@@ -2,6 +2,8 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { escapeHtml, renderMarkdown } from "../consilium/live/markdown.js";
+import { displayTime, htmlTime, parseChatSource } from "./consilium-chat-lib.mjs";
 
 const [sessionDirArg, fragmentPathArg] = process.argv.slice(2);
 
@@ -13,208 +15,220 @@ const sessionDir = path.resolve(sessionDirArg);
 const chatPath = path.join(sessionDir, "CHAT.md");
 const liveChatPath = path.join(sessionDir, "LIVE_CHAT.md");
 const fragmentPath = path.resolve(fragmentPathArg);
-const source = fs.readFileSync(chatPath, "utf8");
+const state = parseChatSource(fs.readFileSync(chatPath, "utf8"));
 
-const sessionId = source.match(/- ID сесії: `([^`]+)`/)?.[1];
-const openedAt = source.match(/- Відкрито: `([^`]+)`/)?.[1];
-
-if (!sessionId || !openedAt) {
+if (!state.sessionId || !state.openedAt) {
   throw new Error("CHAT.md has no session id or opening timestamp");
 }
 
-const messagePattern = /### (M\d+)\n\n- Час: `([^`]+)`\n- Відправник: (.+)\n- Одержувач: (.+)\n\n<!-- BEGIN VERBATIM MESSAGE \1 -->\n([\s\S]*?)\n<!-- END VERBATIM MESSAGE \1 -->/g;
-const messages = [...source.matchAll(messagePattern)].map((match) => ({
-  id: match[1],
-  timestamp: match[2],
-  sender: match[3],
-  recipient: match[4],
-  body: match[5],
-}));
-
-if (!messages.length) {
-  throw new Error("CHAT.md has no messages");
-}
-
-const visibleRole = (value) => value
-  .replace(/\s+`[^`]+`/g, "")
-  .replace(/\s*;\s*/g, "; ")
-  .trim();
-const displayTime = (value) => value.slice(11, 16);
-const htmlTime = (value) => value.replace(/([+-]\d{2})(\d{2})$/, "$1:$2");
-const startLabel = `${openedAt.slice(8, 10)}.${openedAt.slice(5, 7)}.${openedAt.slice(0, 4)}, ${displayTime(openedAt)}`;
-const escapeHtml = (value) => value
-  .replaceAll("&", "&amp;")
-  .replaceAll("<", "&lt;")
-  .replaceAll(">", "&gt;")
-  .replaceAll('"', "&quot;");
-
 const liveChat = [
-  "# Фінансовий консиліум",
+  "# " + state.title,
   "",
-  `**Початок: ${startLabel}**`,
+  "**Початок: " + state.startLabel + "**",
   "",
-  ...messages.flatMap((message, index) => [
+  ...state.messages.flatMap((message, index) => [
     ...(index ? ["---", ""] : []),
-    `## ${visibleRole(message.sender)} → ${visibleRole(message.recipient)} · ${displayTime(message.timestamp)}`,
+    "## " + message.sender + " → " + message.recipient + " · " + displayTime(message.timestamp),
     "",
     message.body,
     "",
   ]),
 ].join("\n").trimEnd() + "\n";
 
-const messageHtml = messages.map((message) => {
-  const sender = visibleRole(message.sender);
-  const recipient = visibleRole(message.recipient);
-  const direction = sender === "Головний консультант" ? "is-sent" : "is-received";
-  return `      <article class="im-message ${direction}" aria-label="${escapeHtml(sender)} до ${escapeHtml(recipient)} о ${displayTime(message.timestamp)}">
-        <div class="im-stack">
-          <div class="im-meta text-small">
-            <span class="im-role">${escapeHtml(sender)} → ${escapeHtml(recipient)}</span>
-            <time datetime="${htmlTime(message.timestamp)}">${displayTime(message.timestamp)}</time>
-          </div>
-          <div class="im-bubble"><div class="im-body">${escapeHtml(message.body)}</div></div>
-        </div>
-      </article>`;
-}).join("\n\n");
+const messageHtml = state.messages.map((message) => {
+  const direction = message.sender === "Головний консультант" ? "is-sent" : "is-received";
+  const label = message.sender + " до " + message.recipient + " о " + displayTime(message.timestamp);
+  return '      <article class="im-message ' + direction + '" aria-label="' + escapeHtml(label) + '">' +
+    '<div class="im-stack">' +
+    '<div class="im-meta">' +
+    '<span class="im-role">' + escapeHtml(message.sender + " → " + message.recipient) + "</span>" +
+    '<time datetime="' + htmlTime(message.timestamp) + '">' + displayTime(message.timestamp) + "</time>" +
+    "</div>" +
+    '<div class="im-bubble"><div class="markdown-body">' + renderMarkdown(message.body) + "</div></div>" +
+    "</div></article>";
+}).join("\n");
 
-const lastMessage = messages.at(-1).id;
-const fragment = `<div id="fc-imessage-live" data-session-id="${escapeHtml(sessionId)}" data-last-message="${lastMessage}" aria-label="Дослівний чат фінансового консиліуму">
+const emptyHtml = state.messages.length
+  ? ""
+  : '<div class="im-empty">Чекаємо на першу репліку.</div>';
+
+const fragment = `<div id="consilium-chat-archive" aria-label="Дослівний чат консиліуму">
   <style>
-    #fc-imessage-live {
+    #consilium-chat-archive {
       color-scheme: light dark;
       width: 100%;
       min-width: 0;
       color: light-dark(#1c1c1e, #f5f5f7);
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
     }
-
-    #fc-imessage-live .im-window {
+    #consilium-chat-archive .im-window {
       overflow: hidden;
-      background: light-dark(#f2f2f7, #000000);
       border: 1px solid light-dark(#d1d1d6, #38383a);
       border-radius: 18px;
+      background: light-dark(#f2f2f7, #000000);
     }
-
-    #fc-imessage-live .im-header {
-      padding: 15px 16px 13px;
-      text-align: center;
-      background: light-dark(#ffffff, #1c1c1e);
+    #consilium-chat-archive .im-header {
+      padding: 14px;
       border-bottom: 1px solid light-dark(#d1d1d6, #38383a);
+      background: light-dark(#ffffff, #1c1c1e);
+      text-align: center;
     }
-
-    #fc-imessage-live .im-title {
+    #consilium-chat-archive .im-title {
       margin: 0;
-      font-weight: 500;
+      font-size: 1rem;
     }
-
-    #fc-imessage-live .im-start {
+    #consilium-chat-archive .im-start,
+    #consilium-chat-archive .im-empty {
       margin-top: 4px;
       color: light-dark(#636366, #aeaeb2);
+      font-size: 0.75rem;
     }
-
-    #fc-imessage-live .im-thread {
-      padding: 18px 13px 22px;
+    #consilium-chat-archive .im-thread {
+      padding: 17px 12px 28px;
     }
-
-    #fc-imessage-live .im-message {
+    #consilium-chat-archive .im-message {
       display: flex;
-      min-width: 0;
-      margin-top: 18px;
+      width: 100%;
+      margin-top: 16px;
     }
-
-    #fc-imessage-live .im-message:first-child {
+    #consilium-chat-archive .im-message:first-child {
       margin-top: 0;
     }
-
-    #fc-imessage-live .im-message.is-sent {
+    #consilium-chat-archive .im-message.is-sent {
       justify-content: flex-end;
     }
-
-    #fc-imessage-live .im-stack {
-      width: min(88%, 650px);
+    #consilium-chat-archive .im-stack {
+      width: min(92%, 720px);
       min-width: 0;
     }
-
-    #fc-imessage-live .is-sent .im-stack {
+    #consilium-chat-archive .is-sent .im-stack {
       text-align: right;
     }
-
-    #fc-imessage-live .im-meta {
+    #consilium-chat-archive .im-meta {
       display: flex;
       gap: 8px;
       align-items: baseline;
       margin: 0 7px 5px;
       color: light-dark(#636366, #aeaeb2);
+      font-size: 0.72rem;
+      line-height: 1.35;
     }
-
-    #fc-imessage-live .is-sent .im-meta {
+    #consilium-chat-archive .is-sent .im-meta {
       justify-content: flex-end;
     }
-
-    #fc-imessage-live .im-role {
+    #consilium-chat-archive .im-role {
       color: light-dark(#3a3a3c, #d1d1d6);
-      font-weight: 500;
+      font-weight: 600;
     }
-
-    #fc-imessage-live .im-bubble {
+    #consilium-chat-archive .im-bubble {
       display: inline-block;
       max-width: 100%;
-      padding: 10px 13px;
+      padding: 10px 13px 11px;
       border-radius: 18px;
       text-align: left;
       overflow-wrap: anywhere;
     }
-
-    #fc-imessage-live .im-body {
-      margin: 0;
-      white-space: pre-wrap;
-    }
-
-    #fc-imessage-live .is-sent .im-bubble {
-      color: #ffffff;
-      background: light-dark(#0a84ff, #0a84ff);
+    #consilium-chat-archive .is-sent .im-bubble {
       border-bottom-right-radius: 5px;
+      background: #0a84ff;
+      color: #ffffff;
     }
-
-    #fc-imessage-live .is-received .im-bubble {
-      color: light-dark(#1c1c1e, #f5f5f7);
-      background: light-dark(#e5e5ea, #2c2c2e);
+    #consilium-chat-archive .is-received .im-bubble {
       border-bottom-left-radius: 5px;
+      background: light-dark(#e5e5ea, #2c2c2e);
     }
-
-    @media (max-width: 480px) {
-      #fc-imessage-live .im-window {
-        border-radius: 14px;
+    #consilium-chat-archive .markdown-body {
+      font-size: 0.9rem;
+      line-height: 1.46;
+    }
+    #consilium-chat-archive .markdown-body > :first-child {
+      margin-top: 0;
+    }
+    #consilium-chat-archive .markdown-body > :last-child {
+      margin-bottom: 0;
+    }
+    #consilium-chat-archive .markdown-body h1,
+    #consilium-chat-archive .markdown-body h2,
+    #consilium-chat-archive .markdown-body h3,
+    #consilium-chat-archive .markdown-body h4,
+    #consilium-chat-archive .markdown-body h5,
+    #consilium-chat-archive .markdown-body h6 {
+      margin: 0.85em 0 0.35em;
+      font-size: 1em;
+      line-height: 1.35;
+    }
+    #consilium-chat-archive .markdown-body p,
+    #consilium-chat-archive .markdown-body ul,
+    #consilium-chat-archive .markdown-body ol,
+    #consilium-chat-archive .markdown-body blockquote,
+    #consilium-chat-archive .markdown-body pre,
+    #consilium-chat-archive .markdown-body .table-scroll {
+      margin: 0.55em 0;
+    }
+    #consilium-chat-archive .markdown-body ul,
+    #consilium-chat-archive .markdown-body ol {
+      padding-left: 1.35em;
+    }
+    #consilium-chat-archive .markdown-body code {
+      padding: 0.12em 0.33em;
+      border-radius: 5px;
+      background: color-mix(in srgb, currentColor 12%, transparent);
+      font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+      font-size: 0.86em;
+    }
+    #consilium-chat-archive .markdown-body pre {
+      max-width: 100%;
+      padding: 10px;
+      overflow: auto;
+      border-radius: 9px;
+      background: color-mix(in srgb, #000000 19%, transparent);
+    }
+    #consilium-chat-archive .markdown-body pre code {
+      padding: 0;
+      background: transparent;
+      white-space: pre;
+    }
+    #consilium-chat-archive .table-scroll {
+      max-width: 100%;
+      overflow-x: auto;
+      border: 1px solid color-mix(in srgb, currentColor 17%, transparent);
+      border-radius: 9px;
+    }
+    #consilium-chat-archive table {
+      width: 100%;
+      min-width: 380px;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    #consilium-chat-archive th,
+    #consilium-chat-archive td {
+      padding: 7px 8px;
+      border-bottom: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+      text-align: left;
+      vertical-align: top;
+    }
+    @media (max-width: 520px) {
+      #consilium-chat-archive .im-stack {
+        width: 96%;
       }
-
-      #fc-imessage-live .im-thread {
-        padding-inline: 9px;
-      }
-
-      #fc-imessage-live .im-stack {
-        width: 94%;
-      }
-
-      #fc-imessage-live .im-meta {
+      #consilium-chat-archive .im-meta {
+        gap: 3px;
         align-items: flex-start;
         flex-direction: column;
-        gap: 1px;
       }
-
-      #fc-imessage-live .is-sent .im-meta {
+      #consilium-chat-archive .is-sent .im-meta {
         align-items: flex-end;
       }
     }
   </style>
-
   <section class="im-window">
     <header class="im-header">
-      <h2 class="im-title">Фінансовий консиліум</h2>
-      <div class="im-start text-small">Початок: ${startLabel}</div>
+      <h2 class="im-title">${escapeHtml(state.title)}</h2>
+      <div class="im-start">Початок: ${escapeHtml(state.startLabel)}</div>
     </header>
-
     <div class="im-thread">
-${messageHtml}
+      ${emptyHtml}
+      ${messageHtml}
     </div>
   </section>
 </div>
@@ -224,6 +238,6 @@ fs.mkdirSync(path.dirname(fragmentPath), { recursive: true });
 fs.writeFileSync(liveChatPath, liveChat);
 fs.writeFileSync(fragmentPath, fragment);
 
-console.log(`${messages.length} messages rendered`);
+console.log(state.messages.length + " messages rendered");
 console.log(liveChatPath);
 console.log(fragmentPath);

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Живий чат консиліуму</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="chat-shell">
+      <header class="chat-header">
+        <div class="chat-header__text">
+          <h1 id="chatTitle">Консиліум</h1>
+          <p id="chatStart">Підключення…</p>
+        </div>
+        <div class="chat-actions">
+          <span class="connection" id="connectionState" role="status" aria-live="polite">
+            <span class="connection__dot" aria-hidden="true"></span>
+            <span id="connectionLabel">Підключення</span>
+          </span>
+          <button class="sound-button" id="soundButton" type="button" aria-pressed="false">
+            <span aria-hidden="true">🔇</span>
+            <span>Звук</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="chat-thread" id="chatThread" aria-label="Дослівний чат консиліуму">
+        <div class="empty-state" id="emptyState">
+          <span class="typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <p>Чекаємо на першу репліку.</p>
+        </div>
+      </main>
+
+      <button class="new-messages" id="newMessagesButton" type="button" hidden>
+        Нові повідомлення
+      </button>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
