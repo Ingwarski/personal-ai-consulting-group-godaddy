@@ -3,24 +3,24 @@
 - Продукт: `Personal Consultant`
 - Версія brief: V1, до цілісного design-затвердження
 - Статус: proposed
-- Дата: 15.08.2026
-- owner_invocation_id: `bcfd01bf-b36f-45b8-bac7-79703bdee395`
+- Дата: 16.08.2026
+- owner_invocation_id: `84b69db5-abcf-48b2-b344-3b101ca1f8b5`
 
 ## Source References
 
-Порядок джерел відповідає `docs/guardrails.md`. Цей brief не змінює продуктову поведінку, перелік станів або структуру wireframes; він визначає presentation- і interaction-контракт для вже підтвердженої єдиної поверхні `SUR-01`.
+Порядок джерел відповідає `docs/guardrails.md`. Цей brief не змінює продуктову поведінку, перелік станів або структуру wireframes; він визначає presentation- і interaction-контракт для рівно двох підтверджених поверхонь: `SUR-01` і `SUR-02`.
 
 | Джерело | SHA-256 / статус | Спожиті фрагменти |
 |---|---|---|
 | `README.md` | `d1afdf92181df9e002f9f75678f8ca46083c90bec0a9a33e47535a0593fa1c9c` | Позиціонування; принцип практичного результату; історичний browser-preview лише як нецільовий контекст |
-| `docs/product-idea.md` | `627dfdadc2363e1011e3ea0091c598c8f989e43fdf1ec45c512705ca0f9cf902` | Позиціонування; Результат для користувача; Основний сценарій; Досвід живого чату; Фінальна рекомендація; Межі V1; Правила даних і доступу; subscription OAuth; Стандарт швидкості; Критерій готовності V1; Підтверджені рішення |
-| `docs/prd.md` | `0c61a4dd97564f6ba17c2a387e2b420adad4282f3bf778f3b644a3d9c28920b6` | §3.2–3.5; §4–5; `FR-001`–`FR-036`; `NFR-001`–`NFR-015`; §8–12; `AC-001`–`AC-011` |
-| `docs/project-context.md` | `b7710d6018a19a949cdb7d6b89051b57b765f425bcfb1f0eef2d469d129664f0` | Desired User Outcomes; Platform Targets; Core Scenarios; MVP Boundaries; Out of Scope; Constraints; subscription OAuth boundary; Assumptions; Risks; Open Questions |
-| `docs/canonical-terms.md` | `469ff18d98fc2001cce2e485195bd57c9b19b7603119c026cddcd810dc04d540` | Ролі; Core Domain Objects; User Actions; Product States; Screen / Flow Names; Approved User-Facing Terms; subscription OAuth і Облік витрат; Synonyms to Normalize; Terms to Avoid; Open Vocabulary Questions |
-| `docs/guardrails.md` | `45f6003f56462073514928a038ec24630f4a85529328d66ec6ae972945eb0737` | Source Of Truth Order; AI Autonomy Boundaries; Forbidden Changes; Scope Boundaries; Design Authority Rules; Conflict Resolution; When To Ask; When To Stop; Artifact Separation Rules; Verification Rules; Evidence Requirements; Open Questions |
-| `docs/user-journey.md` | `4fc297e61081690cb7f03e150388b65a32952eaa99bec494008648b6c334d944` | Journey Overview; Journey Stages 1–10; Climax Beat; Decision Points; subscription auth/quota failure path; Exit Points; Success State; Confirmed Facts And Constraints; Open Questions |
-| `docs/screen-map.md` | `3f12f48577b03e26f8d0e1ce51fb9f1f53f5bdbb7dd534c56e1c9c3191766ef3` | `SUR-01`; `MG-01`–`MG-13`; Surface Closure Matrix; Route Map; Navigation Model; Journey-To-Screen Trace; `SS-01`–`SS-29`; загальні state-категорії; Transition Notes; Entry And Exit Points; Edge Paths; Out Of Scope Screens; Open Questions |
-| `docs/wireframes.md` | `49e5ae2421827373c3d3565520d1b548c5d832b3d6c515f4ffb9dc6252f7a700` | Wireframe Principles; оборотні структурні рішення; `SUR-01` blueprint; conversational sequences A–F; Responsive Structure Notes; `MG-01`–`MG-13`; Permission pattern; Atomic agent-reply pattern; `SS-01`–`SS-29`; structural variants; Content Priority Notes; Open Questions |
+| `docs/product-idea.md` | `263a5d15949e2ebf70f9fb4fa8ba67ff1e882cb5ae2774ecf218ccff16586ac5` | Дві поверхні V1; Element/Matrix; Candidate B; `Налаштування власника`; Google-only exact-email access; три групи; atomic save; immutable active-session snapshot |
+| `docs/prd.md` | `2d9546dd7b0f4cd25dea0f225ffa35c0819966e3edb9efaa72f781f3fb70d660` | §3.2–3.5; §4–5; `FR-001`–`FR-046`; `NFR-001`–`NFR-019`; §8–12; `AC-001`–`AC-016` |
+| `docs/project-context.md` | `529ee8b70ec81b2a4734cb7580e5bfc84052a9f2552b039cd52bd42dfe4b2fee` | Platform Targets; Core Scenarios; Google Access/JWT; три settings-групи; responsive web; subscription OAuth boundary; Risks |
+| `docs/canonical-terms.md` | `75e8ab94a47faa0f89a51605543f2f643ce9b53c8513d26ee7d5bb54037f26fc` | `Налаштування власника`; `Google-вхід`; `Subscription OAuth`; `Моделі`; `Глибина міркування`; `Пресет швидкості`; `Фактичні налаштування сесії`; Terms to Avoid |
+| `docs/guardrails.md` | `54c7ccd20d612e908f1038499c2db101d47e587c141a2d5363e003b2a0dbb3bc` | Source order; two-surface boundary; Google Access/JWT; exact three groups; atomic save; immutable snapshot; forbidden settings expansion; Design Authority Rules |
+| `docs/user-journey.md` | `e4dfa9801ef0eab241c4b768719732628e37aebb068a8fd8067eeedbe1a6d7cd` | Element Journey Stages 1–10; Settings Journey S1–S5; failure paths; exits; success states |
+| `docs/screen-map.md` | `5f138005cf9b6c9b347cc8d876bd74f6f9c977503ad6dc53436ccd35e75f0a5b` | `SUR-01`–`SUR-02`; `MG-01`–`MG-13`; `SG-01`–`SG-05`; `SS-01`–`SS-46`; route, transition, entry/exit and edge contracts |
+| `docs/wireframes.md` | `df7ca5c68e238416d16541e765b6a062bd29ab1328de06dc0f064f0600fb2edc` | `SUR-01` native chat structure; `SUR-02` authenticated settings structure; message, settings and state blueprints; responsive notes; content priorities |
 
 Актуальні платформні джерела перевірено 15.08.2026:
 
@@ -34,9 +34,9 @@
 
 ## Design Brief
 
-`Personal Consultant` має відчуватися як приватна, спокійна й доказова ділова розмова в нативній E2EE Element/Matrix-кімнаті. Дизайн витрачає виразність на змістову ієрархію — рішення, конкретну роль, критичну межу, фактичний статус і наступну дію — та свідомо не витрачає її на новий chrome, декоративний бренд-шар або імітацію окремого застосунку.
+`Personal Consultant` має відчуватися як приватна, спокійна й доказова ділова розмова в нативній E2EE Element/Matrix-кімнаті та як стримана безпечна utility-поверхня, коли Власник відкриває `Налаштування власника`. Спільний принцип — deliberate restraint: виразність витрачається на рішення, критичну межу, identity/access, сумісність, фактичний статус і наступну дію, а не на декоративний бренд-шар.
 
-Єдиний design surface — `SUR-01`. Product-owned presentation складається з:
+`SUR-01` успадковує Element і володіє лише content choreography. `SUR-02` є єдиним web-винятком: одна responsive сторінка з рівно трьома групами, ясним identity/access status, current/default/effective значеннями, compatibility/status патернами, атомарним Save/Reset і повідомленням про незмінний snapshot Активної сесії. Google sign-in належить Cloudflare Access; продукт стилізує лише authenticated settings і безпечні denied/status результати, де це застосовно.
 
 - порядку повідомлень і змістових зон, уже визначених `docs/wireframes.md`;
 - читабельного нативного форматування Element/Matrix і нативних Matrix replies;
@@ -62,10 +62,13 @@
 | `DB-D10` | `SS-28` є невидимою передумовою кожного model call і запуску залежного агента: за успіху жодного product-authored loading/login status не додається | Confirmed: screen-map і wireframes; preflight не створює нової surface або проміжного performance theater |
 | `DB-D11` | `SS-29` показує в тій самій кімнаті лише безпечну категорію збою, відомий reset і позачатову наступну дію; credential, URL або code fields та API/PAYG fallback відсутні | Confirmed: PRD §3.5, canonical terms, screen-map `SS-29` |
 | `DB-D12` | `Витрати` показують налаштовані місячні платежі за AI-підписки, фактичну інфраструктуру й доступний provider usage/limit/reset; usage сесії входить у підписку | Confirmed: `MG-09`, `SS-14`, canonical `Облік витрат`; per-session token charge не вигадується |
+| `DB-D13` | `SUR-02` є єдиним browser-винятком: secure system-like one-page utility, а не чат, dashboard чи admin console | Confirmed: screen-map, wireframes, guardrails |
+| `DB-D14` | Settings мають рівно три групи та одну atomic action hierarchy; active-session snapshot не мутує | Confirmed: `SG-02`–`SG-05`, `SS-35`–`SS-44` |
+| `DB-D15` | Cloudflare Access володіє Google sign-in presentation; product-owned design починається після grant і обмежується safe status result за deny | Confirmed: `SG-01`, `SS-30`–`SS-34` |
 
 ## Audience And Context
 
-Єдиний користувач V1 — Власник. Він працює з практичними бізнесовими, фінансовими, управлінськими, продуктовими, маркетинговими й продажними задачами та переходить між Mac, iPhone, Samsung Flip7/Android і Windows PC. Повсякденний досвід не повинен вимагати технічної підготовки, окремого browser UI або розуміння внутрішньої оркестрації агентів.
+Єдиний користувач V1 — Власник. Він працює з практичними бізнесовими, фінансовими, управлінськими, продуктовими, маркетинговими й продажними задачами та переходить між Mac, iPhone, Samsung Flip7/Android і Windows PC. Повсякденний досвід залишається в Element; responsive browser потрібен лише для рідкісної зміни налаштувань і не вимагає розуміння внутрішньої оркестрації.
 
 Інформаційна щільність нерівномірна за природою продукту: системні статуси й Фінальна рекомендація мають бути короткими, а Підтверджена репліка агента може бути довгою і завжди залишається повною. Design-контракт не розв'язує цю напругу приховуванням; він робить довгий потік сканованим через стабільну роль, порядок, абзаци, списки та сильний початок повідомлення.
 
@@ -78,6 +81,8 @@
 3. Яке рішення або наступна перевірка випливає з роботи?
 
 Критерій досвіду: навіть якщо нативне форматування, колір або ширина бульбашки відрізняються між клієнтами, хронологія, роль, статус, критична межа й наступна дія залишаються однозначними в самому тексті.
+
+Для `SUR-02` Власник має так само швидко зрозуміти: хто має доступ; що є current, default і effective; чи повний набір сумісний; чи atomic save/reset фактично завершено; чому зміни не торкаються Активної сесії.
 
 ## Concern Scan
 
@@ -94,6 +99,9 @@
 | Content density | Короткі product-authored blocks; повні agent replies; один змістовий рівень на абзац; до трьох фінальних дій | Немає summary/accordion/read-more, доданого продуктом |
 | Input modalities | Текст, зображення й PDF через штатний composer; команди вводяться текстом | Voice, video та custom controls поза V1 |
 | Same-chat delivery | Нова репліка з'являється в тій самій приватній розмові | Окремої продуктової поверхні немає |
+| Settings security utility | Одна сторінка, явний identity/access status, три групи, validation і atomic actions | Не чат, dashboard, sidebar, cards-in-cards чи admin console |
+| Settings access | Google sign-in UI належить Cloudflare Access; продукт показує authenticated identity/status або safe denial | Без password/OTP/magic link/іншого IdP, credentials чи Subscription OAuth fields |
+| Settings reversibility | Current/default/effective розрізнені текстом; save/reset атомарні; active snapshot незмінний | Без partial success, silent downgrade, arbitrary model text або live mutation |
 | Subscription access | Успішний `SS-28` невидимий; `SS-29` — короткий same-room status із безпечною категорією причини та позачатовою наступною дією | У Matrix немає OAuth token, `auth.json`, setup-token, reauth URL/code, credential field, login screen або API/PAYG fallback |
 | Cost transparency | `Витрати` відділяють налаштовані щомісячні AI-підписки, фактичну інфраструктуру та доступний status квоти/reset | Usage сесії позначається як включене в підписку; недоступне — `невідомо`; не вигадувати per-session charge |
 | AI control and reversibility | Явні дозволи, `Стоп`, `Нова задача`, `Витрати`, чесний failure-state, незмінна репліка й нове повідомлення для виправлення | Автоматична зовнішня дія без окремого дозволу заборонена |
@@ -117,15 +125,15 @@ Boldness свідомо не витрачається на декоративн�
 
 `B — Дослівний консиліум` є обраним content/UX-напрямом. Його signature element — стабільний ритм `конкретна роль · HH:MM`, нативна Matrix reply relationship для адресованості та повне незмінне тіло кожної фактично надісланої репліки в канонічному порядку. Виразність витрачається на provenance, межі між репліками, критичні стани й фінальний синтез; нативний Element chrome лишається стриманим і незмінним.
 
-Наступний design-evidence артефакт має бути Matrix-native rendered candidate цього напряму з покриттям `SUR-01`, `MG-01`–`MG-13` і `SS-01`–`SS-29`. Сам вибір напряму не є approval receipt. Попередні WhatsApp-кандидати `A/B/C v1` та їх evidence лишаються незмінними історичними артефактами зі статусом superseded.
+Наступна інтегрована revision напряму Candidate B має покрити обидві поверхні: Matrix-native chat evidence для `SUR-01` та system-like secure utility evidence для `SUR-02`, включно з `MG-01`–`MG-13`, `SG-01`–`SG-05` і `SS-01`–`SS-46`. Лише після цілісного покриття можливе whole-design approval. Старі candidate prototypes не покривають `SUR-02` і не є Approved Visual Baseline; попередні WhatsApp `A/B/C v1` лишаються immutable superseded historical evidence.
 
 ### Colors
 
-Кольори повністю визначає активний клієнт Element через `surface.chat`, `surface.message`, `color.content`, `color.secondary` і `color.status`. Product-authored зміст не задає власну палітру та не використовує колір як єдину ознаку успіху, помилки, ролі або дозволу.
+Кольори `SUR-01` повністю визначає активний клієнт Element через `surface.chat`, `surface.message`, `color.content`, `color.secondary` і `color.status`. `SUR-02` використовує стримані system-like семантичні токени `surface.settings`, `surface.section`, `color.border`, `color.focus`, `color.danger` і `color.success`; кожне status-значення дублюється текстом, а не лише кольором.
 
 ### Typography
 
-Шрифт, базовий розмір, line-height і масштабування визначає клієнт через `type.body`. Ієрархія використовує лише `type.heading`, `type.role-time`, `type.secondary` і `type.code`:
+Шрифт, базовий розмір, line-height і масштабування `SUR-01` визначає Element через `type.body`. `SUR-02` використовує системний UI stack через `type.ui`, `type.label` і `type.meta`; довгі model names, errors і mapping text переносяться без скорочення. Ієрархія чату використовує `type.heading`, `type.role-time`, `type.secondary` і `type.code`:
 
 - один короткий `type.heading` на початку product-authored block, якщо без нього важко знайти рішення або межу;
 - `type.role-time` перед кожною Підтвердженою реплікою агента;
@@ -140,17 +148,19 @@ Boldness свідомо не витрачається на декоративн�
 
 Ручні відступи пробілами, центрування, горизонтальні колонки, ASCII-діаграми й decorative separators не використовуються. Довжина рядка, ширина бульбашки, зовнішні відступи та scroll належать Element.
 
+`SUR-02` завжди зберігає односторінкову ієрархію: identity/access → current/default/effective → рівно три групи → compatibility/status → atomic actions → active-session notice. Групи розділяються `space.settings-section`, а не cards-in-cards, sidebar чи dashboard grid.
+
 ### Elevation And Depth
 
-Лише `elevation.message`, успадкований від Element. Product-authored зміст не додає shadows, layers, overlays, floating controls або card-in-card hierarchy.
+`SUR-01` використовує лише `elevation.message`, успадкований від Element. `SUR-02` використовує `elevation.utility`: стриману межу сторінки без decorative shadows, floating controls або card-in-card hierarchy.
 
 ### Shapes
 
-Лише `shape.message`, успадкований від Element. Product-authored blocks не імітують badges, pills, buttons, cards або panels за допомогою символів.
+`SUR-01` успадковує `shape.message`. `SUR-02` використовує `shape.control` і `shape.utility` системно й без декоративних pills, badges або вкладених cards.
 
 ### Component Appearance
 
-Нижче `P-01`–`P-10` — content patterns усередині нативної розмови, а не кастомні UI-компоненти.
+Нижче `P-01`–`P-10` — content patterns усередині нативної розмови; `P-11`–`P-15` — appearance patterns вузької settings-поверхні.
 
 | ID | Pattern | Appearance principle |
 |---|---|---|
@@ -164,6 +174,11 @@ Boldness свідомо не витрачається на декоративн�
 | `P-08` | Native attachment and composer | Повністю нативні preview й composer; product-owned overlay, field, selector або button відсутні |
 | `P-09` | Same-chat delivery | Нова репліка з'являється в `SUR-01`; окремий продуктовий інтерфейс не створюється |
 | `P-10` | Session / archive control result | `P-01` з фактичним результатом, наслідком для Сесії або Архіву сесій і наступною допустимою дією |
+| `P-11` | Settings identity/access strip | `surface.section` + `type.meta`; підтверджена identity і safe access status без policy secrets чи provider credentials |
+| `P-12` | Settings group | Один заголовок, коротке пояснення, label/control/status у `surface.settings`; рівно три такі групи без nested cards |
+| `P-13` | Current/default/effective distinction | Три текстово підписані трактування з різною вагою, але без color-only meaning |
+| `P-14` | Compatibility / operation status | `type.label` + явний status text; inline error біля джерела і один page-level atomic result |
+| `P-15` | Atomic action area | Одна головна Save-дія, окрема Reset-дія з підтвердженням і помітне `focus.ring`; success/failure належить усьому набору |
 
 ### Visual Do's And Don'ts
 
@@ -175,6 +190,9 @@ Do:
 - зберігати зрозумілий plain-text fallback, якщо format markers не відобразилися;
 - відділяти роль і `HH:MM` від body одним стабільним патерном;
 - для нового agent-authored content віддавати перевагу списку над широкою таблицею.
+- в settings завжди називати identity/access, current/default/effective, validation і atomic result текстом;
+- тримати рівно три settings-групи в одному послідовному потоці;
+- показувати явний focus і помилку біля пов'язаного control.
 
 Don't:
 
@@ -184,6 +202,9 @@ Don't:
 - перетворювати фактично надіслану таблицю чи code block після реєстрації: повне тіло зберігається дослівно;
 - передавати critical meaning лише червоним/зеленим, emoji або анімацією;
 - використовувати декоративні gradients, blobs, cards, ASCII-art або ручне вирівнювання пробілами.
+- перетворювати settings на dashboard/sidebar, cards-in-cards або advanced/admin console;
+- додавати credential fields, free-text model slug, Claude Fast Mode, API/PAYG/credits, sound/motion або per-agent/per-unit controls;
+- стилізувати Cloudflare Access Google sign-in як product-owned screen.
 
 ### Design Tokens
 
@@ -191,20 +212,35 @@ Don't:
 |---|---|
 | `surface.chat` | Поточна нативна E2EE Matrix-кімната в Element у відповідному клієнті й темі |
 | `surface.message` | Нативна message presentation Element; продукт не перевизначає її |
+| `surface.settings` | Одна product-owned responsive utility-поверхня без app-shell, sidebar чи dashboard |
+| `surface.section` | Системно-стримана зона з одним семантичним заголовком; не nested card |
 | `color.content` | Нативний primary text color активного клієнта й теми |
 | `color.secondary` | Нативний secondary text treatment; не використовується для critical meaning |
 | `color.status` | Нативна platform treatment, якщо вона існує; значення завжди дублюється явним текстом |
+| `color.border` | Нейтральна system-like межа з контрастом не нижче WCAG 2.2 AA для її семантичної ролі |
+| `color.focus` | Помітний focus indicator, що не залежить від кольору control |
+| `color.danger` | Акцент для error/reset boundary; завжди з текстовим label і наслідком |
+| `color.success` | Акцент лише після підтвердженого atomic result; не єдина ознака успіху |
 | `type.body` | Нативна системна типографіка Element, regular, з user-controlled scaling |
 | `type.heading` | Нативне selective bold для одного головного label або signal-line |
 | `type.role-time` | `Конкретна предметна роль` selective bold + роздільник `·` + час `HH:MM` regular |
 | `type.secondary` | Нативна italic або regular secondary фраза; лише для некритичного контексту |
 | `type.code` | Нативний inline/monospace treatment Element/Matrix для точного технічного змісту |
+| `type.ui` | Системний UI stack для settings з підтримкою 200% text zoom і без залежності від завантаження web-font |
+| `type.label` | Явний persistent label для control/status; placeholder не замінює label |
+| `type.meta` | Підтримувальний текст для identity, current/default/effective і mapping; критичне значення не покладається лише на secondary styling |
 | `space.section` | Один порожній рядок між смисловими секціями одного повідомлення |
 | `space.list` | Один окремий рядок на пункт без декоративних порожніх рядків між пунктами |
 | `space.series` | Нативна межа між двома самодостатніми повідомленнями |
+| `space.settings-section` | Послідовний вертикальний ритм між identity, трьома групами, status і actions; не dashboard grid |
 | `shape.message` | Нативна форма повідомлення Element |
+| `shape.control` | Послідовна system-like форма input/select/button з видимою межею й focus |
+| `shape.utility` | Стримана межа одної settings-поверхні; без decorative panel nesting |
 | `elevation.message` | Нативна depth/separation behavior Element |
+| `elevation.utility` | Без decorative shadow; рівні відділяються border/spacing/heading |
 | `motion.message` | Лише нативна поява/доставка/відкриття; product-authored animation відсутня |
+| `motion.settings` | Жодної product-authored animation; стан завжди зрозумілий з тексту й status region |
+| `focus.ring` | Неперервний видимий контур для клавіатурного focus, що не закриває контент |
 | `priority.p0` | Явний текстовий статус або межа на початку + `type.heading`; потребує рішення чи негайної уваги |
 | `priority.p1` | Основний результат або фактичний робочий зміст; перша змістова теза перед деталями |
 | `priority.p2` | Підстава, причина, контекст або межа впевненості після основного сигналу |
@@ -214,7 +250,7 @@ Don't:
 
 ### Foundation
 
-Форм-фактор — одна асинхронна, але під час Консиліуму жива нативна розмова. Головна interaction primitive — нове текстове повідомлення у штатному composer. Product experience не залежить від hover, drag, custom button або browser route.
+Головний форм-фактор — асинхронна, а під час Консиліуму жива нативна розмова в Element. Головна primitive там — нове текстове повідомлення у штатному composer. Вузький допоміжний форм-фактор — responsive web settings з keyboard-accessible controls, атомарними діями й чітким status feedback. Жодна поверхня не залежить від drag, hover-only meaning або decorative motion.
 
 Основний interaction feel — `visible progress without performance theater`: підтвердження, фактична репліка, пояснення очікування, збій або запит дозволу з'являються як зміст, а не як декоративна анімація.
 
@@ -226,6 +262,9 @@ Don't:
 - `P-06` завершує роботу кількома короткими повідомленнями, але не замінює й не редагує попередні `P-05`.
 - `Стоп`, `Нова задача` й `Витрати` читаються як точні команди, а не як navigation labels.
 - Нативна історія може бути довгою; поточний стан знаходиться за останнім однозначним signal-first block, а не через custom sticky header.
+- `SUR-02` не має спільного app-shell з Element, sidebar або dashboard IA; це одна послідовна settings-сторінка.
+- Ієрархія `SUR-02` стабільна: identity/access → values → три групи → validation/status → Save/Reset → active-session notice.
+- Google sign-in і initial Access denial належать Cloudflare Access; authenticated settings і safe product status не імітують login flow.
 
 ### Voice And Tone
 
@@ -251,6 +290,11 @@ Don't:
 | `P-08` | Native attachment and composer | Приймає лише підтверджені V1 inputs; unsupported input переходить у `P-03`/`P-04` без custom control |
 | `P-09` | Same-chat delivery | Додає нову видиму репліку до `SUR-01` без створення іншої продуктової поверхні |
 | `P-10` | Session / archive control result | Показує фактичний наслідок команди чи архівної дії; для `Витрати` розділяє налаштовані місячні AI-підписки, фактичну інфраструктуру й доступний usage/limit/reset без per-session token charge; не створює окремий dashboard, archive-browser або editable transcript |
+| `P-11` | Settings identity/access strip | Показує лише підтверджену Google identity й safe access status; не приймає credentials і не подає Google-вхід як Subscription OAuth |
+| `P-12` | Settings group | Зберігає рівно три границі; labels пов'язані з controls програмно, довгі значення переносяться, довільний model input відсутній |
+| `P-13` | Current/default/effective distinction | Оновлює current лише після atomic success; default не мутується; active effective snapshot залишається незмінним |
+| `P-14` | Compatibility / operation status | Inline error пов'язаний з полем, page-level status оголошується screen reader; unknown/drift/offline fail closed без silent downgrade |
+| `P-15` | Atomic action area | Save доступний лише для dirty valid set; Reset потребує підтвердження; клавіатурний focus помітний; repeated submit не створює partial write |
 
 #### Message-Group Coverage
 
@@ -274,7 +318,7 @@ Don't:
 
 ### State Patterns
 
-Перелік і переходи належать `docs/screen-map.md`; нижче зафіксовано лише appearance/behavior coverage для кожного `SS-01`–`SS-29`.
+Перелік і переходи належать `docs/screen-map.md`; нижче зафіксовано лише appearance/behavior coverage для `SS-01`–`SS-46`.
 
 | State | Appearance pattern | Behavior pattern |
 |---|---|---|
@@ -307,6 +351,23 @@ Don't:
 | `SS-27` Room invariants не підтверджено | Захищені `P-01`–`P-10` не з'являються; безпечний `P-04` можливий лише без protected details | Після відновлення інваріантів — `SS-01`; security exception для federation gate потребує явного рішення Власника |
 | `SS-28` Передзапусковий subscription auth/quota/private preflight | За успіху невидимий: немає нового `P-01`, spinner, typing, login або credential prompt | Перед кожним model call і запуском залежного агента підтверджує subscription OAuth mode, квоту, відсутність API/PAYG credentials і single-owner eligibility: один захищений Codex OAuth-стан обслуговує окремі реальні sessions/threads, Claude Code-критик проходить subscription setup-token preflight; успіх веде до `SS-09`/`SS-10`, будь-яка невідповідність — до `SS-29` |
 | `SS-29` Fail-closed auth/quota/private boundary | Critical `P-04` у `SUR-01`: безпечна категорія причини, відомий provider reset і позачатова наступна дія; без token, `auth.json`, setup-token, reauth URL/code, link або credential field | Жодного model call чи agent launch і жодного API/PAYG/credits fallback; після provider reset або provider-managed reauth поза Matrix — новий `SS-28`, інакше exit/неповний результат |
+| `SS-30` Settings entry | Нейтральний utility context без chat/dashboard chrome | Перехід до Cloudflare Access-owned Google sign-in; product login controls відсутні |
+| `SS-31` Access loading | `P-11` loading/status без protected values | Grant або safe deny; keyboard/screen-reader status оголошено без animation-only meaning |
+| `SS-32` Access granted | `P-11` з підтвердженою owner identity | Завантажити versioned settings; Google identity не видається за Subscription OAuth |
+| `SS-33` Access denied | Одна safe permission boundary без settings values і policy secrets | Лише повторний дозволений Google-вхід або exit; без fallback |
+| `SS-34` Settings loading | `P-11`–`P-14` у loading/read-only state; placeholders не видаються за current | Save/reset unavailable до цілісного load і validation |
+| `SS-35` Loaded | `P-12`–`P-15`: рівно три групи, current/default/effective і status | Change, reset або exit; Save unavailable без dirty valid set |
+| `SS-36` Dirty valid | Changed status біля джерела й позитивний `P-14` текст | `P-15` Save доступний; cancel повертає loaded state |
+| `SS-37` Incompatible | Inline error біля несумісного control і page status; не color-only | Save і нова сесія fail closed; без silent downgrade |
+| `SS-38` Drift/provider unavailable | Persistent `P-14` warning/error з чітким наслідком | Свіжа validation або exit; current і active effective не мутують |
+| `SS-39` Atomic save in progress | `P-15` і status region показують збереження всього набору | Repeated submit unavailable; selected values видимі; результат лише whole-success або whole-failure |
+| `SS-40` Save success | `P-14` success текст для всього набору; changed markers очищені | Current оновлено для нових сесій; active snapshot незмінний |
+| `SS-41` Save failure | `P-14` error явно каже, що жодну групу не змінено | Reload/fix/retry після свіжої validation; без partial write чи false success |
+| `SS-42` Reset confirmation | Фокусована permission boundary називає всі три групи і наслідок | Confirm/cancel мають однозначний keyboard focus order |
+| `SS-43` Reset result | Whole-set success або `SS-41` failure; без partial status | Default стає current лише після atomic success і лише для нових сесій |
+| `SS-44` Active snapshot notice | `P-13`/`P-14` помітно розрізняють current і active effective | Не пропонує live apply; exit до Element або повернення до loaded state |
+| `SS-45` Offline | Persistent text status; stale values позначені, Save/Reset не мають success styling | Після online — свіжі Access/config checks; без partial write |
+| `SS-46` Mobile/long content | Один стовпець; повні labels, model names, mappings, errors і actions без horizontal dependency | Той самий контракт на 390/430/768/1280/1440; нічого не вилучається |
 
 Загальні стани:
 
@@ -325,6 +386,10 @@ Don't:
 - Дати явну текстову згоду чи відмову щодо одного `P-03`; quick replies або buttons не припускаються.
 - Прокручувати нативну хронологію та відкривати нативний preview вкладення.
 - Запросити архівну дію текстом; точний intent-словник лишається відкритим.
+- Відкрити protected settings URL і пройти Cloudflare Access-owned Google sign-in.
+- Вибрати окремі allowlisted Codex і Claude моделі, спільну глибину міркування й orchestration preset швидкості.
+- Атомарно зберегти dirty valid set, скасувати локальні зміни або після підтвердження повернути весь набір до default.
+- Відкрити Element або закрити settings; bot-link не є передумовою.
 
 ### Accessibility Floor
 
@@ -336,6 +401,9 @@ Don't:
 6. Критичний стан зрозумілий без motion; `P-09` не змінює його змісту.
 7. Native controls успадковують target size, focus і input behavior Element/ОС. Brief не заявляє їхню відповідність без тесту поточних клієнтів.
 8. Не використовувати images of text для product-authored відповідей. Якщо input image або PDF недоступний для аналізу, стан пояснюється текстом, не вгадується з thumbnail.
+9. `SUR-02` має WCAG 2.2 AA як floor: семантичні заголовки й labels, повна keyboard navigation, видимий `focus.ring`, програмне пов'язання errors з controls, status region для async result і відсутність color-only meaning.
+10. Interactive targets у `SUR-02` мають не менше 24×24 CSS px за WCAG 2.2 AA; для primary touch actions на 390/430px ціль — 44×44 CSS px або еквівалентна доступна зона.
+11. Під час 200% text zoom не зникають identity, три settings-групи, current/default/effective, validation, Save/Reset або active-session notice; horizontal scrolling не потрібен для основного content.
 
 ### Key Flow Implications
 
@@ -347,6 +415,9 @@ Don't:
 | Stage 7, втручання Власника | `SS-13`/`SS-14` повертають до контексту; `SS-15`/`SS-16` дають контрольований exit/restart | Пізні репліки після `Стоп` не публікуються; контексти після `Нова задача` не змішуються |
 | Stages 8–9, збій, час і Фінальна рекомендація | `SS-20` через `P-06`/`P-07` | `SS-17`–`SS-19` і `SS-29` через `P-03`/`P-04`; OAuth reauth відбувається лише поза Matrix, зовнішня дія не виконується з самої рекомендації |
 | Stage 10, Архів, експорт і видалення | `SS-21`, `SS-22`, `SS-24` через `P-10` | `SS-23` потребує повторного дозволу; окрема репліка не редагується й не видаляється |
+| Settings S1–S2, access і load | `SS-30`–`SS-35` через `P-11`–`P-14`; authenticated identity та повний current/default/effective set | `SS-33`, `SS-38`, `SS-45`: без protected values, іншого login fallback чи stale-as-current |
+| Settings S3, change/validation | `SS-36` через `P-12`–`P-15`; dirty valid набір явний | `SS-37`–`SS-38` fail closed, error пов'язаний з джерелом, silent downgrade відсутній |
+| Settings S4–S5, save/reset/return | `SS-39`–`SS-44` через `P-13`–`P-15`; whole-set result і active snapshot notice | `SS-41`/`SS-45`: без partial write або false success; `SS-42` reset потребує явного підтвердження |
 
 ## Responsive And Platform Behavior
 
@@ -354,11 +425,11 @@ Don't:
 
 | Evidence viewport | Представляє | Contract |
 |---:|---|---|
-| `390px` | Вузький iPhone-class viewport | Один стовпець; `P-02` безпосередньо перед `P-05`; жодних manual columns; кожний `P-06` читається окремо |
-| `430px` | Wide-phone Android / Samsung Flip7-class viewport | Той самий порядок; довгий role label переноситься природно й не відриває `HH:MM` від body в інший product block |
-| `768px` | Проміжний stress viewport | Не створює tablet IA, side panel або двоколонковий transcript; перевіряє line-wrap і збільшений текст |
-| `1280px` | Mac або Windows desktop-class viewport | Одна chronology; wider native bubble не є підставою для wide tables, dashboards або додаткової metadata column |
-| `1440px` | Wide desktop stress viewport | Той самий content order і density; продукт не заповнює простір декоративним chrome |
+| `390px` | Вузький iPhone-class viewport | `SUR-01`: нативна chronology. `SUR-02`: один стовпець, повні три групи й дії з торкальними цілями, що не менші за accessibility floor |
+| `430px` | Wide-phone Android / Samsung Flip7-class viewport | Той самий order на обох поверхнях; довгі role/model labels, mappings і errors переносяться без втрати association |
+| `768px` | Проміжний stress viewport | Не створює tablet dashboard, sidebar або двоколонковий transcript/settings grid; перевіряє line-wrap, focus order і 200% text zoom |
+| `1280px` | Mac або Windows desktop-class viewport | `SUR-01`: одна chronology. `SUR-02`: односторінкова readable utility width; додатковий простір не створює dashboard columns |
+| `1440px` | Wide desktop stress viewport | Той самий content order і density; жодна поверхня не заповнює простір decorative chrome, cards-in-cards або sidebar |
 
 На кожному актуальному клієнті окремо перевіряються:
 
@@ -370,29 +441,31 @@ Don't:
 
 ## Design Handoff Prompt
 
-Створити Matrix-native rendered candidate обраного напряму `B — Дослівний консиліум` для єдиної приватної E2EE Element/Matrix-кімнати `SUR-01`.
+Створити інтегровану revision обраного напряму `B — Дослівний консиліум`, яка разом покриває Matrix-native `SUR-01` і secure system-like settings `SUR-02`.
 
 Обов'язково:
 
-- зберегти `MG-01`–`MG-13`, `SS-01`–`SS-29` і conversational sequences з `docs/wireframes.md`;
+- зберегти `MG-01`–`MG-13`, `SG-01`–`SG-05`, `SS-01`–`SS-46` і всі двоповерхневі sequences з `docs/wireframes.md`;
 - показати representative narrow і desktop viewports, long verbatim agent reply, role/time identity, permission, progress, `SS-29` safe same-room failure і final series; успішний `SS-28` лишити невидимим;
 - використати лише перевірені нативні text-formatting і Matrix reply affordances Element/Matrix та current-client chrome як контекст, не як нову product-owned system;
-- не створювати browser product, dashboard, custom bubbles, composer, buttons, cards, colors, fonts або motion;
+- не створювати browser chat/dashboard, custom Element bubbles/composer або shared app-shell; `SUR-02` лишати one-page secure utility без sidebar, cards-in-cards чи advanced controls;
+- показати в `SUR-02` identity/access status, current/default/effective, три групи, inline/global compatibility, atomic Save/Reset і active-session snapshot notice на всіх п'яти viewports;
+- не стилізувати Cloudflare Access-owned Google sign-in; не додавати credentials, arbitrary model text, Fast/PAYG/credits, sound/motion або per-unit controls;
 - не створювати login/reauth screen, credential/link/code field або API/PAYG/credits fallback; `SS-29` містить тільки safe category, відомий reset і текстову інструкцію завершити provider-managed reauth поза Matrix;
 - показати `Витрати` як місячні платежі AI-підписок, фактичну інфраструктуру й доступний usage/limit/reset; usage сесії — `входить у підписку`, недоступне — `невідомо`, без per-session token charge;
 - не скорочувати й не перефразовувати representative registered agent body;
-- не позначати rendered candidate approved. Whole-design approval відбувається лише після явного затвердження Matrix-native інтегрованого прототипу.
+- не позначати revision approved. Whole-design approval можливе лише після явного затвердження інтегрованого покриття `SUR-01` + `SUR-02`.
 
 ## Approved Visual Baseline
 
 - Status: proposed
 - Baseline ID: не присвоєно, бо цілісний прототип ще не затверджено
-- Selected Candidate And Version: content/UX-напрям `B — Дослівний консиліум` обрано; Matrix-native rendered version ще не затверджено
+- Selected Candidate And Version: content/UX-напрям `B — Дослівний консиліум` обрано; інтегровану `SUR-01` + `SUR-02` rendered revision ще не затверджено
 - Immutable Visual Target Reference And Hash: не встановлено до approval receipt
 - Frozen Prototype Source Root And Tree Hash: не встановлено до approval receipt
-- Prototype Artifact References: попередні WhatsApp `A/B/C v1` є immutable superseded historical evidence; поточний Matrix-native Candidate B ще не створено або не затверджено
+- Prototype Artifact References: попередні кандидати не покривають `SUR-02` і не є baseline; WhatsApp `A/B/C v1` є immutable superseded historical evidence; інтегрована Candidate B revision ще не затверджена
 - Visual Definition Of Done Scope: proposed contract цього brief; не є approved visual baseline
-- Covered Screens States And Viewports: proposed coverage `SUR-01`, `MG-01`–`MG-13`, `SS-01`–`SS-29`, `390/430/768/1280/1440px`
+- Covered Screens States And Viewports: proposed future integrated coverage `SUR-01`–`SUR-02`, `MG-01`–`MG-13`, `SG-01`–`SG-05`, `SS-01`–`SS-46`, `390/430/768/1280/1440px`; current old prototypes do not satisfy it
 - Approval Receipt: відсутній; approval не запитувався й не надавався
 - Approved At: не застосовується до proposed state
 - Permitted Variance: нативні відмінності Element/ОС допускаються лише як platform variance; product behavior, повнота body, порядок, роль, Matrix reply semantics і state meaning не змінюються
@@ -409,8 +482,8 @@ Don't:
 
 - Key-flow coverage: 6/6 journey groups мають success і failure/permission pattern із названим джерелом.
 - Token resolution: кожен token reference у brief визначено один раз у `Design Tokens`; unresolved token references — 0.
-- Pattern closure: `P-01`–`P-10` мають appearance і behavior principles — 10/10.
-- Screen/state coverage: `SUR-01` — 1/1; `MG-01`–`MG-13` — 13/13 через wireframe/pattern contract; `SS-01`–`SS-29` — 29/29, включно з невидимим success-state `SS-28` і safe same-room `SS-29`.
+- Pattern closure: `P-01`–`P-15` мають appearance і behavior principles — 15/15.
+- Screen/state coverage: `SUR-01`–`SUR-02` — 2/2; `MG-01`–`MG-13` — 13/13; settings-групи `SG-01`, `SG-02`, `SG-03`, `SG-04`, `SG-05` — 5/5; `SS-01`–`SS-46` — 46/46 через state-pattern contract.
 - Direction inventory: поточний обраний напрям — один, Candidate B; historical superseded набір містить рівно три candidates `A/B/C v1`. Нові A/C не вигадані після явного вибору Власника.
 - External references: актуальні official Element, Matrix, WCAG, Apple і Android platform sources доступні; недоступних load-bearing visual references немає.
 
@@ -426,19 +499,20 @@ Don't:
 
 ## Confirmed Design Decisions
 
-- Єдина поверхня — приватна invite-only E2EE Element/Matrix-кімната `SUR-01`.
+- V1 має рівно дві поверхні: приватну Element/Matrix-кімнату `SUR-01` і вузькі responsive `Налаштування власника` `SUR-02`.
 - Нативний Element/ОС володіє chrome, кольором, шрифтом, повідомленнями, delivery/offline indicators, composer, notification sounds, accessibility і motion.
 - Product design володіє content hierarchy, message choreography, role/time identity, readable formatting і state meaning.
 - Повна Підтверджена репліка агента не скорочується, не згортається, не редагується й не очищується після реєстрації.
 - Фінальна рекомендація — окремі самодостатні повідомлення: рішення, до трьох дій, ризик/припущення/умова перегляду, Технічна частина лише за потреби.
 - Critical meaning завжди явний у тексті й не залежить лише від appearance або motion.
-- Candidate B «Дослівний консиліум» обрано як content/UX-напрям; Approved Visual Baseline лишається proposed до явного затвердження Matrix-native rendered candidate.
+- Candidate B «Дослівний консиліум» обрано як content/UX-напрям; Approved Visual Baseline лишається proposed до явного затвердження інтегрованої `SUR-01` + `SUR-02` revision.
+- `SUR-02` — стримана system-like one-page utility з трьома групами, current/default/effective, compatibility status, atomic Save/Reset і active-session snapshot notice.
 - Успішний `SS-28` невидимий; `SS-29` fail closed і показує лише safe category, відомий reset та provider-managed reauth поза Matrix, без credential/link/code fields і без API/PAYG fallback.
 - `Витрати` показують налаштовані місячні платежі за ChatGPT/Codex і Claude, фактичну інфраструктуру та доступний usage/limit/reset; usage сесії входить у підписку, а недоступне позначається `невідомо`.
 
 ## Rejected Directions
 
-- Окремий browser chat, live-preview, dashboard, archive-browser, cost panel або consent-center.
+- Будь-який browser chat, live-preview, dashboard, archive-browser, cost panel або consent-center; `SUR-02` — єдиний web-виняток і не є жодним із них.
 - Custom Element chrome, theme, bubble, header, composer, button, quick reply, card, badge або role avatar.
 - Успадкування browser-specific styles із `consilium/live/styles.css`.
 - Product-added transcript summary, accordion, collapse або reader-screen замість повного body.
@@ -453,7 +527,7 @@ Don't:
 - Нові функції, ролі, screens, routes, message groups, states, input types або паралельні Сесії.
 - Точний final copy для кожного сценарію та intent-словник непідтверджених команд.
 - Архітектура hosted Matrix homeserver, Cloudflare, A2A, agent execution, archive, keys, queues, retries, delivery і cost accounting.
-- QA steps, implementation tasks, code, custom frontend або browser evidence UI.
+- QA steps, implementation tasks, code, browser chat або browser evidence UI; custom frontend дозволений лише в межах authenticated `SUR-02`.
 - Зміна нативних налаштувань Element чи операційної системи від імені Власника; власний звук повідомлень.
 
 ## Open Questions
@@ -465,6 +539,6 @@ Don't:
 5. Які формулювання однозначно є явною згодою або відмовою для кожного `MG-02`?
 6. Яка policy-класифікація визначає Особливо чутливий документ?
 7. Які current-client відмінності в native formatting, long-message presentation, text scaling і screen-reader reading order виявить prototype/evidence pass на чотирьох цільових клієнтах?
-8. Який Matrix-native rendered reference Candidate B буде подано на whole-design approval? До цього Baseline ID, immutable target hash і approval receipt не заповнюються.
+8. Яку інтегровану Candidate B revision з Matrix-native `SUR-01` і settings `SUR-02` буде подано на whole-design approval? До цього Baseline ID, immutable target hash і approval receipt не заповнюються.
 
-Ці питання не блокують proposed design contract, не дозволяють додати нову поверхню або custom chrome і не є pre-prototype approval gate.
+Ці питання не блокують proposed design contract, не дозволяють додати третю поверхню або custom Element chrome і не є pre-prototype approval gate.

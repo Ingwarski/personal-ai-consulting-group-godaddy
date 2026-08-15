@@ -2,34 +2,35 @@
 
 - Продукт: `Personal Consultant`
 - Версія карти: V1
-- Дата: 15.08.2026
-- owner_invocation_id: `712a528b-a193-475f-84bf-65ec4d2f579d`
+- Дата: 16.08.2026
+- owner_invocation_id: `ecf1a01e-95b2-4f6a-94ba-7b1915b4dd34`
 
-V1 не має окремих продуктових екранів. Єдина користувацька поверхня — одна приватна invite-only E2EE Matrix-кімната у штатному Element на Mac, iPhone, Samsung Flip7/Android і Windows PC. Ця карта визначає контракти груп повідомлень, стани й переходи всередині кімнати та нативні Element/Matrix-передумови першого приєднання, recovery, verification і revocation; вона не визначає макет, компоненти, фінальний текст, кастомний Element chrome або архітектуру.
+V1 має рівно дві поверхні: щоденну приватну invite-only E2EE Matrix-кімнату у штатному Element та єдиний вузький responsive web-виняток `Налаштування власника`. Ця карта визначає їхні межі, стани, входи, виходи й переходи; вона не визначає макет, компоненти, фінальний текст, візуальний стиль або архітектуру.
 
 ## Source References
 
 Порядок джерел відповідає `docs/guardrails.md`: актуальне явне рішення Власника має перевагу; `docs/product-idea.md` визначає намір V1; `docs/prd.md` — нормалізовану поведінку; `docs/project-context.md` — підтверджений контекст; `docs/canonical-terms.md` — канонічну мову без зміни поведінки; `docs/user-journey.md` — етапи, розгалуження, входи й виходи.
 
-- `docs/product-idea.md` (`627dfdadc2363e1011e3ea0091c598c8f989e43fdf1ec45c512705ca0f9cf902`): актуальний продуктовий намір, Element/Matrix, Candidate B, subscription OAuth-only межа, модель витрат і критерій готовності.
-- `docs/prd.md` (`0c61a4dd97564f6ba17c2a387e2b420adad4282f3bf778f3b644a3d9c28920b6`): §3.2–3.5; §4–5; `US-001`–`US-023`; `FR-001`–`FR-036`; `NFR-001`–`NFR-015`; §8–12; `AC-001`–`AC-011`.
-- `docs/project-context.md` (`b7710d6018a19a949cdb7d6b89051b57b765f425bcfb1f0eef2d469d129664f0`): §6–14, зокрема платформи, core scenarios, OAuth/private-use constraints, risks та open questions.
-- `docs/canonical-terms.md` (`469ff18d98fc2001cce2e485195bd57c9b19b7603119c026cddcd810dc04d540`): Matrix і Candidate B vocabulary; `Облік витрат`, `Subscription OAuth`, `Codex OAuth-стан`, `Claude Code OAuth token`, `Реальна Codex-сесія/тред`, `Fail-closed auth/quota`; дії, стани та terms to avoid.
-- `docs/guardrails.md` (`45f6003f56462073514928a038ec24630f4a85529328d66ec6ae972945eb0737`): source order, private single-owner boundary, OAuth secret containment, fail-closed auth/quota, out-of-band reauth, evidence and stop rules.
-- `docs/user-journey.md` (`4fc297e61081690cb7f03e150388b65a32952eaa99bec494008648b6c334d944`): stages 1–10, auth/quota decision and failure paths, private eligibility, exits, success states and corrected `Витрати` semantics.
+- `docs/product-idea.md` (`263a5d15949e2ebf70f9fb4fa8ba67ff1e882cb5ae2774ecf218ccff16586ac5`): дві поверхні V1, Element/Matrix, Candidate B, Google-only `Налаштування власника`, subscription OAuth-only межа і фактичні налаштування нової сесії.
+- `docs/prd.md` (`2d9546dd7b0f4cd25dea0f225ffa35c0819966e3edb9efaa72f781f3fb70d660`): §3.2–3.5; §4–5; `US-001`–`US-029`; `FR-001`–`FR-046`; `NFR-001`–`NFR-019`; §8–12; `AC-001`–`AC-016`.
+- `docs/project-context.md` (`529ee8b70ec81b2a4734cb7580e5bfc84052a9f2552b039cd52bd42dfe4b2fee`): дві поверхні, exact-email Google-вхід, responsive settings, три групи, atomic save, immutable active-session snapshot, OAuth/private-use constraints і risks.
+- `docs/canonical-terms.md` (`75e8ab94a47faa0f89a51605543f2f643ce9b53c8513d26ee7d5bb54037f26fc`): Matrix і Candidate B vocabulary; `Налаштування власника`, `Google-вхід`, `Subscription OAuth`, `Моделі`, `Глибина міркування`, `Пресет швидкості`, `Фактичні налаштування сесії` та terms to avoid.
+- `docs/guardrails.md` (`54c7ccd20d612e908f1038499c2db101d47e587c141a2d5363e003b2a0dbb3bc`): source order, двоповерхнева межа, Google Access/JWT, рівно три групи, atomic save, immutable snapshot, subscription OAuth containment і stop rules.
+- `docs/user-journey.md` (`e4dfa9801ef0eab241c4b768719732628e37aebb068a8fd8067eeedbe1a6d7cd`): stages 1–10 для Element/Matrix, окремий Settings Journey `S1`–`S5`, failure paths, exits і success states.
 - `README.md`: лише початкове позиціонування та принцип практичного результату. Історичний browser-preview не використано як поверхню V1.
 
 Скорочення трасування: `PI` — `docs/product-idea.md`; `PRD` — `docs/prd.md`; `PC` — `docs/project-context.md`; `CT` — `docs/canonical-terms.md`; `GR` — `docs/guardrails.md`; `UJ` — `docs/user-journey.md`.
 
 ## Screen Inventory
 
-### Єдина поверхня
+### Поверхні V1
 
 | ID | Поверхня | Розташування | Призначення | Межа | Трасування |
 |---|---|---|---|---|---|
-| `SUR-01` | Приватна Element/Matrix-кімната | Одна invite-only E2EE Matrix-кімната `Personal Consultant` у штатному Element на Mac, iPhone, Samsung Flip7/Android або Windows PC | Прийняти запит або точну команду, показати дозволи, перебіг роботи, результат, витрати й архівні дії в одному хронологічному потоці | Один Власник, один Matrix-акаунт бота на тому самому hosted homeserver, exact allowlist `room_id` + `owner_mxid`, перевірені й не відкликані пристрої, не більше однієї Активної сесії; без окремого браузерного UI, dashboard або іншого продуктового screen | `PI: Межі V1`; `PRD: FR-001, FR-034, NFR-005, NFR-007, NFR-013, §8, §11`; `PC: §7, §9–11`; `UJ: Starting Context, Stage 1, Confirmed Facts And Constraints` |
+| `SUR-01` | Приватна Element/Matrix-кімната | Одна invite-only E2EE Matrix-кімната `Personal Consultant` у штатному Element на Mac, iPhone, Samsung Flip7/Android або Windows PC | Прийняти запит або точну команду, показати дозволи, перебіг роботи, результат, витрати й архівні дії в одному хронологічному потоці | Один Власник, один Matrix-акаунт бота на тому самому hosted homeserver, exact allowlist `room_id` + `owner_mxid`, перевірені й не відкликані пристрої, не більше однієї Активної сесії; без браузерного дублювання розмови, dashboard або іншої консультаційної поверхні | `PI: Межі V1`; `PRD: FR-001, FR-034, NFR-005, NFR-007, NFR-013, §8, §11`; `PC: §7, §9–11`; `UJ: Starting Context, Stage 1, Confirmed Facts And Constraints` |
+| `SUR-02` | `Налаштування власника` | Зовнішній responsive web URL на desktop і mobile, захищений Cloudflare Access Google IdP та exact-email allowlist | Переглянути й атомарно зберегти рівно три групи налаштувань для нових сесій або повернути значення до default | Єдиний web-виняток; не чат, dashboard, архів, live status чи admin console; Google-вхід не є Subscription OAuth; без credentials, довільних model slug або зміни Активної сесії | `PRD: US-024–US-029, FR-037–FR-046, NFR-016–NFR-019, AC-012–AC-016`; `PC: §7–9, §11–13`; `UJ: Settings Journey S1–S5` |
 
-Нова репліка з'являється в `SUR-01`; продукт не створює окремої поверхні для її отримання.
+Нова консультаційна репліка з'являється лише в `SUR-01`. `SUR-02` не дублює розмову, архів, перебіг агентів або витрати.
 
 ### Контракти груп повідомлень у `SUR-01`
 
@@ -53,9 +54,21 @@ V1 не має окремих продуктових екранів. Єдина 
 
 Жодна група не показує системні інструкції, приховані міркування моделей, журнали інструментів, технічні ID, номери повідомлень, секунди або сирі Markdown-маркери як код чату. Повне тіло Підтвердженої репліки агента не скорочується, не згортається й не редагується. Продукт не створює власного звуку; нові репліки використовують лише нативні сповіщення Element та операційної системи, якщо їх увімкнув Власник.
 
+### Контракти груп налаштувань у `SUR-02`
+
+Ці групи визначають лише семантичний контракт. Вони не визначають layout або компоненти.
+
+| ID | Група | Контракт | Заборонено | Трасування |
+|---|---|---|---|---|
+| `SG-01` | Google-доступ до settings | Вхід лише через Cloudflare Access Google IdP; доступ лише точній allowlisted email Власника після валідації Access JWT | Password, OTP, magic link, інший IdP, публічна реєстрація, credential/OAuth UI; Google-вхід не подається як Subscription OAuth | `FR-037–FR-038`, `NFR-016`, `AC-012`; `UJ: Settings S1` |
+| `SG-02` | Моделі | Два окремі typed allowlisted вибори: модель для Codex-агентів і модель для Claude Code-критика | Довільний model slug, спільний селектор, модель поза allowlist | `FR-039`, `NFR-017`, `AC-013`; `UJ: Settings S2–S3` |
+| `SG-03` | Глибина міркування | Одна семантична шкала `low` / `medium` / `high` / `xhigh` для обох provider runtimes; сумісність перевіряється до збереження | Тихе пониження, provider-specific вигадане значення | `FR-040, FR-043`, `NFR-017`, `AC-013`; `UJ: Settings S3` |
+| `SG-04` | Пресет швидкості | `швидко` / `збалансовано` / `ретельно` змінює лише orchestration budget/pacing нової сесії й не послаблює обов'язкові перевірки | Claude Fast Mode, API/PAYG/usage credits, per-agent/per-unit overrides, sound/motion | `FR-041–FR-042`, `NFR-018`, `AC-014`; `UJ: Settings S2–S3` |
+| `SG-05` | Керування змінами й фактичні значення | Показує current, default і effective значення; дозволяє скасувати локальні зміни, атомарно зберегти валідний набір або після підтвердження повернути default; новий snapshot діє лише для наступної сесії | Partial write, зміна фактичних налаштувань Активної сесії, advanced/admin settings | `FR-043–FR-046`, `NFR-017, NFR-019`, `AC-015–AC-016`; `UJ: Settings S2–S5` |
+
 ## Surface Closure Matrix
 
-| Потреба або гілка journey | Підтримка у `SUR-01` | Тип замикання | Трасування |
+| Потреба або гілка journey | Поверхня й підтримка | Тип замикання | Трасування |
 |---|---|---|---|
 | Пройти перше приєднання, recovery, verification або revocation | Нативні Element/Matrix-системні стани перед `SS-01`; новий пристрій відновлює доступ за recovery key і проходить перевірку, втрачений або скомпрометований — відкликається | Нативна host-client передумова, не новий продуктовий screen; неперевірений або відкликаний пристрій не запускає роботу | `PRD: US-001–US-002, FR-001, AC-006, AC-010`; `UJ: Stage 1, Failure Path 1–3` |
 | Перевірити `room_id` + `owner_mxid`, пристрій і room invariants | Системна перевірка `SS-01` до будь-якої захищеної відповіді; при відмові `SS-04`, агенти не запускаються й активна сесія Власника не змінюється | Системна відповідь без нового screen; безпечний видимий failure використовує `MG-11`, інакше exit без protected data | `PRD: FR-001, NFR-007, AC-006`; `GR: When To Stop`; `UJ: Stage 1` |
@@ -77,8 +90,17 @@ V1 не має окремих продуктових екранів. Єдина 
 | Запросити дозвіл на зовнішню чи високоризикову дію або особисте коучингове питання | `MG-02`; без дозволу відповідна дія чи питання не переходить межу | Permission-state | `PRD: §3.4, FR-035`; `GR: When To Ask`; `UJ: Stakes And Constraints` |
 | Зберегти, експортувати або видалити сесію | Системне архівування після підтвердженого завершення; `MG-13` для запиту експорту, відмови редагувати окрему репліку та підтвердженого видалення | System response і archive-control state без окремої бібліотеки чи dashboard | `PRD: FR-031–FR-032, AC-008`; `UJ: Stage 10` |
 | Показати нову репліку | Новий `MG-05`, `MG-07`, `MG-08`, `MG-11` або `MG-12` з'являється в тій самій приватній E2EE Matrix-кімнаті; сповіщення й звук, якщо ввімкнені, належать Element/ОС | Та сама продуктова поверхня, без окремого screen і без власного продуктового звуку | `PRD: FR-034, NFR-015, AC-010`; `UJ: Confirmed Facts And Constraints` |
+| Відкрити налаштування й підтвердити особу | `SUR-02`: зовнішній settings URL → Cloudflare Access Google IdP → exact-email policy → origin JWT validation | Окремий web-entry; явне надання або відмова в доступі, без ботового посилання | `FR-037–FR-038`, `NFR-016`, `AC-012`; `UJ: Settings S1` |
+| Завантажити current, default і effective значення | `SUR-02`; `SG-05`; `SS-34`–`SS-35` | Loading → read-only current/default/effective contract до редагування | `FR-043, FR-045`; `UJ: Settings S2` |
+| Змінити рівно три групи | `SUR-02`; `SG-02`–`SG-04` | Typed вибір моделей, спільна глибина міркування і orchestration preset швидкості | `FR-039–FR-042`, `NFR-017–NFR-018`, `AC-013–AC-014`; `UJ: Settings S2–S3` |
+| Заблокувати несумісну комбінацію або capability drift | `SUR-02`; `SS-37`–`SS-38` | Fail closed до збереження і до запуску нової сесії; без тихого downgrade | `FR-043`, `NFR-017`, `AC-013`; `UJ: Settings Failure Path 3` |
+| Зберегти валідний набір | `SUR-02`; `SG-05`; `SS-39`–`SS-41` | Одна atomic save-операція: або весь набір прийнято, або попередня версія збережена без partial write | `FR-044`, `NFR-019`, `AC-015`; `UJ: Settings S4` |
+| Скасувати або повернути default | `SUR-02`; `SG-05`; `SS-42`–`SS-43` | Cancel відкидає лише незбережені зміни; reset потребує підтвердження й атомарно зберігає default | `FR-044–FR-045`, `AC-015`; `UJ: Settings S4` |
+| Зберегти стабільність Активної сесії | `SUR-02`; `SS-44` | Видиме повідомлення: збережене налаштування діє лише для нової сесії; active effective snapshot не мутує | `FR-046`, `AC-016`; `UJ: Settings S4–S5` |
+| Працювати з mobile, довгим вмістом або без мережі | `SUR-02`; `SS-45`–`SS-46` | Однаковий контракт desktop/mobile; offline не призводить до partial write | `NFR-016, NFR-019`; `UJ: Settings Channel мобільний доступ, Failure Path 5` |
+| Повернутися до консультації | `SUR-02` → відкрити штатний Element / закрити settings | Exit до `SUR-01`; вхід з ботової репліки не є обов'язковим | `UJ: Settings S5, Exit Points` |
 
-Surface closure досягнуто: кожен етап, decision point, failure path і команда з `docs/user-journey.md` має групу повідомлень, системну відповідь або явне пояснення, чому окремого screen немає.
+Surface closure досягнуто: кожен етап, decision point, failure path і команда з `docs/user-journey.md` замикаються в `SUR-01` або в єдиному дозволеному web-винятку `SUR-02`; третьої поверхні немає.
 
 ## Route Map
 
@@ -148,9 +170,32 @@ flowchart LR
     E -->|"Не підтверджено"| A
 ```
 
+### Налаштування власника
+
+```mermaid
+flowchart LR
+    A["Зовнішній settings URL"] --> B["Cloudflare Access: Google-вхід"]
+    B --> C{"Exact allowlisted email і Access JWT валідні?"}
+    C -->|"Ні"| X["SS-33: відмова в доступі"]
+    C -->|"Так"| D["SS-34: завантаження current/default/effective"]
+    D --> E["SS-35: три групи завантажені"]
+    E --> F{"Дія Власника"}
+    F -->|"Зміна"| G{"Комбінація сумісна?"}
+    G -->|"Так"| H["SS-36: dirty valid"]
+    G -->|"Ні"| I["SS-37/SS-38: fail closed"]
+    H -->|"Зберегти"| J["SS-39: atomic save"]
+    J -->|"Успіх"| K["SS-40/SS-44: збережено для нової сесії"]
+    J -->|"Збій"| L["SS-41: попередня версія збережена"]
+    F -->|"Повернути default"| M["SS-42: підтвердження"]
+    M -->|"Підтверджено"| N["SS-43: atomic reset result"]
+    F -->|"Скасувати / вийти"| O["Відкрити Element або закрити settings"]
+    K --> O
+    N --> O
+```
+
 ## Navigation Model
 
-- Єдина продуктова локація V1 — `SUR-01`; URL, route path, вкладок, бокового меню, окремої архівної сторінки, cost-dashboard або consent-center немає. Native Element/Matrix invitation, recovery, verification і revocation є host-client передумовами, а не додатковими продуктовими screens.
+- V1 має рівно дві продуктові локації: `SUR-01` для щоденної консультації і `SUR-02` для вузьких налаштувань. Спільного dashboard, app-shell, архівної сторінки, cost-dashboard або consent-center немає.
 - Базова навігація — хронологічний потік тієї самої розмови. Підтверджені репліки відображаються в канонічному порядку реєстрації.
 - Нове звичайне повідомлення під час Активної сесії є уточненням, а не переходом до паралельної сесії.
 - Точні команди `Стоп`, `Нова задача` й `Витрати` доступні в тій самій розмові. Вони не відкривають окремих screen.
@@ -158,7 +203,9 @@ flowchart LR
 - `Стоп` завершує активний маршрут у стані `Зупинена сесія`. `Нова задача` закриває поточний маршрут і повертає Власника до entry нового запиту без успадкування попереднього активного контексту.
 - Дозвіл на продовження понад 10 хвилин повертає до живого перебігу. Відмова або відсутність дозволу не дає продовжити відповідну роботу.
 - Експорт, запит видалення та його підтвердження відбуваються в `SUR-01`; точні користувацькі формулювання для цих дій джерела не визначають.
-- Усі нові репліки залишаються в тій самій E2EE Matrix-кімнаті; продукт не додає іншої поверхні, окремих Matrix-акаунтів агентів або власного звуку.
+- Вхід до `SUR-02` починається із зовнішнього settings URL і проходить через Cloudflare Access Google-вхід. Джерела не вимагають посилання з ботової репліки.
+- Вихід з `SUR-02` — закрити settings або відкрити штатний Element. Налаштування не переносять до web-чату, а daily UX не переноситься з Element.
+- Усі консультаційні репліки залишаються в `SUR-01`; продукт не додає третьої поверхні, окремих Matrix-акаунтів агентів або власного звуку.
 
 ## Journey-To-Screen Trace
 
@@ -186,6 +233,11 @@ flowchart LR
 | 9. Фінальна рекомендація | `MG-12` | Рішення стабілізоване або потрібна зовнішня перевірка | Завершення й архів; окрема дія може перейти в `MG-02` дозволу | `FR-025–FR-028`, `FR-035`, `AC-011` |
 | 10. Архівування | Системний стан у `SUR-01` | Нормальне завершення з підтвердженою цілісністю | Завершена сесія в Архіві сесій | `FR-031`, `NFR-010–NFR-011` |
 | 10. Видалення | `MG-02`, `MG-13` | Запит видалити цілу сесію | Після підтвердження — остаточне видалення; без нього — архів без змін | `FR-032`, `AC-008` |
+| Settings S1. Перехід і Google-вхід | `SUR-02`, `SG-01`, `SS-30`–`SS-33` | Зовнішній settings URL; Google-вхід через Cloudflare Access | Exact allowlisted email і валідний JWT → load settings; wrong email, alternative method або invalid/missing/expired JWT → permission denied | `US-024`, `FR-037–FR-038`, `NFR-016`, `AC-012` |
+| Settings S2. Current/default/effective і три групи | `SUR-02`, `SG-02`–`SG-05`, `SS-34`–`SS-35` | Доступ надано | Завантажено окремі Codex/Claude моделі, спільну глибину, orchestration preset та current/default/effective значення | `US-025–US-026`, `FR-039–FR-042, FR-045`, `NFR-017–NFR-018`, `AC-013–AC-014` |
+| Settings S3. Зміна і capability validation | `SUR-02`, `SG-02`–`SG-04`, `SS-36`–`SS-38` | Власник змінює дозволене значення | Сумісний dirty set → save available; несумісність, drift або provider unavailable → fail closed, без silent downgrade | `US-027`, `FR-043`, `NFR-017`, `AC-013` |
+| Settings S4. Atomic save, cancel або defaults | `SUR-02`, `SG-05`, `SS-39`–`SS-44` | Валідний dirty set, cancel або підтверджений reset | Повний atomic success або попередня версія без змін; збережене не мутує active effective snapshot | `US-028–US-029`, `FR-044–FR-046`, `NFR-019`, `AC-015–AC-016` |
+| Settings S5. Повернення до Element | `SUR-02` → `SUR-01` | Збереження, reset, cancel або закриття settings | Відкрити штатний Element або закрити web-поверхню; daily consultation UX не змінено | `FR-046`, `AC-016`; `UJ: Settings S5, Exit Points` |
 | Сповіщення про нову репліку | Нативна поведінка Element/ОС для `SUR-01` | Нова вихідна репліка | Відкриття тієї самої Matrix-кімнати засобами Element; власного продуктового звуку немає | `FR-034`, `NFR-015`, `AC-010` |
 
 ## Screen States
@@ -223,10 +275,27 @@ flowchart LR
 | `SS-27` | Room invariants не підтверджено | E2EE/invite-only, joined membership рівно Власник + бот на одному hosted homeserver, no pending invites, history `joined`, no guests/bridges/widgets і federation gate не підтверджено | Після відновлення інваріантів → `SS-01`; без цього exit. Непідтримуваний `m.federate: false` потребує security exception Власника до production | `GR: Forbidden Changes, When To Ask, When To Stop`; `UJ: Stage 1` |
 | `SS-28` | Передзапусковий subscription auth/quota/private preflight | До кожного model call і запуску залежного агента система підтверджує дозволений subscription OAuth mode, потрібну квоту, відсутність API/PAYG credentials і private single-owner eligibility. Для Codex перевіряється один захищений managed-refresh auth state; для критика — Claude subscription OAuth/setup-token | Успіх → `SS-09` або `SS-10`; unknown/expired/revoked/refresh failure/invalid setup-token/quota exhausted/forbidden credential/third-party or ineligible path → `SS-29` | `PRD: §3.5, FR-009–FR-010, FR-030, NFR-006, AC-002, AC-007`; `GR: When To Stop`; `UJ: Decision Points` |
 | `SS-29` | Fail-closed auth/quota/private boundary | Жодний залежний agent launch або model call не відбувається. `MG-11` показує безпечну категорію причини, provider-reported reset time й позачатову наступну дію, якщо вони відомі; token, setup-token, `auth.json`, reauth URL/code не приймаються в Matrix; API/PAYG/credits fallback не пропонується | Provider reset або Власник завершує provider-managed reauth поза Matrix → свіжий `SS-28`; інакше exit/неповний результат. Уже підтверджені репліки не змінюються | `US-018`, `FR-030`, `NFR-006`, `NFR-012`, `AC-007`; `GR: When To Stop`; `UJ: Failure Path 8–11` |
+| `SS-30` | Вхід до `Налаштувань власника` | Власник відкриває зовнішній settings URL; це не посилання на чат, dashboard чи архів | Передати запит Cloudflare Access → `SS-31` | `US-024`, `FR-037`; `UJ: Settings S1` |
+| `SS-31` | Google-вхід і Access-перевірка тривають | Cloudflare Access виконує Google-вхід і exact-email policy; продукт не збирає password, OTP, magic link чи Subscription OAuth | Доступ надано → `SS-32`; відмовлено → `SS-33` | `FR-037–FR-038`, `NFR-016`, `AC-012` |
+| `SS-32` | Google-доступ надано | Exact allowlisted email підтверджено, origin прийняв валідний Access JWT; Google-вхід лишається окремим від provider Subscription OAuth | `SS-34` | `FR-038`, `NFR-016`, `AC-012` |
+| `SS-33` | Доступ до settings відхилено | Wrong email, інший метод/IdP або missing, invalid чи expired JWT не відкривають protected settings і не показують їхніх значень | Повторний дозволений Google-вхід або exit; без fallback | `FR-037–FR-038`, `NFR-016`, `AC-012`; `GR: When To Stop` |
+| `SS-34` | Завантаження current/default/effective | Після access grant система отримує узгоджену версію трьох груп, default значення і фактичні налаштування Активної сесії, якщо вона є | Успіх → `SS-35`; offline/provider/config failure → `SS-38`, `SS-45` | `FR-043, FR-045–FR-046`, `NFR-017, NFR-019`; `UJ: Settings S2` |
+| `SS-35` | Current/default/effective і рівно три групи завантажені | Доступні лише окремі allowlisted Codex/Claude моделі, спільна глибина `low`/`medium`/`high`/`xhigh` і пресет `швидко`/`збалансовано`/`ретельно`; active effective snapshot показаний окремо від наступних settings | Зміна → `SS-36`/`SS-37`; reset → `SS-42`; exit → Element/закриття | `FR-039–FR-043, FR-045–FR-046`, `AC-013–AC-014, AC-016` |
+| `SS-36` | Dirty valid | Незбережений набір відрізняється від current і пройшов capability validation для обох runtimes; mandatory guards не послаблені | Зберегти → `SS-39`; скасувати → `SS-35`; нова несумісність → `SS-37` | `FR-039–FR-043`, `NFR-017–NFR-018`, `AC-013–AC-014` |
+| `SS-37` | Несумісний набір | Невідома або несумісна model/effort/preset комбінація позначена як невалідна; save і запуск нової сесії з цим набором заблоковані | Вибрати сумісний набір → `SS-36`; скасувати → `SS-35` | `FR-043`, `NFR-017`, `AC-013` |
+| `SS-38` | Capability drift або provider unavailable | Система не може підтвердити allowlist/capability або provider status; save й нова сесія fail closed, без тихої заміни моделі чи глибини | Після відновлення і свіжої перевірки → `SS-35`/`SS-36`; інакше exit | `FR-043`, `NFR-017`, `AC-013`; `GR: When To Stop` |
+| `SS-39` | Atomic save in progress | Валідний повний набір зберігається як одна версійна операція; повторне save не створює partial/duplicate write | Успіх → `SS-40`; збій/конфлікт версії/offline → `SS-41`/`SS-45` | `FR-044`, `NFR-019`, `AC-015` |
+| `SS-40` | Atomic save succeeded | Увесь валідний набір став current для нових сесій; partial success немає | `SS-44`; потім `SS-35` або exit до Element | `FR-044, FR-046`, `NFR-019`, `AC-015–AC-016` |
+| `SS-41` | Atomic save failed | Жодне з трьох значень не змінено; попередня узгоджена версія залишається current, а active snapshot не змінюється | Виправити/reload/retry після свіжої перевірки або exit | `FR-044`, `NFR-019`, `AC-015`; `UJ: Settings Failure Path 4–5` |
+| `SS-42` | Підтвердження reset to defaults | Повернення рівно трьох груп до default вимагає явного підтвердження; до нього current не змінюється | Підтверджено → atomic reset й `SS-43`; скасовано → `SS-35`/`SS-36` | `FR-045`, `AC-015` |
+| `SS-43` | Reset result | Успішний reset атомарно робить default новим current для наступної сесії; збій залишає попередню версію без partial write | Успіх → `SS-44`; збій → `SS-41` | `FR-044–FR-046`, `NFR-019`, `AC-015–AC-016` |
+| `SS-44` | Повідомлення про active-session snapshot | Якщо є Активна сесія, settings явно показують: збережена версія застосується лише до нової сесії; фактичні налаштування поточної незмінні | `SS-35` або exit до Element | `FR-046`, `AC-016` |
+| `SS-45` | Settings offline | Без мережі current/effective значення не вважаються свіжими, save/reset не завершуються успішно і partial write не виникає | Відновлення мережі → свіжий `SS-31`/`SS-34`; або exit | `NFR-016, NFR-019`; `UJ: Settings Failure Path 5` |
+| `SS-46` | Mobile або long-content settings | На desktop і mobile доступний той самий повний семантичний контракт: три групи, current/default/effective, validation, atomic save/reset і active snapshot; довгі назви чи пояснення не вилучають зміст | Залишається в актуальному settings-state або exit; layout визначає downstream design | `NFR-016`; `UJ: Settings Channel, Accessibility Needs` |
 
 ### Обов'язкові загальні state-категорії
 
-| Категорія | Контракт для `SUR-01` |
+| Категорія | Контракт поверхні |
 |---|---|
 | Empty | Окремого продуктового empty-screen немає. До першого запиту Власник перебуває у штатній Element/Matrix-кімнаті; invitation, recovery, verification і revocation належать нативним клієнтським станам, а джерела не визначають custom welcome або onboarding-layout. |
 | Loading / in progress | Custom spinner або progress-screen немає. Прийняття показує `MG-04`; консиліум показує `MG-07` або `MG-08`, щоб не було понад 60 секунд без змістовного оновлення чи пояснення. |
@@ -235,7 +304,13 @@ flowchart LR
 | Permission required / denied | Окремими станами є перша згода, чутливий документ, продовження понад 10 хвилин, зовнішня чи високоризикова дія, особисте коучингове питання та видалення. Відмова або мовчання не дозволяють відповідну дію й не переносяться на іншу межу. |
 | Offline / native delivery | Окремого продуктового offline-screen джерела не визначають. Стан мережі, надсилання, доставки й нативні сповіщення показує штатний Element/ОС; продукт не додає власного chrome, звуку або непідтвердженої поведінки. |
 | Long content | Повне тіло Підтвердженої репліки агента не скорочується, не згортається й не редагується. Нативне відображення довгого змісту та Matrix replies належить Element/Matrix; конкретна presentation-структура належить downstream design/wireframes. |
-| Same-chat delivery | Кожна нова вихідна репліка з'являється в `SUR-01`; окрема продуктова поверхня не створюється. |
+| Same-chat delivery | Кожна нова вихідна репліка з'являється в `SUR-01`; окрема поверхня для цієї репліки не створюється; `SUR-02` залишається лише settings-винятком. |
+| `SUR-02` Loading | `SS-31` і `SS-34` відокремлюють Access-перевірку від завантаження current/default/effective; `SS-39` окремо показує atomic save in progress. |
+| `SUR-02` Permission denied | `SS-33` не показує protected values і не пропонує іншого login method; дозволений лише новий Google-вхід точного email. |
+| `SUR-02` Error / fail closed | `SS-37`, `SS-38`, `SS-41` і `SS-45` блокують save або нову сесію без silent downgrade, partial write чи зміни active snapshot. |
+| `SUR-02` Success | `SS-40` або успішна гілка `SS-43` підтверджують лише повне атомарне збереження; `SS-44` пояснює застосування лише до нової сесії. |
+| `SUR-02` Offline | `SS-45` не вважає stale values свіжими й не підтверджує save/reset; після відновлення потрібна свіжа Access/config перевірка. |
+| `SUR-02` Mobile / long content | `SS-46` зберігає повний контракт трьох груп на mobile і desktop; композицію визначає downstream design. |
 
 ## Transition Notes
 
@@ -254,7 +329,12 @@ flowchart LR
 13. Якщо доказів недостатньо або потрібна зовнішня перевірка, маршрут переходить у `SS-19`, а не до впевненої рекомендації.
 14. Перехід у `SS-21` дозволений лише коли повноту, порядок, відсутність дублів і незмінність запису підтверджено. Інакше показується частковий статус і наступна перевірка.
 15. Видалення окремої репліки не має переходу до success-state. Видаляється лише ціла сесія після повторного явного підтвердження.
-16. Нова репліка належить лише `SUR-01` і не створює іншої продуктової локації. Продукт не створює власного звуку.
+16. Нова консультаційна репліка належить лише `SUR-01`; `SUR-02` не приймає запитів і не показує agent/live/archive data. Продукт не створює власного звуку.
+17. `SUR-02` відкривається із зовнішнього settings URL і допускає лише Cloudflare Access Google-вхід точного email Власника; origin не покладається лише на наявність cookie, а потребує валідного Access JWT.
+18. У `SUR-02` є рівно три конфігуровані групи. Жодна з них не може послабити critic, A2A, E2EE, visible verbatim, research, safety, privacy або permission guards.
+19. Будь-яка несумісність, capability drift, provider unavailability або непідтверджена версія fail closed до збереження й запуску нової сесії; silent downgrade заборонений.
+20. Save і reset змінюють лише увесь валідний версійний набір; після збою, offline або version conflict попередня версія залишається current.
+21. Кожна Активна сесія зберігає незмінний effective snapshot. Збереження в `SUR-02` діє лише для наступної сесії й не мутує поточну.
 
 ## Entry And Exit Points
 
@@ -267,6 +347,8 @@ flowchart LR
 | Entry | `Стоп` | Команда під час Активної сесії | `Зупинена сесія` |
 | Entry | `Нова задача` | Команда за наявності поточного контексту | Поточну сесію закрито; нову створено без змішування контекстів |
 | Entry | Архівна дія | Запит експорту, видалення репліки або видалення цілої сесії | `MG-13` або `MG-02` підтвердження видалення |
+| Entry | Зовнішній settings URL | Власник відкриває responsive `SUR-02`; посилання з ботової репліки не є передумовою | `SS-30` → `SS-31` |
+| Entry | Google-доступ до settings | Cloudflare Access підтвердив exact email, origin — валідний JWT | `SS-32` → `SS-34`; інакше `SS-33` |
 | Exit | Доступ не підтверджено | Інший `room_id`/`owner_mxid`, підроблена Matrix-подія, неперевірений або відкликаний пристрій | Без агентів, захищених даних і впливу на активну сесію Власника |
 | Exit | Room invariants не підтверджено | E2EE/invite-only/membership/history/guest/bridge/widget/federation gate не відповідають guardrails | Без обробки робочих повідомлень до відновлення інваріантів або явного дозволеного security exception |
 | Exit | Згоду не надано | Перше використання без одноразової згоди | Звичайна обробка не починається |
@@ -280,6 +362,8 @@ flowchart LR
 | Exit | Збій або неповний результат | Повний успішний шлях недоступний | Чесний частковий результат і доступна наступна перевірка або дія |
 | Exit | Експорт | Повну сесію отримано | Архівний запис не змінюється |
 | Exit | Видалення | Власник повторно підтвердив видалення цілої сесії | Цілу сесію остаточно видалено |
+| Exit | Settings access denied | Wrong email, інший IdP/метод або missing/invalid/expired JWT | `SS-33`; protected settings не показано |
+| Exit / return | Settings закрито | Після save, reset, cancel або без змін | Відкрити штатний Element або закрити web-поверхню; daily UX залишається в `SUR-01` |
 
 ## Edge Paths
 
@@ -305,10 +389,17 @@ flowchart LR
 | Запит видалити окрему репліку | `MG-13` повідомляє, що дія недоступна | Зміна незмінного запису | `FR-032`, `AC-008` |
 | Видалення цілої сесії не підтверджено | Залишити `SS-21` без змін | Видалення на підставі першого запиту або мовчання | `FR-032`; `GR: When To Ask` |
 | Цілісність запису не доведено | `SS-19`; не називати сесію успішно завершеною чи коректно заархівованою | Непідтверджений success-state | `GR: When To Stop, Evidence Requirements` |
+| Wrong Google email або інший login method | `SS-33`; не показувати current/default/effective і не пропонувати fallback | Доступ до `SUR-02`, password/OTP/magic-link/other IdP | `FR-037–FR-038`, `NFR-016`, `AC-012` |
+| Access JWT missing, invalid або expired | `SS-33`; origin не довіряє cookie без валідації й не віддає protected values | Частковий доступ або обхід Access policy | `FR-038`, `NFR-016`, `AC-012` |
+| Довільний model slug або unknown capability | Не приймати free text; `SS-37`/`SS-38` блокують save і нову сесію | Тиха заміна моделі, effort downgrade або stale capability launch | `FR-039, FR-043`, `NFR-017`, `AC-013` |
+| Провайдер недоступний або capability drift | `SS-38`; зберегти попередній current і вимагати свіжу перевірку | Save/launch неперевіреної комбінації | `FR-043`, `NFR-017`, `AC-013` |
+| Save/reset перервано, offline або version conflict | `SS-41`/`SS-45`; жодного partial write, попередня версія лишається current | Частково застосовані значення або false success | `FR-044`, `NFR-019`, `AC-015` |
+| Налаштування змінено під час Активної сесії | `SS-44` показує, що зміни діють лише на нову сесію | Мутація effective model/effort/preset поточної сесії | `FR-046`, `AC-016` |
+| Mobile або довгий settings content | `SS-46`; зберегти ті самі групи, значення, validation і atomic semantics | Вилучення полів або послаблення контракту на mobile | `NFR-016`; `UJ: Settings Channel` |
 
 ## Out Of Scope Screens
 
-- Окремий браузерний чат, live-preview або повсякденна панель керування.
+- Будь-яка web-поверхня, крім вузького responsive `SUR-02`: браузерний чат, live-preview, dashboard, archive, live agent status або admin console.
 - Клієнтський кабінет, onboarding-app, consent-center, cost-dashboard, archive-browser, download-center або notification-center.
 - Список чи перемикач паралельних сесій, оскільки V1 допускає не більше однієї Активної сесії.
 - Користувацькі поверхні Telegram, Slack, iMessage або стороннього конструктора чатботів.
@@ -319,6 +410,7 @@ flowchart LR
 - Поверхні для голосових повідомлень, аудіо, відео та інших непідтверджених типів вкладень.
 - Білінг користувачів, монетизація, жорсткі грошові ліміти, командні ролі або багатокористувацьке адміністрування.
 - Продуктовий login/reauth-screen, форма для OAuth token/setup-token/`auth.json`, API/PAYG/credits upsell або credential/code у Matrix; provider-managed reauth лишається захищеною позачатовою дією Власника.
+- У `SUR-02`: password, OTP, magic link, інший IdP, публічна реєстрація, credential UI, довільний model slug, спільний селектор моделі, Claude Fast Mode, API/PAYG/usage credits, sound/motion, per-agent/per-unit overrides або advanced/admin settings.
 - Детальний layout, компоненти, кольори, типографіка, design tokens, кастомний Element chrome, архітектура, QA-кроки й implementation tasks.
 
 ## Open Questions
@@ -331,4 +423,4 @@ flowchart LR
 6. Яка точна policy-класифікація визначає `Особливо чутливий документ`? До затвердження невизначений документ переходить у `SS-07` і потребує окремого підтвердження.
 7. Який оператор hosted Matrix homeserver використовується та чи підтримує він `m.federate: false` під час створення кімнати? Це не додає screen: без підтримки потрібні зафіксований security exception і явне рішення Власника до production.
 
-Жодне відкрите питання не дозволяє додати іншу користувацьку поверхню, паралельну сесію, новий тип вкладення або автоматичну зовнішню дію до V1.
+Жодне відкрите питання не дозволяє додати третю користувацьку поверхню, паралельну сесію, новий тип вкладення, додаткову settings-групу або автоматичну зовнішню дію до V1.
