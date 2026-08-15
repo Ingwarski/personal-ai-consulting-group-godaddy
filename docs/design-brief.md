@@ -4,7 +4,7 @@
 - Версія brief: V1, до цілісного design-затвердження
 - Статус: proposed
 - Дата: 15.08.2026
-- owner_invocation_id: `d2347c59-79df-4df6-998c-a9daa04ff987`
+- owner_invocation_id: `bcfd01bf-b36f-45b8-bac7-79703bdee395`
 
 ## Source References
 
@@ -13,14 +13,14 @@
 | Джерело | SHA-256 / статус | Спожиті фрагменти |
 |---|---|---|
 | `README.md` | `d1afdf92181df9e002f9f75678f8ca46083c90bec0a9a33e47535a0593fa1c9c` | Позиціонування; принцип практичного результату; історичний browser-preview лише як нецільовий контекст |
-| `docs/product-idea.md` | `bb6392c8762ebad8ad50be8da4cfc69cb925bc59a37fc993d5b75a8900b8ba73` | Позиціонування; Результат для користувача; Основний сценарій; Досвід живого чату; Фінальна рекомендація; Межі V1; Правила даних і доступу; Стандарт швидкості; Критерій готовності V1; Підтверджені рішення |
-| `docs/prd.md` | `196af1b75e9a8b89bb581203403cbb9a986c1dca5630639150fa192cd04f01ec` | §3.2–3.4; §4–5; `FR-001`–`FR-036`; `NFR-001`–`NFR-015`; §8–12; `AC-001`–`AC-011` |
-| `docs/project-context.md` | `19bc260c395412d5332e7bae62f60e4befea79fcf60b876fdd18db2e19e514c0` | Desired User Outcomes; Platform Targets; Core Scenarios; MVP Boundaries; Out of Scope; Constraints; Assumptions; Risks; Open Questions |
-| `docs/canonical-terms.md` | `e9555a092cd994ec120013b62ac79615ac2f85b45c4180b1b1e9c505b82d105f` | Ролі; Core Domain Objects; User Actions; Product States; Screen / Flow Names; Approved User-Facing Terms; Internal Terms; Synonyms to Normalize; Terms to Avoid; Open Vocabulary Questions |
-| `docs/guardrails.md` | `64a1e0998ac811202d96de532a04b70912a2ed6ad288295d1f4ffbb0f6d559db` | Source Of Truth Order; AI Autonomy Boundaries; Forbidden Changes; Scope Boundaries; Design Authority Rules; Conflict Resolution; When To Ask; When To Stop; Artifact Separation Rules; Verification Rules; Evidence Requirements; Open Questions |
-| `docs/user-journey.md` | `a9b39c4102c2715622a77973069eb0adbc722a04382083e1f975cc72b880a7d3` | Journey Overview; Journey Stages 1–10; Climax Beat; Decision Points; Friction And Risks; Failure Path; Exit Points; Success State; Confirmed Facts And Constraints; Open Questions |
-| `docs/screen-map.md` | `36b6c720adc3edb819027610e5eecbbdd05d987670b096e9bc2e4e3759a0e786` | `SUR-01`; `MG-01`–`MG-13`; Surface Closure Matrix; Route Map; Navigation Model; Journey-To-Screen Trace; `SS-01`–`SS-27`; загальні state-категорії; Transition Notes; Entry And Exit Points; Edge Paths; Out Of Scope Screens; Open Questions |
-| `docs/wireframes.md` | `b078bdcaf96b7f0f5fc822e842ae3339c93d3816875e8396b4df3a48eff37e83` | Wireframe Principles; оборотні структурні рішення; `SUR-01` blueprint; conversational sequences A–F; Responsive Structure Notes; `MG-01`–`MG-13`; Permission pattern; Atomic agent-reply pattern; `SS-01`–`SS-27`; structural variants; Content Priority Notes; Open Questions |
+| `docs/product-idea.md` | `627dfdadc2363e1011e3ea0091c598c8f989e43fdf1ec45c512705ca0f9cf902` | Позиціонування; Результат для користувача; Основний сценарій; Досвід живого чату; Фінальна рекомендація; Межі V1; Правила даних і доступу; subscription OAuth; Стандарт швидкості; Критерій готовності V1; Підтверджені рішення |
+| `docs/prd.md` | `0c61a4dd97564f6ba17c2a387e2b420adad4282f3bf778f3b644a3d9c28920b6` | §3.2–3.5; §4–5; `FR-001`–`FR-036`; `NFR-001`–`NFR-015`; §8–12; `AC-001`–`AC-011` |
+| `docs/project-context.md` | `b7710d6018a19a949cdb7d6b89051b57b765f425bcfb1f0eef2d469d129664f0` | Desired User Outcomes; Platform Targets; Core Scenarios; MVP Boundaries; Out of Scope; Constraints; subscription OAuth boundary; Assumptions; Risks; Open Questions |
+| `docs/canonical-terms.md` | `469ff18d98fc2001cce2e485195bd57c9b19b7603119c026cddcd810dc04d540` | Ролі; Core Domain Objects; User Actions; Product States; Screen / Flow Names; Approved User-Facing Terms; subscription OAuth і Облік витрат; Synonyms to Normalize; Terms to Avoid; Open Vocabulary Questions |
+| `docs/guardrails.md` | `45f6003f56462073514928a038ec24630f4a85529328d66ec6ae972945eb0737` | Source Of Truth Order; AI Autonomy Boundaries; Forbidden Changes; Scope Boundaries; Design Authority Rules; Conflict Resolution; When To Ask; When To Stop; Artifact Separation Rules; Verification Rules; Evidence Requirements; Open Questions |
+| `docs/user-journey.md` | `4fc297e61081690cb7f03e150388b65a32952eaa99bec494008648b6c334d944` | Journey Overview; Journey Stages 1–10; Climax Beat; Decision Points; subscription auth/quota failure path; Exit Points; Success State; Confirmed Facts And Constraints; Open Questions |
+| `docs/screen-map.md` | `3f12f48577b03e26f8d0e1ce51fb9f1f53f5bdbb7dd534c56e1c9c3191766ef3` | `SUR-01`; `MG-01`–`MG-13`; Surface Closure Matrix; Route Map; Navigation Model; Journey-To-Screen Trace; `SS-01`–`SS-29`; загальні state-категорії; Transition Notes; Entry And Exit Points; Edge Paths; Out Of Scope Screens; Open Questions |
+| `docs/wireframes.md` | `49e5ae2421827373c3d3565520d1b548c5d832b3d6c515f4ffb9dc6252f7a700` | Wireframe Principles; оборотні структурні рішення; `SUR-01` blueprint; conversational sequences A–F; Responsive Structure Notes; `MG-01`–`MG-13`; Permission pattern; Atomic agent-reply pattern; `SS-01`–`SS-29`; structural variants; Content Priority Notes; Open Questions |
 
 Актуальні платформні джерела перевірено 15.08.2026:
 
@@ -59,6 +59,9 @@
 | `DB-D07` | Не успадковувати `consilium/live/styles.css` | Confirmed scope cut: це browser evidence, а не продуктова поверхня V1 |
 | `DB-D08` | WCAG 2.2 AA є floor для product-authored content і prototype evidence; conformance нативного Element chrome не приписується продукту | Confirmed boundary: content контролює продукт, chrome — Element/ОС |
 | `DB-D09` | Попередні WhatsApp-кандидати `A/B/C v1` та їх evidence незмінні, але superseded і не є поточним visual target | Confirmed: Design Authority Rules; актуальний target — Matrix-native Candidate B |
+| `DB-D10` | `SS-28` є невидимою передумовою кожного model call і запуску залежного агента: за успіху жодного product-authored loading/login status не додається | Confirmed: screen-map і wireframes; preflight не створює нової surface або проміжного performance theater |
+| `DB-D11` | `SS-29` показує в тій самій кімнаті лише безпечну категорію збою, відомий reset і позачатову наступну дію; credential, URL або code fields та API/PAYG fallback відсутні | Confirmed: PRD §3.5, canonical terms, screen-map `SS-29` |
+| `DB-D12` | `Витрати` показують налаштовані місячні платежі за AI-підписки, фактичну інфраструктуру й доступний provider usage/limit/reset; usage сесії входить у підписку | Confirmed: `MG-09`, `SS-14`, canonical `Облік витрат`; per-session token charge не вигадується |
 
 ## Audience And Context
 
@@ -91,6 +94,8 @@
 | Content density | Короткі product-authored blocks; повні agent replies; один змістовий рівень на абзац; до трьох фінальних дій | Немає summary/accordion/read-more, доданого продуктом |
 | Input modalities | Текст, зображення й PDF через штатний composer; команди вводяться текстом | Voice, video та custom controls поза V1 |
 | Same-chat delivery | Нова репліка з'являється в тій самій приватній розмові | Окремої продуктової поверхні немає |
+| Subscription access | Успішний `SS-28` невидимий; `SS-29` — короткий same-room status із безпечною категорією причини та позачатовою наступною дією | У Matrix немає OAuth token, `auth.json`, setup-token, reauth URL/code, credential field, login screen або API/PAYG fallback |
+| Cost transparency | `Витрати` відділяють налаштовані щомісячні AI-підписки, фактичну інфраструктуру та доступний status квоти/reset | Usage сесії позначається як включене в підписку; недоступне — `невідомо`; не вигадувати per-session charge |
 | AI control and reversibility | Явні дозволи, `Стоп`, `Нова задача`, `Витрати`, чесний failure-state, незмінна репліка й нове повідомлення для виправлення | Автоматична зовнішня дія без окремого дозволу заборонена |
 
 ## Design Spine
@@ -112,7 +117,7 @@ Boldness свідомо не витрачається на декоративн�
 
 `B — Дослівний консиліум` є обраним content/UX-напрямом. Його signature element — стабільний ритм `конкретна роль · HH:MM`, нативна Matrix reply relationship для адресованості та повне незмінне тіло кожної фактично надісланої репліки в канонічному порядку. Виразність витрачається на provenance, межі між репліками, критичні стани й фінальний синтез; нативний Element chrome лишається стриманим і незмінним.
 
-Наступний design-evidence артефакт має бути Matrix-native rendered candidate цього напряму з покриттям `SUR-01`, `MG-01`–`MG-13` і `SS-01`–`SS-27`. Сам вибір напряму не є approval receipt. Попередні WhatsApp-кандидати `A/B/C v1` та їх evidence лишаються незмінними історичними артефактами зі статусом superseded.
+Наступний design-evidence артефакт має бути Matrix-native rendered candidate цього напряму з покриттям `SUR-01`, `MG-01`–`MG-13` і `SS-01`–`SS-29`. Сам вибір напряму не є approval receipt. Попередні WhatsApp-кандидати `A/B/C v1` та їх evidence лишаються незмінними історичними артефактами зі статусом superseded.
 
 ### Colors
 
@@ -239,13 +244,13 @@ Don't:
 | `P-01` | Native message block | Додається в канонічному порядку й залишається самодостатнім після нативного line-wrap; не відкриває іншої поверхні |
 | `P-02` | Role-time identity line | Належить лише наступному повному body; виправлення role/body додається новою реплікою, не переписує попередню |
 | `P-03` | Permission / data-boundary message | Зупиняє лише названу дію; приймає явну згоду або відмову; не переносить дозвіл на іншу межу |
-| `P-04` | Progress / failure message | Progress повертає до активного потоку; failure називає наслідок і recovery лише за наявності підтвердженої дії |
+| `P-04` | Progress / failure message | Progress повертає до активного потоку; failure називає наслідок і лише безпечну підтверджену recovery-дію. Для `SS-29` не містить credential, token, `auth.json`, setup-token, reauth URL/code або API/PAYG fallback |
 | `P-05` | Long verbatim agent reply | Публікується повністю; не ділиться, не переказується й не змінюється після підтвердженої реєстрації; client-native collapse не замінюється product collapse |
 | `P-06` | Final recommendation series | Завершує стабілізовану роботу; зовнішня або високоризикова дія після рекомендації окремо переходить у `P-03` |
 | `P-07` | Technical part | Існує лише за потреби й переноситься цілком; не розсипається на фрагменти між іншими повідомленнями |
 | `P-08` | Native attachment and composer | Приймає лише підтверджені V1 inputs; unsupported input переходить у `P-03`/`P-04` без custom control |
 | `P-09` | Same-chat delivery | Додає нову видиму репліку до `SUR-01` без створення іншої продуктової поверхні |
-| `P-10` | Session / archive control result | Показує фактичний наслідок команди чи архівної дії; не створює окремий dashboard, archive-browser або editable transcript |
+| `P-10` | Session / archive control result | Показує фактичний наслідок команди чи архівної дії; для `Витрати` розділяє налаштовані місячні AI-підписки, фактичну інфраструктуру й доступний usage/limit/reset без per-session token charge; не створює окремий dashboard, archive-browser або editable transcript |
 
 #### Message-Group Coverage
 
@@ -261,15 +266,15 @@ Don't:
 | `MG-06` | `P-01` | Склад Консиліуму показує конкретні ролі й очікуваний наступний видимий крок |
 | `MG-07` | `P-02`, `P-05`, `P-09` | Role/time identity, повне незмінне body, канонічний порядок і доставка в той самий чат |
 | `MG-08` | `P-04` | Фактичний поступ, причина очікування, звуження або заміна агента без spinner |
-| `MG-09` | `P-10` | Дві фактичні суми як read-only result; жорсткий ліміт не візуалізується |
+| `MG-09` | `P-10` | Read-only result: налаштовані місячні платежі ChatGPT/Codex і Claude, фактичні інфраструктурні витрати та provider-reported usage/ліміт/reset; usage сесії — `входить у підписку`, недоступне — `невідомо`; per-session token charge і жорсткий ліміт не візуалізуються |
 | `MG-10` | `P-10` | Однозначний результат `Стоп` або буквальний перехід `Нова задача` |
-| `MG-11` | `P-04` | Збій/неповнота, наслідок, підтверджене/невідоме й доступна наступна перевірка |
+| `MG-11` | `P-04` | Збій/неповнота, наслідок, підтверджене/невідоме й доступна наступна перевірка; для `SS-29` — лише safe auth/quota/private category, відомий reset і позачатова reauth-дія без секрету, URL/code або paid fallback |
 | `MG-12` | `P-06`, за потреби `P-07` | Рішення → до трьох дій → ризик/перегляд → окрема Технічна частина |
 | `MG-13` | `P-10` | Фактичний архівний результат, незмінність попереднього body й допустимий наступний крок |
 
 ### State Patterns
 
-Перелік і переходи належать `docs/screen-map.md`; нижче зафіксовано лише appearance/behavior coverage для кожного `SS-01`–`SS-27`.
+Перелік і переходи належать `docs/screen-map.md`; нижче зафіксовано лише appearance/behavior coverage для кожного `SS-01`–`SS-29`.
 
 | State | Appearance pattern | Behavior pattern |
 |---|---|---|
@@ -286,7 +291,7 @@ Don't:
 | `SS-11` Живий перебіг Консиліуму | Повторювані `P-02` + `P-05`; `P-09` на нові вихідні репліки | Канонічний порядок; уточнення, команди, дозволи, фінал або failure |
 | `SS-12` Видимий поступ, очікування або заміна агента | `P-04` між репліками, без spinner або fake typing | Повернення до `SS-11` або перехід у `SS-19` |
 | `SS-13` Уточнення Активної сесії | Новий нативний owner message через `P-08` у поточній хронології | Повернення до актуального режиму тієї самої Сесії |
-| `SS-14` Витрати показано | `P-10` із двома фактичними сумами й без budget-limit styling | Read-only return до попереднього active/completed context |
+| `SS-14` Облік витрат показано | `P-10`: місячні платежі ChatGPT/Codex і Claude → фактична інфраструктура → доступний provider usage/ліміт/reset; usage сесії — `входить у підписку`, недоступне — `невідомо`; без per-session token charge або budget-limit styling | Read-only return до попереднього active/completed context |
 | `SS-15` Зупинена сесія | `P-10` з однозначним результатом `Стоп`; success styling роботи відсутній | Нові виклики й пізні робочі повідомлення не продовжують Сесію |
 | `SS-16` Поточну сесію закрито, нову створено | `P-10` з буквальним описом переходу без вигаданого lifecycle label | Новий entry без перенесення активного контексту |
 | `SS-17` Очікування дозволу продовжити понад 10 хвилин | `P-03`: причина → часова межа → наслідок → явне рішення | Дозвіл повертає до `SS-11`; без нього робота не продовжується |
@@ -300,13 +305,15 @@ Don't:
 | `SS-25` Нативне recovery і verification потрібні | Product-authored protected content відсутній; Element володіє recovery і device-verification presentation | Успіх повертає до `SS-01`; невдача завершує шлях без розшифрування й обробки робочих повідомлень |
 | `SS-26` Відкликання пристрою потрібне | Product-authored flow не починається; Element/Matrix володіє revocation presentation | Після відкликання й перевірки іншого пристрою — `SS-01`; інакше exit |
 | `SS-27` Room invariants не підтверджено | Захищені `P-01`–`P-10` не з'являються; безпечний `P-04` можливий лише без protected details | Після відновлення інваріантів — `SS-01`; security exception для federation gate потребує явного рішення Власника |
+| `SS-28` Передзапусковий subscription auth/quota/private preflight | За успіху невидимий: немає нового `P-01`, spinner, typing, login або credential prompt | Перед кожним model call і запуском залежного агента підтверджує subscription OAuth mode, квоту, відсутність API/PAYG credentials і single-owner eligibility: один захищений Codex OAuth-стан обслуговує окремі реальні sessions/threads, Claude Code-критик проходить subscription setup-token preflight; успіх веде до `SS-09`/`SS-10`, будь-яка невідповідність — до `SS-29` |
+| `SS-29` Fail-closed auth/quota/private boundary | Critical `P-04` у `SUR-01`: безпечна категорія причини, відомий provider reset і позачатова наступна дія; без token, `auth.json`, setup-token, reauth URL/code, link або credential field | Жодного model call чи agent launch і жодного API/PAYG/credits fallback; після provider reset або provider-managed reauth поза Matrix — новий `SS-28`, інакше exit/неповний результат |
 
 Загальні стани:
 
 - Empty: product-owned welcome або onboarding block відсутній.
 - Hover/focus/active: повністю нативні; продукт не створює власних focusable controls.
 - Disabled: заборонена дія пояснюється текстом, а не custom disabled control.
-- Loading: `P-01`, `P-02`/`P-05` або `P-04`; custom spinner чи typing indicator не додається.
+- Loading: `P-01`, `P-02`/`P-05` або `P-04`; custom spinner чи typing indicator не додається. Успішний `SS-28` не створює loading message взагалі.
 - Offline/delivery: показує Element; product-authored success не виводиться з візуального індикатора без фактичного evidence.
 - Long content: `P-05` лишається повним; якщо клієнт застосовує власне згортання, продукт не додає другий collapse layer.
 
@@ -335,10 +342,10 @@ Don't:
 | Journey source | Success coverage | Failure / permission coverage |
 |---|---|---|
 | `docs/user-journey.md`: Stages 1–4, доступ, дані й прийняття | `SS-08` через `P-01` | `SS-02`, `SS-04`–`SS-07`, `SS-25`–`SS-27` через native Element states і `P-03`/`P-04`; Секрет не повторюється |
-| Stage 5 і Stage 6A, Пряма відповідь | `SS-09` і за підтвердженої цілісності `SS-21` | `SS-19` відділяє невідоме й наступну перевірку; fake consilium відсутній |
-| Stage 6B, Повний Консиліум | `SS-10`–`SS-12` через roster, `P-02`, `P-05`, `P-09`; потім `SS-20` | Заміна/очікування через `P-04`; понад 10 хвилин — `SS-17`; недоступний консиліум — `SS-19` |
+| Stage 5 і Stage 6A, Пряма відповідь | Невидимий успішний `SS-28`, потім `SS-09` і за підтвердженої цілісності `SS-21` | `SS-29` fail closed без model call, credential UI чи paid fallback; general `SS-19` відділяє невідоме й наступну перевірку; fake consilium відсутній |
+| Stage 6B, Повний Консиліум | Успішний `SS-28` перед кожним залежним model call/agent launch; `SS-10`–`SS-12` через roster, `P-02`, `P-05`, `P-09`; потім `SS-20` | `SS-29` показує safe same-room status і позачатову recovery-дію; заміна/очікування через `P-04`; понад 10 хвилин — `SS-17`; недоступний консиліум — `SS-19` |
 | Stage 7, втручання Власника | `SS-13`/`SS-14` повертають до контексту; `SS-15`/`SS-16` дають контрольований exit/restart | Пізні репліки після `Стоп` не публікуються; контексти після `Нова задача` не змішуються |
-| Stages 8–9, збій, час і Фінальна рекомендація | `SS-20` через `P-06`/`P-07` | `SS-17`–`SS-19` через `P-03`/`P-04`; зовнішня дія не виконується з самої рекомендації |
+| Stages 8–9, збій, час і Фінальна рекомендація | `SS-20` через `P-06`/`P-07` | `SS-17`–`SS-19` і `SS-29` через `P-03`/`P-04`; OAuth reauth відбувається лише поза Matrix, зовнішня дія не виконується з самої рекомендації |
 | Stage 10, Архів, експорт і видалення | `SS-21`, `SS-22`, `SS-24` через `P-10` | `SS-23` потребує повторного дозволу; окрема репліка не редагується й не видаляється |
 
 ## Responsive And Platform Behavior
@@ -367,10 +374,12 @@ Don't:
 
 Обов'язково:
 
-- зберегти `MG-01`–`MG-13`, `SS-01`–`SS-27` і conversational sequences з `docs/wireframes.md`;
-- показати representative narrow і desktop viewports, long verbatim agent reply, role/time identity, permission, progress, failure і final series;
+- зберегти `MG-01`–`MG-13`, `SS-01`–`SS-29` і conversational sequences з `docs/wireframes.md`;
+- показати representative narrow і desktop viewports, long verbatim agent reply, role/time identity, permission, progress, `SS-29` safe same-room failure і final series; успішний `SS-28` лишити невидимим;
 - використати лише перевірені нативні text-formatting і Matrix reply affordances Element/Matrix та current-client chrome як контекст, не як нову product-owned system;
 - не створювати browser product, dashboard, custom bubbles, composer, buttons, cards, colors, fonts або motion;
+- не створювати login/reauth screen, credential/link/code field або API/PAYG/credits fallback; `SS-29` містить тільки safe category, відомий reset і текстову інструкцію завершити provider-managed reauth поза Matrix;
+- показати `Витрати` як місячні платежі AI-підписок, фактичну інфраструктуру й доступний usage/limit/reset; usage сесії — `входить у підписку`, недоступне — `невідомо`, без per-session token charge;
 - не скорочувати й не перефразовувати representative registered agent body;
 - не позначати rendered candidate approved. Whole-design approval відбувається лише після явного затвердження Matrix-native інтегрованого прототипу.
 
@@ -383,7 +392,7 @@ Don't:
 - Frozen Prototype Source Root And Tree Hash: не встановлено до approval receipt
 - Prototype Artifact References: попередні WhatsApp `A/B/C v1` є immutable superseded historical evidence; поточний Matrix-native Candidate B ще не створено або не затверджено
 - Visual Definition Of Done Scope: proposed contract цього brief; не є approved visual baseline
-- Covered Screens States And Viewports: proposed coverage `SUR-01`, `MG-01`–`MG-13`, `SS-01`–`SS-27`, `390/430/768/1280/1440px`
+- Covered Screens States And Viewports: proposed coverage `SUR-01`, `MG-01`–`MG-13`, `SS-01`–`SS-29`, `390/430/768/1280/1440px`
 - Approval Receipt: відсутній; approval не запитувався й не надавався
 - Approved At: не застосовується до proposed state
 - Permitted Variance: нативні відмінності Element/ОС допускаються лише як platform variance; product behavior, повнота body, порядок, роль, Matrix reply semantics і state meaning не змінюються
@@ -401,7 +410,8 @@ Don't:
 - Key-flow coverage: 6/6 journey groups мають success і failure/permission pattern із названим джерелом.
 - Token resolution: кожен token reference у brief визначено один раз у `Design Tokens`; unresolved token references — 0.
 - Pattern closure: `P-01`–`P-10` мають appearance і behavior principles — 10/10.
-- Screen/state coverage: `SUR-01` — 1/1; `MG-01`–`MG-13` — 13/13 через wireframe/pattern contract; `SS-01`–`SS-27` — 27/27.
+- Screen/state coverage: `SUR-01` — 1/1; `MG-01`–`MG-13` — 13/13 через wireframe/pattern contract; `SS-01`–`SS-29` — 29/29, включно з невидимим success-state `SS-28` і safe same-room `SS-29`.
+- Direction inventory: поточний обраний напрям — один, Candidate B; historical superseded набір містить рівно три candidates `A/B/C v1`. Нові A/C не вигадані після явного вибору Власника.
 - External references: актуальні official Element, Matrix, WCAG, Apple і Android platform sources доступні; недоступних load-bearing visual references немає.
 
 ### Pass 2 — Judgment
@@ -423,6 +433,8 @@ Don't:
 - Фінальна рекомендація — окремі самодостатні повідомлення: рішення, до трьох дій, ризик/припущення/умова перегляду, Технічна частина лише за потреби.
 - Critical meaning завжди явний у тексті й не залежить лише від appearance або motion.
 - Candidate B «Дослівний консиліум» обрано як content/UX-напрям; Approved Visual Baseline лишається proposed до явного затвердження Matrix-native rendered candidate.
+- Успішний `SS-28` невидимий; `SS-29` fail closed і показує лише safe category, відомий reset та provider-managed reauth поза Matrix, без credential/link/code fields і без API/PAYG fallback.
+- `Витрати` показують налаштовані місячні платежі за ChatGPT/Codex і Claude, фактичну інфраструктуру та доступний usage/limit/reset; usage сесії входить у підписку, а недоступне позначається `невідомо`.
 
 ## Rejected Directions
 
@@ -431,6 +443,8 @@ Don't:
 - Успадкування browser-specific styles із `consilium/live/styles.css`.
 - Product-added transcript summary, accordion, collapse або reader-screen замість повного body.
 - Custom spinner або typing animation.
+- Login/reauth screen, OAuth/setup-token/`auth.json` input, reauth link/code у Matrix або API/PAYG/credits upsell/fallback.
+- Вигадана per-session token charge, budget-limit visualization або автоматичні usage credits для subscription usage.
 - Автоматичне перетворення вибору Candidate B на Approved Visual Baseline без Matrix-native rendered evidence та явного approval receipt.
 - Попередні WhatsApp `A/B/C v1` як актуальний visual target; вони лишаються лише immutable superseded historical evidence.
 

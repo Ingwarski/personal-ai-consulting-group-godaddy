@@ -1,250 +1,313 @@
 # Architecture
 
 - Продукт: `Personal Consultant`
-- Версія: V1 proposed Matrix architecture
+- Версія: V1 subscription OAuth-only architecture
 - Дата: 15.08.2026
-- owner_invocation_id: `207ebc4d-cafd-4845-af91-e38c8af4dd00`
+- Статус: proposed architecture contract
+- `owner_invocation_id`: `2f20ecef-5701-4d1b-b8de-6bfc7535c4d1`
 
 ## Source References
 
-Порядок істини успадковано з `docs/guardrails.md`. Архітектура не робить старі WhatsApp-прототипи поточним дизайном і не розширює V1.
+Архітектура дотримується порядку істини з `docs/guardrails.md`. Вона деталізує технічні механізми, але не створює нової поведінки, поверхні або дозволу.
 
-| Джерело | SHA-256 | Спожиті фрагменти |
+| Джерело | SHA-256 | Спожиті рішення |
 |---|---|---|
-| `docs/product-idea.md` | `bb6392c8762ebad8ad50be8da4cfc69cb925bc59a37fc993d5b75a8900b8ba73` | Element/Matrix, E2EE, живий дослівний консиліум, Cloudflare, Codex, Claude Code, A2A, архів, витрати |
-| `docs/prd.md` | `196af1b75e9a8b89bb581203403cbb9a986c1dca5630639150fa192cd04f01ec` | `US-001`–`US-023`, `FR-001`–`FR-036`, `NFR-001`–`NFR-015`, `AC-001`–`AC-011` |
-| `docs/project-context.md` | `19bc260c395412d5332e7bae62f60e4befea79fcf60b876fdd18db2e19e514c0` | платформи, сценарії, межі, ризики |
-| `docs/canonical-terms.md` | `e9555a092cd994ec120013b62ac79615ac2f85b45c4180b1b1e9c505b82d105f` | ролі, Сесія, Реєстратор, A2A, Канонічний порядок |
-| `docs/guardrails.md` | `64a1e0998ac811202d96de532a04b70912a2ed6ad288295d1f4ffbb0f6d559db` | автономність, дозволи, секрети, зупинка, evidence |
-| `docs/user-journey.md` | `a9b39c4102c2715622a77973069eb0adbc722a04382083e1f975cc72b880a7d3` | основний, recovery, failure, control і final paths |
-| `docs/screen-map.md` | `36b6c720adc3edb819027610e5eecbbdd05d987670b096e9bc2e4e3759a0e786` | `SUR-01`, `MG-01`–`MG-13`, `SS-01`–`SS-27` |
-| `docs/wireframes.md` | `b078bdcaf96b7f0f5fc822e842ae3339c93d3816875e8396b4df3a48eff37e83` | нативна хронологія Element, повні репліки, Matrix replies |
-| `docs/design-brief.md` | `1840c78c92d6ef665528602b70dc854d4e59e05180753c613af2671ed2a29ba4` | Candidate B, native Element inheritance, proposed visual baseline, без власного звуку |
-| Existing repository code | read-only evidence | `consilium/live/*`, scripts і тести — локальний історичний evidence, не production runtime |
+| `docs/product-idea.md` | `627dfdadc2363e1011e3ea0091c598c8f989e43fdf1ec45c512705ca0f9cf902` | Element/Matrix, Candidate B, Cloudflare, subscription OAuth-only, private single-owner, витрати |
+| `docs/prd.md` | `0c61a4dd97564f6ba17c2a387e2b420adad4282f3bf778f3b644a3d9c28920b6` | `US-001`–`US-023`, `FR-001`–`FR-036`, `NFR-001`–`NFR-015`, `AC-001`–`AC-011` |
+| `docs/project-context.md` | `b7710d6018a19a949cdb7d6b89051b57b765f425bcfb1f0eef2d469d129664f0` | платформи, одноосібна модель, довірчі межі, ризики |
+| `docs/canonical-terms.md` | `469ff18d98fc2001cce2e485195bd57c9b19b7603119c026cddcd810dc04d540` | ролі, стани, OAuth, A2A, архів і витрати |
+| `docs/guardrails.md` | `45f6003f56462073514928a038ec24630f4a85529328d66ec6ae972945eb0737` | room invariants, stop rules, secret containment, evidence |
+| `docs/user-journey.md` | `4fc297e61081690cb7f03e150388b65a32952eaa99bec494008648b6c334d944` | stages 1–10, preflight, reauth, fail-closed і cost paths |
+| `docs/screen-map.md` | `3f12f48577b03e26f8d0e1ce51fb9f1f53f5bdbb7dd534c56e1c9c3191766ef3` | `SUR-01`, `MG-01`–`MG-13`, `SS-01`–`SS-29` |
+| `docs/wireframes.md` | `49e5ae2421827373c3d3565520d1b548c5d832b3d6c515f4ffb9dc6252f7a700` | native chronology/replies, auth failure and cost structure |
+| `docs/design-brief.md` | `c0bc4237b1668cd04262ff8662018b5c9df3aafc866739eab1f10f71acbba60f` | native Element inheritance, Candidate B, no custom auth UI or sound |
 
-Перевірені 15.08.2026 первинні технічні джерела:
+Офіційні технічні джерела перевірено 15.08.2026:
 
-- [Matrix E2EE](https://matrix.org/docs/matrix-concepts/end-to-end-encryption/) і [Matrix elements](https://matrix.org/docs/matrix-concepts/elements-of-matrix/) — homeserver, client, bot, Olm/Megolm і device keys.
-- [Matrix Client-Server API](https://spec.matrix.org/v1.19/client-server-api/) — room creation, `m.federate`, membership, events, replies і sync.
-- [matrix-rust-sdk](https://github.com/matrix-org/matrix-rust-sdk) — SDK із Matrix-криптографією для bot/client runtime.
-- [Cloudflare Containers architecture](https://developers.cloudflare.com/containers/platform-details/architecture/), [Container API](https://developers.cloudflare.com/durable-objects/api/container/), [outbound traffic](https://developers.cloudflare.com/containers/platform-details/outbound-traffic/) і [pricing](https://developers.cloudflare.com/containers/pricing/).
-- [Cloudflare secrets](https://developers.cloudflare.com/workers/configuration/secrets/) і [R2 data security](https://developers.cloudflare.com/r2/reference/data-security/).
-- [A2A v0.3.0](https://a2a-protocol.org/v0.3.0/specification/) — Task, Message, Part, Agent Card і streaming contracts.
-- [Codex CLI](https://developers.openai.com/codex/cli/reference/) і [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code/cli-usage) — окремі non-interactive process contracts.
+- [OpenAI: Using Codex with your ChatGPT plan](https://help.openai.com/en/articles/11369540-codex-and-chatgpt-plan-usage-limits) — Codex входить до відповідних ChatGPT-планів і має plan-dependent usage limits.
+- [OpenAI Codex app-server](https://github.com/openai/codex/blob/main/codex-rs/app-server/README.md) — ChatGPT-managed OAuth, browser/device login, automatic refresh, `account/read`, auth mode/plan/rate limits та separate thread/turn contracts.
+- [OpenAI Codex Python SDK API reference](https://github.com/openai/codex/blob/main/sdk/python/docs/api-reference.md) — supported ChatGPT login та `thread_start`/`thread_resume`.
+- [Anthropic Claude Code authentication](https://code.claude.com/docs/en/authentication) — credential precedence, `claude setup-token`, `CLAUDE_CODE_OAUTH_TOKEN` і bare-mode incompatibility.
+- [Anthropic Claude Code CLI](https://code.claude.com/docs/en/cli-usage) — `claude auth status`, login/logout і setup-token lifecycle.
+- [Anthropic legal and compliance](https://code.claude.com/docs/en/legal-and-compliance) — OAuth для ordinary subscription use; third-party products/services потребують іншої auth-моделі або vendor approval.
+- [Matrix Client-Server API v1.19](https://spec.matrix.org/v1.19/client-server-api/), [Matrix E2EE](https://matrix.org/docs/matrix-concepts/end-to-end-encryption/) і [matrix-rust-sdk](https://github.com/matrix-org/matrix-rust-sdk).
+- [Cloudflare Containers](https://developers.cloudflare.com/containers/platform-details/architecture/), [Durable Objects container API](https://developers.cloudflare.com/durable-objects/api/container/), [R2 data security](https://developers.cloudflare.com/r2/reference/data-security/) і [Workers secrets](https://developers.cloudflare.com/workers/configuration/secrets/).
+- [A2A v0.3.0](https://a2a-protocol.org/v0.3.0/specification/) — Agent Card, Message, Task, Part and streaming semantics.
 
-## Architecture Decision
+## Architecture Overview
 
-V1 працює через одну приватну invite-only E2EE Matrix-кімнату в Element. Власник і один bot-account зареєстровані на одному керованому hosted homeserver. Власник користується штатними Element-клієнтами на Mac, iPhone, Android і Windows; окремого browser UI немає.
+V1 — приватна система одного Власника в одній invite-only E2EE Matrix-кімнаті. Один verified bot-device у постійному `MatrixBridgeContainer` приймає й надсилає події. Один fixed-name `RegistrarDO` є єдиним доменним авторитетом для Сесії, дозволів, порядку, A2A, leases, outbox, `Стоп`, deadlines та cost snapshots.
 
-У Cloudflare працюють два різні runtime-рівні:
+На час однієї Активної сесії запускається один `AgentRuntimeContainer`:
 
-1. `MatrixBridgeContainer` — постійний легкий Matrix-клієнт. Він тримає `/sync`, розшифровує events як перевірений bot-device, перевіряє room invariants і публікує підтверджені events.
-2. `AgentRuntimeContainer` — on-demand обчислювальний процес лише на час Сесії. У ньому працюють окремі процеси Codex для Головного консультанта та 2–5 спеціалістів і окремий Claude Code-критик.
+- один trusted `CodexAccountRuntime` керує одним authoritative mutable ChatGPT OAuth state;
+- Головний консультант і 2–5 Codex-агентів-спеціалістів мають окремі реальні Codex threads, workspaces, ролі й A2A identities;
+- окремий ізольований `ClaudeCriticProcess` використовує лише subscription OAuth token;
+- жоден агент не має Matrix credentials, archive keys або права публікувати напряму.
 
-Один fixed-name `RegistrarDO` є єдиним власником Active Session, Канонічного порядку, A2A-маршрутизації, idempotency, permissions, `Стоп`, deadlines, outbox і Витрат сесії. Жоден агент не надсилає повідомлення іншому агенту або в Matrix напряму.
+Один OAuth state не означає одного агента. Окремість доводиться thread/process identity, workspace, role, task, lifecycle events і фактичними register-before-route A2A messages.
+
+## Architecture Principles
+
+1. **Один авторитетний запис.** `RegistrarDO` серіалізує доменні переходи.
+2. **Один mutable Codex OAuth lineage.** Durable encrypted checkpoint і leased runtime copy утворюють одну versioned lineage; клонування `auth.json` заборонене.
+3. **Один active credential writer.** Лише runtime із чинним fenced lease може restore, refresh, mutate і checkpoint state.
+4. **Окремі agent contexts.** Codex roles використовують supported app-server/SDK threads та ізольовані workspaces, а не копії credentials.
+5. **Fail closed.** Auth mode, eligibility або quota failure зупиняє залежну роботу в `SS-29` без API/PAYG/cloud fallback.
+6. **Register before route.** Фактична agent reply стає immutable confirmed message до передачі адресату або Matrix.
+7. **E2EE без перебільшення.** E2EE завершується на verified bot-device; Cloudflare, OpenAI та Anthropic бачать переданий їм plaintext.
+8. **Нативний UX.** Element/OS володіє chrome, replies, notifications і sound.
+9. **Disposable compute, durable truth.** Container filesystem не є єдиною копією crypto, credential, session або archive state.
+10. **Private non-SaaS.** Розширення на третіх осіб інвалідовує цю OAuth-архітектуру.
 
 ## System Context
 
 ```mermaid
 flowchart LR
-    U["Власник у Element"] <-->|"E2EE Matrix events"| H["Hosted Matrix homeserver"]
-    H <-->|"ciphertext sync/send"| B["MatrixBridgeContainer: verified bot device"]
-    B <-->|"internal authenticated commands"| R["RegistrarDO: sole Session registrar"]
-    R <-->|"jobs, events, A2A envelopes"| A["AgentRuntimeContainer"]
-    A --> C1["Codex: Головний консультант"]
-    A --> C2["Codex: 2–5 specialists"]
-    A --> CL["Claude Code: critic"]
-    R <-->|"encrypted archive refs"| O["R2"]
-    A -->|"TLS via controlled outbound handler"| P["OpenAI / Anthropic APIs"]
+    U["Власник у штатному Element"] <-->|"Matrix E2EE events"| H["Hosted Matrix homeserver"]
+    H <-->|"ciphertext sync/send"| B["MatrixBridgeContainer: verified bot-device"]
+    B <-->|"scoped internal events"| R["RegistrarDO: sole domain authority"]
+    R <-->|"leased jobs and confirmed events"| A["AgentRuntimeContainer"]
+    A --- CA["CodexAccountRuntime: one app-server and OAuth writer"]
+    CA --- CH["Head thread/workspace"]
+    CA --- CS["2–5 specialist threads/workspaces"]
+    A --- CL["ClaudeCriticProcess: isolated subscription OAuth"]
+    R <-->|"application-encrypted objects"| O["Cloudflare R2"]
+    A -->|"allowlisted TLS"| OP["OpenAI Codex subscription service"]
+    A -->|"allowlisted TLS"| AP["Anthropic Claude subscription service"]
 ```
 
-## Trust And Encryption Boundaries
+## Module And Boundary Map
 
-| Відрізок | Захист | Хто потенційно бачить plaintext |
+| Component | Owns | Must not own |
 |---|---|---|
-| Element ↔ homeserver ↔ bot-device | Matrix E2EE; homeserver зберігає ciphertext | перевірені пристрої Власника і bot-device |
-| Bot crypto store at rest | application-layer encryption; ciphertext у R2/DO | bridge runtime після unwrap |
-| Bridge ↔ RegistrarDO ↔ AgentRuntime | Cloudflare internal bindings/TLS + scoped auth | довірений Cloudflare runtime |
-| AgentRuntime ↔ OpenAI/Anthropic | TLS; мінімально потрібний контекст | відповідний AI-провайдер |
-| Session archive in R2 | application-layer AEAD поверх Cloudflare at-rest encryption | authorized archive path після unwrap |
+| `MatrixBridgeContainer` | `/sync`, E2EE crypto machine, decrypt/encrypt, room gates, native reply relations, send receipts | Session truth, AI OAuth, orchestration |
+| Bridge host DO | Cloudflare container lifecycle and bridge lease only | domain state, agent order |
+| `RegistrarDO` | Active Session, canonical sequence, permissions, dedupe, A2A, credential/runtime lease metadata, deadlines, outbox, costs | plaintext OAuth, Matrix private keys, model reasoning |
+| `RoomInvariantGate` | exact `room_id` + `owner_mxid`, device trust, E2EE, membership and room policy result | silent exceptions |
+| `PolicyGate` | secret rejection, sensitive-data/external-action permission, private eligibility | confirmed-body mutation |
+| `AgentRuntimeContainer` | one-session compute, supervision, isolated workspaces, cancellation | durable plaintext or direct Matrix publication |
+| `CodexAccountRuntime` | one app-server/SDK account context, auth health, threads/turns, exclusive credential writer | clones, Matrix/R2 keys, alternate providers |
+| `ClaudeCriticProcess` | critic process/workspace and subscription OAuth health | Codex state, API/cloud credentials, bare mode |
+| `A2ARegistrarAdapter` | A2A v0.3 validation and addressed draft normalization | peer bypass, public discovery |
+| `CredentialVault` | application-encrypted Codex/Claude credential objects and versions | plaintext at rest, transcript |
+| `CryptoArchive` | per-session encryption, integrity manifest, export, verified whole-session delete | OAuth or mutable transcript |
+| R2 | ciphertext credential/crypto checkpoints, inputs and archives | plaintext, wrapping keys, domain authority |
+| Outbound handlers | destination allowlist, mediation and egress evidence | routing decisions or session state |
 
-E2EE закінчується на bot-device. Homeserver не читає зміст, але Cloudflare runtime мусить розшифрувати його для роботи агентів. Локальний runtime прибрав би Cloudflare з trust boundary, але не OpenAI/Anthropic; V1 не залежить від увімкненого Mac.
+## Runtime And Automation Model
 
-Metadata — room ID, Matrix IDs, IP/service timestamps, event sizes і delivery timing — не стає невидимою через E2EE. Система мінімізує її, але не обіцяє metadata privacy.
+### Matrix bridge
 
-## Hosted Homeserver And Room Contract
+- `MatrixBridgeContainer` is always on, restores its application-encrypted crypto checkpoint before accepting work and keeps one sync lease.
+- Before protected work it confirms `SS-01`/`SS-27`: exact allowlist, verified non-revoked device, E2EE, invite-only, owner + bot only on one hosted homeserver, no pending invites/guests/bridges/widgets, history `joined` and federation gate.
+- `m.federate: false` is required when supported at room creation; otherwise production needs an explicit documented owner exception.
+- `matrix.org` is only a conditional PoC default behind `HomeserverAdapter` and capability/policy gates.
 
-Початковий найменш болісний PoC-вибір — акаунти на `matrix.org`, але лише після живої перевірки bot/account policy, SLA, room-creation capabilities і стабільності. `HomeserverAdapter` не прив’язує систему до одного оператора; інший керований провайдер можна підставити без зміни доменної моделі. Власний VPS або власний homeserver у V1 не потрібен.
+### Codex account runtime
 
-Перед кожною робочою Сесією `RoomInvariantGate` підтверджує:
+1. `RegistrarDO` grants one fenced `CodexCredentialLease`. A second writer/runtime cannot start until release or safe expiry.
+2. The holder fetches one versioned ciphertext checkpoint, unwraps it only in runtime memory and materializes the active store in an ephemeral private directory; credential file mode is `0600` and the directory is owner-only.
+3. One pinned app-server starts against that store. `account/read` with refresh confirms account type `chatgpt`, eligible plan and managed refresh before any Codex model turn.
+4. `OPENAI_API_KEY`, `CODEX_API_KEY`, `CODEX_ACCESS_TOKEN`, personal-access-token mode, Bedrock/provider config and custom API endpoints are absent and rejected. Only auth mode `chatgpt` is accepted.
+5. Head and specialists receive separate `thread/start`/`thread/resume` identities and bounded workspaces. Shared OAuth never shares conversation context.
+6. Login, refresh, logout, checkpoint and revocation are globally serialized. V1 also serializes Codex provider turns conservatively; bounded cross-thread concurrency requires pinned official-runtime evidence and cannot add a writer or clone.
+7. After every observed credential mutation and before the next turn, runtime seals a new checkpoint, writes it with version compare-and-swap, records hash/version in `RegistrarDO` and advances the lease.
+8. Clean stop checkpoints before teardown. Crash keeps fencing until expiry; stale/reused refresh rejection becomes `SS-29` and may require reauth.
 
-- exact `room_id` та exact `owner_mxid`;
-- E2EE увімкнено до першого робочого повідомлення;
-- invite-only membership;
-- рівно два joined members: Власник і bot;
-- немає pending invites, guests, bridges, widgets або application services;
-- `history_visibility = joined`;
-- devices Власника й bot не revoked; bot-device verified;
-- кімнату створено з `m.federate: false`, якщо оператор це підтримує.
+### Codex bootstrap, reauth and revocation
 
-`m.federate` задається під час створення кімнати і не виправляється постфактум. Якщо provider не дозволяє `m.federate: false`, production блокується до вибору іншого hosted provider або явного security exception Власника. Інші room invariants не мають silent exception.
+- Initial browser/device-code login uses the official Codex-managed flow in a trusted one-time bootstrap runtime/channel controlled by the Власник, never Matrix.
+- Auth URL, device code, `auth.json`, access/refresh token and credential screenshots never enter `SUR-01`, A2A, prompts, logs, telemetry, archives, repositories or images.
+- Bootstrap produces the first sealed version directly in `CredentialVault`; copying `auth.json` between runtimes is forbidden.
+- Permanent refresh failure, logout/revocation, plan ineligibility or quota exhaustion revokes the active lease, pauses dependent jobs and emits only safe `SS-29` category/reset instruction.
+- Reauth creates a new out-of-band credential version. Work resumes only after fresh `account/read`/plan/quota check; old versions are unusable.
 
-## Modules And Ownership
+### Claude Code critic
 
-| Компонент | Володіє | Не має права володіти |
+- Critic is a separate supervised process/workspace from all Codex threads.
+- Власник runs `claude setup-token` out-of-band. `CLAUDE_CODE_OAUTH_TOKEN` enters `CredentialVault` directly and is exposed only to the isolated critic process for its lifetime.
+- The process starts from an allowlisted environment. `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, `apiKeyHelper`, `CLAUDE_CODE_USE_BEDROCK`, `CLAUDE_CODE_USE_VERTEX`, `CLAUDE_CODE_USE_FOUNDRY` and related provider credentials are absent and blocked.
+- Bare mode is forbidden because official docs state it does not read `CLAUDE_CODE_OAUTH_TOKEN`.
+- Before each critic job, `claude auth status` must report logged-in subscription OAuth. Exit failure, expiry, revocation, scope failure or quota exhaustion transitions to `SS-29`.
+- Renewal/replacement is out-of-band; there is no API key, cloud provider, PAYG, extra-credit or model fallback.
+
+### A2A and visible message lifecycle
+
+1. Registrar issues a role-scoped job with minimal context and lease.
+2. Real thread/process produces an actual assignment, reply, critique or correction draft.
+3. `A2ARegistrarAdapter` validates sender, recipient, task, generation and body.
+4. `RegistrarDO` persists unchanged body, assigns canonical sequence/hash and creates target plus Matrix outbox intents atomically.
+5. Only then does routing occur. Direct peer channels, hidden shared chat files and public Agent Cards are invalid.
+6. Bridge publishes immediately from one bot identity with role + `HH:MM` and native Matrix reply.
+7. Correction is a new confirmed message. `Стоп` rejects late drafts; confirmed messages remain immutable.
+
+## Data And State Model
+
+| Object | Authoritative owner | Persistence and invariants |
 |---|---|---|
-| `MatrixBridgeContainer` | sync token, E2EE crypto machine, decrypt/encrypt, room checks, native reply, send receipt | Session truth, agent orchestration |
-| `BridgeDO` | bridge health, encrypted crypto-store checkpoint refs, sync lease | agent messages або canonical order |
-| `RegistrarDO` | Active Session, permissions, dedupe, canonical log, A2A, leases, deadlines, outbox, costs | model reasoning або Matrix keys |
-| `PolicyGate` | secrets rejection, sensitive-data permission, allowed transitions, `Стоп` | зміна confirmed body |
-| `AgentRuntimeContainer` | isolated processes, bounded workspaces, event parsing, cancellation | Matrix/R2 credentials або direct publication |
-| `A2ARegistrarAdapter` | A2A v0.3.0 validation і canonical envelope conversion | direct peer channel |
-| `CryptoArchive` | per-session keys, AEAD, hash manifests, verified delete | plaintext long-term content |
-| R2 | encrypted inputs, transcript archive, integrity manifest | root keys або plaintext |
-| Worker outbound handlers | host allowlist, signing, credential injection, size limits | session decisions |
+| `SessionState` | `RegistrarDO` | one generation; mode, permissions, deadlines, stop/final/archive state |
+| `AgentIdentity` | `RegistrarDO` | role, provider, real thread/process ID, workspace, lease, health |
+| `CodexThreadState` | app-server plus registrar ref | distinct head/specialist thread; no credential copy; resumable |
+| `ConfirmedEnvelope` | `RegistrarDO` | append-only body, addressed A2A IDs, sequence, predecessor/hash |
+| `MatrixOutboxIntent` | `RegistrarDO` | stable transaction ID, reply target, retry and receipt |
+| `CredentialCheckpoint` | `CredentialVault` in R2 | AEAD ciphertext, provider, version, hash, created/revoked state |
+| `CredentialLease` | `RegistrarDO` | exactly one active writer, fencing generation, expiry, checkpoint version |
+| `MatrixCryptoCheckpoint` | bridge boundary in R2 | application-encrypted SDK store/cursor; one bridge writer |
+| `CostSnapshot` | `RegistrarDO` | configured fees, actual infrastructure, provider usage/limit/reset or unavailable |
+| `ArchiveManifest` | `CryptoArchive` in R2 | encrypted objects, hashes, key version, canonical head, deletion state |
 
-## Core Contracts
+Credential states are `absent → sealed → leased → active`, then `checkpointed`, `reauth-required` or `revoked`. No transition makes plaintext durable.
 
-| Contract | Producer → consumer | Required fields |
+## Integration Map
+
+| Integration | Direction | Contract and failure boundary |
 |---|---|---|
-| `MatrixInboundEvent` | bridge → registrar | room/event/sender IDs, relation, type, decrypted body/blob ref, time, invariant result, idempotency key |
-| `RegistrarCommand` | head → registrar | session generation, lease, action, role/task/recipient, permission/finalization data |
-| `RuntimeJob` | registrar → runtime | session, role, objective, minimal context refs, deadline, lease, provider profile |
-| `A2AEnvelopeDraft` | agent → registrar | A2A message/task ID, sender/recipient roles, immutable body, reply-to, usage |
-| `ConfirmedEnvelope` | registrar → target/outbox | unchanged body, canonical sequence, confirmed time, predecessor/hash |
-| `MatrixOutboxIntent` | registrar → bridge | session/sequence, body, role, `HH:MM`, native reply event ID, retry policy |
-| `MatrixSendReceipt` | bridge → registrar | intent ID, Matrix event ID or failure, attempt, time |
-| `RuntimeEvent` | runtime → registrar | started, heartbeat, draft, usage, completed, cancelled або failed |
-| `ArchiveManifest` | registrar/crypto → R2 | version, session, object hashes, algorithm/key version, canonical head hash, deletion state |
+| Element/Matrix | owner ↔ bridge | E2EE events, native replies, verified device; keys/invariant failure stops work |
+| Hosted homeserver | bridge ↔ provider | ciphertext sync/send; metadata visible; capability/policy release gate |
+| OpenAI Codex | account runtime ↔ provider | ChatGPT-managed OAuth, account/plan/rate-limit health, thread/turn events; non-`chatgpt` fails closed |
+| Anthropic Claude Code | critic ↔ provider | `CLAUDE_CODE_OAUTH_TOKEN`, auth-status/exit/usage; higher-priority credential blocks startup |
+| A2A v0.3 | agents ↔ registrar | private authenticated envelopes, register-before-route, no public discovery |
+| Cloudflare R2 | internal bindings | application-encrypted credentials, crypto checkpoints, inputs, archives; no public bucket |
+| DO/Containers | registrar/bridge ↔ compute | fixed identity, leases, lifecycle, durable metadata, on-demand supervision |
+| Research gateways | runtime → allowlist | explicit source retrieval only; no arbitrary egress or secret injection |
 
-Confirmed agent body є append-only. Виправлення — нова `ConfirmedEnvelope`. Hidden chain-of-thought, system prompts, tool traces, secrets і credentials не є репліками агентів і не публікуються.
+## Trust Boundaries And Secret Handling
 
-## End-To-End Flow
+| Boundary | Plaintext exposure | Required control |
+|---|---|---|
+| Element ↔ homeserver ↔ bot | owner and verified bot; homeserver sees metadata | E2EE, verification/revocation, room gates |
+| Bot ↔ Cloudflare runtime | trusted bridge memory | scoped binding, no plaintext durable log |
+| Registrar ↔ runtime | minimum job context | authenticated lease, role/context minimization |
+| Runtime ↔ OpenAI/Anthropic | content sent to provider | TLS, minimization, first-use consent |
+| Vault ↔ leased runtime | leased memory/ephemeral `0600` file only | AEAD, version/CAS, one writer, teardown, no logs |
+| Archive ↔ export/delete | authorized transient plaintext | per-session key, manifest, whole-session action |
 
-1. Bridge receives encrypted events through `/sync`, decrypts locally and rejects unknown room/sender/device or failed invariants.
-2. Bridge sends an idempotent `MatrixInboundEvent` to fixed `RegistrarDO`.
-3. Registrar applies secret/permission/session rules and persists acknowledgement intent.
-4. Registrar starts AgentRuntime; separately launched Codex head chooses direct or Консиліум mode.
-5. For a Консиліум, registrar launches 2–5 Codex specialists and one Claude Code critic. Process identity, lease and heartbeat are evidence; labels are insufficient.
-6. Кожне actual assignment, intermediate result, addressed challenge, critique and correction is submitted as `A2AEnvelopeDraft`.
-7. Registrar persists unchanged body, assigns canonical sequence and creates target-routing plus Matrix outbox intents atomically.
-8. Bridge publishes each confirmed message immediately in the same room using `Роль · HH:MM` and native Matrix reply. It does not batch or summarize the visible stream.
-9. Critique and revision use the same register-before-route path.
-10. Head produces the final synthesis only after evidence/critique gates.
-11. On completion, encrypted archive is written to R2; AgentRuntime sleeps. Bridge remains active.
+Worker secrets hold wrapping material and static service credentials, never transcripts. R2 stores only application ciphertext. Wrapping keys are separate for bot crypto, AI credentials and archives.
 
-## Runtime And A2A Rules
+## Technology Stack And Constraints
 
-- A2A uses official v0.3.0 semantics over private authenticated internal HTTP/SSE adapters.
-- Agent Cards are internal allowlisted definitions; public discovery is off.
-- Direct agent-to-agent sockets, shared chat files and hidden peer channels are invalid.
-- Each process has an isolated workspace and bounded context.
-- Registrar rejects stale generation/lease, duplicate ID, unknown role, late response after `Стоп` and body mutation.
-- `Стоп` atomically cancels leases/processes and rejects later drafts; confirmed bodies remain.
-- Якщо substantive progress is absent at the deadline, the room receives a factual delay/failure state, not synthetic content.
+- Clients: official Element on Mac, iPhone, Samsung Flip7/Android and Windows.
+- Messaging: Matrix Client-Server API and E2EE through `matrix-rust-sdk`.
+- Hosting: Cloudflare Worker, DO, Containers and private R2; no own VPS, own Matrix homeserver or local Mac production dependency.
+- Agent control: pinned supported Codex app-server/SDK thread/turn interface; separate Claude Code CLI process; private A2A v0.3 adapter.
+- Storage: DO for small canonical metadata; application-encrypted R2 for durable objects; ephemeral container filesystem.
+- Network: container internet disabled by default; Worker handlers allow only homeserver, OpenAI, Anthropic and approved research endpoints.
+- UI: no browser product, custom Element chrome, bot role accounts or product-authored sound.
 
-## Persistence, Keys And Deletion
+## Security Privacy And Access Model
 
-- DO storage keeps small canonical metadata, state, dedupe, outbox and costs.
-- R2 keeps only application-encrypted large blobs and closed-session bundles.
-- Container filesystem is disposable and never the sole copy of crypto state, sync cursor, transcript or archive.
-- Bot crypto checkpoints are encrypted before R2/DO persistence; one writer holds the lease.
-- Per-session data keys are random; wrapping key lives in Cloudflare secret/key boundary, not R2 or chat.
-- Export decrypts only after exact owner/room/device checks.
-- Delete is session-wide: tombstone → remove R2 objects → verify absence → remove permitted metadata → report provider-retention limits.
-- Matrix events already delivered cannot be promised physically erased by R2 deletion; redaction is separate and requires explicit permission.
+- Work starts only for exact `room_id` + `owner_mxid` from a verified, non-revoked device after room invariants pass.
+- Room contains exactly Власник + one bot on the same hosted homeserver; guests, bridges, widgets, extra invites and participants block work.
+- OAuth and Matrix recovery material are `Секрет` and are rejected before dispatch, canonical log and archive.
+- Agent workspaces never receive Matrix tokens, OAuth checkpoint files, R2 keys or archive wrapping keys.
+- Private single-owner eligibility is checked with auth/plan health. No client, employee, team member or third party initiates work or receives subscription-backed results.
+- Multiuser, client-facing, resale or commercial-service expansion invalidates this architecture and requires API/enterprise authentication or explicit written vendor approval plus new product/billing/security review.
 
-## Network And Secrets
+## Failure And Recovery Model
 
-- `enableInternet = false` for containers by default.
-- Outbound handlers allow only homeserver, OpenAI, Anthropic and explicit research gateways.
-- Handlers inject scoped API credentials so long-lived provider tokens do not enter agent workspaces.
-- Matrix tokens exist only in bridge crypto boundary; agents never receive them.
-- R2/key access exists only through internal bindings.
-- Consumer login cookies are not automated; commercial/API credentials are required.
-- Secrets, full payment data, government IDs, medical data and recovery keys are rejected before storage and dispatch.
-
-## Availability And Recovery
-
-- One fixed registrar serializes all state changes.
-- Matrix `event_id` + room ID deduplicate input; stable transaction ID deduplicates output.
-- Bridge restart restores encrypted crypto store and sync cursor before accepting work.
-- Missing keys produce `SS-25`, not plaintext fallback; invariant failure produces `SS-27`.
-- AgentRuntime crash leaves canonical log/outbox intact; retry never republishes confirmed bodies.
-- If bridge health is lost, no false delivered status is emitted.
+| Failure | Registrar action | Visible result and recovery |
+|---|---|---|
+| Matrix access/invariant/key failure | reject before protected dispatch | `SS-04`/`SS-25`–`SS-27` or safe exit; native recovery/revocation |
+| Codex auth mode not `chatgpt` | block all Codex turns | `SS-29`; remove forbidden mode out-of-band, then fresh preflight |
+| Codex refresh/lease/checkpoint failure | fence runtime, pause jobs | `SS-29`; no fabricated reply; out-of-band reauth if needed |
+| Claude auth invalid or token expired/revoked | stop critic/dependent synthesis | `SS-29`; replace out-of-band, then fresh status check |
+| Codex/Claude quota exhausted | pause dependent provider work | `SS-29` with reset if exposed; wait, never fallback |
+| Forbidden API/cloud credential | block entire agent runtime | `SS-29` until environment/config is clean |
+| Agent crash/no progress | retain canonical log/outbox; replace/narrow under new lease | `MG-08`/`MG-11`; confirmed messages unchanged |
+| Crash after credential mutation | keep fence; restore last sealed version | fail closed on stale refresh; never concurrent writer |
+| `Стоп` | cancel leases/processes; reject late drafts | `SS-15`; confirmed messages remain |
+| Archive/integrity failure | withhold successful completion | `SS-19` with next verification |
 
 ## Capacity And Cost Model
 
-| Runtime | Starting profile | Lifecycle | Cost driver |
-|---|---|---|---|
-| Matrix bridge | `basic` 1 GiB / 4 GB | always on; test `lite` later | memory, disk, small CPU/egress |
-| Agent runtime | `standard-3` 2 vCPU / 8 GiB | per Session, sleeps after bounded idle | vCPU, memory, model APIs |
-| Registrar/bridge DO | one named instance each | persistent | requests, storage, duration |
-| R2 | encrypted archive/blobs | retention policy | storage, operations, egress |
+- Capacity is one Власник, one room, one Active Session, one `RegistrarDO`, one `AgentRuntimeContainer` and one Codex credential-writer lease.
+- Session may contain one head thread, 2–5 specialist threads and one Claude critic process. Separate identity does not guarantee parallel turns.
+- V1 serializes Codex provider turns initially. Only measured safe bounded concurrency inside the same account runtime may later be enabled; a second writer or cloned store is never scaling.
+- Bridge remains always on; agent compute is on-demand and stops after checkpoint/archive handoff.
+- `Витрати` reports configured monthly ChatGPT/Codex and Claude fees, actual Cloudflare/hosted-Matrix/R2 spend, and provider-reported usage/limit/reset when exposed.
+- Session AI marginal cost is `входить у підписку; окремо не атрибутується`. Missing data is `невідомо`. Token estimates, invented session charges, API/PAYG, purchased credits and hard budget claims are forbidden.
 
-At published Cloudflare rates, continuously provisioned `lite` bridge is approximately USD 6.7/month and `basic` approximately USD 11.9/month before CPU, DO, R2, egress and AI calls. Це planning arithmetic, не прогноз рахунку. `Витрати` показує actual metered usage та явно позначені оцінки.
+## Performance Reliability And Observability
 
-## Observability
-
-Content-free telemetry: bridge sync lag and crypto restore; room invariant result; registrar transition latency, dedupe and outbox age; per-role process lifecycle; acknowledgement/first-message/critique/final timing; cost by session/provider; archive hash/delete verification. Logs never contain bodies, keys, tokens, recovery keys or attachments.
+- Drivers remain 5-second acknowledgement, 30-second first confirmed agent reply, no more than 60 seconds without substantive update, and 10-minute consilium or permission to continue.
+- Stable Matrix transaction/event IDs provide idempotency; registrar generations/leases reject duplicates and late work.
+- Outbox retries never create a second `ConfirmedEnvelope`; delivery needs a Matrix send receipt.
+- Content-free telemetry: bridge sync/crypto restore, room gate, registrar transitions, lease age/fence, checkpoint version/age, auth-mode category, quota/reset, thread/process lifecycle, outbox age, timing, archive hashes and deletion.
+- Logs/traces exclude bodies, attachments, prompts, OAuth/Matrix tokens, `auth.json`, setup-token, URLs/codes, recovery keys and workspace content.
+- Alerts distinguish auth expiry, quota exhaustion, forbidden credential, provider outage, agent failure, integrity failure and delivery failure.
 
 ## Deployment And Rollback
 
-1. Provision Worker, DO, R2, containers and secrets outside production.
-2. Create bot and new compliant Matrix room; verify devices and recovery before work content.
-3. Validate E2EE, restart/crypto restore and exact room invariants on real Element clients.
-4. Deploy bridge dark without agent dispatch.
-5. Enable synthetic direct-answer flow, then real A2A agents, archive and costs.
-6. Promote exact image/config hashes. Old WhatsApp transcripts are not current Matrix history.
+1. Provision Worker, fixed `RegistrarDO`, container hosts, private R2 prefixes and wrapping secrets outside production.
+2. Create bot/compliant room; verify E2EE, recovery/revocation, membership and restartable crypto checkpoint.
+3. Bootstrap Codex ChatGPT OAuth and Claude setup-token out-of-band into separate sealed credential objects.
+4. Start dark `CodexAccountRuntime`; verify one writer lease, `account/read` mode/plan, checkpoint mutation and teardown without a model turn.
+5. Verify Claude with `claude auth status` under the allowlisted environment and confirm forbidden provider credentials are absent.
+6. Enable direct flow, separate Codex threads, Claude critic, A2A, archive and cost snapshots.
+7. Promote pinned image, SDK/app-server/CLI, schema and source hashes only after real Element/Matrix evidence.
 
-Rollback stops new intake, cancels AgentRuntime, keeps bridge read-only for status/export, restores the last compatible image/schema reader and preserves confirmed bodies. Key/schema migrations must support the declared rollback window.
+Rollback stops intake, executes `Стоп`, fences credential writers, seals the last valid checkpoint, retains safe bridge status/export and restores the previous compatible image/schema reader. It never copies an old `auth.json` over a newer lineage. If safe restore is unproven, system stays `SS-29` until out-of-band reauth.
 
-## Security And Failure Evidence
+## Architecture Decision Log
 
-- unauthorized mxid/room/device rejected before protected processing;
-- E2EE verified on Mac, iPhone, Android and Windows; recovery and revoked-device denial;
-- federation, membership, invites, guests, bridges/widgets and history invariants checked;
-- no plaintext fallback on missing keys;
-- separate Codex and Claude Code critic process identity proven;
-- every visible A2A body exists byte-for-byte in canonical log before routing/publication;
-- duplicate sync/outbox/restart does not duplicate messages;
-- `Стоп`, permission denial, timeout, crash and late reply are safe;
-- full bodies, roles, `HH:MM`, native replies and order survive clients/export;
-- encrypted R2 objects, deletion and archive hashes verified;
-- arbitrary egress blocked and credentials absent from agent environment;
-- cost ledger reconciles with provider usage;
-- no custom sound or browser product surface exists.
+| ID | Decision | Source References | Alternatives Considered | Why | Consequences | Open Follow-Up |
+|---|---|---|---|---|---|---|
+| `AD-01` | Element/Matrix + hosted homeserver + Cloudflare | `FR-001`, `NFR-005`, guardrails | browser/WhatsApp, own VPS/homeserver, local Mac | confirmed surface and low ops burden | provider capability/policy gate | select provider/federation capability |
+| `AD-02` | one fixed `RegistrarDO` | `FR-014`–`FR-016`, Candidate B | peer agents, multiple registrars | deterministic order/stop/permission/evidence | single logical authority | measure DO pressure |
+| `AD-03` | one sealed mutable Codex OAuth lineage/writer | owner decision, PRD `3.5`, OpenAI app-server | cloned `auth.json`, OAuth per agent, API keys | avoid split-brain in managed refresh | checkpoint complexity, conservative scheduling | pinned concurrency evidence |
+| `AD-04` | separate Codex threads/workspaces | `FR-009`, OpenAI thread/turn docs | role-labeled monologue, separate stores | real agents without credential duplication | lifecycle/context isolation evidence | SDK vs direct app-server adapter |
+| `AD-05` | isolated Claude process with subscription token | `FR-010`, Anthropic auth/CLI | API/cloud/bare/shared process | independent subscription critic | out-of-band renewal, scrubbed env | confirm plan eligibility |
+| `AD-06` | encrypted R2 credentials and archives | `NFR-005`–`NFR-006`, Cloudflare docs | plaintext DO/R2, container-only, VPS vault | durable Cloudflare-only production | key rotation/crash consistency risk | approve key service/cadence |
+| `AD-07` | A2A v0.3 register-before-route | `FR-011`–`FR-016`, A2A spec | direct peer/shared chat file | actual visible ordered conversation | registrar latency | pin profile/version |
+| `AD-08` | fail-closed `SS-29`, no paid fallback | `FR-030`, `NFR-006` | API/PAYG/credits/provider fallback | protects consent/cost/auth boundary | partial sessions pause | safe reason mapping |
+| `AD-09` | subscription + actual infrastructure costs | `FR-033`, `MG-09` | token estimate/session charge/hard cap | truthful attributable cost only | some fields unknown | select billing/usage feeds |
+| `AD-10` | private one-owner non-SaaS gate | product idea, PRD `3.1`, Anthropic legal | shared/client service on owner OAuth | ordinary owner-use boundary | expansion needs rearchitecture | periodic terms review |
 
-## Decision Record
+## Risks And Mitigations
 
-1. **Element/Matrix replaces WhatsApp.** Native multi-device UX, Matrix E2EE and programmable bot access.
-2. **Managed homeserver, not own VPS.** Lowest operational burden; capability/policy is a release gate.
-3. **Same homeserver and non-federated room where supported.** Fewer servers and metadata paths.
-4. **Always-on bridge, on-demand agents.** `/sync` needs persistence; expensive compute does not.
-5. **One registrar.** Deterministic order, permissions, stop and immutable record.
-6. **Real isolated processes.** A консиліум is not simulated role labels.
-7. **A2A through registrar only.** Full actual conversation stays visible and auditable.
-8. **Application-layer encryption in R2.** Managed at-rest encryption is not the product key boundary.
-9. **No local production dependency.** All device families work without an awake Mac.
-10. **No product-authored sound.** Element/OS owns messenger notifications.
+| Risk | Mitigation | Residual |
+|---|---|---|
+| OAuth split-brain/refresh reuse | fenced writer, version/CAS, no clone | crash before checkpoint may force reauth |
+| Credential leakage | AEAD, ephemeral `0600` file, allowlisted env, no-content logs | runtime is trusted plaintext boundary |
+| Higher-precedence Claude credential wins | empty allowlisted env, auth status, blocked provider flags | CLI precedence can change |
+| Serialized Codex work misses timing | separate threads; measured bounded concurrency only in same runtime | 10-minute target may be hard |
+| Subscription quota exhaustion | preflight every call, visible reset, no fallback | precise provider status may be absent |
+| Provider rules change | release and periodic eligibility review | vendor approval may be required |
+| Homeserver policy/SLA mismatch | adapter, conditional PoC, capability/soak gates | provider not selected |
+| Duplicate/reordered messages | sequence/hash, idempotency, outbox receipts | client delivery timing differs |
+| R2/archive/key failure | separated keys, manifests, verified whole-session operations | upstream retention cannot be erased here |
+| Registrar outage | durable state, replayable outbox, alerts | temporary unavailability over split-brain |
 
 ## Traceability
 
-| Architecture area | Primary requirements |
+| Area | Primary contracts |
 |---|---|
-| exact Matrix room/device access | `FR-001`–`FR-005`, `NFR-006`, `AC-001`, `SS-01`–`SS-08`, `SS-25`–`SS-27` |
-| one Active Session and commands | `FR-006`–`FR-014`, `AC-002`–`AC-004` |
-| real live consilium/A2A | `FR-015`–`FR-024`, `NFR-001`–`NFR-005`, `AC-005`–`AC-007` |
-| final, failures, external actions | `FR-025`–`FR-030`, `AC-008`–`AC-009` |
-| archive, deletion, costs | `FR-031`–`FR-036`, `NFR-007`–`NFR-012`, `AC-010`–`AC-011` |
-| native cross-device UX | `NFR-013`–`NFR-015`, `SUR-01`, `MG-01`–`MG-13`, Candidate B |
+| Matrix access/E2EE/recovery | `FR-001`–`FR-006`, `NFR-005`–`NFR-008`, `SS-01`–`SS-08`, `SS-25`–`SS-27` |
+| OAuth/separate agents/private eligibility | `US-006`–`US-007`, `US-018`, `FR-009`–`FR-010`, `FR-030`, `NFR-006`, `SS-28`–`SS-29` |
+| live A2A/Candidate B | `FR-011`–`FR-019`, `FR-034`, `MG-06`–`MG-08`, `SS-10`–`SS-12` |
+| controls/failure/timing | `FR-020`–`FR-024`, `NFR-001`–`NFR-004`, `MG-08`–`MG-11` |
+| final/archive/permissions | `FR-025`–`FR-032`, `FR-035`, `SS-18`–`SS-24` |
+| truthful costs | `US-021`, `FR-033`, `NFR-012`, `MG-09`, `SS-14` |
+| Element-only presentation | `SUR-01`, `FR-034`, `NFR-013`–`NFR-015`, Candidate B |
 
-## Open Questions And Release Gates
+## Out Of Scope
 
-1. Which managed homeserver passes bot policy, uptime, `m.federate: false` and pricing tests? `matrix.org` is conditional PoC default, not guaranteed production choice.
-2. Which Codex and Claude models/profiles meet quality, streaming and cost thresholds?
-3. What retention period and wrapping-key service are approved?
-4. What Matrix-native rendered Candidate B receives whole-design approval?
-5. What measured bridge profile is safe after a 7-day soak: `basic` or `lite`?
+- API-key, PAYG, usage-credit, Bedrock, Vertex, Foundry, personal-access-token, custom provider or model fallback.
+- Cloned `auth.json`, multiple Codex credential writers, OAuth store per agent or durable plaintext credential volume.
+- Third-party, client, employee, shared, resale, public or SaaS use of owner subscriptions.
+- Own VPS, own Matrix homeserver, local Mac production dependency or always-on local process.
+- Browser product, login dashboard, custom Element chrome/sound or separate agent Matrix accounts.
+- Public A2A discovery, direct peer messaging, hidden inter-agent chat or fabricated replies.
+- New screens, user stories, visual baseline, DoD/eval gates, QA checklist or implementation tasks.
 
-These questions block production where stated, but do not require a local server, own VPS/homeserver, WhatsApp integration, custom browser UI or product-authored sound.
+## Open Questions
+
+1. Which hosted Matrix provider passes bot policy, uptime, E2EE recovery, exactly-two-member room and `m.federate: false` gates? `matrix.org` remains conditional PoC only.
+2. Which pinned Codex app-server/SDK and Claude Code versions are production-compatible, and can bounded cross-thread turns be proven safe inside one account runtime without another writer?
+3. Which Cloudflare wrapping-key service, rotation cadence and credential-checkpoint retention policy are approved?
+4. Which current ChatGPT and Claude plans explicitly permit this exact private cloud automation at release time? Unclear eligibility blocks production pending vendor confirmation.
+5. Which provider-supported feeds expose usage, limit and reset without API billing credentials? Missing values remain `невідомо`.
+6. What archive retention period and stopped-session lifecycle status are approved?
+
+None permits API/PAYG fallback, credential material in Matrix, a second writer, third-party use, local production hosting or a new product surface.
