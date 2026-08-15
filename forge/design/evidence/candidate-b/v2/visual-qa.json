@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0.0",
+  "candidate": "candidate-b/v2",
+  "status": "proposed",
+  "approved": false,
+  "validated_at": "2026-08-16T01:54:26+03:00",
+  "source_tree_hash": "8aad24606ffd42621d3c9c79ed668d988c46371ada1bc8fddf87b2ea1f2d30a1",
+  "matrix_fixture_hash": "0f3959792187148a2e1ae842c738644da7ed60ddc01776948f86914b8fb207e6",
+  "frozen_agent_body_hash": "ddf71722bcb4d5a2e0a56a64a4f6f0160d99d276f75590afd263e10371e76cfa",
+  "coverage": {
+    "surfaces": ["SUR-01", "SUR-02"],
+    "canonical_states": "46/46",
+    "deterministic_routes": 29,
+    "settings_groups": ["Моделі", "Глибина міркування", "Швидкість"],
+    "viewports_css_px": [390, 430, 768, 1280, 1440]
+  },
+  "checks": {
+    "static_validation": "passed",
+    "browser_console_errors": 0,
+    "browser_page_errors": 0,
+    "horizontal_overflow": "none across all routes at 390px and representative routes at 430/768/1280/1440px",
+    "text_zoom_200_percent_at_768px": "passed without horizontal overflow on both surfaces",
+    "keyboard_first_focus": "skip link",
+    "reset_confirmation_dialog": "opens with explicit cancel and confirm actions",
+    "atomic_save": "dirty valid -> saving -> whole-set success",
+    "incompatible_pair": "save blocked without silent reasoning downgrade",
+    "active_session_snapshot": "unchanged after save and reset",
+    "denied_access": "no protected settings rendered",
+    "custom_sound": "absent"
+  },
+  "screenshots": [
+    {
+      "path": "forge/design/evidence/candidate-b/v2/candidate-b-v2-chat-desktop.png",
+      "sha256": "54f8b46fd0c813535bce468c14f5b12dfb29b2e4df88bd011effe70cfcba8691",
+      "viewport": "1440x900",
+      "surface": "SUR-01",
+      "state": "live"
+    },
+    {
+      "path": "forge/design/evidence/candidate-b/v2/candidate-b-v2-settings-desktop.png",
+      "sha256": "e5b9454cdf6c1e54957447647e6b4bfb3ffe7b6fd0ef28e2a90ec2668ad88c6e",
+      "viewport": "1440x900",
+      "surface": "SUR-02",
+      "state": "loaded"
+    },
+    {
+      "path": "forge/design/evidence/candidate-b/v2/candidate-b-v2-chat-mobile.png",
+      "sha256": "82d491673748ef79c2c272f12339e435bba4d0a2b5f5f5060840aa3766044d1f",
+      "viewport": "390x844",
+      "surface": "SUR-01",
+      "state": "live"
+    },
+    {
+      "path": "forge/design/evidence/candidate-b/v2/candidate-b-v2-settings-mobile.png",
+      "sha256": "adde344be7808af610cd2f4c8701385124545f9d9587a3fdca851da44ac0bd2d",
+      "viewport": "390x844",
+      "surface": "SUR-02",
+      "state": "loaded"
+    }
+  ],
+  "boundary": "Design-only evidence. This is not production authentication, persistence, Matrix transport, provider OAuth, A2A orchestration, or deployment evidence."
+}

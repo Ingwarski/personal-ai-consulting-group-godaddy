@@ -1,7 +1,7 @@
 {
   "pipeline_version": "1.1.0",
   "state": "awaiting_integrated_design_approval",
-  "updated_at": "2026-08-16T01:29:53+0300",
+  "updated_at": "2026-08-16T01:54:26+0300",
   "product_idea_intake": {
     "status": "handed_off",
     "intake_id": "google-owner-settings-20260816",
@@ -205,7 +205,20 @@
   "prototype_candidates": [
     {"candidate_id": "candidate-a", "version": "v1", "direction": "Рішення спочатку", "status": "historical-superseded", "approved": false},
     {"candidate_id": "candidate-b", "version": "v1", "direction": "Дослівний консиліум", "status": "selected-content-direction-historical-visual", "approved": false},
-    {"candidate_id": "candidate-c", "version": "v1", "direction": "Контроль і межі", "status": "historical-superseded", "approved": false}
+    {"candidate_id": "candidate-c", "version": "v1", "direction": "Контроль і межі", "status": "historical-superseded", "approved": false},
+    {
+      "candidate_id": "candidate-b",
+      "version": "v2",
+      "direction": "Дослівний консиліум — Element + Налаштування власника",
+      "status": "proposed-awaiting-whole-design-approval",
+      "approved": false,
+      "source_root": "forge/design/candidates/candidate-b/v2",
+      "source_tree_hash": "8aad24606ffd42621d3c9c79ed668d988c46371ada1bc8fddf87b2ea1f2d30a1",
+      "matrix_fixture_hash": "0f3959792187148a2e1ae842c738644da7ed60ddc01776948f86914b8fb207e6",
+      "frozen_agent_body_hash": "ddf71722bcb4d5a2e0a56a64a4f6f0160d99d276f75590afd263e10371e76cfa",
+      "visual_qa": "forge/design/evidence/candidate-b/v2/visual-qa.json",
+      "coverage": {"surfaces": "2/2", "states": "46/46", "viewports": [390, 430, 768, 1280, 1440]}
+    }
   ],
   "active_baseline": {
     "baseline_id": null,
@@ -217,11 +230,11 @@
   "approved_baseline_id": null,
   "affected_feature_units": [],
   "input_requests": [],
-  "next_ready_nodes": ["integrated-candidate-b-with-owner-settings"],
+  "next_ready_nodes": ["whole-design-approval-candidate-b-v2"],
   "pause_reason": "whole-design-approval-required-for-integrated-candidate-b-and-owner-settings",
   "last_resume_event": {
-    "type": "google_owner_settings_sdd_reconciliation",
-    "timestamp": "2026-08-16T01:29:53+0300",
+    "type": "integrated_candidate_b_v2_created_and_browser_validated",
+    "timestamp": "2026-08-16T01:54:26+0300",
     "source": "user_request"
   }
 }

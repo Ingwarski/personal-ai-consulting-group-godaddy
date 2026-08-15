@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Інтегрований design-only прототип Candidate B для Element і Налаштувань власника."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <title>Candidate B v2 — Персональний консультант</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230f6f69'/%3E%3Ctext x='32' y='40' text-anchor='middle' font-family='Arial,sans-serif' font-size='24' font-weight='700' fill='white'%3EPC%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script
+      src="../../../candidate-sets/whatsapp-consultant/v1/shared/scenario-fixture.js"
+      defer
+    ></script>
+    <script
+      src="../../../candidate-sets/matrix-consultant/v2/shared/scenario-fixture.js"
+      defer
+    ></script>
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#prototype-root">Перейти до прототипу</a>
+
+    <header class="review-toolbar" aria-label="Керування прототипом">
+      <div class="review-title">
+        <span class="review-mark" aria-hidden="true">B</span>
+        <div>
+          <strong>Candidate B · інтегрований прототип</strong>
+          <span>Для цілісного погодження, не production</span>
+        </div>
+      </div>
+
+      <div class="review-controls">
+        <fieldset class="surface-switcher">
+          <legend class="sr-only">Поверхня прототипу</legend>
+          <button type="button" data-surface="chat">Element-чат</button>
+          <button type="button" data-surface="settings">Налаштування</button>
+        </fieldset>
+
+        <label class="state-control">
+          <span>Стан</span>
+          <select id="state-select"></select>
+        </label>
+      </div>
+    </header>
+
+    <main id="prototype-root" tabindex="-1"></main>
+
+    <template id="chat-template">
+      <section class="element-context" aria-label="Element — приватна кімната Персонального консультанта">
+        <aside class="element-rooms" aria-label="Кімнати Element">
+          <div class="element-brand">
+            <span class="element-brand-mark" aria-hidden="true">E</span>
+            <strong>Element</strong>
+          </div>
+          <div class="room-search" aria-hidden="true">Пошук</div>
+          <p class="room-section-label">Приватні кімнати</p>
+          <div class="room-item" aria-current="page">
+            <span class="room-avatar" aria-hidden="true">PC</span>
+            <span>
+              <strong>Персональний консультант</strong>
+              <small>Зашифровано</small>
+            </span>
+          </div>
+        </aside>
+
+        <section class="element-room">
+          <header class="room-header">
+            <div class="room-heading">
+              <span class="mobile-back" aria-hidden="true">‹</span>
+              <span class="room-avatar" aria-hidden="true">PC</span>
+              <div>
+                <h1>Персональний консультант</h1>
+                <p><span aria-hidden="true">🔒</span> Приватна зашифрована кімната</p>
+              </div>
+            </div>
+            <button class="icon-button" type="button" aria-label="Інформація про кімнату">i</button>
+          </header>
+
+          <div class="timeline" id="conversation" tabindex="-1">
+            <div class="session-start">
+              <span>15 серпня 2026 · початок о 10:02</span>
+            </div>
+            <ol id="message-stream" class="message-stream" aria-live="polite"></ol>
+          </div>
+
+          <div class="element-composer" aria-label="Поле повідомлення — лише демонстрація">
+            <button type="button" class="composer-action" aria-label="Додати вкладення" disabled>＋</button>
+            <div class="composer-field" aria-hidden="true">Напишіть повідомлення…</div>
+            <button type="button" class="composer-action" aria-label="Надіслати повідомлення" disabled>➤</button>
+          </div>
+        </section>
+      </section>
+    </template>
+
+    <template id="settings-template">
+      <section class="settings-page" aria-labelledby="settings-title">
+        <header class="settings-header">
+          <div>
+            <p class="settings-eyebrow">Персональний консультант</p>
+            <h1 id="settings-title">Налаштування власника</h1>
+            <p class="settings-intro">
+              Ці параметри застосовуються лише до нових сесій. Щоденна робота залишається в Element.
+            </p>
+          </div>
+          <a class="element-return" href="?surface=chat&amp;state=live">Відкрити Element</a>
+        </header>
+
+        <div id="settings-content"></div>
+      </section>
+    </template>
+
+    <dialog id="reset-dialog" class="reset-dialog" aria-labelledby="reset-title">
+      <form method="dialog">
+        <h2 id="reset-title">Повернути всі налаштування до default?</h2>
+        <p>
+          Будуть змінені моделі, глибина міркування та швидкість для наступних сесій.
+          Активна сесія не зміниться.
+        </p>
+        <div class="dialog-actions">
+          <button value="cancel" class="button secondary">Скасувати</button>
+          <button value="confirm" class="button danger">Повернути default</button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>
