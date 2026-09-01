@@ -517,3 +517,7 @@ The source repository may include the Node adapters and explicit schema tooling,
 - **Options:** accept a shared token/header; retain Cloudflare Access; or use a server-side Google OIDC authorization-code boundary.
 - **Decision:** use server-side Google OIDC only, validate the signed ID token’s issuer, audience, expiry, nonce, verified-email claim and exact owner email, then issue an application session that contains no Google or AI token.
 - **Consequence:** Settings stays unavailable until the owner provisions a Google web client and exact redirect URI; this is safer than a temporary alternate login and does not alter subscription OAuth isolation.
+
+**Implementation note — canonical Registrar state.**
+
+The Node adapter now instantiates the existing `RegistrarDO` over the fixed `registrar-v1` MySQL namespace and exposes only its content-free active-session summary to Settings. It has no public route and no Matrix client. That preserves the session/append/CAS contract without falsely treating a database adapter as an E2EE bridge or agent runtime.

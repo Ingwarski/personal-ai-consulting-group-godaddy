@@ -17,6 +17,7 @@ import {
   type GodaddyDatabaseConfiguration,
   type MySqlPool
 } from "./mysql-storage.ts";
+import { createGoDaddyRegistrarRuntime } from "./registrar-runtime.ts";
 
 type SettingsAsset = "settings.css" | "settings.js";
 
@@ -146,11 +147,18 @@ export function createGoDaddySettingsRuntime(
 
   const settingsOrigin = new URL(oidc.value.redirectUri).origin;
   const google = createGoogleOidcService({ configuration: oidc.value, now });
+  const pool = (dependencies.createPool ?? defaultPool)(database.value);
   const storage = new MySqlKeyValueStorage({
-    executor: (dependencies.createPool ?? defaultPool)(database.value),
+    executor: pool,
     namespace: "owner-settings-v1"
   });
-  const ownerSettings = new OwnerSettingsDO({ storage, getCapabilityReceipt: () => receipt, now });
+  const registrar = createGoDaddyRegistrarRuntime({ pool, now });
+  const ownerSettings = new OwnerSettingsDO({
+    storage,
+    getCapabilityReceipt: () => receipt,
+    getActiveSessionSummary: registrar.getActiveSessionSummary,
+    now
+  });
   const csrfKey = importCsrfHmacKey(csrfSecret);
   const readAsset = dependencies.readAsset ?? defaultReadAsset;
 
