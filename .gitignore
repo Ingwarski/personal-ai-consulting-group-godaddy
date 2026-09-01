@@ -1,2 +1,9 @@
 .playwright-cli/
+.DS_Store
 output/playwright/
+node_modules/
+.wrangler/
+.dev.vars
+.dev.vars.local
+coverage/
+dist/

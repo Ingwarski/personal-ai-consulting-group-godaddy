@@ -2,16 +2,16 @@
 
 ## Метадані
 
-- `status`: proposed baseline
+- `status`: approved visual baseline; production implementation not started
 - `architecture_owner`: `to-architecture`
-- `owner_invocation_id`: `0d65f43c-e5b9-4eca-8adc-84a6a3eb5a17`
-- `updated_at`: `2026-08-16`
+- `owner_invocation_id`: `e05a1a53-1bfe-4a6b-a6db-a3ba80de9266`
+- `updated_at`: `2026-09-01`
 - `design_direction`: Candidate B для живого дослівного консиліуму
 - `product_surfaces`: 2 (`SUR-01`, `SUR-02`)
 - `requirements`: 29 user stories, 46 FR, 19 NFR, 16 AC
 - `screen_contracts`: `MG-01–MG-13`, `SG-01–SG-05`, `SS-01–SS-46`
 
-Цей документ є proposed архітектурною базою, а не описом уже реалізованої системи. Поточний код репозиторію підтверджує лише локальний legacy live-chat прототип; Cloudflare, hosted Matrix, subscription OAuth runtime і `SUR-02` ще не є production implementation.
+Цей документ фіксує архітектурну базу для затвердженого visual baseline, а не опис уже реалізованої системи. Поточний код репозиторію підтверджує лише локальний legacy live-chat прототип; Cloudflare, `matrix.org`, subscription OAuth runtime і `SUR-02` ще не є production implementation.
 
 ## 1. Джерела правди
 
@@ -19,16 +19,16 @@
 
 | Джерело | SHA-256 | Архітектурне значення |
 |---|---|---|
-| `README.md` | `d1afdf92181df9e002f9f75678f8ca46083c90bec0a9a33e47535a0593fa1c9c` | межі репозиторію й запуску консиліуму |
-| `docs/product-idea.md` | `263a5d15949e2ebf70f9fb4fa8ba67ff1e882cb5ae2774ecf218ccff16586ac5` | продуктовий намір і підтверджені рішення |
-| `docs/prd.md` | `2d9546dd7b0f4cd25dea0f225ffa35c0819966e3edb9efaa72f781f3fb70d660` | 29 US, 46 FR, 19 NFR, 16 AC |
-| `docs/project-context.md` | `529ee8b70ec81b2a4734cb7580e5bfc84052a9f2552b039cd52bd42dfe4b2fee` | технічний і операційний контекст |
-| `docs/canonical-terms.md` | `75e8ab94a47faa0f89a51605543f2f643ce9b53c8513d26ee7d5bb54037f26fc` | канонічні сутності й стани |
-| `docs/guardrails.md` | `54c7ccd20d612e908f1038499c2db101d47e587c141a2d5363e003b2a0dbb3bc` | незмінні обмеження та fail-closed межі |
+| `README.md` | `540a76cb67521d9f3652ec15604f9dc7657f865af639baf13df506f07288c81b` | межі репозиторію й запуску консиліуму |
+| `docs/product-idea.md` | `0773d6f4af97aecd24db28399c9839dd6e547af83b73cdc8c975f0f93be9c6a8` | продуктовий намір і підтверджені рішення |
+| `docs/prd.md` | `524572b88574933f8df3ba4f1d2987f94285e676ef11a779aecf4582218caa2d` | 29 US, 46 FR, 19 NFR, 16 AC |
+| `docs/project-context.md` | `192375d5251c53cdfa9b310d7bf76bd663b82148aa38c5d638a99e2dcf4774d7` | технічний і операційний контекст |
+| `docs/canonical-terms.md` | `716dae08e4fdbc8f00f63e80868a1625aa648b72e4ce4685d5d554631384d86a` | канонічні сутності й стани |
+| `docs/guardrails.md` | `8f4489de9f7a7ecce64bab29b1b8bf273747a995bcc1460b61f01d98d4e1f7c0` | незмінні обмеження та fail-closed межі |
 | `docs/user-journey.md` | `e4dfa9801ef0eab241c4b768719732628e37aebb068a8fd8067eeedbe1a6d7cd` | основна й settings-подорожі |
 | `docs/screen-map.md` | `5f138005cf9b6c9b347cc8d876bd74f6f9c977503ad6dc53436ccd35e75f0a5b` | 2 surfaces, 13 MG, 5 SG, 46 SS |
 | `docs/wireframes.md` | `df7ca5c68e238416d16541e765b6a062bd29ab1328de06dc0f064f0600fb2edc` | low-fi interaction contracts |
-| `docs/design-brief.md` | `65b9ab8353735a541e46ada95c8e89e85a5e0882f0e71705384aa98887ee2ed3` | Candidate B та візуальні constraints |
+| `docs/design-brief.md` | `110ae5b96032214a487269d2c0c4c9688de072e4900c4853c093683dad01d5cd` | approved baseline `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`, Candidate B v2 та візуальні constraints |
 
 ### 1.2. Pattern evidence, не product scope
 
@@ -41,7 +41,7 @@
 - Cloudflare: [Google IdP](https://developers.cloudflare.com/cloudflare-one/integrations/identity-providers/google/), [Access policies](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/), [self-hosted applications](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/self-hosted-public-app/), [JWT validation](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/) і [Workers caching](https://developers.cloudflare.com/workers/cache/configuration/).
 - OpenAI: [Codex models](https://learn.chatgpt.com/docs/models), [Codex configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference), [Codex app-server model capabilities](https://learn.chatgpt.com/docs/app-server) і [Codex authentication](https://learn.chatgpt.com/docs/auth).
 - Anthropic: [Claude Code authentication](https://code.claude.com/docs/en/authentication), [model and effort configuration](https://code.claude.com/docs/en/model-config) і [Fast Mode](https://code.claude.com/docs/en/fast-mode).
-- Matrix: [Client-Server API](https://spec.matrix.org/latest/client-server-api/), [E2EE implementation guide](https://matrix.org/docs/matrix-concepts/end-to-end-encryption/) і [room version 11](https://spec.matrix.org/v1.11/rooms/v11/).
+- Matrix: [Client-Server API](https://spec.matrix.org/latest/client-server-api/), [E2EE implementation guide](https://matrix.org/docs/matrix-concepts/end-to-end-encryption/), [public homeserver](https://matrix.org/homeserver/), [pricing](https://matrix.org/homeserver/pricing/) і [room version 11](https://spec.matrix.org/v1.11/rooms/v11/).
 - Agent interoperability: [A2A Protocol v0.3.0](https://a2a-protocol.org/latest/specification/).
 - Cloudflare runtime: [Containers](https://developers.cloudflare.com/containers/), [Durable Objects](https://developers.cloudflare.com/durable-objects/) і [R2](https://developers.cloudflare.com/r2/).
 
@@ -56,7 +56,7 @@ V1 має дві й лише дві продуктові поверхні:
 
 `SUR-02` не є браузерною консультацією: там немає чату, архіву, execution status, живих реплік, витрат або dashboard. Після save/reset/cancel Власник повертається до Element. Candidate B залишається базовим напрямом для `SUR-01`: кожне реальне призначення, проміжна відповідь, критика і корекція з'являються дослівно від одного Matrix bot identity з роллю та `HH:MM`; адресування використовує native Matrix reply.
 
-Production topology: hosted Matrix + Cloudflare. Локальний Mac, власний VPS і власний homeserver не є production компонентами.
+Production topology: публічний `matrix.org` + Cloudflare. Локальний Mac, власний VPS, власний homeserver і платний Matrix-hosting не є production компонентами V1.
 
 ## 3. Незмінні принципи
 
@@ -69,13 +69,13 @@ Production topology: hosted Matrix + Cloudflare. Локальний Mac, вла�
 7. Налаштування не можуть послабити critic, A2A, E2EE, verbatim visibility, source, safety, privacy чи permission guards.
 8. Активна сесія має immutable effective settings snapshot; пізніші saves діють лише на наступну.
 9. UI не приймає довільних model slug і не показує жодного AI OAuth credential.
-10. Product status — proposed, доки production topology не розгорнуто та не підтверджено.
+10. Visual baseline — approved; runtime status лишається not implemented, доки production topology не розгорнуто та не підтверджено.
 
 ## 4. Системний контекст
 
 ```mermaid
 flowchart LR
-    E["Element clients"] <-->|"E2EE Matrix events"| H["Managed hosted homeserver"]
+    E["Element clients"] <-->|"E2EE Matrix events"| H["matrix.org public homeserver"]
     H <--> B["Always-on MatrixBridgeContainer"]
     B <--> R["RegistrarDO"]
     R <--> A["On-demand AgentRuntimeContainer"]
@@ -90,7 +90,7 @@ flowchart LR
     A --> M
 ```
 
-Hosted homeserver транспортує ciphertext між Matrix-пристроями, але E2EE закінчується на Element і bot crypto client. `MatrixBridgeContainer`, `AgentRuntimeContainer` та provider runtimes бачать потрібний plaintext; це чесна межа E2EE, а не твердження про наскрізне шифрування всередині orchestration backend.
+`matrix.org` транспортує ciphertext між Matrix-пристроями, але бачить службові метадані. E2EE закінчується на Element і bot crypto client. `MatrixBridgeContainer`, `AgentRuntimeContainer` та provider runtimes бачать потрібний plaintext; це чесна межа E2EE, а не твердження про наскрізне шифрування всередині orchestration backend.
 
 `SUR-02` має окрему TLS + Cloudflare Access boundary. Його дані не надсилаються до Matrix і не успадковують Matrix E2EE.
 
@@ -99,7 +99,7 @@ Hosted homeserver транспортує ciphertext між Matrix-пристро
 | Компонент | Роль | Не має права |
 |---|---|---|
 | Element clients | native Matrix UX, E2EE, replies, notifications | виконувати orchestration або settings writes |
-| Managed homeserver | room transport, membership, joined history | бачити E2EE plaintext або додавати учасників поза інваріантом |
+| `matrix.org` public homeserver | room transport, membership, joined history | бачити E2EE plaintext або додавати учасників поза інваріантом |
 | `MatrixBridgeContainer` | постійний `matrix-rust-sdk` client, encrypted crypto store, ingest/delivery | синтезувати agent output або змінювати settings |
 | `RegistrarDO` | dedupe, session lifecycle, ordered append, A2A register-before-route, snapshot commit | викликати незареєстрованого агента або переписувати transcript |
 | `AgentRuntimeContainer` | одна ephemeral consultation runtime | переживати завершення сесії або володіти довгостроковими secrets |
@@ -119,13 +119,12 @@ Hosted homeserver транспортує ciphertext між Matrix-пристро
 Room invariant перевіряється до приймання кожного нового запиту:
 
 - invite-only E2EE room із рівно двома joined members: Власник і один verified bot;
-- обидва акаунти на тому самому managed hosted homeserver;
-- `m.federate: false`, якщо обраний room version/provider це підтримує;
-- history visibility — joined members; guests, bridges, widgets і outstanding invites — off/none;
+- обидва акаунти на `matrix.org`;
+- history visibility — joined members; public address/listing, guests, bridges, widgets і outstanding invites — off/none;
 - bot device verified, crypto store persistent і encrypted;
 - будь-який drift блокує нову сесію, але не переписує вже підтверджені повідомлення.
 
-`matrix.org` допустимий лише як умовний PoC default через provider adapter. Production gate вимагає підтвердження private-room controls, server-side bot operation, E2EE device lifecycle, data location, retention і операційної підтримки; інакше вибирається інший managed provider без зміни domain contracts.
+Для V1 обрано публічний `matrix.org` на його поточному безкоштовному плані. Власний VPS, власний homeserver і платний Matrix-hosting поза scope. Публічний homeserver не дає Власнику server-level контролю federation, тому V1 не заявляє та не вимагає `m.federate: false`. Release gate — живий доказ private-room controls, server-side bot operation, E2EE device lifecycle, exact membership/allowlist, data boundary і наявного на дату запуску безкоштовного плану. Якщо будь-який room invariant порушено, нові сесії блокуються; вибір іншого provider потребує нового явного рішення Власника.
 
 `MatrixBridgeContainer` працює завжди. `AgentRuntimeContainer` запускається на одну сесію після preflight і завершується після finalization/checkpoint. Власник завжди пише лише боту; внутрішні агенти не мають Matrix identities.
 
@@ -337,7 +336,7 @@ Latency budgets are end-to-end from accepted Matrix request: status ≤5 s, expe
 `Витрати` reports only:
 
 - configured monthly ChatGPT/Codex and Claude subscription fees;
-- actual Cloudflare, hosted Matrix, R2 and other infrastructure spend;
+- actual Cloudflare, R2 and other infrastructure spend, plus current `matrix.org` plan status (`0` only while the free plan is available);
 - provider-reported usage/limit/reset when exposed.
 
 AI marginal cost of a session is «included in subscription / not attributable». No invented token cost, hard monetary session cap, automatic extra usage or credits purchase is allowed. Fast Mode is excluded because Anthropic states that subscription Fast Mode consumes separately billed extra usage.
@@ -376,7 +375,7 @@ Schema evolution is expand/read-old/write-new with reversible readers. Settings 
 
 Agent runtime rollback does not roll back confirmed transcript. A failed rollout drains new starts, keeps bridge/Registrar available for visible status and preserves archives. OAuth checkpoints are never restored by copying old plaintext credentials; only the fenced encrypted lineage may advance.
 
-Production gates include managed Matrix provider approval, room invariant proof, Access exact-policy proof, origin JWT validation, subscription-only auth proof, egress deny proof, catalog/runtime reconciliation and restore verification. These are release gates, not new user-facing surfaces.
+Production gates include `matrix.org` room/device/invariant proof, confirmation of its current free-plan status, Access exact-policy proof, origin JWT validation, subscription-only auth proof, egress deny proof, catalog/runtime reconciliation and restore verification. These are release gates, not new user-facing surfaces.
 
 ## 21. Архітектурні рішення
 
@@ -395,7 +394,7 @@ Production gates include managed Matrix provider approval, room invariant proof,
 | AD-11 | реальні окремі Codex threads + isolated Claude critic | ролі й критика не імітуються одним монологом |
 | AD-12 | subscription OAuth only | auth/quota failure видимий і fail closed |
 | AD-13 | app-layer encrypted R2 archive | завершена сесія immutable й exportable as a whole |
-| AD-14 | hosted Matrix/Cloudflare production | немає локального Mac, власного VPS чи homeserver |
+| AD-14 | `matrix.org`/Cloudflare production | немає локального Mac, власного VPS, власного homeserver чи платного Matrix-hosting |
 
 ## 22. Traceability
 
@@ -429,7 +428,7 @@ Multiuser, third-party access або commercial-service expansion анулює �
 
 ## 24. Відкриті рішення до production approval
 
-1. Обрати managed Matrix provider після gate-перевірки; `matrix.org` лишається тільки conditional PoC candidate.
+1. Перед release перевірити поточний безкоштовний план і ліміти `matrix.org`, а також живий E2EE room/device/invariant proof. Заміна `matrix.org` іншим provider не дозволена без нового явного рішення Власника.
 2. Зафіксувати Cloudflare region/data-location options та retention для DO/R2/Access logs відповідно до прийнятної юрисдикції.
 3. Затвердити першу release-версію `ModelCapabilityCatalog` лише після live subscription preflight обох runtimes; поточні назви моделей не є довговічним архітектурним припущенням.
 4. Затвердити числові значення `SpeedPolicyCatalog` у межах 2–5 specialists і 5/30/60/10 UX invariants без paid acceleration.

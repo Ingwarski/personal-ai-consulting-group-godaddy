@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "candidate": "candidate-b/v1",
+  "direction": "Дослівний консиліум",
+  "status": {
+    "phase": "proposed",
+    "approval": "not-approved",
+    "autoApproved": false
+  },
+  "route": {
+    "origin": "http://127.0.0.1:4312",
+    "path": "/forge/design/candidates/candidate-b/v1/",
+    "queryParameter": "state",
+    "example": "http://127.0.0.1:4312/forge/design/candidates/candidate-b/v1/?state=active"
+  },
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "stateCoverage": {
+    "required": [
+      "active",
+      "permission",
+      "failure",
+      "final",
+      "costs",
+      "stopped"
+    ],
+    "verified": 6,
+    "total": 6,
+    "result": "passed"
+  },
+  "checks": {
+    "keyboardNavigation": {
+      "result": "passed",
+      "method": "real-browser keyboard traversal and Enter activation"
+    },
+    "focusVisibility": {
+      "result": "passed",
+      "method": "real-browser keyboard traversal plus :focus-visible policy"
+    },
+    "reducedMotion": {
+      "result": "passed",
+      "method": "static policy verification",
+      "evidence": "prefers-reduced-motion: reduce constrains animation and transition duration and iteration"
+    },
+    "horizontalOverflow": {
+      "result": "passed",
+      "desktop": false,
+      "mobile": false
+    },
+    "freshConsole": {
+      "result": "passed",
+      "errors": 0,
+      "warnings": 0,
+      "favicon404": false
+    }
+  },
+  "sourceIntegrity": {
+    "sharedFixtureSha256": "96732f738a41bf1f838736de77a748ef65704d68010553bbf43638f83ddd1af6",
+    "frozenAgentBodiesSha256": "ddf71722bcb4d5a2e0a56a64a4f6f0160d99d276f75590afd263e10371e76cfa",
+    "frozenAgentBodiesContract": "UTF-8 agent message bodies in fixture order, joined using scenario.agentBodyContract.concatenationSeparator, then SHA-256",
+    "candidateSourceTreeSha256": "a57757991cabcf3d3b9d4193738325d153284c47a84162ef11d0aae7e140f6fd",
+    "candidateSourceTreeHashingContract": {
+      "algorithm": "SHA-256",
+      "scope": "direct regular files in forge/design/candidates/candidate-b/v1",
+      "files": [
+        "app.js",
+        "index.html",
+        "styles.css",
+        "validate.mjs"
+      ],
+      "ordering": "relative POSIX path in ascending bytewise lexical order",
+      "recordEncoding": "UTF-8 relative path, NUL byte, raw file bytes, NUL byte, repeated for every file"
+    }
+  },
+  "screenshots": [
+    {
+      "path": "forge/design/evidence/candidate-b/v1/candidate-b-active-desktop-final.png",
+      "state": "active",
+      "viewport": "desktop",
+      "capture": "full-page",
+      "pixelWidth": 1440,
+      "pixelHeight": 2227,
+      "sha256": "db3000ab15939d18b0a7356cddabb10993d0a81fbb447e9c95c6c259e0973399"
+    },
+    {
+      "path": "forge/design/evidence/candidate-b/v1/candidate-b-final-desktop-final.png",
+      "state": "final",
+      "viewport": "desktop",
+      "capture": "full-page",
+      "pixelWidth": 1440,
+      "pixelHeight": 2903,
+      "sha256": "9c60c2d1172b0e7c34c523399363fc4628820902fb732a3e39c33f961c87cde0"
+    },
+    {
+      "path": "forge/design/evidence/candidate-b/v1/candidate-b-final-mobile-final.png",
+      "state": "final",
+      "viewport": "mobile",
+      "capture": "full-page",
+      "pixelWidth": 390,
+      "pixelHeight": 4473,
+      "sha256": "84efbf2a5ebe7fc6d5c8141fe23d5c35da5e71becbeeb5f62f9b0f61c227f24e"
+    }
+  ],
+  "changedEvidencePaths": [
+    "forge/design/evidence/candidate-b/v1/candidate-b-active-desktop-final.png",
+    "forge/design/evidence/candidate-b/v1/candidate-b-final-desktop-final.png",
+    "forge/design/evidence/candidate-b/v1/candidate-b-final-mobile-final.png",
+    "forge/design/evidence/candidate-b/v1/visual-qa.json"
+  ],
+  "result": "passed"
+}

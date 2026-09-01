@@ -1,10 +1,13 @@
 {
   "schema_version": "1.0.0",
   "candidate": "candidate-b/v2",
-  "status": "proposed",
-  "approved": false,
-  "validated_at": "2026-08-16T01:54:26+03:00",
-  "source_tree_hash": "8aad24606ffd42621d3c9c79ed668d988c46371ada1bc8fddf87b2ea1f2d30a1",
+  "status": "approved",
+  "approved": true,
+  "baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+  "approval_receipt": "Explicit owner message on 2026-08-16: ОК. Закрий хром і продовжуй розробку.",
+  "approved_at": "2026-08-16T02:22:48+03:00",
+  "validated_at": "2026-08-16T02:14:07+03:00",
+  "source_tree_hash": "96b91ba9622f8301809ed10ef661a313006e0c2743712912c624edc36a2ca8eb",
   "matrix_fixture_hash": "0f3959792187148a2e1ae842c738644da7ed60ddc01776948f86914b8fb207e6",
   "frozen_agent_body_hash": "ddf71722bcb4d5a2e0a56a64a4f6f0160d99d276f75590afd263e10371e76cfa",
   "coverage": {
@@ -31,28 +34,28 @@
   "screenshots": [
     {
       "path": "forge/design/evidence/candidate-b/v2/candidate-b-v2-chat-desktop.png",
-      "sha256": "54f8b46fd0c813535bce468c14f5b12dfb29b2e4df88bd011effe70cfcba8691",
+      "sha256": "144ed9bfc3859ba1d4f63ba7bc1b0afc90d40e6deccadb5b2dfd952b985e87cf",
       "viewport": "1440x900",
       "surface": "SUR-01",
       "state": "live"
     },
     {
       "path": "forge/design/evidence/candidate-b/v2/candidate-b-v2-settings-desktop.png",
-      "sha256": "e5b9454cdf6c1e54957447647e6b4bfb3ffe7b6fd0ef28e2a90ec2668ad88c6e",
+      "sha256": "d268124c122cef6790562ce37527532682a9fb034095ded6a0eb5b6c9498cd87",
       "viewport": "1440x900",
       "surface": "SUR-02",
       "state": "loaded"
     },
     {
       "path": "forge/design/evidence/candidate-b/v2/candidate-b-v2-chat-mobile.png",
-      "sha256": "82d491673748ef79c2c272f12339e435bba4d0a2b5f5f5060840aa3766044d1f",
+      "sha256": "60cc33a1c12729f60986b4f0fe07da32ed1957b86a70ff27a78623ef4d881faf",
       "viewport": "390x844",
       "surface": "SUR-01",
       "state": "live"
     },
     {
       "path": "forge/design/evidence/candidate-b/v2/candidate-b-v2-settings-mobile.png",
-      "sha256": "adde344be7808af610cd2f4c8701385124545f9d9587a3fdca851da44ac0bd2d",
+      "sha256": "930f21e95bacd5be576602f6b0b349c0277db5d0fc74ae1d082aefd92d15dbd3",
       "viewport": "390x844",
       "surface": "SUR-02",
       "state": "loaded"

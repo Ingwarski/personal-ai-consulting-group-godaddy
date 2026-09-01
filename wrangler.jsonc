@@ -1,0 +1,30 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "personal-ai-consulting-group",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-08-16",
+  "workers_dev": true,
+  "vars": {
+    "RUNTIME_MODE": "production",
+    "SETTINGS_ORIGIN": "https://personal-ai-consulting-group.kyivteam-6d0.workers.dev"
+  },
+  // ACCESS_ISSUER, ACCESS_APPLICATION_AUD, ACCESS_OWNER_EMAIL and
+  // SETTINGS_CSRF_HMAC_KEY must be provisioned as Wrangler secrets.
+  // CAPABILITY_CATALOG must be added as a service binding once the real
+  // service exists; a fabricated service name would make this config lie.
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "html_handling": "none",
+    "not_found_handling": "none",
+    "run_worker_first": true
+  },
+  "durable_objects": {
+    "bindings": [
+      { "name": "OWNER_SETTINGS", "class_name": "OwnerSettingsDurableObject" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1-owner-settings", "new_sqlite_classes": ["OwnerSettingsDurableObject"] }
+  ]
+}

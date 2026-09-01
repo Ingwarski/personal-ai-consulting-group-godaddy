@@ -1,0 +1,11 @@
+# Copy to .dev.vars for local development. Keep all real values out of Git.
+RUNTIME_MODE=development
+ACCESS_ISSUER=
+ACCESS_APPLICATION_AUD=
+ACCESS_OWNER_EMAIL=
+SETTINGS_ORIGIN=
+SETTINGS_CSRF_HMAC_KEY=
+
+# CAPABILITY_CATALOG is a Cloudflare service/fetcher binding, not a text var.
+# Configure it in an environment-specific Wrangler configuration only after
+# the real capability-catalog service name is known.

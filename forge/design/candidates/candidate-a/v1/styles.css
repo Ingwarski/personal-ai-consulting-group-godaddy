@@ -1,0 +1,515 @@
+:root {
+  color-scheme: light dark;
+  --evidence-bg: #171b20;
+  --evidence-text: #f5f7f8;
+  --evidence-muted: #b7c1c8;
+  --evidence-line: #46515a;
+  --evidence-active: #d8fdd2;
+  --evidence-active-text: #17361b;
+  --wa-app-bg: #f0f2f5;
+  --wa-chat-bg: #efeae2;
+  --wa-header-bg: #f0f2f5;
+  --wa-border: #d8dedf;
+  --wa-received: #ffffff;
+  --wa-sent: #d9fdd3;
+  --wa-text: #111b21;
+  --wa-muted: #667781;
+  --wa-green: #008069;
+  --wa-focus: #005fcc;
+  --wa-shadow: 0 10px 36px rgb(17 27 33 / 18%);
+  --bubble-radius: 9px;
+  --shell-radius: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100dvh;
+  overflow-x: hidden;
+  color: var(--wa-text);
+  background: #dfe4e5;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--wa-focus);
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 100;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.7rem 0.9rem;
+  color: #ffffff;
+  background: #005fcc;
+  border-radius: 0.4rem;
+  transform: translateY(-180%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.evidence-shell {
+  position: relative;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: minmax(15rem, 1fr) minmax(20rem, 1.4fr);
+  gap: 1rem 1.5rem;
+  align-items: center;
+  padding: 1rem clamp(1rem, 3vw, 2.5rem);
+  color: var(--evidence-text);
+  background: var(--evidence-bg);
+  border-bottom: 2px dashed var(--evidence-line);
+}
+
+.evidence-intro h1,
+.evidence-intro p {
+  margin: 0;
+}
+
+.evidence-intro h1 {
+  margin-top: 0.2rem;
+  font-size: clamp(1.05rem, 2vw, 1.3rem);
+  line-height: 1.25;
+}
+
+.evidence-intro > p:last-child {
+  margin-top: 0.45rem;
+  max-width: 52rem;
+  color: var(--evidence-muted);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.eyebrow,
+.switcher-label {
+  color: var(--evidence-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.state-switcher {
+  min-width: 0;
+}
+
+.state-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+  margin-top: 0.45rem;
+}
+
+.state-link {
+  display: inline-flex;
+  min-height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.42rem 0.7rem;
+  color: var(--evidence-text);
+  text-decoration: none;
+  border: 1px solid var(--evidence-line);
+  border-radius: 999px;
+}
+
+.state-link[aria-current="page"] {
+  color: var(--evidence-active-text);
+  background: var(--evidence-active);
+  border-color: var(--evidence-active);
+  font-weight: 700;
+}
+
+.prototype-stage {
+  min-height: calc(100dvh - 9rem);
+  padding: 1rem clamp(0rem, 3vw, 2rem) 2rem;
+}
+
+.product-boundary {
+  width: min(100%, 1120px);
+  margin: 0 auto 0.55rem;
+  color: #45545c;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.whatsapp-surface {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(100%, 1120px);
+  height: min(760px, calc(100dvh - 11rem));
+  min-height: 560px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: var(--wa-app-bg);
+  border: 1px solid var(--wa-border);
+  border-radius: var(--shell-radius);
+  box-shadow: var(--wa-shadow);
+}
+
+.native-header {
+  display: flex;
+  min-height: 4rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  background: var(--wa-header-bg);
+  border-bottom: 1px solid var(--wa-border);
+}
+
+.native-avatar {
+  display: grid;
+  width: 2.65rem;
+  height: 2.65rem;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #ffffff;
+  background: var(--wa-green);
+  border-radius: 50%;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.native-title {
+  min-width: 0;
+}
+
+.native-title h2,
+.native-title p {
+  margin: 0;
+}
+
+.native-title h2 {
+  overflow: hidden;
+  font-size: 1rem;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.native-title p,
+.native-context {
+  color: var(--wa-muted);
+  font-size: 0.78rem;
+}
+
+.native-context {
+  margin-left: auto;
+}
+
+.transcript {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding: clamp(0.75rem, 2vw, 1.4rem) clamp(0.75rem, 5vw, 4.5rem) 2rem;
+  background: var(--wa-chat-bg);
+}
+
+.message-row {
+  display: flex;
+  margin: 0 0 0.55rem;
+}
+
+.message-row--owner {
+  justify-content: flex-end;
+}
+
+.message-row--incoming {
+  justify-content: flex-start;
+}
+
+.message {
+  position: relative;
+  width: fit-content;
+  max-width: min(78%, 44rem);
+  padding: 0.58rem 0.68rem 0.42rem;
+  color: var(--wa-text);
+  background: var(--wa-received);
+  border-radius: var(--bubble-radius);
+  box-shadow: 0 1px 1px rgb(17 27 33 / 10%);
+}
+
+.message-row--owner .message {
+  background: var(--wa-sent);
+}
+
+.message-row--final {
+  margin-top: 0.7rem;
+}
+
+.message-row--final + .message-row--final {
+  margin-top: -0.25rem;
+}
+
+.role-time {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: baseline;
+  margin: 0 0 0.35rem;
+  color: var(--wa-text);
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
+.role-time strong {
+  color: var(--wa-green);
+}
+
+.role-time time {
+  color: var(--wa-muted);
+  font-size: 0.74rem;
+}
+
+.message-copy {
+  overflow-wrap: anywhere;
+  font-size: 0.94rem;
+  line-height: 1.48;
+}
+
+.message-copy > :first-child {
+  margin-top: 0;
+}
+
+.message-copy > :last-child {
+  margin-bottom: 0;
+}
+
+.message-copy p,
+.message-copy ul,
+.message-copy ol,
+.message-copy pre {
+  margin: 0.62rem 0;
+}
+
+.message-copy ul,
+.message-copy ol {
+  padding-left: 1.3rem;
+}
+
+.message-copy li + li {
+  margin-top: 0.35rem;
+}
+
+.signal-line {
+  display: block;
+  font-weight: 750;
+}
+
+.message-copy code {
+  padding: 0.08em 0.25em;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 0.9em;
+  background: rgb(17 27 33 / 8%);
+  border-radius: 0.2rem;
+}
+
+.message-copy pre {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 0.75rem;
+  white-space: pre-wrap;
+  background: rgb(17 27 33 / 7%);
+  border-radius: 0.35rem;
+}
+
+.message-time {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--wa-muted);
+  font-size: 0.67rem;
+  line-height: 1;
+  text-align: right;
+}
+
+.native-composer {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  align-items: center;
+  min-height: 3.8rem;
+  padding: 0.55rem 0.8rem;
+  color: var(--wa-muted);
+  background: var(--wa-app-bg);
+  border-top: 1px solid var(--wa-border);
+}
+
+.composer-placeholder {
+  min-width: 0;
+  padding: 0.72rem 0.9rem;
+  background: var(--wa-received);
+  border-radius: 999px;
+}
+
+.fatal-error {
+  margin: 1rem;
+  padding: 1rem;
+  background: #ffffff;
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+@media (max-width: 980px) {
+  .evidence-shell {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .whatsapp-surface {
+    height: min(720px, calc(100dvh - 14.5rem));
+  }
+}
+
+@media (max-width: 620px) {
+  .evidence-shell {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+    padding: 0.85rem;
+  }
+
+  .prototype-stage {
+    min-height: auto;
+    padding: 0;
+  }
+
+  .product-boundary {
+    margin: 0;
+    padding: 0.55rem 0.75rem;
+    background: #dfe4e5;
+  }
+
+  .whatsapp-surface {
+    width: 100%;
+    height: calc(100dvh - 1rem);
+    min-height: 640px;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .native-context {
+    display: none;
+  }
+
+  .transcript {
+    padding: 0.7rem 0.55rem 1.5rem;
+  }
+
+  .message {
+    max-width: 88%;
+  }
+
+  .message-copy {
+    font-size: 0.92rem;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --wa-app-bg: #202c33;
+    --wa-chat-bg: #0b141a;
+    --wa-header-bg: #202c33;
+    --wa-border: #2a3942;
+    --wa-received: #202c33;
+    --wa-sent: #005c4b;
+    --wa-text: #e9edef;
+    --wa-muted: #8696a0;
+    --wa-green: #00a884;
+    --wa-focus: #7eb6ff;
+    --wa-shadow: 0 10px 36px rgb(0 0 0 / 35%);
+  }
+
+  body,
+  .product-boundary {
+    background: #11191f;
+  }
+
+  .product-boundary {
+    color: #aebbc2;
+  }
+
+  .message-copy code,
+  .message-copy pre {
+    background: rgb(255 255 255 / 9%);
+  }
+}
+
+@media (prefers-contrast: more) {
+  .message,
+  .whatsapp-surface,
+  .native-header,
+  .native-composer {
+    border-color: currentColor;
+  }
+
+  .role-time strong {
+    color: currentColor;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+@media print {
+  .evidence-shell,
+  .product-boundary,
+  .native-composer {
+    display: none !important;
+  }
+
+  .prototype-stage {
+    padding: 0;
+  }
+
+  .whatsapp-surface {
+    height: auto;
+    min-height: 0;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .transcript {
+    overflow: visible;
+  }
+}

@@ -56,23 +56,23 @@
   });
 
   const INITIAL_CURRENT_SETTINGS = Object.freeze({
-    codex: "GPT-5.3-Codex",
-    claude: "Claude Opus 4.6",
-    reasoning: "high",
+    codex: "GPT-5.6 Sol",
+    claude: "Claude Opus 5",
+    reasoning: "xhigh",
     speed: "збалансовано"
   });
 
   const DEFAULT_SETTINGS = Object.freeze({
-    codex: "GPT-5.3-Codex",
-    claude: "Claude Sonnet 4.6",
-    reasoning: "high",
+    codex: "GPT-5.6 Sol",
+    claude: "Claude Opus 5",
+    reasoning: "xhigh",
     speed: "збалансовано"
   });
 
   const ACTIVE_SETTINGS = Object.freeze({
-    codex: "GPT-5.3-Codex",
-    claude: "Claude Opus 4.6",
-    reasoning: "high",
+    codex: "GPT-5.6 Sol",
+    claude: "Claude Opus 5",
+    reasoning: "xhigh",
     speed: "ретельно"
   });
 
@@ -254,7 +254,7 @@
     const states = {
       loaded: { tone: "neutral", title: "Набір сумісний", text: "Змін немає. Обидва runtimes підтвердили вибрані значення." },
       dirty: { tone: "success", title: "Зміни готові до збереження", text: "Увесь набір сумісний для Codex і Claude Code." },
-      incompatible: { tone: "error", title: "Комбінація несумісна", text: "Claude Sonnet 4.6 не підтверджує xhigh. Збереження і нова сесія заблоковані; значення не буде знижено автоматично." },
+      incompatible: { tone: "error", title: "Комбінація несумісна", text: "Claude Opus 4.6 — legacy-модель поза актуальним allowlist — не підтверджує xhigh. Значення не буде знижено автоматично; виберіть актуальну модель із каталогу." },
       drift: { tone: "error", title: "Сумісність не підтверджена", text: "Claude Code зараз недоступний. Current і snapshot активної сесії не змінено." },
       saving: { tone: "progress", title: "Зберігаємо весь набір", text: "Повторне збереження недоступне до завершення атомарної операції." },
       saved: { tone: "success", title: "Увесь набір збережено", text: "Нові значення стануть effective на старті наступної сесії. Активна сесія не змінилася." },
@@ -269,7 +269,7 @@
   function settingsForm(state) {
     if (draftSource !== "user") {
       if (state === "incompatible") {
-        draft = { ...currentSettings, claude: "Claude Sonnet 4.6", reasoning: "xhigh" };
+        draft = { ...currentSettings, claude: "Claude Opus 4.6", reasoning: "xhigh" };
       } else if (state === "dirty") {
         draft = { ...currentSettings, reasoning: "xhigh" };
       } else if (state === "reset-done") {
@@ -309,19 +309,22 @@
             <label>
               <span>Codex-агенти</span>
               <select id="codex-model"${disabledAttribute}>
-                <option${selected("GPT-5.3-Codex", draft.codex)}>GPT-5.3-Codex</option>
-                <option${selected("GPT-5.2-Codex", draft.codex)}>GPT-5.2-Codex</option>
+                <option${selected("GPT-5.6 Sol", draft.codex)}>GPT-5.6 Sol</option>
+                <option${selected("GPT-5.6 Terra", draft.codex)}>GPT-5.6 Terra</option>
+                <option${selected("GPT-5.6 Luna", draft.codex)}>GPT-5.6 Luna</option>
               </select>
-              <small>Лише моделі з дозволеного каталогу підписки.</small>
+              <small>У прототипі показано актуальні назви з OpenAI Docs; production залишає лише моделі, які підтвердив Codex subscription runtime.</small>
             </label>
             <label>
               <span>Claude Code-критик</span>
               <select id="claude-model" aria-describedby="claude-error"${disabledAttribute}>
-                <option${selected("Claude Opus 4.6", draft.claude)}>Claude Opus 4.6</option>
-                <option${selected("Claude Sonnet 4.6", draft.claude)}>Claude Sonnet 4.6</option>
+                <option${selected("Claude Opus 5", draft.claude)}>Claude Opus 5</option>
+                <option${selected("Claude Sonnet 5", draft.claude)}>Claude Sonnet 5</option>
+                <option${selected("Claude Opus 4.8", draft.claude)}>Claude Opus 4.8</option>
+                ${state === "incompatible" ? '<option value="Claude Opus 4.6" selected>Claude Opus 4.6 — legacy, заблоковано</option>' : ""}
               </select>
-              <small id="claude-error" class="field-message ${state === "incompatible" ? "field-error" : ""}">
-                ${state === "incompatible" ? "Ця модель не підтримує вибране xhigh без зниження." : "Окремий критик залишається обов’язковим у кожному пресеті."}
+                <small id="claude-error" class="field-message ${state === "incompatible" ? "field-error" : ""}">
+                ${state === "incompatible" ? "Цей legacy-вибір більше не приймається. Для актуальних Opus 5, Sonnet 5 і Opus 4.8 xhigh підтримується; max не зберігається в цьому екрані." : "Окремий критик залишається обов’язковим у кожному пресеті."}
               </small>
             </label>
           </div>
@@ -338,7 +341,7 @@
               <label><input type="radio" name="reasoning" value="${value}"${checked(value, draft.reasoning)} /><span>${value}</span></label>
             `).join("")}
           </fieldset>
-          <p class="mapping-note">Одне значення перевіряється для обох runtimes. Тихого зниження немає.</p>
+          <p class="mapping-note">Codex GPT-5.6 підтримує none, low, medium, high, xhigh і max. Claude Code підтримує low, medium, high, xhigh і max для Opus 5, Sonnet 5 та Opus 4.8. У цьому екрані max не зберігається: його можна дозволити лише окремим runtime-рішенням для поточної сесії.</p>
         </section>
 
         <section class="settings-group" aria-labelledby="speed-title">
@@ -430,7 +433,7 @@
         speed: form.elements.speed.value
       };
       draftSource = "user";
-      const nextState = draft.claude === "Claude Sonnet 4.6" && draft.reasoning === "xhigh"
+      const nextState = draft.reasoning === "xhigh" && draft.claude === "Claude Opus 4.6"
         ? "incompatible"
         : "dirty";
       setRoute("settings", nextState, true);

@@ -24,6 +24,7 @@
 
 Актуальні платформні джерела перевірено 15.08.2026:
 
+- [HappyPro Academy CSS](https://happypro.academy/styles.css?v=20260814-september-cohort-v23) — первинне джерело палітри `#071a33`, `#dceeff`, `#2e6fdc`, `#c0265b` і `#f79e1b` для product-owned `SUR-02`, перевірене 16.08.2026.
 - [Element Support: The Middle Panel](https://docs.element.io/latest/element-support/quick-start-guide/the-middle-panel/) — офіційна довідка про нативні message, composer, formatting, reply, attachment і thread affordances Element.
 - [Matrix Client-Server API v1.19](https://spec.matrix.org/v1.19/client-server-api/) — офіційний контракт `body`/`formatted_body`, rich replies і client-specific fallback/rendering.
 - [Element Download](https://element.io/download) — офіційне джерело підтримуваних desktop і mobile клієнтів.
@@ -55,7 +56,7 @@
 | `DB-D03` | Використати deliberate restraint як спільний принцип: виразність належить змістовим сигналам, а не декоративному оформленню | Reversible source-grounded synthesis із практичного результату, конфіденційності, доказовості й низького технічного шуму |
 | `DB-D04` | Role/time identity має вигляд `Конкретна предметна роль · HH:MM` перед повним тілом репліки | Confirmed: `FR-015`–`FR-019`, `MG-07`, Atomic agent-reply pattern |
 | `DB-D05` | Критичне значення ніколи не передається лише кольором, emoji або рухом | Confirmed accessibility floor; нативні клієнти можуть змінювати appearance |
-| `DB-D06` | Candidate B «Дослівний консиліум» є обраним content/UX-напрямом; Matrix-native rendered candidate ще не затверджено | Confirmed direction: explicit operator decision; visual baseline лишається proposed до окремого whole-design approval |
+| `DB-D06` | Candidate B «Дослівний консиліум» є обраним і затвердженим цілісним напрямом у revision `v2` | Confirmed: Власник явно погодив інтегрований Candidate B v2 для переходу до розробки 16.08.2026; baseline фіксується нижче |
 | `DB-D07` | Не успадковувати `consilium/live/styles.css` | Confirmed scope cut: це browser evidence, а не продуктова поверхня V1 |
 | `DB-D08` | WCAG 2.2 AA є floor для product-authored content і prototype evidence; conformance нативного Element chrome не приписується продукту | Confirmed boundary: content контролює продукт, chrome — Element/ОС |
 | `DB-D09` | Попередні WhatsApp-кандидати `A/B/C v1` та їх evidence незмінні, але superseded і не є поточним visual target | Confirmed: Design Authority Rules; актуальний target — Matrix-native Candidate B |
@@ -65,6 +66,7 @@
 | `DB-D13` | `SUR-02` є єдиним browser-винятком: secure system-like one-page utility, а не чат, dashboard чи admin console | Confirmed: screen-map, wireframes, guardrails |
 | `DB-D14` | Settings мають рівно три групи та одну atomic action hierarchy; active-session snapshot не мутує | Confirmed: `SG-02`–`SG-05`, `SS-35`–`SS-44` |
 | `DB-D15` | Cloudflare Access володіє Google sign-in presentation; product-owned design починається після grant і обмежується safe status result за deny | Confirmed: `SG-01`, `SS-30`–`SS-34` |
+| `DB-D16` | `SUR-02` бере семантичну палітру з HappyPro Academy: navy, blue, pale blue, berry та amber focus | Confirmed: явне доручення Власника; значення з актуального CSS `happypro.academy` від 16.08.2026. `SUR-01` лишається нативною Element-поверхнею |
 
 ## Audience And Context
 
@@ -125,11 +127,11 @@ Boldness свідомо не витрачається на декоративн�
 
 `B — Дослівний консиліум` є обраним content/UX-напрямом. Його signature element — стабільний ритм `конкретна роль · HH:MM`, нативна Matrix reply relationship для адресованості та повне незмінне тіло кожної фактично надісланої репліки в канонічному порядку. Виразність витрачається на provenance, межі між репліками, критичні стани й фінальний синтез; нативний Element chrome лишається стриманим і незмінним.
 
-Наступна інтегрована revision напряму Candidate B має покрити обидві поверхні: Matrix-native chat evidence для `SUR-01` та system-like secure utility evidence для `SUR-02`, включно з `MG-01`–`MG-13`, `SG-01`–`SG-05` і `SS-01`–`SS-46`. Лише після цілісного покриття можливе whole-design approval. Старі candidate prototypes не покривають `SUR-02` і не є Approved Visual Baseline; попередні WhatsApp `A/B/C v1` лишаються immutable superseded historical evidence.
+Інтегрована revision `Candidate B v2` покриває обидві поверхні: Matrix-native chat evidence для `SUR-01` та secure utility evidence для `SUR-02`, включно з `MG-01`–`MG-13`, `SG-01`–`SG-05` і `SS-01`–`SS-46`. Власник затвердив її цілісно для переходу до розробки. Старі candidate prototypes не покривають `SUR-02` і не є Approved Visual Baseline; попередні WhatsApp `A/B/C v1` лишаються immutable superseded historical evidence.
 
 ### Colors
 
-Кольори `SUR-01` повністю визначає активний клієнт Element через `surface.chat`, `surface.message`, `color.content`, `color.secondary` і `color.status`. `SUR-02` використовує стримані system-like семантичні токени `surface.settings`, `surface.section`, `color.border`, `color.focus`, `color.danger` і `color.success`; кожне status-значення дублюється текстом, а не лише кольором.
+Кольори `SUR-01` повністю визначає активний клієнт Element через `surface.chat`, `surface.message`, `color.content`, `color.secondary` і `color.status`. `SUR-02` використовує семантичну палітру HappyPro Academy: navy `#071a33`, blue `#2e6fdc`, pale blue `#dceeff`, berry `#c0265b` і amber focus `#f79e1b`. Кожне status-значення дублюється текстом, а не лише кольором.
 
 ### Typography
 
@@ -212,15 +214,15 @@ Don't:
 |---|---|
 | `surface.chat` | Поточна нативна E2EE Matrix-кімната в Element у відповідному клієнті й темі |
 | `surface.message` | Нативна message presentation Element; продукт не перевизначає її |
-| `surface.settings` | Одна product-owned responsive utility-поверхня без app-shell, sidebar чи dashboard |
-| `surface.section` | Системно-стримана зона з одним семантичним заголовком; не nested card |
+| `surface.settings` | HappyPro pale blue `#dceeff` як одна product-owned responsive utility-поверхня без app-shell, sidebar чи dashboard |
+| `surface.section` | White `#ffffff` або soft blue `#f4f8ff` зона з одним семантичним заголовком; не nested card |
 | `color.content` | Нативний primary text color активного клієнта й теми |
 | `color.secondary` | Нативний secondary text treatment; не використовується для critical meaning |
 | `color.status` | Нативна platform treatment, якщо вона існує; значення завжди дублюється явним текстом |
-| `color.border` | Нейтральна system-like межа з контрастом не нижче WCAG 2.2 AA для її семантичної ролі |
-| `color.focus` | Помітний focus indicator, що не залежить від кольору control |
-| `color.danger` | Акцент для error/reset boundary; завжди з текстовим label і наслідком |
-| `color.success` | Акцент лише після підтвердженого atomic result; не єдина ознака успіху |
+| `color.border` | HappyPro-derived blue-grey `#b9cceb` з контрастом не нижче WCAG 2.2 AA для його семантичної ролі |
+| `color.focus` | HappyPro amber `#f79e1b`; помітний indicator, що не залежить від кольору control |
+| `color.danger` | HappyPro berry-dark `#9f1239` для error/reset boundary; завжди з текстовим label і наслідком |
+| `color.success` | Confirmed-result green `#146c43`; не єдина ознака успіху |
 | `type.body` | Нативна системна типографіка Element, regular, з user-controlled scaling |
 | `type.heading` | Нативне selective bold для одного головного label або signal-line |
 | `type.role-time` | `Конкретна предметна роль` selective bold + роздільник `·` + час `HH:MM` regular |
@@ -441,7 +443,7 @@ Don't:
 
 ## Design Handoff Prompt
 
-Створити інтегровану revision обраного напряму `B — Дослівний консиліум`, яка разом покриває Matrix-native `SUR-01` і secure system-like settings `SUR-02`.
+Реалізувати затверджену інтегровану revision `B — Дослівний консиліум v2`, яка разом покриває Matrix-native `SUR-01` і secure settings `SUR-02`.
 
 Обов'язково:
 
@@ -454,25 +456,25 @@ Don't:
 - не створювати login/reauth screen, credential/link/code field або API/PAYG/credits fallback; `SS-29` містить тільки safe category, відомий reset і текстову інструкцію завершити provider-managed reauth поза Matrix;
 - показати `Витрати` як місячні платежі AI-підписок, фактичну інфраструктуру й доступний usage/limit/reset; usage сесії — `входить у підписку`, недоступне — `невідомо`, без per-session token charge;
 - не скорочувати й не перефразовувати representative registered agent body;
-- не позначати revision approved. Whole-design approval можливе лише після явного затвердження інтегрованого покриття `SUR-01` + `SUR-02`.
+- зберегти затверджений baseline нижче; кожна user-visible production реалізація має перевірятися проти нього, а не проти старих v1-кандидатів.
 
 ## Approved Visual Baseline
 
-- Status: proposed
-- Baseline ID: не присвоєно, бо цілісний прототип ще не затверджено
-- Selected Candidate And Version: content/UX-напрям `B — Дослівний консиліум` обрано; інтегровану `SUR-01` + `SUR-02` rendered revision ще не затверджено
-- Immutable Visual Target Reference And Hash: не встановлено до approval receipt
-- Frozen Prototype Source Root And Tree Hash: не встановлено до approval receipt
-- Prototype Artifact References: попередні кандидати не покривають `SUR-02` і не є baseline; WhatsApp `A/B/C v1` є immutable superseded historical evidence; інтегрована Candidate B revision ще не затверджена
-- Visual Definition Of Done Scope: proposed contract цього brief; не є approved visual baseline
-- Covered Screens States And Viewports: proposed future integrated coverage `SUR-01`–`SUR-02`, `MG-01`–`MG-13`, `SG-01`–`SG-05`, `SS-01`–`SS-46`, `390/430/768/1280/1440px`; current old prototypes do not satisfy it
-- Approval Receipt: відсутній; approval не запитувався й не надавався
-- Approved At: не застосовується до proposed state
+- Status: approved
+- Baseline ID: `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`
+- Selected Candidate And Version: `B — Дослівний консиліум v2` — Matrix-native `SUR-01` + HappyPro-palette `SUR-02`
+- Immutable Visual Target Reference And Hash: `forge/design/candidates/candidate-b/v2`; `96b91ba9622f8301809ed10ef661a313006e0c2743712912c624edc36a2ca8eb`
+- Frozen Prototype Source Root And Tree Hash: `forge/design/candidates/candidate-b/v2`; `96b91ba9622f8301809ed10ef661a313006e0c2743712912c624edc36a2ca8eb`
+- Prototype Artifact References: `index.html`, `styles.css`, `app.js`, `validate.mjs`; `forge/design/evidence/candidate-b/v2/visual-qa.json`; four screenshots under `forge/design/evidence/candidate-b/v2/`
+- Visual Definition Of Done Scope: повна відповідність цій revision для `SUR-01` і `SUR-02`: Matrix-native content choreography, повний дослівний body, роль/`HH:MM`, safe states, settings one-page hierarchy, HappyPro palette, keyboard/focus, responsive order; старі v1-кандидати не є visual target
+- Covered Screens States And Viewports: `SUR-01`–`SUR-02`, `MG-01`–`MG-13`, `SG-01`–`SG-05`, `SS-01`–`SS-46`, `390/430/768/1280/1440px`
+- Approval Receipt: явне повідомлення Власника 16.08.2026: «ОК. Закрий хром і продовжуй розробку» після перегляду Candidate B v2
+- Approved At: `2026-08-16T02:22:48+0300`
 - Permitted Variance: нативні відмінності Element/ОС допускаються лише як platform variance; product behavior, повнота body, порядок, роль, Matrix reply semantics і state meaning не змінюються
-- Operator Overrides: немає зафіксованих
+- Operator Overrides: палітра `SUR-02` має походити з `happypro.academy`; браузерні спеціальні звуки не дозволені
 - Supersedes: попередні WhatsApp `A/B/C v1` як поточний design target; їхні source/evidence артефакти лишаються незмінними історичними записами
 - Superseded By: none
-- Downstream Invalidation: none; approved baseline ще не існує
+- Downstream Invalidation: architecture, DoD/evals, QA checklist і development plan мають послатися на цей Baseline ID та hash перед виконанням user-visible implementation units
 
 ## Validation Report
 
@@ -484,7 +486,7 @@ Don't:
 - Token resolution: кожен token reference у brief визначено один раз у `Design Tokens`; unresolved token references — 0.
 - Pattern closure: `P-01`–`P-15` мають appearance і behavior principles — 15/15.
 - Screen/state coverage: `SUR-01`–`SUR-02` — 2/2; `MG-01`–`MG-13` — 13/13; settings-групи `SG-01`, `SG-02`, `SG-03`, `SG-04`, `SG-05` — 5/5; `SS-01`–`SS-46` — 46/46 через state-pattern contract.
-- Direction inventory: поточний обраний напрям — один, Candidate B; historical superseded набір містить рівно три candidates `A/B/C v1`. Нові A/C не вигадані після явного вибору Власника.
+- Direction inventory: активний approved baseline — один, Candidate B v2; historical superseded набір містить рівно три candidates `A/B/C v1`. Нові A/C не вигадані після явного вибору Власника.
 - External references: актуальні official Element, Matrix, WCAG, Apple і Android platform sources доступні; недоступних load-bearing visual references немає.
 
 ### Pass 2 — Judgment
@@ -505,7 +507,7 @@ Don't:
 - Повна Підтверджена репліка агента не скорочується, не згортається, не редагується й не очищується після реєстрації.
 - Фінальна рекомендація — окремі самодостатні повідомлення: рішення, до трьох дій, ризик/припущення/умова перегляду, Технічна частина лише за потреби.
 - Critical meaning завжди явний у тексті й не залежить лише від appearance або motion.
-- Candidate B «Дослівний консиліум» обрано як content/UX-напрям; Approved Visual Baseline лишається proposed до явного затвердження інтегрованої `SUR-01` + `SUR-02` revision.
+- Candidate B «Дослівний консиліум v2» є Approved Visual Baseline для інтегрованих `SUR-01` + `SUR-02`.
 - `SUR-02` — стримана system-like one-page utility з трьома групами, current/default/effective, compatibility status, atomic Save/Reset і active-session snapshot notice.
 - Успішний `SS-28` невидимий; `SS-29` fail closed і показує лише safe category, відомий reset та provider-managed reauth поза Matrix, без credential/link/code fields і без API/PAYG fallback.
 - `Витрати` показують налаштовані місячні платежі за ChatGPT/Codex і Claude, фактичну інфраструктуру та доступний usage/limit/reset; usage сесії входить у підписку, а недоступне позначається `невідомо`.
@@ -519,14 +521,14 @@ Don't:
 - Custom spinner або typing animation.
 - Login/reauth screen, OAuth/setup-token/`auth.json` input, reauth link/code у Matrix або API/PAYG/credits upsell/fallback.
 - Вигадана per-session token charge, budget-limit visualization або автоматичні usage credits для subscription usage.
-- Автоматичне перетворення вибору Candidate B на Approved Visual Baseline без Matrix-native rendered evidence та явного approval receipt.
+- Будь-яку нову візуальну revision без нового цілісного approval receipt; чинний Baseline ID не змінюється мовчки.
 - Попередні WhatsApp `A/B/C v1` як актуальний visual target; вони лишаються лише immutable superseded historical evidence.
 
 ## Out Of Scope
 
 - Нові функції, ролі, screens, routes, message groups, states, input types або паралельні Сесії.
 - Точний final copy для кожного сценарію та intent-словник непідтверджених команд.
-- Архітектура hosted Matrix homeserver, Cloudflare, A2A, agent execution, archive, keys, queues, retries, delivery і cost accounting.
+- Архітектура `matrix.org`, Cloudflare, A2A, agent execution, archive, keys, queues, retries, delivery і cost accounting.
 - QA steps, implementation tasks, code, browser chat або browser evidence UI; custom frontend дозволений лише в межах authenticated `SUR-02`.
 - Зміна нативних налаштувань Element чи операційної системи від імені Власника; власний звук повідомлень.
 
@@ -539,6 +541,5 @@ Don't:
 5. Які формулювання однозначно є явною згодою або відмовою для кожного `MG-02`?
 6. Яка policy-класифікація визначає Особливо чутливий документ?
 7. Які current-client відмінності в native formatting, long-message presentation, text scaling і screen-reader reading order виявить prototype/evidence pass на чотирьох цільових клієнтах?
-8. Яку інтегровану Candidate B revision з Matrix-native `SUR-01` і settings `SUR-02` буде подано на whole-design approval? До цього Baseline ID, immutable target hash і approval receipt не заповнюються.
 
-Ці питання не блокують proposed design contract, не дозволяють додати третю поверхню або custom Element chrome і не є pre-prototype approval gate.
+Ці питання не блокують approved design contract, не дозволяють додати третю поверхню або custom Element chrome і не є pre-prototype approval gate.

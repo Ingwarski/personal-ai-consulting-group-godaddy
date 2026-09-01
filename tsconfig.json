@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "lib": ["ES2024", "WebWorker"],
+    "types": ["@cloudflare/workers-types"],
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.ts"]
+}

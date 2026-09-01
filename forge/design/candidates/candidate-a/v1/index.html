@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="uk" data-ready="false">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src data:; connect-src 'none'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <title>Candidate A · Рішення спочатку</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%23008069'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-family='system-ui,sans-serif' font-size='22' font-weight='700' fill='white'%3EPC%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script
+      defer
+      src="../../../candidate-sets/whatsapp-consultant/v1/shared/scenario-fixture.js"
+    ></script>
+    <script defer src="./app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#conversation">Перейти до розмови</a>
+
+    <aside class="evidence-shell" data-evidence-only aria-labelledby="evidence-title">
+      <div class="evidence-intro">
+        <p class="eyebrow">Evidence-only · поза продуктовою поверхнею</p>
+        <h1 id="evidence-title">Candidate A · Рішення спочатку</h1>
+        <p>
+          Design-only симуляція. Вона перевіряє хореографію й акценти повідомлень,
+          але не доводить роботу WhatsApp API, агентів, архіву чи витрат.
+        </p>
+      </div>
+
+      <nav class="state-switcher" aria-label="Стани прототипу">
+        <span class="switcher-label">Стан</span>
+        <div id="state-links" class="state-links"></div>
+      </nav>
+
+    </aside>
+
+    <main class="prototype-stage">
+      <p class="product-boundary" aria-hidden="true">
+        Нижче — єдина продуктова поверхня: нативна розмова WhatsApp
+      </p>
+
+      <section
+        id="conversation"
+        class="whatsapp-surface"
+        data-product-surface
+        aria-labelledby="conversation-title"
+      >
+        <header class="native-header" aria-label="Нативний контекст WhatsApp">
+          <div class="native-avatar" aria-hidden="true">PC</div>
+          <div class="native-title">
+            <h2 id="conversation-title">Personal Consultant</h2>
+            <p>приватна розмова</p>
+          </div>
+          <span class="native-context" aria-hidden="true">WhatsApp</span>
+        </header>
+
+        <div
+          id="transcript"
+          class="transcript"
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions text"
+          aria-label="Хронологія розмови"
+          tabindex="0"
+        ></div>
+
+        <footer class="native-composer" aria-label="Нативний composer WhatsApp, лише контекст макета">
+          <span aria-hidden="true">＋</span>
+          <span class="composer-placeholder">Повідомлення</span>
+          <span aria-hidden="true">●</span>
+        </footer>
+      </section>
+    </main>
+
+    <noscript>
+      <p class="fatal-error">Для перемикання станів цієї design-only симуляції потрібен JavaScript.</p>
+    </noscript>
+  </body>
+</html>

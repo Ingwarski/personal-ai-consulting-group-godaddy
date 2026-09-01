@@ -6,13 +6,10 @@ const threadNode = document.querySelector("#chatThread");
 const emptyNode = document.querySelector("#emptyState");
 const connectionNode = document.querySelector("#connectionState");
 const connectionLabel = document.querySelector("#connectionLabel");
-const soundButton = document.querySelector("#soundButton");
 const newMessagesButton = document.querySelector("#newMessagesButton");
 
 let currentState = null;
 let renderedIds = [];
-let soundEnabled = false;
-let audioContext = null;
 let unseenCount = 0;
 let pendingState = null;
 let applyingState = false;
@@ -43,58 +40,6 @@ const setConnection = (mode, label) => {
   connectionNode.classList.toggle("is-offline", mode === "offline");
   connectionLabel.textContent = label;
 };
-
-const makeWhoosh = () => {
-  if (!soundEnabled) return;
-  audioContext ||= new AudioContext();
-  if (audioContext.state === "suspended") {
-    audioContext.resume();
-  }
-
-  const duration = 0.32;
-  const sampleRate = audioContext.sampleRate;
-  const buffer = audioContext.createBuffer(1, sampleRate * duration, sampleRate);
-  const data = buffer.getChannelData(0);
-
-  for (let index = 0; index < data.length; index += 1) {
-    const progress = index / data.length;
-    const envelope = Math.sin(Math.PI * progress) * (1 - progress * 0.35);
-    data[index] = (Math.random() * 2 - 1) * envelope;
-  }
-
-  const source = audioContext.createBufferSource();
-  const filter = audioContext.createBiquadFilter();
-  const gain = audioContext.createGain();
-  const now = audioContext.currentTime;
-
-  source.buffer = buffer;
-  filter.type = "bandpass";
-  filter.Q.value = 0.7;
-  filter.frequency.setValueAtTime(1500, now);
-  filter.frequency.exponentialRampToValueAtTime(480, now + duration);
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.12, now + 0.035);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-  source.connect(filter).connect(gain).connect(audioContext.destination);
-  source.start(now);
-  source.stop(now + duration);
-};
-
-const setSoundEnabled = async (enabled) => {
-  soundEnabled = enabled;
-  soundButton.setAttribute("aria-pressed", String(enabled));
-  soundButton.firstElementChild.textContent = enabled ? "🔊" : "🔇";
-  if (enabled) {
-    audioContext ||= new AudioContext();
-    await audioContext.resume();
-    makeWhoosh();
-  }
-};
-
-soundButton.addEventListener("click", () => {
-  setSoundEnabled(!soundEnabled);
-});
 
 newMessagesButton.addEventListener("click", () => scrollToBottom());
 
@@ -164,7 +109,6 @@ const appendMessages = async (messages) => {
     }
     await new Promise((resolve) => setTimeout(resolve, 90));
   }
-  makeWhoosh();
 };
 
 const applyState = async (state) => {

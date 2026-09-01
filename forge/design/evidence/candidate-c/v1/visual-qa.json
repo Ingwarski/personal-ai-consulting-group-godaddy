@@ -1,0 +1,211 @@
+{
+  "schema_version": "1.0.0",
+  "evidence_id": "visual-qa-candidate-c-v1",
+  "candidate": {
+    "id": "candidate-c",
+    "version": "v1",
+    "direction": "Контроль і межі",
+    "status": "proposed",
+    "approved": false,
+    "approved_visual_baseline_id": null,
+    "prototype_source_root": "forge/design/candidates/candidate-c/v1/",
+    "source_tree_hash": {
+      "algorithm": "sha256",
+      "contract": "From the prototype source root, sort NUL-delimited relative file paths in LC_ALL=C order; run shasum -a 256 on each file; hash the resulting UTF-8 manifest lines formatted as '<file-sha256><two spaces><./relative-path><newline>'.",
+      "command": "(cd forge/design/candidates/candidate-c/v1 && find . -type f -print0 | LC_ALL=C sort -z | xargs -0 shasum -a 256) | shasum -a 256",
+      "value": "e4c0ba9b9e18a504a0a20f6e6b4c27018e8334d90d40d79156d0d682a5c0d814",
+      "files": [
+        {
+          "path": "app.js",
+          "sha256": "8f45e339eae56883d9de3f45cce2e85396eeeddf4865e5c2daf7fc6e6fe0aaf3"
+        },
+        {
+          "path": "index.html",
+          "sha256": "8753be77294659ccf71225cfa9396293086c2cc9f3463bcb3010c488ef2f835c"
+        },
+        {
+          "path": "styles.css",
+          "sha256": "70e93c2106244444873c65f72cf3a3044494c6fca22989bfe8f63f8f0dfd13d7"
+        }
+      ]
+    }
+  },
+  "adapter": {
+    "name": "playwright-cli",
+    "browser_engine": "chromium",
+    "environment": "local-static-preview",
+    "verification_source": "final Playwright run supplied for normalization"
+  },
+  "preview": {
+    "origin": "http://127.0.0.1:4312",
+    "route": "/forge/design/candidates/candidate-c/v1/",
+    "canonical_preview_url": "http://127.0.0.1:4312/forge/design/candidates/candidate-c/v1/?state=active",
+    "state_query_key": "state",
+    "states": [
+      {
+        "state": "active",
+        "label": "Активна сесія",
+        "url": "http://127.0.0.1:4312/forge/design/candidates/candidate-c/v1/?state=active",
+        "checked": true,
+        "critical_block_immediately_visible": true
+      },
+      {
+        "state": "permission",
+        "label": "Потрібен дозвіл",
+        "url": "http://127.0.0.1:4312/forge/design/candidates/candidate-c/v1/?state=permission",
+        "checked": true,
+        "critical_block_immediately_visible": true
+      },
+      {
+        "state": "failure",
+        "label": "Неповний результат",
+        "url": "http://127.0.0.1:4312/forge/design/candidates/candidate-c/v1/?state=failure",
+        "checked": true,
+        "critical_block_immediately_visible": true
+      },
+      {
+        "state": "final",
+        "label": "Фінальна рекомендація",
+        "url": "http://127.0.0.1:4312/forge/design/candidates/candidate-c/v1/?state=final",
+        "checked": true,
+        "critical_block_immediately_visible": true
+      },
+      {
+        "state": "costs",
+        "label": "Витрати",
+        "url": "http://127.0.0.1:4312/forge/design/candidates/candidate-c/v1/?state=costs",
+        "checked": true,
+        "critical_block_immediately_visible": true
+      },
+      {
+        "state": "stopped",
+        "label": "Сесію зупинено",
+        "url": "http://127.0.0.1:4312/forge/design/candidates/candidate-c/v1/?state=stopped",
+        "checked": true,
+        "critical_block_immediately_visible": true
+      }
+    ]
+  },
+  "content_fixture": {
+    "path": "forge/design/candidate-sets/whatsapp-consultant/v1/shared/scenario-fixture.js",
+    "sha256": "96732f738a41bf1f838736de77a748ef65704d68010553bbf43638f83ddd1af6",
+    "agent_body_contract": {
+      "message_count": 4,
+      "concatenation_separator": "",
+      "utf8_bytes": 5895,
+      "sha256": "ddf71722bcb4d5a2e0a56a64a4f6f0160d99d276f75590afd263e10371e76cfa",
+      "verbatim": true,
+      "normalization": "none"
+    }
+  },
+  "captures": [
+    {
+      "capture_id": "candidate-c-v1-active-desktop-final",
+      "state": "active",
+      "theme": "candidate-c-default",
+      "source_capture_path": "forge/design/evidence/candidate-c/v1/candidate-c-active-desktop-final.png",
+      "evidence_path": "forge/design/evidence/candidate-c/v1/candidate-c-active-desktop-final.png",
+      "sha256": "3164f5e6685399f69a41e0e31e9351b7b76e01ea129bbeb30efa6a83dd789d94",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "capture_pixels": {
+        "width": 1440,
+        "height": 900
+      },
+      "full_page": true
+    },
+    {
+      "capture_id": "candidate-c-v1-final-desktop-final",
+      "state": "final",
+      "theme": "candidate-c-default",
+      "source_capture_path": "forge/design/evidence/candidate-c/v1/candidate-c-final-desktop-final.png",
+      "evidence_path": "forge/design/evidence/candidate-c/v1/candidate-c-final-desktop-final.png",
+      "sha256": "36657bcbfb090e4a8b401c8f071eb64a4153f92fb61f09d0218928d2653a07cb",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "capture_pixels": {
+        "width": 1440,
+        "height": 900
+      },
+      "full_page": true
+    },
+    {
+      "capture_id": "candidate-c-v1-final-mobile-final",
+      "state": "final",
+      "theme": "candidate-c-default",
+      "source_capture_path": "forge/design/evidence/candidate-c/v1/candidate-c-final-mobile-final.png",
+      "evidence_path": "forge/design/evidence/candidate-c/v1/candidate-c-final-mobile-final.png",
+      "sha256": "1497da36451ea8b25516d7f3678e326bd352c588fafc5686a3dbd856e44bb8e0",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "capture_pixels": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": true
+    }
+  ],
+  "verification": {
+    "qa_result": "pass_for_design_review",
+    "states_checked": 6,
+    "states_passed": 6,
+    "critical_blocks_immediately_visible": true,
+    "responsive_viewports": [
+      {
+        "width": 1440,
+        "height": 900,
+        "label": "desktop"
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "label": "mobile"
+      }
+    ],
+    "horizontal_overflow": false,
+    "keyboard_navigation": {
+      "passed": true,
+      "focus_order_checked": [
+        "six evidence-only state links"
+      ],
+      "focus_visible": true
+    },
+    "reduced_motion": {
+      "passed": true,
+      "observed_transition_duration": "0s"
+    },
+    "markdown_rendered": true,
+    "agent_role_and_hh_mm_visible": true,
+    "raw_fixture_ids_or_logs_visible": false,
+    "console": {
+      "fresh_session": true,
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  "findings": [],
+  "release_effect": {
+    "phase": "prototype_design_review",
+    "blocking_findings": 0,
+    "release_readiness_claimed": false,
+    "reason": "Candidate C remains proposed and is not an Approved Visual Baseline."
+  },
+  "limitations": [
+    "This evidence validates a static interaction-simulated prototype only.",
+    "It does not prove production WhatsApp, Cloudflare, agent, persistence, archive, cost, notification, or other backend behavior.",
+    "Only active and final states have promoted screenshots; all six deterministic states were exercised in the final browser run."
+  ],
+  "changed_evidence_paths": [
+    "forge/design/evidence/candidate-c/v1/candidate-c-active-desktop-final.png",
+    "forge/design/evidence/candidate-c/v1/candidate-c-final-desktop-final.png",
+    "forge/design/evidence/candidate-c/v1/candidate-c-final-mobile-final.png",
+    "forge/design/evidence/candidate-c/v1/visual-qa.json"
+  ],
+  "recorded_at": "2026-08-15T16:45:03Z"
+}

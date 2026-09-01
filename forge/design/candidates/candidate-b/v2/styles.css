@@ -1,28 +1,30 @@
 :root {
   color-scheme: light;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-  --page: #f4f6f8;
+  /* HappyPro palette, sampled from https://happypro.academy/ */
+  --page: #dceeff;
   --surface: #ffffff;
-  --surface-soft: #f7f8fa;
-  --ink: #172027;
-  --muted: #65727d;
-  --border: #d7dde2;
-  --accent: #0f6f69;
-  --accent-hover: #0a5a55;
-  --accent-soft: #e8f4f2;
+  --surface-soft: #f4f8ff;
+  --ink: #071a33;
+  --muted: #264c7a;
+  --border: #b9cceb;
+  --accent: #2e6fdc;
+  --accent-hover: #1f5fc5;
+  --accent-soft: #e7f1ff;
   --success: #146c43;
   --success-soft: #ebf7f0;
-  --warning: #855a00;
-  --warning-soft: #fff6df;
-  --danger: #b42318;
-  --danger-soft: #fff0ef;
-  --focus: #ffb300;
-  --review-bg: #132227;
-  --review-text: #f7fbfc;
-  --review-muted: #afc1c7;
-  --element-panel: #f6f7f8;
-  --element-line: #e5e8eb;
-  --element-highlight: #dff2ef;
+  --warning: #9a5b00;
+  --warning-soft: #fff5dc;
+  --danger: #9f1239;
+  --danger-soft: #fff0f6;
+  --focus: #f79e1b;
+  --review-bg: #071a33;
+  --review-text: #f5faff;
+  --review-muted: #c5d8ed;
+  --element-panel: #f4f8ff;
+  --element-line: #d6e4f6;
+  --element-highlight: #dceeff;
+  --brand-berry: #c0265b;
   --timeline-width: 49rem;
 }
 
@@ -39,7 +41,7 @@ body {
   min-height: 100vh;
   margin: 0;
   color: var(--ink);
-  background: var(--page);
+  background: linear-gradient(135deg, #f4f8ff 0%, var(--page) 48%, #8bb8f4 160%);
 }
 
 button,
@@ -147,8 +149,8 @@ input:focus-visible,
   height: 2rem;
   place-items: center;
   border-radius: 0.5rem;
-  color: #0d2b28 !important;
-  background: #73d8c8;
+  color: #ffffff !important;
+  background: var(--accent);
   font-weight: 800;
 }
 
@@ -175,8 +177,8 @@ input:focus-visible,
 }
 
 .surface-switcher button[aria-pressed="true"] {
-  color: #12262b;
-  background: #f3fbfa;
+  color: var(--ink);
+  background: var(--page);
   font-weight: 750;
 }
 
@@ -190,10 +192,10 @@ input:focus-visible,
   width: min(14rem, 28vw);
   min-height: 2.65rem;
   padding: 0.45rem 2rem 0.45rem 0.65rem;
-  border: 1px solid #506268;
+  border: 1px solid #49688f;
   border-radius: 0.5rem;
   color: var(--review-text);
-  background: #21343a;
+  background: #0b2545;
 }
 
 #prototype-root {
@@ -244,7 +246,7 @@ input:focus-visible,
   width: 2rem;
   height: 2rem;
   color: white;
-  background: #0d8f85;
+  background: var(--accent);
 }
 
 .room-search {
@@ -473,7 +475,7 @@ input:focus-visible,
 
 .message-body {
   min-width: 0;
-  color: #28343b;
+  color: var(--ink);
   font-size: 0.93rem;
   line-height: 1.52;
   overflow-wrap: anywhere;
@@ -687,7 +689,7 @@ input:focus-visible,
   padding: 0.75rem;
   margin: 0.85rem 0 0;
   border-left: 3px solid var(--accent);
-  color: #36504f;
+  color: var(--ink-soft, #264c7a);
   background: var(--accent-soft);
   font-size: 0.82rem;
   line-height: 1.45;
@@ -934,7 +936,7 @@ fieldset:disabled label {
 
 .button.danger {
   color: white;
-  background: var(--danger);
+  background: var(--brand-berry);
 }
 
 .button:disabled {

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#075e54" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23075e54'/%3E%3Cpath d='M18 18h28v20H30l-9 8v-8h-3z' fill='white'/%3E%3C/svg%3E" />
+    <meta
+      name="description"
+      content="Direction C — Контроль і межі. Статичний evidence-прототип нативної WhatsApp-розмови Personal Consultant."
+    />
+    <title>Direction C · Контроль і межі</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="prototype-layout">
+      <aside class="evidence-panel" aria-labelledby="evidence-title">
+        <div class="evidence-heading">
+          <p class="eyebrow">Prototype Mockup Candidate C · v1</p>
+          <div class="title-row">
+            <h1 id="evidence-title">Контроль і межі</h1>
+            <span class="status-badge">Proposed</span>
+          </div>
+          <p class="evidence-summary">
+            Критичний стан названо на початку. Наслідок або потрібна відповідь завершують блок.
+          </p>
+        </div>
+
+        <nav class="state-switcher" aria-label="Evidence-only перемикач станів">
+          <p class="control-label">Evidence-only стани</p>
+          <div class="state-links" id="state-links">
+            <a href="?state=active" data-state-link="active">Активна сесія</a>
+            <a href="?state=permission" data-state-link="permission">Потрібен дозвіл</a>
+            <a href="?state=failure" data-state-link="failure">Неповний результат</a>
+            <a href="?state=final" data-state-link="final">Фінальна рекомендація</a>
+            <a href="?state=costs" data-state-link="costs">Витрати</a>
+            <a href="?state=stopped" data-state-link="stopped">Зупинено</a>
+          </div>
+        </nav>
+
+        <div class="evidence-disclaimer" id="prototype-note">
+          <strong>Лише дизайн-симуляція.</strong>
+          Перемикач вище відтворює заздалегідь визначені стани для перевірки. Прототип не підключений до
+          WhatsApp, Cloudflare, агентів, архіву, витрат або інших production API.
+        </div>
+      </aside>
+
+      <main class="prototype-stage" aria-label="Candidate C evidence preview">
+        <article class="whatsapp-shell" aria-label="Приватна нативна WhatsApp-розмова Personal Consultant">
+          <header class="whatsapp-header">
+            <span class="native-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="24" height="24"><path d="m15.5 5-7 7 7 7" /></svg>
+            </span>
+            <span class="avatar" aria-hidden="true">PC</span>
+            <div class="contact-copy">
+              <strong>Personal Consultant</strong>
+              <span>приватна розмова</span>
+            </div>
+            <span class="native-icon native-icon--end" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22">
+                <circle cx="12" cy="5" r="1.5" />
+                <circle cx="12" cy="12" r="1.5" />
+                <circle cx="12" cy="19" r="1.5" />
+              </svg>
+            </span>
+          </header>
+
+          <section class="conversation" aria-labelledby="conversation-title">
+            <h2 class="sr-only" id="conversation-title">Сценарій: Падіння продажів після вебінару</h2>
+            <div class="date-chip">15 серпня 2026</div>
+            <ol class="message-list" id="message-list" aria-label="Хронологія розмови"></ol>
+          </section>
+
+          <footer class="native-composer" aria-label="Нативний composer WhatsApp, показано лише як контекст">
+            <span class="composer-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="23" height="23">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M8.5 14.2c1.8 1.6 5.2 1.6 7 0M9 9.5h.01M15 9.5h.01" />
+              </svg>
+            </span>
+            <input
+              aria-describedby="prototype-note"
+              aria-label="Поле повідомлення. У цьому дизайн-прототипі надсилання не підключено."
+              placeholder="Повідомлення"
+              readonly
+            />
+            <span class="composer-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="23" height="23">
+                <path d="m8 12 7.6-7.6a3 3 0 0 1 4.2 4.2l-9.2 9.2a5 5 0 0 1-7.1-7.1l8.5-8.5" />
+              </svg>
+            </span>
+            <span class="voice-circle" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="21" height="21">
+                <rect x="9" y="3" width="6" height="11" rx="3" />
+                <path d="M6.5 11.5a5.5 5.5 0 0 0 11 0M12 17v4M9 21h6" />
+              </svg>
+            </span>
+          </footer>
+        </article>
+
+      </main>
+    </div>
+
+    <script
+      defer
+      src="../../../candidate-sets/whatsapp-consultant/v1/shared/scenario-fixture.js"
+    ></script>
+    <script defer src="./app.js"></script>
+  </body>
+</html>

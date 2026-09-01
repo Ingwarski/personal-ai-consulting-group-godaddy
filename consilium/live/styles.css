@@ -80,8 +80,7 @@ a {
   align-items: center;
 }
 
-.connection,
-.sound-button {
+.connection {
   display: inline-flex;
   gap: 6px;
   align-items: center;
@@ -95,15 +94,6 @@ a {
   white-space: nowrap;
 }
 
-.sound-button {
-  cursor: pointer;
-}
-
-.sound-button:hover {
-  color: var(--text);
-}
-
-.sound-button:focus-visible,
 .new-messages:focus-visible,
 .markdown-body a:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--focus) 65%, transparent);

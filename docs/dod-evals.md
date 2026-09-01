@@ -1,13 +1,13 @@
 # DoD And Evals
 
 - Продукт: `Personal Consultant`
-- Версія контракту: V1, pre-prototype proposed phase
+- Версія контракту: V1, implementation phase after approved visual baseline
 - Дата: 16.08.2026
-- owner_invocation_id: `0e5836e7-2f12-40d2-8659-559077494e5e`
+- owner_invocation_id: `e05a1a53-1bfe-4a6b-a6db-a3ba80de9266`
 
 ## Source References
 
-Порядок істини успадковано з `docs/guardrails.md`. `docs/product-idea.md` використано, тому що `docs/prd.md` прямо називає його основним джерелом продуктового наміру. Поточна pipeline-фаза є pre-prototype proposed phase: Approved Visual Baseline ще не потрібен, а чинний visual-evidence контракт походить із валідованого proposed `docs/design-brief.md`. Після одного whole-design approval візуальний гейт має бути конкретизований даними approval receipt.
+Порядок істини успадковано з `docs/guardrails.md`. `docs/product-idea.md` використано, тому що `docs/prd.md` прямо називає його основним джерелом продуктового наміру. Поточна pipeline-фаза має approved visual baseline `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`; усі user-visible implementation units перевіряються проти його immutable target та approval receipt.
 
 | Джерело | SHA-256 / evidence | Спожиті фрагменти |
 |---|---|---|
@@ -20,10 +20,10 @@
 | `docs/user-journey.md` | `e4dfa9801ef0eab241c4b768719732628e37aebb068a8fd8067eeedbe1a6d7cd` | Element Stages 1–10; Settings S1–S5; decisions; auth/access recovery; failures; costs; success |
 | `docs/screen-map.md` | `5f138005cf9b6c9b347cc8d876bd74f6f9c977503ad6dc53436ccd35e75f0a5b` | `SUR-01`–`SUR-02`; `MG-01`–`MG-13`; `SG-01`–`SG-05`; `SS-01`–`SS-46`; transitions; edge paths |
 | `docs/wireframes.md` | `df7ca5c68e238416d16541e765b6a062bd29ab1328de06dc0f064f0600fb2edc` | Native Element patterns; authenticated responsive Settings structure; all state/group coverage; accessibility |
-| `docs/design-brief.md` | `65b9ab8353735a541e46ada95c8e89e85a5e0882f0e71705384aa98887ee2ed3` | Proposed integrated Candidate B contract; `P-01`–`P-15`; both surfaces; no approved baseline |
-| `docs/architecture.md` | `5354a4ea15b19e9bb7c3553835dbeedcf42fefc4ad44242538b4ed7623c0c3f2` | Matrix/E2EE and OAuth runtime; Cloudflare Settings access/browser hardening; `OwnerSettingsDO`; capability catalogs; atomic save/reset; immutable session snapshot |
+| `docs/design-brief.md` | `fe448a96e48f78751c6e7f301515c5abf3856c3b69266d9dac4ec0321c017824` | Approved `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`; both surfaces; `P-01`–`P-15`; HappyPro palette for `SUR-02` |
+| `docs/architecture.md` | `f115117a92b1a158003aab579cb26abb804fa7cd340d55c1a9060b52b7c6d183` | Matrix/E2EE and OAuth runtime; Cloudflare Settings access/browser hardening; `OwnerSettingsDO`; capability catalogs; atomic save/reset; immutable session snapshot |
 | Поточний репозиторій | Read-only inspection, 16.08.2026 | `scripts/consilium-*.mjs`, `consilium/live/*` і `tests/consilium-chat.test.mjs` доводять лише локальне збереження body, форматування й preview; package manifest, CI, Cloudflare config і production runtime відсутні |
-| Явна pipeline-вказівка | 16.08.2026 | Pre-prototype proposed phase; Approved Visual Baseline не є передумовою цього артефакту; наступна integrated Candidate B revision має охопити обидві surface до одного approval |
+| Явне рішення Власника | 16.08.2026 | Candidate B v2 цілісно затверджено фразою «ОК. Закрий хром і продовжуй розробку»; тільки цей baseline є visual source для наступних user-visible units |
 
 Канонічне покриття цього контракту: `US=29`, `FR=46`, `NFR=19`, `AC=16`, `SUR=2`, `MG=13`, `SG=5`, `SS=46`. Відсутній або додатковий ID є `G-01` blocker, доки upstream source не змінено явно.
 
@@ -54,8 +54,8 @@ Scope є Done лише коли одночасно:
 - немає відкритих P0, P1 або P2 із `Release Effect: blocking`;
 - статика, mockup, prototype, згенерований HTML чи локальний browser-preview не використані як доказ Element/Matrix, Cloudflare, A2A, реальних процесів, архіву, вартості або доставки;
 - твердження про успіх не перевищує evidence: provider acceptance не називається delivery, кілька labels не називаються реальним Консиліумом, а оцінка вартості не називається фактичною сумою;
-- user-visible content відповідає чинному proposed design contract; до approval жоден prototype не названо Approved Visual Baseline;
-- після whole-design approval кожний user-visible implementation scope додатково проходить `approved_visual_baseline_fidelity`;
+- user-visible content відповідає approved visual baseline `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`;
+- кожний user-visible implementation scope проходить активний `approved_visual_baseline_fidelity`;
 - evidence bundle містить owner, час, environment/config fingerprint, source revision, фактичний результат і незмінні посилання або hashes.
 - один-owner/non-SaaS eligibility, auth mode, quota, credential-writer fence і відсутність API/PAYG/cloud-provider fallback перевірені до кожного залежного model call; unknown або failure веде до `SS-29`, а не до часткового прихованого запуску.
 - `SUR-02` допускає лише exact-owner Google Access principal після незалежної Worker-перевірки JWT і request-security controls; Settings зберігаються all-or-nothing, а нова Сесія отримує повний immutable effective snapshot лише після свіжої capability/auth/quota validation.
@@ -90,10 +90,10 @@ Feature unit є Done, коли:
 | `G-10 encrypted_archive_export_delete` | Archive/data-control claim та release |
 | `G-11 confirmed_cost_accounting` | `Витрати` та Product V1 |
 | `G-12 native_element_matrix_client_behavior` | Element/Matrix/client claim та release |
-| `G-13 proposed_design_contract_fidelity` | Pre-approval prototype або user-visible implementation |
+| `G-13 proposed_design_contract_fidelity` | Historical/proposed prototype evidence only; не є production gate для нового user-visible implementation |
 | `G-14 matrix_e2ee_room_and_platform_isolation` | Deployed integration та release |
 | `G-15 v1_real_matrix_e2e` | Product V1 release |
-| `G-16 approved_visual_baseline_fidelity` | Inactive до whole-design approval; після approval стає hard gate для user-visible release scope |
+| `G-16 approved_visual_baseline_fidelity` | Active hard gate для кожного user-visible frontend/full-stack/integration scope |
 | `G-17 subscription_oauth_private_runtime` | Будь-який model call, agent launch, `SS-28`/`SS-29` або Product V1 release |
 | `G-18 owner_settings_access_security` | Кожний `SUR-02` request, protected asset/API access або Product V1 release |
 | `G-19 owner_settings_atomic_configuration` | Settings read/save/reset, capability/catalog change, session start або Product V1 release |
@@ -163,11 +163,11 @@ System/end-to-end evidence запускає `AC-001`–`AC-016` через ре�
 
 ### UX/UI Checks
 
-- У pre-prototype phase перевіряється `G-13 proposed_design_contract_fidelity` проти `docs/design-brief.md`: рівно дві поверхні `SUR-01`–`SUR-02`, `MG-01`–`MG-13` (13), `SG-01`–`SG-05` (5), `SS-01`–`SS-46` (46), `P-01`–`P-15`, native Element/Matrix chat, one-page Settings hierarchy, plain-text meaning та accessibility floor.
+- Для historical proposed artifacts перевіряється `G-13 proposed_design_contract_fidelity`. Нові user-visible implementation units перевіряються активним `G-16 approved_visual_baseline_fidelity` проти `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`: рівно дві поверхні `SUR-01`–`SUR-02`, `MG-01`–`MG-13` (13), `SG-01`–`SG-05` (5), `SS-01`–`SS-46` (46), `P-01`–`P-15`, native Element/Matrix chat, one-page Settings hierarchy, HappyPro palette для `SUR-02`, plain-text meaning та accessibility floor.
 - Representative evidence охоплює 390, 430, 768, 1280 і 1440 px як design stress viewports, але browser rendering не підміняє current-client evidence.
 - Реальні Element/Matrix clients перевіряються на Mac, iPhone, Samsung Flip7/Android і Windows PC щодо order, formatting, long body, role/`HH:MM`, text scaling/screen-reader path і disclosed variance.
 - Реальна deployed `SUR-02` перевіряється на representative mobile/desktop widths щодо keyboard-only navigation, programmatic labels/relationships, visible focus, 24×24 minimum targets і 44×44 primary touch target where applicable, error/status announcements, zoom/reflow, long model/mapping text, no horizontal loss of critical action and no color-only meaning.
-- Після approval застосовується `G-16 approved_visual_baseline_fidelity` з фактичними Baseline ID, immutable target hash, coverage, concrete QA check IDs and `VisualQAEvidence`.
+- `G-16 approved_visual_baseline_fidelity` застосовується з Baseline ID, immutable target hash, coverage, concrete QA check IDs and `VisualQAEvidence`.
 
 ### Release Checks
 
@@ -358,13 +358,13 @@ Release-ready вимагає:
 ### `G-13 proposed_design_contract_fidelity`
 
 - **Gate:** `proposed_design_contract_fidelity`
-- **Purpose:** constrain pre-approval prototypes and user-visible work to the validated proposed design contract without inventing approval.
-- **Source References:** `docs/wireframes.md`; `docs/design-brief.md` proposed integrated contract, `P-01`–`P-15`, Accessibility Floor, Responsive And Platform Behavior and Approved Visual Baseline section.
-- **Applies To:** every pre-approval Prototype Mockup Candidate and any user-visible implementation/evidence before whole-design approval.
-- **Required Evidence:** exact coverage scan proving `SUR=2`, `MG=13` (`MG-01`–`MG-13`), `SG=5` (`SG-01`–`SG-05`), `SS=46` (`SS-01`–`SS-46`) and `P=15` (`P-01`–`P-15`); integrated Candidate B evidence across native Matrix chat and one-page Settings; representative 390/430/768/1280/1440 stress views; manual content/accessibility review; explicit `proposed` label. Runtime/security behavior remains owned by `G-18`–`G-20`, not inferred from visuals.
-- **Pass Condition:** native Element/Matrix chrome remains inherited; `SUR-02` remains the only narrow one-page web exception with exactly three groups; full chat body/order/role/state meaning and Settings current/default/effective/validation/action meaning persist; critical meaning has plain-text form; no candidate is called approved.
-- **Fail Or Block Condition:** missing either surface, custom chat chrome, extra web product surface, Settings sidebar/dashboard/fourth group/forbidden control, browser chat as product target, collapsed/edited agent body, color-only meaning, missing representative state or false Approved Visual Baseline claim.
-- **Rerun Rule:** після wireframe/design-brief change, candidate revision or user-visible implementation change.
+- **Purpose:** preserve historical integrity of proposed candidates without redefining the approved visual baseline.
+- **Source References:** historical `docs/wireframes.md` / `docs/design-brief.md` proposed-contract lineage.
+- **Applies To:** historical pre-approval Candidate Mockup artifacts only; never substitutes `G-16` for implementation/release scope.
+- **Required Evidence:** original historical candidate coverage and `proposed` metadata.
+- **Pass Condition:** the historical artifact is not rewritten as if it were the active baseline.
+- **Fail Or Block Condition:** a historical candidate is relabeled as the active baseline or used as visual evidence for a new implementation unit.
+- **Rerun Rule:** only if historical evidence integrity is challenged.
 - **Automation Status:** `manual`.
 
 ### `G-14 matrix_e2ee_room_and_platform_isolation`
@@ -372,7 +372,7 @@ Release-ready вимагає:
 - **Gate:** `matrix_e2ee_room_and_platform_isolation`
 - **Purpose:** verify Matrix E2EE, exact room/device invariants, persistent bot crypto state and Cloudflare isolation without claiming an external audit or hiding the bot-decryption boundary.
 - **Source References:** PRD `FR-001`, `FR-004`, `FR-005`, `FR-031`, `NFR-005`–`NFR-008`, `AC-005`, `AC-006`; architecture §§3–6, 14, 16–20, `MatrixBridgeContainer`, `RegistrarDO`, `ArchiveService` and `AD-01`, `AD-10`, `AD-13`–`AD-14`.
-- **Applies To:** hosted homeserver/room, Element and bot devices, bridge/DO/internal bindings, runtime workspaces, outbound handlers, telemetry, R2 and wrapping-key boundary.
+- **Applies To:** `matrix.org` room, Element and bot devices, bridge/DO/internal bindings, runtime workspaces, outbound handlers, telemetry, R2 and wrapping-key boundary.
 - **Required Evidence:** E2EE and ciphertext homeserver evidence; exact room/membership/invite/history/federation/guest/bridge/widget checks; encrypted crypto-store restart; verified/revoked-device tests; `enableInternet=false`, host allowlist and credential-injection inspection; workspace isolation denial; ciphertext R2 and content-free telemetry samples; secret scan covering Matrix/OAuth tokens, `auth.json`, setup-token, reauth URL/code, prompts, A2A, logs, archives, exports and repository artifacts.
 - **Pass Condition:** only exact verified devices decrypt; homeserver sees ciphertext; room invariants pass; bridge restores keys without plaintext fallback; agents have scoped leases and no Matrix/R2/archive/OAuth checkpoint credentials; egress is allowlisted; R2 is application-encrypted; telemetry is content-free; OAuth plaintext exists only inside its authorized runtime boundary.
 - **Fail Or Block Condition:** unknown member/invite, federation exception without approval, missing/revoked device accepted, lost keys bypassed, shared readable workspace, credential leakage, arbitrary egress, body in telemetry, plaintext R2, OAuth material in Matrix/agent context/evidence or unapproved external effect.
@@ -395,19 +395,19 @@ Release-ready вимагає:
 
 - **Gate:** `approved_visual_baseline_fidelity`
 - **Purpose:** bind post-approval user-visible frontend/full-stack/integration units across both product surfaces to the one immutable whole-design baseline.
-- **Source References:** guardrails `Design Authority Rules`; design brief `Approved Visual Baseline`; explicit pre-prototype pipeline instruction requiring integrated Candidate B revision for both surfaces.
-- **Applies To:** lifecycle status `inactive` in the current pre-prototype proposed phase because no whole-design approval receipt exists. It becomes an active hard gate only after one valid receipt approves an integrated Candidate B revision covering both `SUR-01` and `SUR-02`; a chat-only or Settings-only approval cannot activate/pass it.
-- **Required Evidence:** active Baseline ID; immutable visual target hash; affected routes/states/viewports; permitted variance and operator overrides; concrete future QA check IDs; `VisualQAEvidence` references; `PrototypePromotionReceipt` when approved prototype code is reused.
-- **Pass Condition:** after approval, baseline is current; all required coverage exists; every deviation is permitted or source-backed; no P0, P1 or blocking P2 fidelity finding remains. While inactive this gate cannot be reported `passed` and does not block prototype creation.
-- **Fail Or Block Condition:** after approval, stale/superseded baseline, missing target/hash/coverage, unexplained material drift, missing required evidence or blocking finding.
+- **Source References:** guardrails `Design Authority Rules`; design brief `Approved Visual Baseline` (`PC-MATRIX-CANDIDATE-B-V2-20260816-R1`).
+- **Applies To:** active hard gate for every user-visible frontend, full-stack or integration unit that affects `SUR-01` or `SUR-02`.
+- **Required Evidence:** active Baseline ID; immutable visual target hash; affected routes/states/viewports; permitted variance and operator overrides; `QA-VIS-001`–`QA-VIS-003`; `forge/design/evidence/candidate-b/v2/visual-qa.json`; `PrototypePromotionReceipt` when approved prototype code is reused.
+- **Pass Condition:** baseline is current; all required coverage exists; every deviation is permitted or source-backed; no P0, P1 or blocking P2 fidelity finding remains.
+- **Fail Or Block Condition:** stale/superseded baseline, missing target/hash/coverage, unexplained material drift, missing required evidence or blocking finding.
 - **Rerun Rule:** after every affected user-visible change, baseline supersession, approved override or client-variance change.
 - **Automation Status:** `not available yet`.
-- **Baseline ID:** not assigned before whole-design approval, as confirmed by `docs/design-brief.md`.
-- **Immutable Target Hash:** not established before approval.
-- **Affected Routes States And Viewports:** proposed future integrated coverage is `SUR-01`–`SUR-02`, `MG-01`–`MG-13`, `SG-01`–`SG-05`, `SS-01`–`SS-46` and 390/430/768/1280/1440 px; approval receipt must freeze the actual covered set.
-- **Permitted Variance And Operator Overrides:** native Element/Matrix/OS platform variance and source-backed responsive Settings reflow are presently allowed inputs to the future baseline; no operator override is recorded.
-- **QA Check IDs:** concrete IDs do not exist because `docs/qa-checklist.md` has not yet been created; they become mandatory after approval and before this gate can pass.
-- **VisualQAEvidence References:** none exist in the pre-prototype phase.
+- **Baseline ID:** `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`.
+- **Immutable Target Hash:** `96b91ba9622f8301809ed10ef661a313006e0c2743712912c624edc36a2ca8eb`.
+- **Affected Routes States And Viewports:** `SUR-01`–`SUR-02`, `MG-01`–`MG-13`, `SG-01`–`SG-05`, `SS-01`–`SS-46` and 390/430/768/1280/1440 px.
+- **Permitted Variance And Operator Overrides:** native Element/Matrix/OS platform variance and source-backed responsive Settings reflow; `SUR-02` uses the HappyPro palette and has no product-authored sound.
+- **QA Check IDs:** `QA-VIS-001`–`QA-VIS-003` after checklist reconciliation.
+- **VisualQAEvidence References:** `forge/design/evidence/candidate-b/v2/visual-qa.json` and its four listed screenshots.
 - **PrototypePromotionReceipt:** not applicable until approved prototype code is reused.
 
 ### `G-17 subscription_oauth_private_runtime`
@@ -586,7 +586,7 @@ Status semantics:
 - `passed`: every applicable pass condition is met with fresh readable evidence and no blocking finding.
 - `failed`: the eval executed and at least one pass condition was violated.
 - `blocked`: required source, environment, permission, integration, device, evidence or unresolved high-risk policy prevents a valid execution or conclusion.
-- `not_applicable`: the source-backed applicability condition is false for this scope; reason is mandatory. `G-16` is currently lifecycle status `inactive`, so it cannot be reported `passed`; no eval result is required until whole-design approval activates it.
+- `not_applicable`: the source-backed applicability condition is false for this scope; reason is mandatory. `G-16` is active for every affected user-visible unit; it may not be reported `passed` without baseline-bound evidence.
 
 Aggregate completion status is `passed` only when all applicable required child results are `passed`. A `failed` or `blocked` hard gate blocks Done. Advisory findings remain visible and do not change an otherwise valid `passed` result unless their recorded Release Effect is `blocking`.
 
@@ -680,16 +680,16 @@ Blocker classes:
 9. Auth expiry/revocation/quota or crash-recovery reruns must show the fail-closed event, absence of any dependent call/fallback, safe out-of-band recovery where applicable, a fresh `SS-28`, and affected `G-05`, `G-11`, `G-14`, `G-15`, `G-17` results.
 10. Access/Google/JWT/request-security changes rerun `G-18` across the complete positive/negative identity and browser-security matrix, plus affected `G-15`/`G-20`; a single happy-path login cannot substitute.
 11. Settings schema/catalog/provider/speed/persistence/snapshot changes rerun `G-19` including failure injection, live capability reconciliation and concurrent save/start, plus affected `G-15`/`G-17`/`G-20`.
-12. `SUR-02` presentation or interaction changes rerun affected deployed states/viewports/accessibility paths in `G-20`, `G-13` and, after activation, `G-16`; runtime result correlation remains required.
+12. `SUR-02` presentation or interaction changes rerun affected deployed states/viewports/accessibility paths in `G-20` and active `G-16`; runtime result correlation remains required.
 
 ## PR Merge And Completion Rules
 
 The repository currently defines no package scripts, CI configuration, branch protection, PR template or deployment gate. This document does not invent them.
 
 - A change may be called `merge-ready` only when its requirement trace is complete, all applicable unit/integration/manual design gates pass on the current revision and no blocking finding remains.
-- A merge or local commit is not a release claim. Product V1 is `release-ready` only after all applicable hard gates, including `G-15`, `G-17`–`G-20` and post-approval `G-16` when active, pass.
+- A merge or local commit is not a release claim. Product V1 is `release-ready` only after all applicable hard gates, including `G-15`, active `G-16`, and `G-17`–`G-20`, pass.
 - Absence of automation is not a waiver: required evidence may be manual/hybrid but must retain the same result schema.
-- Human approval is not a default completion gate. The only standing design approval is the future one-time whole-design approval; product-specific explicit permissions remain runtime safety boundaries, not PR approvals.
+- Human approval is not a default completion gate. The one whole-design approval has been recorded in the active baseline; product-specific explicit permissions remain runtime safety boundaries, not PR approvals.
 - Any change that conflicts with current source truth returns to the upstream owner; it is not merged as an implicit requirement change.
 
 ## Out Of Scope
@@ -699,7 +699,7 @@ The repository currently defines no package scripts, CI configuration, branch pr
 - Per-screen/per-scenario QA procedures, test data sets, exact commands, screenshots or future QA check IDs.
 - Implementation units, coding tasks, milestones, issue hierarchy or delivery schedule.
 - CI/provider/tool commands not present in the repository.
-- Creating or approving the integrated rendered Candidate B revision across `SUR-01` + `SUR-02` or assigning an Approved Visual Baseline.
+- Replacing or extending the active visual baseline without a new explicit whole-design approval.
 - Claiming security, privacy, accessibility, delivery or regulatory guarantees without corresponding runtime and specialist evidence.
 
 ## Open Questions
@@ -710,5 +710,4 @@ The repository currently defines no package scripts, CI configuration, branch pr
 4. **Runtime configuration.** Exact pinned Codex app-server/SDK and Claude Code versions, A2A v0.3.0 serialization profile, runtime adapter start/heartbeat/cancel semantics, wrapping-key provider, crypto version and retry scheduler remain implementation-bound; related gates cannot pass until the deployed choices are named and evidenced.
 5. **Subscription, infrastructure and provider-status feeds.** Which configured subscription-fee records, actual infrastructure billing/usage feeds and provider-supported usage/limit/reset signals are authoritative? `G-11` requires reconciliation where data exists and `невідомо` where it does not; missing provider status never becomes an invented monetary AI total, reset or per-session token charge.
 6. **Client variance.** Current Element/Matrix formatting and accessibility behavior on Mac, iPhone, Samsung Flip7/Android and Windows requires real-device evidence and honest reporting of material differences.
-7. **Hosted homeserver.** `matrix.org` is only the conditional PoC default. Production `G-02`, `G-14` and `G-15` remain blocked until bot policy, reliability, room capabilities and the `m.federate: false` decision have live evidence.
-8. **Approved Visual Baseline.** Candidate B is the selected content/UX direction, but no integrated rendered revision covering Matrix-native `SUR-01` and responsive `SUR-02`, Baseline ID, immutable target hash, QA check IDs or VisualQAEvidence exists. This does not block documentation; only one whole-design approval of both surfaces activates `G-16`, after which its missing fields are blocking.
+7. **Matrix.org.** `matrix.org` is the selected V1 public homeserver on its current free plan. Production `G-02`, `G-14` and `G-15` remain blocked until the free-plan status, bot policy, reliability, private E2EE room invariants and verified device lifecycle have live evidence. `m.federate: false` is not a V1 gate because the owner does not control that server-level setting on the public homeserver.

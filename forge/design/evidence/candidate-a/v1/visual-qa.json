@@ -1,0 +1,167 @@
+{
+  "candidate": {
+    "id": "candidate-a",
+    "version": "v1",
+    "direction": "Рішення спочатку",
+    "status": "proposed",
+    "approval": "not-approved",
+    "designOnly": true
+  },
+  "recordedAt": "2026-08-15T19:45:03+03:00",
+  "route": {
+    "origin": "http://127.0.0.1:4312",
+    "path": "/forge/design/candidates/candidate-a/v1/",
+    "stateQuery": "?state={state}",
+    "final": "http://127.0.0.1:4312/forge/design/candidates/candidate-a/v1/?state=final"
+  },
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "stateCoverage": {
+    "expected": 6,
+    "passed": 6,
+    "states": [
+      {
+        "state": "active",
+        "httpStatus": 200,
+        "ready": true,
+        "stateMatched": true,
+        "horizontalOverflow": false
+      },
+      {
+        "state": "permission",
+        "httpStatus": 200,
+        "ready": true,
+        "stateMatched": true,
+        "horizontalOverflow": false
+      },
+      {
+        "state": "failure",
+        "httpStatus": 200,
+        "ready": true,
+        "stateMatched": true,
+        "horizontalOverflow": false
+      },
+      {
+        "state": "final",
+        "httpStatus": 200,
+        "ready": true,
+        "stateMatched": true,
+        "horizontalOverflow": false
+      },
+      {
+        "state": "costs",
+        "httpStatus": 200,
+        "ready": true,
+        "stateMatched": true,
+        "horizontalOverflow": false
+      },
+      {
+        "state": "stopped",
+        "httpStatus": 200,
+        "ready": true,
+        "stateMatched": true,
+        "horizontalOverflow": false
+      }
+    ]
+  },
+  "interactionChecks": {
+    "keyboard": {
+      "passed": true,
+      "evidence": "The first Tab focuses the skip link «Перейти до розмови» with href #conversation."
+    },
+    "focus": {
+      "passed": true,
+      "evidence": "Keyboard focus reaches a semantic anchor and the candidate stylesheet provides :focus-visible treatment for buttons, anchors, and tabindex targets."
+    },
+    "reducedMotion": {
+      "passed": true,
+      "evidence": "With prefers-reduced-motion emulated as reduce, matchMedia returned true and computed document scroll-behavior was auto."
+    }
+  },
+  "layoutChecks": {
+    "desktopHorizontalOverflow": false,
+    "mobileHorizontalOverflow": false,
+    "productSurfaceHorizontalOverflow": false
+  },
+  "freshConsole": {
+    "scope": "All six state routes in one isolated Playwright browser session on port 4312",
+    "errors": 0,
+    "warnings": 0,
+    "pageErrors": 0
+  },
+  "immutability": {
+    "fixture": {
+      "path": "forge/design/candidate-sets/whatsapp-consultant/v1/shared/scenario-fixture.js",
+      "algorithm": "SHA-256",
+      "sha256": "96732f738a41bf1f838736de77a748ef65704d68010553bbf43638f83ddd1af6"
+    },
+    "frozenAgentBodies": {
+      "count": 4,
+      "algorithm": "SHA-256",
+      "hashingContract": "SHA-256 over the UTF-8 bytes of fixture.agentMessages.map(message => message.body).join(''), with no separator or normalization.",
+      "sha256": "ddf71722bcb4d5a2e0a56a64a4f6f0160d99d276f75590afd263e10371e76cfa"
+    }
+  },
+  "sourceTree": {
+    "path": "forge/design/candidates/candidate-a/v1",
+    "algorithm": "SHA-256",
+    "hashingContract": "From the candidate directory, SHA-256 each regular file; sort records by relative POSIX path under LC_ALL=C; then SHA-256 the exact UTF-8 shasum manifest byte stream, including two-space delimiters and trailing newlines.",
+    "command": "(cd forge/design/candidates/candidate-a/v1 && find . -type f -print0 | LC_ALL=C sort -z | xargs -0 shasum -a 256) | shasum -a 256",
+    "sha256": "0fa285361b8f4cdbedb7ff3c83da6a5113a1b840f7c3d7fd0ba3f0d73c61942d"
+  },
+  "screenshots": [
+    {
+      "path": "forge/design/evidence/candidate-a/v1/candidate-a-active-desktop-final.png",
+      "sourceCapture": "forge/design/evidence/candidate-a/v1/candidate-a-active-desktop-final.png",
+      "state": "active",
+      "viewport": "desktop",
+      "capturePixels": {
+        "width": 1440,
+        "height": 916
+      },
+      "algorithm": "SHA-256",
+      "sha256": "21ead4da0538e397d9e47a7c065d1ff20fe73fa5c37acefe4aa1bbc4eba56484"
+    },
+    {
+      "path": "forge/design/evidence/candidate-a/v1/candidate-a-final-desktop-final.png",
+      "sourceCapture": "forge/design/evidence/candidate-a/v1/candidate-a-final-desktop-final.png",
+      "state": "final",
+      "viewport": "desktop",
+      "capturePixels": {
+        "width": 1440,
+        "height": 916
+      },
+      "algorithm": "SHA-256",
+      "sha256": "8d5ddcca5fc82e48c5e34985fa60407b05fb1155411f5406f6e604c5526b41ef"
+    },
+    {
+      "path": "forge/design/evidence/candidate-a/v1/candidate-a-final-mobile-final.png",
+      "sourceCapture": "forge/design/evidence/candidate-a/v1/candidate-a-final-mobile-final.png",
+      "state": "final",
+      "viewport": "mobile",
+      "capturePixels": {
+        "width": 390,
+        "height": 1122
+      },
+      "algorithm": "SHA-256",
+      "sha256": "f5055f86151efc7031381f13a19a0c45e874b6f2332f7839bd6141a67070a750"
+    }
+  ],
+  "changedEvidencePaths": [
+    "forge/design/evidence/candidate-a/v1/visual-qa.json",
+    "forge/design/evidence/candidate-a/v1/candidate-a-active-desktop-final.png",
+    "forge/design/evidence/candidate-a/v1/candidate-a-final-desktop-final.png",
+    "forge/design/evidence/candidate-a/v1/candidate-a-final-mobile-final.png"
+  ],
+  "approvalBoundary": "This evidence records technical and visual QA only. Candidate A remains proposed and not approved."
+}

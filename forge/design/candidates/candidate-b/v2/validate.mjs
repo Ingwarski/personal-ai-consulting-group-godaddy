@@ -78,12 +78,27 @@ assert(indexSource.includes("<dialog"), "reset confirmation dialog missing");
 
 const settingsGroups = ["Моделі", "Глибина міркування", "Швидкість"];
 settingsGroups.forEach((label) => assert(appSource.includes(label), `settings group missing: ${label}`));
+[
+  "GPT-5.6 Sol",
+  "GPT-5.6 Terra",
+  "GPT-5.6 Luna",
+  "Claude Opus 5",
+  "Claude Sonnet 5",
+  "Claude Opus 4.8"
+].forEach((model) => assert(appSource.includes(model), `current model missing: ${model}`));
+assert(!appSource.includes("GPT-5.3-Codex"), "obsolete Codex model remains");
+assert(!appSource.includes("GPT-5.2-Codex"), "obsolete Codex model remains");
+assert(appSource.includes("legacy, заблоковано"), "legacy compatibility state missing");
+assert(appSource.includes("max не зберігається"), "session-only max boundary missing");
 assert(appSource.includes("Зберегти весь набір"), "atomic save label missing");
 assert(appSource.includes("Активна сесія використовує незмінний snapshot"), "snapshot notice missing");
 assert(appSource.includes("Іншого способу входу у V1 немає"), "Google-only denied boundary missing");
 assert(appSource.includes("не Fast Mode, priority tier, PAYG або credits"), "speed boundary missing");
 
 assert(styleSource.includes(":focus-visible"), "visible focus styles missing");
+assert(styleSource.includes("--accent: #2e6fdc"), "HappyPro blue palette missing");
+assert(styleSource.includes("--review-bg: #071a33"), "HappyPro navy palette missing");
+assert(styleSource.includes("--brand-berry: #c0265b"), "HappyPro berry palette missing");
 assert(styleSource.includes("prefers-reduced-motion: reduce"), "reduced-motion handling missing");
 assert(styleSource.includes("max-width: 520px"), "narrow responsive layout missing");
 assert(styleSource.includes("grid-template-columns: 1fr"), "single-column responsive rule missing");
