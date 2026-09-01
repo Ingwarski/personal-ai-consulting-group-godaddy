@@ -446,7 +446,7 @@ Verified platform evidence: GoDaddy Published is described by the provider as a 
 
 The locally verified Node 22 scaffold has an explicit `build`, `start`, `PORT` and `/healthz` contract. It starts only as a safe deployment gate: an invalid runtime mode, forbidden provider environment material or a non-Node-22 runtime makes health return `503`. When the runtime is valid, the root returns `200` solely so GoDaddy can verify the process; its response explicitly states that the Personal Consultant product is not implemented. It is not a production topology approval or evidence that the V1 is migrated.
 
-The temporary legacy-recovery aid is opt-in only: setting `GODADDY_DATABASE_PROBE=metadata` runs one bounded read of `information_schema.TABLES` after startup, logs public table metadata only (name, type, estimated rows and size) and immediately closes its `mysql2` connection. It never reads table rows or definitions, never logs any `DB_*` values/database identifier or provider error text, and has no write statement. It must be removed again once an independently restorable backup and destructive manifest exist.
+On 02.09.2026 the temporary Preview-only metadata probe completed one `information_schema.TABLES` read and returned zero tables. It was used only because GoDaddy’s table/export UI reported its agent unavailable; it did not read rows or definitions or log credentials. The probe and its `mysql2` dependency are retired immediately after this receipt; the zero-table result does not prove anything beyond the exact connected schema’s absence of tables.
 
 ### 25.2. Current no-go facts
 

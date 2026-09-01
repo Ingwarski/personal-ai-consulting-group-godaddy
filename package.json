@@ -20,8 +20,5 @@
     "@cloudflare/workers-types": "^5.20260815.1",
     "typescript": "^7.0.2",
     "wrangler": "^4.123.0"
-  },
-  "dependencies": {
-    "mysql2": "^3.24.2"
   }
 }

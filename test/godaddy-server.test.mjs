@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { FORBIDDEN_RUNTIME_ENVIRONMENT_NAMES as workerForbiddenEnvironmentNames } from "../src/runtime/environment.ts";
-import { runDatabaseMetadataProbe } from "../src/godaddy/database-probe.mjs";
 import { FORBIDDEN_RUNTIME_ENVIRONMENT_NAMES as godaddyForbiddenEnvironmentNames } from "../src/godaddy/forbidden-environment.mjs";
 import { createGodaddyServer, getGodaddyRuntimeStatus, parsePort } from "../src/godaddy/server.mjs";
 
@@ -76,69 +75,4 @@ test("runtime and port validation are explicit", () => {
 
 test("GoDaddy keeps the production credential denylist aligned with the Worker", () => {
   assert.deepEqual(godaddyForbiddenEnvironmentNames, workerForbiddenEnvironmentNames);
-});
-
-test("the GoDaddy metadata probe reads only bounded schema metadata when explicitly enabled", async () => {
-  let receivedConfig;
-  let receivedQuery;
-  let closed = false;
-  const result = await runDatabaseMetadataProbe({
-    environment: {
-      GODADDY_DATABASE_PROBE: "metadata",
-      DB_HOST: "database.internal",
-      DB_PORT: "3306",
-      DB_NAME: "private_database",
-      DB_USER: "private_user",
-      DB_PASSWORD: "private_password"
-    },
-    loadMysql: async () => ({
-      createConnection: async (config) => {
-        receivedConfig = config;
-        return {
-          query: async (query) => {
-            receivedQuery = query;
-            return [[{
-              tableName: "legacy_sessions",
-              tableType: "BASE TABLE",
-              estimatedRows: 12,
-              estimatedBytes: 4096
-            }]];
-          },
-          end: async () => { closed = true; }
-        };
-      }
-    })
-  });
-
-  assert.deepEqual(result, {
-    status: "completed",
-    tableCount: 1,
-    truncated: false,
-    tables: [{ name: "legacy_sessions", type: "BASE TABLE", estimatedRows: 12, estimatedBytes: 4096 }]
-  });
-  assert.equal(receivedConfig.connectTimeout, 5000);
-  assert.match(receivedQuery, /information_schema\.TABLES/);
-  assert.doesNotMatch(receivedQuery, /SELECT \*/);
-  assert.equal(closed, true);
-});
-
-test("the GoDaddy metadata probe stays off by default and never exposes connection failures", async () => {
-  const notRequested = await runDatabaseMetadataProbe({
-    environment: {},
-    loadMysql: async () => { throw new Error("must not load"); }
-  });
-  assert.deepEqual(notRequested, { status: "not_requested" });
-
-  const unavailable = await runDatabaseMetadataProbe({
-    environment: {
-      GODADDY_DATABASE_PROBE: "metadata",
-      DB_HOST: "database.internal",
-      DB_PORT: "3306",
-      DB_NAME: "private_database",
-      DB_USER: "private_user",
-      DB_PASSWORD: "private_password"
-    },
-    loadMysql: async () => { throw new Error("password must not appear"); }
-  });
-  assert.deepEqual(unavailable, { status: "unavailable", code: "database_metadata_probe_failed" });
 });

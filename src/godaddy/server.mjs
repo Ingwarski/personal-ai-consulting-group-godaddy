@@ -2,7 +2,6 @@ import { createServer } from "node:http";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { runDatabaseMetadataProbe } from "./database-probe.mjs";
 import { FORBIDDEN_RUNTIME_ENVIRONMENT_NAMES } from "./forbidden-environment.mjs";
 
 export const GODADDY_NODE_MAJOR = 22;
@@ -79,11 +78,6 @@ export async function startGodaddyServer({ environment = process.env, nodeVersio
     server.once("error", rejectListen);
     server.listen({ host: "0.0.0.0", port }, resolveListen);
   });
-
-  const databaseProbe = await runDatabaseMetadataProbe({ environment });
-  if (databaseProbe.status !== "not_requested") {
-    console.log(`GoDaddy database metadata probe: ${JSON.stringify(databaseProbe)}`);
-  }
 
   return server;
 }
