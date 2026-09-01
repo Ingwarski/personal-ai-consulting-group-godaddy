@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { FORBIDDEN_RUNTIME_ENVIRONMENT_NAMES } from "./forbidden-environment.mjs";
+import { createGoDaddySettingsRuntime } from "./settings-runtime.ts";
 
 export const GODADDY_NODE_MAJOR = 22;
 
@@ -48,10 +49,44 @@ export function parsePort(value) {
   return port <= 65535 ? port : undefined;
 }
 
+const nodeRequest = (request) => {
+  const headers = new Headers();
+  for (const [name, value] of Object.entries(request.headers)) {
+    if (value === undefined) continue;
+    headers.set(name, Array.isArray(value) ? value.join(name === "cookie" ? "; " : ", ") : value);
+  }
+  const method = request.method ?? "GET";
+  if (method === "GET" || method === "HEAD") {
+    return new Request(`http://godaddy.internal${request.url ?? "/"}`, { method, headers });
+  }
+  return new Request(`http://godaddy.internal${request.url ?? "/"}`, {
+    method,
+    headers,
+    body: request,
+    duplex: "half"
+  });
+};
+
+const writeResponse = async (response, output) => {
+  const headers = {};
+  for (const [name, value] of response.headers) {
+    if (name !== "set-cookie") headers[name] = value;
+  }
+  const cookies = typeof response.headers.getSetCookie === "function"
+    ? response.headers.getSetCookie()
+    : response.headers.get("set-cookie");
+  if (Array.isArray(cookies) && cookies.length > 0) headers["set-cookie"] = cookies;
+  if (typeof cookies === "string" && cookies.length > 0) headers["set-cookie"] = cookies;
+  output.writeHead(response.status, headers);
+  if (response.body === null) return output.end();
+  output.end(Buffer.from(await response.arrayBuffer()));
+};
+
 export function createGodaddyServer({ environment = process.env, nodeVersion = process.version } = {}) {
   const status = getGodaddyRuntimeStatus({ environment, nodeVersion });
+  const settings = status.ok ? createGoDaddySettingsRuntime(environment) : undefined;
 
-  return createServer((request, response) => {
+  return createServer(async (request, response) => {
     const url = new URL(request.url ?? "/", "http://localhost");
     if (request.method === "GET" && url.pathname === "/healthz") {
       return json(response, status.ok ? 200 : 503, status.ok
@@ -61,8 +96,17 @@ export function createGodaddyServer({ environment = process.env, nodeVersion = p
 
     if (request.method === "GET" && url.pathname === "/") {
       return json(response, status.ok ? 200 : 503, status.ok
-        ? { status: "runtime_ready", code: "personal_consultant_product_not_implemented" }
+        ? { status: "runtime_ready", code: "personal_consultant_settings_slice_pending_configuration" }
         : { status: "blocked", code: status.code });
+    }
+
+    if (status.ok && settings !== undefined) {
+      try {
+        const settingsResponse = await settings.handle(nodeRequest(request));
+        if (settingsResponse !== undefined) return writeResponse(settingsResponse, response);
+      } catch {
+        return json(response, 500, { status: "error", code: "settings_runtime_failure" });
+      }
     }
 
     return json(response, 404, { status: "not_found" });

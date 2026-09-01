@@ -45,11 +45,15 @@ test("GoDaddy health fails closed without runtime configuration or with forbidde
   });
 });
 
-test("GoDaddy server does not present the product before its runtime is implemented", async (t) => {
+test("GoDaddy server preserves its health probe while Settings stays unavailable without configuration", async (t) => {
   await withServer(t, { environment: supportedEnvironment, nodeVersion: "v22.16.0" }, async (origin) => {
     const root = await fetch(`${origin}/`);
     assert.equal(root.status, 200);
-    assert.deepEqual(await root.json(), { status: "runtime_ready", code: "personal_consultant_product_not_implemented" });
+    assert.deepEqual(await root.json(), { status: "runtime_ready", code: "personal_consultant_settings_slice_pending_configuration" });
+
+    const settings = await fetch(`${origin}/settings`);
+    assert.equal(settings.status, 503);
+    assert.equal(await settings.text(), "Settings are temporarily unavailable.");
 
     const unknown = await fetch(`${origin}/unknown`);
     assert.equal(unknown.status, 404);

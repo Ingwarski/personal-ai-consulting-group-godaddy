@@ -8,9 +8,8 @@
   },
   "scripts": {
     "build:settings-assets": "node scripts/build-settings-assets.mjs",
-    "build:godaddy-runtime": "node scripts/build-godaddy-runtime.mjs",
-    "build": "npm run build:settings-assets && npm run build:godaddy-runtime",
-    "start": "npm run build && node dist/godaddy/server.mjs",
+    "build": "npm run build:settings-assets",
+    "start": "npm run build && node --experimental-strip-types src/godaddy/server.mjs",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test test/*.test.ts test/*.test.mjs",
     "check:environment": "node --experimental-strip-types scripts/check-forbidden-runtime-env.mjs",
@@ -20,5 +19,9 @@
     "@cloudflare/workers-types": "^5.20260815.1",
     "typescript": "^7.0.2",
     "wrangler": "^4.123.0"
+  },
+  "dependencies": {
+    "google-auth-library": "^10.9.1",
+    "mysql2": "^3.24.2"
   }
 }

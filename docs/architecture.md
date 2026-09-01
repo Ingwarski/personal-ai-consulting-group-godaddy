@@ -444,13 +444,13 @@ Multiuser, third-party access або commercial-service expansion анулює �
 
 Verified platform evidence: GoDaddy Published is described by the provider as a persistent Node.js 22 process that supports long-lived connections. This removes the Preview idle-sleep concern; it does not prove restart/redeploy behavior, private durable storage, process isolation, database isolation, native dependency support, credential fencing, or rollback for this V1.
 
-The locally verified Node 22 scaffold has an explicit `build`, `start`, `PORT` and `/healthz` contract. It starts only as a safe deployment gate: an invalid runtime mode, forbidden provider environment material or a non-Node-22 runtime makes health return `503`. When the runtime is valid, the root returns `200` solely so GoDaddy can verify the process; its response explicitly states that the Personal Consultant product is not implemented. It is not a production topology approval or evidence that the V1 is migrated.
+The locally verified Node 22 scaffold has an explicit `build`, `start`, `PORT` and `/healthz` contract. It starts only as a safe deployment gate: an invalid runtime mode, forbidden provider environment material or a non-Node-22 runtime makes health return `503`. When the runtime is valid, the root returns `200` solely so GoDaddy can verify the process; its response explicitly states that the Settings slice still requires configuration. It is not a production topology approval or evidence that the V1 is migrated.
 
-On 02.09.2026 the temporary Preview-only metadata probe completed one `information_schema.TABLES` read and returned zero tables. It was used only because GoDaddy’s table/export UI reported its agent unavailable; it did not read rows or definitions or log credentials. The probe and its `mysql2` dependency are retired immediately after this receipt; the zero-table result does not prove anything beyond the exact connected schema’s absence of tables.
+On 02.09.2026 the temporary Preview-only metadata probe completed one `information_schema.TABLES` read and returned zero tables. It was used only because GoDaddy’s table/export UI reported its agent unavailable; it did not read rows or definitions or log credentials. The probe itself was retired immediately after this receipt. The separately audited Node storage adapter may use `mysql2` only after its explicit Published-state gate; the zero-table result does not prove anything beyond the exact connected schema’s absence of tables.
 
 ### 25.2. Current no-go facts
 
-- Current checkout requires Node.js `>=24`, has no HTTP-server `start` script, and is a Cloudflare Worker configuration rather than a GoDaddy Node application.
+- The Cloudflare reference topology is not directly deployable to GoDaddy: it depends on `OWNER_SETTINGS`, `REGISTRAR`, asset bindings and Cloudflare Access JWT behavior. The checkout now has a separate Node.js 22 build/start/`PORT` contract, but that is not a replacement for those dependencies.
 - `src/worker.ts` depends on `OWNER_SETTINGS`, `REGISTRAR`, asset binding and Cloudflare Access JWT behavior; `CAPABILITY_CATALOG` is not yet wired. Archive code has an R2 adapter.
 - The approved architecture requires `MatrixBridgeContainer`, `RegistrarDO`, `OwnerSettingsDO`, Cloudflare Access and R2. Matrix E2EE runtime, subscription-OAuth runtime, live capability catalog and archive storage are not production-connected.
 - In GoDaddy, Files is Git-connected and read-only. Replacing legacy source requires an explicit source disconnect/repoint or a separate GitHub repository decision; it cannot be accomplished by deleting UI files.
@@ -487,3 +487,33 @@ The former Cloudflare lineage remains an immutable reference and rollback source
 2. Which private durable storage and process model safely sustain Matrix crypto/OAuth boundaries across restart?
 3. Is a GoDaddy-native Google-only Settings boundary approved as an equivalent to the current Cloudflare Access/JWT contract, or is an exception/new product decision required?
 4. Which source action preserves HappyPro rollback: Git disconnect/repoint while retaining the repository, or eventual permanent repository deletion after the stabilization period?
+
+### 25.6. Node 22 replatform boundary
+
+The GoDaddy implementation is a separate adapter layer. It preserves the existing domain modules as reference contracts and does not make the Cloudflare Worker executable inside the Node process. The first transferable product slice is `Налаштування власника`: its typed settings domain, full-object/CAS/idempotency rules and responsive presentation can run behind a Node HTTP adapter only after an equivalent Google-only access boundary and persistent transaction boundary exist.
+
+| Boundary | Node 22 responsibility | Fail-closed rule |
+|---|---|---|
+| Google-only Settings access | Authorization-code flow with state and nonce; server-side Google ID-token verification against the discovery/JWKS metadata; exact configured owner email; secure signed session cookie | Missing, invalid, expired, wrongly issued/audienced, wrong-email or unverified-email assertion returns denial and creates no session. No password, OTP, magic-link, alternative IdP or browser-supplied identity is accepted. |
+| Settings persistence | MySQL transaction adapter for the existing `SettingsStorage` contract, namespaced separately from registrar state | The adapter performs no automatic DDL and does not initialize or write unless a production-bound storage configuration and the exact schema are already present. Preview remains stateless unless the provider proves separate database/schema+credential. |
+| Capability truth | Versioned, typed capability receipt supplied outside the repository and validated by the existing domain | An absent, malformed, stale or incompatible receipt leaves Settings unavailable; model names or defaults are never invented in Node configuration. |
+| Registrar state | MySQL transaction adapter for the existing `RegistrarStorage` contract with a single fixed owner namespace | No Matrix event, agent start or visible message is accepted until the Matrix runtime, room/device invariant and production persistence boundary are separately configured and verified. |
+| Matrix, subscription OAuth and archive | Separate Node processes/adapters must be selected and evidenced before activation | No placeholder agent, synthetic Matrix reply, API/PAYG credential or unencrypted archive is permitted as a migration shortcut. |
+
+The source repository may include the Node adapters and explicit schema tooling, but a deployment never applies schema changes implicitly. A schema write, Google OAuth client configuration, Matrix bot/crypto state, subscription OAuth provisioning and Published activation remain distinct, just-in-time actions. None is authorized by a Preview pull.
+
+**Configuration contract (names only):** `RUNTIME_MODE`, the GoDaddy-injected `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `GODADDY_STATE_DATABASE_ROLE`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OWNER_EMAIL`, `GOOGLE_REDIRECT_URI`, `GOOGLE_SESSION_HMAC_KEY`, `SETTINGS_CSRF_HMAC_KEY` and `CAPABILITY_CATALOG_JSON`. Provider credentials, Google tokens, database values and the capability receipt’s internal runtime provenance never enter Git, logs or an archive; the authenticated Settings document receives only the model labels and mappings it needs to render the approved controls.
+
+**Decision AD-14 — Stateless Preview before isolated state proof.**
+
+- **Source:** `FR-001`, `FR-038`–`FR-046`, `NFR-005`–`NFR-019`, and the observed shared GoDaddy database resource.
+- **Options:** let Preview initialize the shared database; or make Preview stateless until GoDaddy proves a separate database/schema+credential.
+- **Decision:** Preview remains stateless. Product persistence is enabled only by an explicit production-bound database role after the schema exists and the state boundary is verified.
+- **Consequence:** Preview can prove Node build, protected-route denial and presentation assets, but cannot prove session, Matrix, archive or settings persistence.
+
+**Decision AD-15 — Google OIDC is the Node Settings equivalent, not an alternate product login.**
+
+- **Source:** `FR-038`–`FR-039`, `NFR-016`, `AC-012`, and Google’s server-side OpenID Connect validation contract.
+- **Options:** accept a shared token/header; retain Cloudflare Access; or use a server-side Google OIDC authorization-code boundary.
+- **Decision:** use server-side Google OIDC only, validate the signed ID token’s issuer, audience, expiry, nonce, verified-email claim and exact owner email, then issue an application session that contains no Google or AI token.
+- **Consequence:** Settings stays unavailable until the owner provisions a Google web client and exact redirect URI; this is safer than a temporary alternate login and does not alter subscription OAuth isolation.
