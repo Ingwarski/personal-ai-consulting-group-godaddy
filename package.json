@@ -4,14 +4,17 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=24.0.0"
+    "node": ">=22.0.0"
   },
   "scripts": {
     "build:settings-assets": "node scripts/build-settings-assets.mjs",
+    "build:godaddy-runtime": "node scripts/build-godaddy-runtime.mjs",
+    "build": "npm run build:settings-assets && npm run build:godaddy-runtime",
+    "start": "npm run build && node dist/godaddy/server.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "test": "node --experimental-strip-types --test test/*.test.ts test/*.test.mjs",
     "check:environment": "node --experimental-strip-types scripts/check-forbidden-runtime-env.mjs",
-    "check": "npm run build:settings-assets && npm run typecheck && npm run test && npm run check:environment"
+    "check": "npm run build && npm run typecheck && npm run test && npm run check:environment"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260815.1",

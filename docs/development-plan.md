@@ -1,5 +1,8 @@
 # Development Plan
 
+- `status`: Node 22 runtime scaffold locally verified; all-GoDaddy production feasibility remains blocked
+- `updated_at`: `2026-09-02`
+
 ## Source References
 
 - `docs/prd.md`: `US-001`–`US-029`, `FR-001`–`FR-046`, `NFR-001`–`NFR-019`, `AC-001`–`AC-016`.
@@ -10,19 +13,23 @@
 - `docs/screen-map.md`: `SUR-01`–`SUR-02`, `MG-01`–`MG-13`, `SG-01`–`SG-05`, `SS-01`–`SS-46`.
 - `docs/wireframes.md`: conversational sequences A–F, Owner Settings structure and atomic-agent-reply pattern.
 - `docs/design-brief.md`: Approved Visual Baseline `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`, immutable target `96b91ba9622f8301809ed10ef661a313006e0c2743712912c624edc36a2ca8eb`.
-- `docs/architecture.md`: §§5–20, especially `RegistrarDO`, `OwnerSettingsDO`, `SettingsAccessGateway`, `MatrixBridgeContainer`, `AgentRuntimeContainer`, `ModelCapabilityCatalogService` and the subscription-OAuth boundary.
+- `docs/architecture.md`: §§5–20 and §25, especially the all-GoDaddy feasibility, legacy-cleanup, recovery and equivalence boundaries.
 - `docs/dod-evals.md`: `G-01`–`G-20`, including active `G-16`.
 - `docs/qa-checklist.md`: `QA-PA-*`, `QA-JRN-*`, `QA-SS-*`, `QA-VIS-*`, `QA-INT-*`, `QA-A11Y-*`, `QA-RR-001`.
 
+## All-GoDaddy precondition
+
+The user-selected hosting direction is the existing GoDaddy Node.js app, not a direct Worker deployment. The original checkout required Node.js `>=24`, supplied no Node HTTP `start` contract, and contains Cloudflare Worker/DO/R2-oriented adapters. A Node 22 build/start/`PORT`/health scaffold is now locally verified, but it fails closed and presents no product surface. The remaining feasibility gate must pass before legacy-code cleanup, secret removal, database cleanup or any production claim.
+
+`Preview` and `Published` must not be treated as isolated merely because they are variants. A stateful Preview requires provider-proven separate database/schema+credential; otherwise its scope is stateless build/UI verification only. An empty database table list in the dashboard is insufficient proof of legacy-data absence or exclusive ownership.
+
 ## Implementation Strategy
 
-Build the production system as two connected vertical paths without turning the existing browser preview into the product:
-
-1. Build and test the Owner Settings domain and its Cloudflare-facing boundary first. It has a narrow, local-testable contract: typed model catalogs, compatibility, atomic full-object writes, immutable effective snapshots and no API/PAYG fallback.
-2. Build the shared session registrar before provider adapters. It owns canonical order, idempotency, cancellation and verbatim confirmed messages; Matrix and agent processes become adapters to it.
-3. Add deployed integrations only after their local contract tests pass: Cloudflare Access/Worker, one `matrix.org` room, then subscription-OAuth runtimes and A2A.
+1. Complete the GoDaddy feasibility and legacy-recovery gates without production writes. This is the gate for any further replatform implementation, not a substitute for it.
+2. Extend the verified Node 22 runtime only after feasibility establishes a safe process, database, storage and auth model. The existing Cloudflare units are reference contracts, not deployable work items for the new target.
+3. Recreate the canonical registrar, Matrix bridge, Settings access, OAuth fencing and archive only with proven equivalents; no adapter is assumed interchangeable.
 4. Promote only the approved Candidate B v2 presentation fragments for `SUR-02`; `SUR-01` remains native Element/Matrix and is not reimplemented as a browser chat.
-5. Claims progress from local contract evidence → controlled integration evidence → deployed, real-device E2E evidence. A green local suite never substitutes a relevant hard gate.
+5. Claims progress from local contract evidence → controlled integration evidence → GoDaddy Published, real-device E2E evidence. A green local suite never substitutes a relevant hard gate.
 
 ## Codebase Map
 
@@ -33,9 +40,22 @@ Build the production system as two connected vertical paths without turning the 
 | `tests/consilium-chat.test.mjs` | Legacy formatting test | Preserve; add isolated MVP tests under a new runtime test tree.
 | `forge/design/candidates/candidate-b/v2/*` | Approved visual evidence | Reuse only selected `SUR-02` presentation via the traced promotion in U-04.
 | `forge/design/evidence/candidate-b/v2/*` | Approved visual evidence | Read-only visual target; use for `G-16`, never as runtime proof.
-| `src/*`, `test/*`, `wrangler.*`, `package.json` | Absent | Created by the first implementation unit; names below are the target module map.
+| `src/*`, `test/*`, `wrangler.*`, `package.json` | Existing Cloudflare-oriented partial implementation | Preserve as a reference/rollback source during feasibility; do not assert that it is a GoDaddy Node app or delete it before the legacy retention decision. |
 
 ## Implementation Units
+
+### G-00 — All-GoDaddy feasibility and legacy recovery gate
+
+- **Purpose:** establish whether the requested GoDaddy target can satisfy retained V1 invariants and whether legacy HappyPro state can be recovered before any irreversible change.
+- **Source References:** architecture §25; PRD `FR-001`–`FR-046`, `NFR-001`–`NFR-019`; DoD `G-01`, `G-02`–`G-20`; QA `QA-RR-001` and all applicable `QA-PA-*`.
+- **Depends On:** explicit hosting direction from the Owner; no legacy or provider-data mutation.
+- **Work Items:** inventory deployed app/source/variant/database resource metadata without secret values or database payloads; map runtime to database; reconcile historic HappyPro persistence evidence; preserve immutable Git rollback artifact; create encrypted backup and prove an isolated restore; verify Node 22 build/start/`PORT` and restart semantics in an isolated target; obtain provider evidence for database isolation, private durable storage, child-process/native-dependency feasibility and outbound policy; define a GoDaddy-equivalent design for registrar, Matrix crypto state, Google-only Settings, subscription OAuth and encrypted archive. The local Node 22 build/start/health contract is complete; restart/redeploy proof in GoDaddy and all stateful-equivalence work remain open.
+- **Acceptance Checks:** dashboard table absence is never accepted as database-wipe authority; no legacy source/secrets/data are deleted; no stateful Preview is used without independent database/schema+credential; all missing provider guarantees become an explicit blocker rather than an assumption.
+- **Verification:** redacted metadata inventory; backup hash and restore/reconciliation result; Node 22 build/start/health/restart receipt; provider capability evidence; architecture review mapping every V1 invariant to a GoDaddy equivalent or a no-go result.
+- **Delivery Layer:** feasibility/recovery.
+- **Interfaces Produced:** content-free environment inventory, recovery receipt, and an approved GoDaddy runtime contract or a documented no-go.
+- **Interfaces Consumed:** none.
+- **Integration Verification:** no destructive action is eligible until the G-00 evidence bundle and action-time destructive manifest are both complete.
 
 ### U-01 — Runtime scaffold and contract test boundary
 

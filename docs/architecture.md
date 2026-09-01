@@ -2,10 +2,10 @@
 
 ## Метадані
 
-- `status`: approved visual baseline; production implementation not started
+- `status`: all-GoDaddy target recorded; Node 22 runtime scaffold locally verified; production feasibility blocked
 - `architecture_owner`: `to-architecture`
 - `owner_invocation_id`: `e05a1a53-1bfe-4a6b-a6db-a3ba80de9266`
-- `updated_at`: `2026-09-01`
+- `updated_at`: `2026-09-02`
 - `design_direction`: Candidate B для живого дослівного консиліуму
 - `product_surfaces`: 2 (`SUR-01`, `SUR-02`)
 - `requirements`: 29 user stories, 46 FR, 19 NFR, 16 AC
@@ -56,7 +56,7 @@ V1 має дві й лише дві продуктові поверхні:
 
 `SUR-02` не є браузерною консультацією: там немає чату, архіву, execution status, живих реплік, витрат або dashboard. Після save/reset/cancel Власник повертається до Element. Candidate B залишається базовим напрямом для `SUR-01`: кожне реальне призначення, проміжна відповідь, критика і корекція з'являються дослівно від одного Matrix bot identity з роллю та `HH:MM`; адресування використовує native Matrix reply.
 
-Production topology: публічний `matrix.org` + Cloudflare. Локальний Mac, власний VPS, власний homeserver і платний Matrix-hosting не є production компонентами V1.
+Approved-baseline topology була `matrix.org` + Cloudflare. 02.09.2026 Власник направив V1 до існуючого GoDaddy Node.js app. Це supersedes Cloudflare як цільовий hosting direction, але не робить GoDaddy production topology схваленою: її feasibility, security-equivalence і recovery gates наведені у §25. Локальний Mac, власний VPS, власний homeserver і платний Matrix-hosting не є production компонентами V1.
 
 ## 3. Незмінні принципи
 
@@ -435,3 +435,53 @@ Multiuser, third-party access або commercial-service expansion анулює �
 5. Підтвердити, що chosen Cloudflare/Matrix plans покривають recovery, encrypted storage, logs і on-call needs одного власника.
 
 Жодне відкрите рішення не дозволяє додати третю surface, альтернативний login, API/PAYG fallback, нову settings group або послабити confirmed guards.
+
+## 25. All-GoDaddy target: feasibility and migration boundary (02.09.2026)
+
+### 25.1. Decision status
+
+Власник визначив ціль: перенести V1 повністю до існуючого GoDaddy Node.js app після removal legacy HappyPro code, secrets and database state. Це є **target direction**, а не дозвіл назвати current checkout deployable або очистити legacy state без recovery proof.
+
+Verified platform evidence: GoDaddy Published is described by the provider as a persistent Node.js 22 process that supports long-lived connections. This removes the Preview idle-sleep concern; it does not prove restart/redeploy behavior, private durable storage, process isolation, database isolation, native dependency support, credential fencing, or rollback for this V1.
+
+The locally verified Node 22 scaffold has an explicit `build`, `start`, `PORT` and `/healthz` contract. It starts only as a safe deployment gate: an invalid runtime mode, forbidden provider environment material or a non-Node-22 runtime makes health return `503`; its product root also returns `503` until the retained V1 contracts are implemented. It is not a production topology approval or evidence that the V1 is migrated.
+
+### 25.2. Current no-go facts
+
+- Current checkout requires Node.js `>=24`, has no HTTP-server `start` script, and is a Cloudflare Worker configuration rather than a GoDaddy Node application.
+- `src/worker.ts` depends on `OWNER_SETTINGS`, `REGISTRAR`, asset binding and Cloudflare Access JWT behavior; `CAPABILITY_CATALOG` is not yet wired. Archive code has an R2 adapter.
+- The approved architecture requires `MatrixBridgeContainer`, `RegistrarDO`, `OwnerSettingsDO`, Cloudflare Access and R2. Matrix E2EE runtime, subscription-OAuth runtime, live capability catalog and archive storage are not production-connected.
+- In GoDaddy, Files is Git-connected and read-only. Replacing legacy source requires an explicit source disconnect/repoint or a separate GitHub repository decision; it cannot be accomplished by deleting UI files.
+- The read-only dashboard showed one hosted database with no visible tables. This alone does not identify the legacy runtime database, establish exclusive ownership, or reconcile the historic `happypro_access_store` evidence.
+
+### 25.3. Equivalent-runtime obligations
+
+The all-GoDaddy implementation may proceed only after an architecture revision selects and verifies equivalents for every retained V1 invariant:
+
+| Required invariant | GoDaddy-target proof required before cutover |
+|---|---|
+| Node runtime | Node 22-compatible build, explicit `start`/`PORT` contract, health endpoint and restart/redeploy behavior |
+| Matrix ingress | Long-lived sync plus encrypted, private, restart-safe crypto state; verified room/device and idempotent delivery proof |
+| Canonical order | A single MySQL-backed transaction/lease/unique-key/outbox design that proves dedupe, ordering, cancellation and late-output fencing across concurrent requests and restart |
+| Owner Settings | Exact Google-only owner authentication and origin request protection with positive, wrong-account and bypass evidence; a replacement must be approved before it supersedes Cloudflare Access/JWT |
+| Subscription OAuth | Isolated Codex credential writer and separate Claude critic process; no API/PAYG/Fast/credits fallback and no credential leakage |
+| Archive | Application-layer encryption, independent key custody, immutable export/delete lifecycle and restore verification without assuming R2 |
+| Preview safety | Provider-side isolated database/schema plus separate credential, or stateless Preview only; shared tables are not isolation |
+
+### 25.4. Legacy cleanup boundary
+
+No code, secret or database deletion occurs before all of the following are recorded without secret values or database payloads:
+
+1. resource-level deployed app → database mapping; metadata-only catalog of tables, views, triggers, events, sizes/counts and privileges; and an explanation of any difference from historic HappyPro evidence;
+2. immutable legacy Git rollback artifact, encrypted backup, and successful isolated restore/reconciliation drill;
+3. a precise destructive manifest for Git/source routing, each Preview/Publish secret entry, database object allowlist, upstream credential revoke/rotate list and post-action absence checks;
+4. action-time owner confirmation of that exact manifest.
+
+The former Cloudflare lineage remains an immutable reference and rollback source until a GoDaddy Published evidence bundle proves every applicable V1 gate. A GoDaddy deployment snapshot is not accepted as database or secret rollback evidence. Deletion of the HappyPro GitHub repository is a separate retention decision, not implied by replacing GoDaddy source.
+
+### 25.5. Open blockers
+
+1. Can GoDaddy demonstrate an isolated database/schema+credential for stateful Preview and a safe recovery target?
+2. Which private durable storage and process model safely sustain Matrix crypto/OAuth boundaries across restart?
+3. Is a GoDaddy-native Google-only Settings boundary approved as an equivalent to the current Cloudflare Access/JWT contract, or is an exception/new product decision required?
+4. Which source action preserves HappyPro rollback: Git disconnect/repoint while retaining the repository, or eventual permanent repository deletion after the stabilization period?
