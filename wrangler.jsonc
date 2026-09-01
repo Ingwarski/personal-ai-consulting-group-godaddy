@@ -21,10 +21,12 @@
   },
   "durable_objects": {
     "bindings": [
-      { "name": "OWNER_SETTINGS", "class_name": "OwnerSettingsDurableObject" }
+      { "name": "OWNER_SETTINGS", "class_name": "OwnerSettingsDurableObject" },
+      { "name": "REGISTRAR", "class_name": "RegistrarDurableObject" }
     ]
   },
   "migrations": [
-    { "tag": "v1-owner-settings", "new_sqlite_classes": ["OwnerSettingsDurableObject"] }
+    { "tag": "v1-owner-settings", "new_sqlite_classes": ["OwnerSettingsDurableObject"] },
+    { "tag": "v2-registrar", "new_sqlite_classes": ["RegistrarDurableObject"] }
   ]
 }

@@ -120,3 +120,4 @@ export function createWorker(dependencies: WorkerDependencies = {}) {
 
 export default createWorker();
 export { OwnerSettingsDurableObject } from "./cloudflare/owner-settings-durable-object.ts";
+export { RegistrarDurableObject } from "./cloudflare/registrar-durable-object.ts";
