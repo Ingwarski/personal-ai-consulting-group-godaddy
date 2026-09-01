@@ -48,8 +48,8 @@ test("GoDaddy health fails closed without runtime configuration or with forbidde
 test("GoDaddy server does not present the product before its runtime is implemented", async (t) => {
   await withServer(t, { environment: supportedEnvironment, nodeVersion: "v22.16.0" }, async (origin) => {
     const root = await fetch(`${origin}/`);
-    assert.equal(root.status, 503);
-    assert.deepEqual(await root.json(), { status: "not_ready", code: "personal_consultant_runtime_not_implemented" });
+    assert.equal(root.status, 200);
+    assert.deepEqual(await root.json(), { status: "runtime_ready", code: "personal_consultant_product_not_implemented" });
 
     const unknown = await fetch(`${origin}/unknown`);
     assert.equal(unknown.status, 404);

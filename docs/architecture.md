@@ -444,7 +444,7 @@ Multiuser, third-party access або commercial-service expansion анулює �
 
 Verified platform evidence: GoDaddy Published is described by the provider as a persistent Node.js 22 process that supports long-lived connections. This removes the Preview idle-sleep concern; it does not prove restart/redeploy behavior, private durable storage, process isolation, database isolation, native dependency support, credential fencing, or rollback for this V1.
 
-The locally verified Node 22 scaffold has an explicit `build`, `start`, `PORT` and `/healthz` contract. It starts only as a safe deployment gate: an invalid runtime mode, forbidden provider environment material or a non-Node-22 runtime makes health return `503`; its product root also returns `503` until the retained V1 contracts are implemented. It is not a production topology approval or evidence that the V1 is migrated.
+The locally verified Node 22 scaffold has an explicit `build`, `start`, `PORT` and `/healthz` contract. It starts only as a safe deployment gate: an invalid runtime mode, forbidden provider environment material or a non-Node-22 runtime makes health return `503`. When the runtime is valid, the root returns `200` solely so GoDaddy can verify the process; its response explicitly states that the Personal Consultant product is not implemented. It is not a production topology approval or evidence that the V1 is migrated.
 
 ### 25.2. Current no-go facts
 

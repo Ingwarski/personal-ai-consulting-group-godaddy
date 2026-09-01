@@ -59,8 +59,10 @@ export function createGodaddyServer({ environment = process.env, nodeVersion = p
         : { status: "blocked", code: status.code });
     }
 
-    if (url.pathname === "/") {
-      return json(response, 503, { status: "not_ready", code: "personal_consultant_runtime_not_implemented" });
+    if (request.method === "GET" && url.pathname === "/") {
+      return json(response, status.ok ? 200 : 503, status.ok
+        ? { status: "runtime_ready", code: "personal_consultant_product_not_implemented" }
+        : { status: "blocked", code: status.code });
     }
 
     return json(response, 404, { status: "not_found" });
