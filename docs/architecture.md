@@ -521,3 +521,7 @@ The source repository may include the Node adapters and explicit schema tooling,
 **Implementation note — canonical Registrar state.**
 
 The Node adapter now instantiates the existing `RegistrarDO` over the fixed `registrar-v1` MySQL namespace and exposes only its content-free active-session summary to Settings. It has no public route and no Matrix client. That preserves the session/append/CAS contract without falsely treating a database adapter as an E2EE bridge or agent runtime.
+
+**Implementation note — encrypted archive storage.**
+
+The Node adapter maps `ArchiveStorage` to dedicated MySQL archive and tombstone tables. It stores only ciphertext, IV and manifest; a confirmed deletion writes a tombstone and removes ciphertext in one database transaction. The table DDL is not automatic, no archive key is configured, and no route or Matrix close flow can call it yet. This is a portable storage adapter, not a claim that GoDaddy has completed archive retention, restore or key-management evidence.
