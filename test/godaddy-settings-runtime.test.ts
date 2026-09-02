@@ -90,6 +90,48 @@ test("GoDaddy Settings starts only a local owner-password session before it open
   assert.equal(signInCookies.some((cookie) => cookie.startsWith("__Host-personal-consultant-owner=")), true);
 });
 
+test("owner sign-in keeps the public HTTPS origin when GoDaddy reports an HTTP upstream protocol", async () => {
+  const runtime = createGoDaddySettingsRuntime(configuredEnvironment, {
+    createPool: () => new UnusedPool(),
+    now: () => activeNow
+  });
+  const proxyHeaders = { ...originHeaders, "x-forwarded-proto": "http" };
+  const login = await runtime.handle(new Request("https://settings.example.test/auth/sign-in", { headers: proxyHeaders }));
+  assert.equal(login?.status, 200);
+  const document = await login?.text();
+  const loginCookie = (login?.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie?.()[0];
+  const formToken = /name="formToken" value="([A-Za-z0-9_-]+)"/u.exec(document ?? "")?.[1];
+  if (loginCookie === undefined || formToken === undefined) throw new Error("Expected login challenge.");
+  const form = new URLSearchParams({ formToken, password: configuredEnvironment.SETTINGS_OWNER_PASSWORD }).toString();
+  const crossSite = await runtime.handle(new Request("https://settings.example.test/auth/sign-in", {
+    method: "POST",
+    headers: {
+      ...proxyHeaders,
+      cookie: loginCookie.slice(0, loginCookie.indexOf(";")),
+      origin: "https://other.example.test",
+      "sec-fetch-site": "cross-site",
+      "content-type": "application/x-www-form-urlencoded",
+      "content-length": String(form.length)
+    },
+    body: form
+  }));
+  assert.equal(crossSite?.status, 403);
+  const signedIn = await runtime.handle(new Request("https://settings.example.test/auth/sign-in", {
+    method: "POST",
+    headers: {
+      ...proxyHeaders,
+      cookie: loginCookie.slice(0, loginCookie.indexOf(";")),
+      origin: "https://settings.example.test",
+      "sec-fetch-site": "same-origin",
+      "content-type": "application/x-www-form-urlencoded",
+      "content-length": String(form.length)
+    },
+    body: form
+  }));
+  assert.equal(signedIn?.status, 303);
+  assert.equal(signedIn?.headers.get("location"), "/settings");
+});
+
 test("the owner-only runtime operation can begin Codex device authorization without exposing a credential to public routes", async () => {
   const bootstrap: RuntimeBootstrap = {
     loadCatalog: async () => undefined,

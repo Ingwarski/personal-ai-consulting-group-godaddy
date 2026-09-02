@@ -103,10 +103,11 @@ function capabilityReceiptFromEnvironment(environment: Record<string, unknown>, 
 function requestOrigin(request: Request): string | undefined {
   const host = request.headers.get("host");
   if (host === null || host.length === 0 || host.length > 255 || /[\s/\\@]/u.test(host)) return undefined;
-  const forwardedProtocol = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
-  const protocol = forwardedProtocol === "http" || forwardedProtocol === "https" ? forwardedProtocol : "https";
   try {
-    return new URL(`${protocol}://${host}`).origin;
+    // GoDaddy terminates public HTTPS before the Node process.  Its upstream
+    // protocol header can therefore be `http` even though the browser origin
+    // is HTTPS; it is not a safe source for an owner-session origin check.
+    return new URL(`https://${host}`).origin;
   } catch {
     return undefined;
   }
