@@ -11,6 +11,26 @@ import type { ClaudeCodeSubscriptionProcess, ClaudeCodeSubscriptionStatus } from
 const MAX_OUTPUT_BYTES = 96 * 1024;
 const MAX_PROMPT_BYTES = 32_000;
 const DEFAULT_TIMEOUT_MILLISECONDS = 9 * 60_000;
+const DEFAULT_CLAUDE_CODE_MODEL_CANDIDATES = Object.freeze([
+  "claude-fable-5",
+  "claude-opus-5",
+  "claude-opus-4-8",
+  "claude-sonnet-5",
+  "claude-sonnet-4-6",
+  "claude-haiku-4-5-20251001"
+]);
+const CLAUDE_MODEL_DISPLAY_NAMES: Readonly<Record<string, string>> = Object.freeze({
+  "claude-fable-5": "Claude Fable 5",
+  "claude-opus-5": "Claude Opus 5",
+  "claude-opus-4-8": "Claude Opus 4.8",
+  "claude-sonnet-5": "Claude Sonnet 5",
+  "claude-sonnet-4-6": "Claude Sonnet 4.6",
+  "claude-haiku-4-5-20251001": "Claude Haiku 4.5",
+  fable: "Claude Fable",
+  opus: "Claude Opus",
+  sonnet: "Claude Sonnet",
+  haiku: "Claude Haiku"
+});
 
 export type CommandResult = Readonly<{
   exitCode: number | null;
@@ -71,20 +91,20 @@ function executablePath(value: string | undefined): string {
 function candidateModels(environment: Record<string, unknown>): readonly string[] {
   const configured = typeof environment.CLAUDE_CODE_MODEL_CANDIDATES === "string"
     ? environment.CLAUDE_CODE_MODEL_CANDIDATES.split(",").map((value) => value.trim()).filter((value) => value.length > 0)
-    : ["sonnet", "opus", "haiku", "fable"];
+    : DEFAULT_CLAUDE_CODE_MODEL_CANDIDATES;
   const unique = [...new Set(configured)];
-  return unique.length > 0 && unique.length <= 4 && unique.every((value) => /^[A-Za-z0-9._-]{1,128}$/u.test(value))
+  return unique.length > 0 && unique.length <= DEFAULT_CLAUDE_CODE_MODEL_CANDIDATES.length && unique.every((value) => /^[A-Za-z0-9._-]{1,128}$/u.test(value))
     ? Object.freeze(unique)
     : Object.freeze([]);
 }
 
 function displayName(candidate: string): string {
-  const builtIn: Record<string, string> = { sonnet: "Claude Sonnet", opus: "Claude Opus", haiku: "Claude Haiku", fable: "Claude Fable" };
-  return builtIn[candidate] ?? `Claude ${candidate}`;
+  return CLAUDE_MODEL_DISPLAY_NAMES[candidate] ?? `Claude ${candidate}`;
 }
 
 function productId(candidate: string): string {
-  return `claude-${candidate.replaceAll(/[^A-Za-z0-9]+/gu, "-").replace(/^-+|-+$/gu, "")}`;
+  const normalized = candidate.replaceAll(/[^A-Za-z0-9]+/gu, "-").replace(/^-+|-+$/gu, "");
+  return normalized.startsWith("claude-") ? normalized : `claude-${normalized}`;
 }
 
 function commandEnvironment(environment: Record<string, unknown>, token: string, directory: string): Readonly<Record<string, string>> {

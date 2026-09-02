@@ -8,6 +8,12 @@ import type { CapabilityReceipt, OwnerSettings, ProviderModelCapability } from "
 
 const CATALOG_STORAGE_KEY = "current";
 const CATALOG_NAMESPACE = "runtime-capability-v1";
+const PREFERRED_CLAUDE_DEFAULT_MODEL_IDS = Object.freeze([
+  "claude-sonnet-5",
+  "claude-sonnet-4-6",
+  "claude-sonnet-4-5-20250929",
+  "claude-sonnet"
+]);
 
 export type RuntimeBootstrapStatus = Readonly<{
   codex: "ready" | "auth_required" | "quota_blocked" | "unavailable";
@@ -35,7 +41,9 @@ export type RuntimeBootstrapOptions = Readonly<{
 
 function chooseDefaults(codexModels: readonly ProviderModelCapability[], claudeModels: readonly ProviderModelCapability[], codexDefault?: string): OwnerSettings | undefined {
   const codex = codexModels.find((model) => model.productId === codexDefault) ?? codexModels[0];
-  const claude = claudeModels[0];
+  const claude = PREFERRED_CLAUDE_DEFAULT_MODEL_IDS
+    .map((modelId) => claudeModels.find((model) => model.productId === modelId))
+    .find((model): model is ProviderModelCapability => model !== undefined) ?? claudeModels[0];
   if (codex === undefined || claude === undefined) return undefined;
   return Object.freeze({
     codex: Object.freeze({ modelId: codex.productId, reasoningEffort: null }),
@@ -117,7 +125,7 @@ export function createRuntimeBootstrap(options: RuntimeBootstrapOptions): Runtim
         claude: Object.freeze({
           runtime: Object.freeze({ ...claudeStatus, availableModelIds: claudeModels.map((model) => model.productId) }),
           models: claudeModels,
-          ...(claudeModels[0] === undefined ? {} : { defaultModelId: claudeModels[0].productId })
+          defaultModelId: defaults.claude.modelId
         }),
         defaults,
         catalogVersion: `runtime-${issuedAt.getTime()}`,

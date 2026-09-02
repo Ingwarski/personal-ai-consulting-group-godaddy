@@ -114,7 +114,7 @@ test("fails closed for a rejected authentication check or malformed completion",
   );
 });
 
-test("probes current Claude aliases and exposes only the usable per-model efforts", async () => {
+test("probes exact current Claude models and exposes only the usable per-model efforts", async () => {
   const calls: Parameters<CommandRunner>[0][] = [];
   const run: CommandRunner = async (input) => {
     calls.push(input);
@@ -122,8 +122,8 @@ test("probes current Claude aliases and exposes only the usable per-model effort
     const effortIndex = input.arguments.indexOf("--effort");
     const effort = effortIndex === -1 ? null : input.arguments[effortIndex + 1];
     const model = input.arguments[input.arguments.indexOf("--model") + 1];
-    if (model === "sonnet" && effort !== "xhigh") {
-      return { exitCode: 0, stdout: JSON.stringify({ result: "READY", session_id: `sonnet-${effort}` }), stderr: "" };
+    if ((model === "claude-opus-5" || model === "claude-opus-4-8") && effort !== "xhigh") {
+      return { exitCode: 0, stdout: JSON.stringify({ result: "READY", session_id: `${model}-${effort}` }), stderr: "" };
     }
     return { exitCode: 1, stdout: "", stderr: "" };
   };
@@ -133,14 +133,25 @@ test("probes current Claude aliases and exposes only the usable per-model effort
     run
   });
   if (process === undefined) throw new Error("Expected process.");
-  assert.deepEqual(await process.discoverModels(), [{
-    productId: "claude-sonnet",
-    displayName: "Claude Sonnet",
-    runtimeModelId: "sonnet",
-    availability: "available",
-    supportedReasoningEfforts: ["low", "medium", "high", "max"],
-    reasoningMappings: { low: "low", medium: "medium", high: "high", max: "max" }
-  }]);
-  assert.equal(calls.length, 10);
-  assert.equal(calls.some((call) => call.arguments.includes("opus")), true);
+  assert.deepEqual(await process.discoverModels(), [
+    {
+      productId: "claude-opus-5",
+      displayName: "Claude Opus 5",
+      runtimeModelId: "claude-opus-5",
+      availability: "available",
+      supportedReasoningEfforts: ["low", "medium", "high", "max"],
+      reasoningMappings: { low: "low", medium: "medium", high: "high", max: "max" }
+    },
+    {
+      productId: "claude-opus-4-8",
+      displayName: "Claude Opus 4.8",
+      runtimeModelId: "claude-opus-4-8",
+      availability: "available",
+      supportedReasoningEfforts: ["low", "medium", "high", "max"],
+      reasoningMappings: { low: "low", medium: "medium", high: "high", max: "max" }
+    }
+  ]);
+  assert.equal(calls.some((call) => call.arguments.includes("claude-opus-5")), true);
+  assert.equal(calls.some((call) => call.arguments.includes("claude-opus-4-8")), true);
+  assert.equal(calls.some((call) => call.arguments.includes("opus")), false);
 });

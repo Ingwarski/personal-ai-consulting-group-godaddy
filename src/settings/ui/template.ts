@@ -15,6 +15,22 @@ const SPEEDS: ReadonlyArray<Readonly<{ value: SpeedPreset; title: string; descri
   { value: "збалансовано", title: "Збалансовано", description: "Рекомендований баланс темпу, перевірки й повноти." },
   { value: "ретельно", title: "Ретельно", description: "Більше доречних перевірок у межах тих самих правил безпеки." }
 ];
+const CLAUDE_MODEL_ORDER = new Map<string, number>([
+  ["claude-fable-5", 0],
+  ["claude-opus-5", 1],
+  ["claude-opus-4-8", 2],
+  ["claude-opus-4-7", 3],
+  ["claude-opus-4-6", 4],
+  ["claude-opus-4-5-20251101", 5],
+  ["claude-sonnet-5", 6],
+  ["claude-sonnet-4-6", 7],
+  ["claude-sonnet-4-5-20250929", 8],
+  ["claude-haiku-4-5-20251001", 9],
+  ["fable", 10],
+  ["opus", 11],
+  ["sonnet", 12],
+  ["haiku", 13]
+]);
 
 const escapeHtml = (value: string): string =>
   value
@@ -64,10 +80,16 @@ function renderActiveSession(model: SettingsPageModel): string {
 const jsonForScript = (value: unknown): string =>
   JSON.stringify(value).replaceAll("<", "\\u003c").replaceAll(">", "\\u003e").replaceAll("&", "\\u0026");
 
-function renderModelOptions(models: readonly ProviderModelCapability[], selectedId: string): string {
-  return models
-    .filter((model) => model.availability === "available")
-    .map((model) => {
+function renderModelOptions(provider: "codex" | "claude", models: readonly ProviderModelCapability[], selectedId: string): string {
+  const visible = models
+    .map((model, index) => Object.freeze({ model, index }))
+    .filter(({ model }) => model.availability === "available");
+  const ordered = provider === "claude"
+    ? visible.sort((left, right) => (CLAUDE_MODEL_ORDER.get(left.model.runtimeModelId) ?? Number.MAX_SAFE_INTEGER) -
+        (CLAUDE_MODEL_ORDER.get(right.model.runtimeModelId) ?? Number.MAX_SAFE_INTEGER) || left.index - right.index)
+    : visible;
+  return ordered
+    .map(({ model }) => {
       const selected = model.productId === selectedId ? " selected" : "";
       return `<option value="${escapeHtml(model.productId)}"${selected}>${escapeHtml(model.displayName)}</option>`;
     })
@@ -183,7 +205,7 @@ export function renderSettingsDocument(model: SettingsPageModel): string {
           <div class="group-heading"><div><p class="group-number">1</p><h2 id="codex-title">Codex-агенти</h2></div>${changed}</div>
           <p class="provider-description">Модель і міркування Codex налаштовуються лише для Codex. Вони не змінюють Claude Code.</p>
           <div class="field-grid">
-            <label for="codex-model"><span>Модель Codex</span><select id="codex-model" name="codexModelId">${renderModelOptions(model.capabilityReceipt.codexModels, draft.codex.modelId)}</select><small>Лише моделі, які повернув поточний Codex runtime.</small></label>
+            <label for="codex-model"><span>Модель Codex</span><select id="codex-model" name="codexModelId">${renderModelOptions("codex", model.capabilityReceipt.codexModels, draft.codex.modelId)}</select><small>Лише моделі, які повернув поточний Codex runtime.</small></label>
             <label for="codex-effort"><span>Міркування Codex</span><select id="codex-effort" name="codexReasoningEffort">${renderEffortOptions(codex, draft.codex.reasoningEffort)}</select><small>«За замовчуванням моделі» не передає окремий рівень у Codex.</small></label>
           </div>
         </section>
@@ -192,7 +214,7 @@ export function renderSettingsDocument(model: SettingsPageModel): string {
           <div class="group-heading"><div><p class="group-number">2</p><h2 id="claude-title">Claude Code-критик</h2></div>${changed}</div>
           <p class="provider-description">Claude Code працює як незалежний критик. Його модель і рівень міркування не мають спільної шкали з Codex.</p>
           <div class="field-grid">
-            <label for="claude-model"><span>Модель Claude Code</span><select id="claude-model" name="claudeModelId">${renderModelOptions(model.capabilityReceipt.claudeModels, draft.claude.modelId)}</select><small>Показані лише моделі, успішно перевірені в поточній Claude Code підписці.</small></label>
+            <label for="claude-model"><span>Модель Claude Code</span><select id="claude-model" name="claudeModelId">${renderModelOptions("claude", model.capabilityReceipt.claudeModels, draft.claude.modelId)}</select><small>Показані лише моделі, успішно перевірені в поточній Claude Code підписці.</small></label>
             <label for="claude-effort"><span>Міркування Claude Code</span><select id="claude-effort" name="claudeReasoningEffort">${renderEffortOptions(claude, draft.claude.reasoningEffort)}</select><small>Рівні залежать від обраної Claude-моделі; однакові назви не означають однакову інтенсивність із Codex.</small></label>
           </div>
         </section>

@@ -8,8 +8,7 @@ import { OwnerSettingsDO } from "../src/settings/owner-settings-do.ts";
 import { activeNow, createCapabilityReceipt } from "./fixtures/capability-receipt.ts";
 import { MemorySettingsStorage } from "./fixtures/memory-settings-storage.ts";
 
-async function pageModel() {
-  const receipt = createCapabilityReceipt();
+async function pageModel(receipt = createCapabilityReceipt()) {
   const ownerSettings = new OwnerSettingsDO({
     storage: new MemorySettingsStorage(),
     getCapabilityReceipt: () => receipt,
@@ -20,6 +19,34 @@ async function pageModel() {
   if (read === undefined) throw new Error("Settings must initialize for the test.");
   return { read, capabilityReceipt: receipt, csrfToken: "test-csrf-token", now: activeNow };
 }
+
+test("orders the verified Claude family by exact model capability, not alias discovery order", async () => {
+  const baseline = createCapabilityReceipt().claudeModels[0]!;
+  const claudeModel = (productId: string, displayName: string, runtimeModelId: string) => ({
+    ...baseline,
+    productId,
+    displayName,
+    runtimeModelId
+  });
+  const receipt = createCapabilityReceipt({
+    claudeModels: [
+      claudeModel("claude-sonnet-5", "Claude Sonnet 5", "claude-sonnet-5"),
+      claudeModel("claude-haiku-4-5-20251001", "Claude Haiku 4.5", "claude-haiku-4-5-20251001"),
+      claudeModel("claude-opus-4-8", "Claude Opus 4.8", "claude-opus-4-8"),
+      claudeModel("claude-opus-5", "Claude Opus 5", "claude-opus-5")
+    ],
+    defaults: {
+      ...createCapabilityReceipt().defaults,
+      claude: { modelId: "claude-sonnet-5", reasoningEffort: "high" }
+    }
+  });
+  const html = renderSettingsDocument(await pageModel(receipt));
+  const optionPosition = (modelId: string): number => html.indexOf(`<option value="${modelId}"`);
+
+  assert.ok(optionPosition("claude-opus-5") < optionPosition("claude-opus-4-8"));
+  assert.ok(optionPosition("claude-opus-4-8") < optionPosition("claude-sonnet-5"));
+  assert.ok(optionPosition("claude-sonnet-5") < optionPosition("claude-haiku-4-5-20251001"));
+});
 
 test("settings page has exactly three labelled groups and only catalog-provided model names", async () => {
   const model = await pageModel();
