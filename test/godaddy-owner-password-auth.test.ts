@@ -27,13 +27,9 @@ test("GoDaddy owner-password configuration requires distinct strong Secrets", ()
   }), { ok: true, value: configuration });
 });
 
-test("GoDaddy owner-password service issues no secret-bearing cookie and accepts only a same-origin challenged sign-in", async () => {
+test("GoDaddy owner-password service issues no secret-bearing cookie and binds a completed owner session to a canonical HTTPS origin", async () => {
   const service = createOwnerPasswordService({ configuration, now: () => issuedAt });
-  assert.equal(await service.start("http://settings.example.test"), undefined);
-
-  const start = await service.start(origin);
-  assert.notEqual(start, undefined);
-  if (start === undefined) throw new Error("Expected a password login challenge.");
+  const start = await service.start();
   assert.equal(start.formToken.length >= 32, true);
   assert.equal(start.setCookie.startsWith("__Host-personal-consultant-login="), true);
   assert.equal(start.setCookie.includes("HttpOnly; Secure; SameSite=Strict"), true);
@@ -62,22 +58,22 @@ test("GoDaddy owner-password service issues no secret-bearing cookie and accepts
   assert.equal(completed.setCookie.startsWith("__Host-personal-consultant-owner="), true);
   assert.equal(completed.setCookie.includes(configuration.ownerPassword), false);
   assert.equal(await service.hasVerifiedOwner(cookiePair(completed.setCookie)), true);
+  assert.equal(await service.getVerifiedOwnerOrigin(cookiePair(completed.setCookie)), origin);
 
-  const crossOrigin = await service.finish({
+  const invalidOrigin = await service.finish({
     cookieHeader: cookiePair(start.setCookie),
     password: configuration.ownerPassword,
-    requestOrigin: "https://attacker.example.test",
+    requestOrigin: "http://settings.example.test",
     formToken: start.formToken
   });
-  assert.equal(crossOrigin.ok, false);
+  assert.equal(invalidOrigin.ok, false);
   assert.equal(service.signOutCookie(), "__Host-personal-consultant-owner=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0");
 });
 
 test("GoDaddy owner session expires without a refresh path", async () => {
   let currentTime = issuedAt.getTime();
   const service = createOwnerPasswordService({ configuration, now: () => new Date(currentTime) });
-  const start = await service.start(origin);
-  if (start === undefined) throw new Error("Expected a password login challenge.");
+  const start = await service.start();
   const completed = await service.finish({
     cookieHeader: cookiePair(start.setCookie),
     password: configuration.ownerPassword,

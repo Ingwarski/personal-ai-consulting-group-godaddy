@@ -28,13 +28,13 @@ type LoginTransaction = Readonly<{
   v: 1;
   e: number;
   n: string;
-  o: string;
 }>;
 
 type OwnerSession = Readonly<{
   v: 1;
   e: number;
   s: string;
+  o: string;
 }>;
 
 type SignedValue<T> = Readonly<{ payload: T; value: string }>;
@@ -118,7 +118,7 @@ async function verify<T>(key: CryptoKey, value: string | undefined): Promise<T |
 function isHttpsOrigin(value: string): boolean {
   try {
     const url = new URL(value);
-    return url.protocol === "https:" && url.username.length === 0 && url.password.length === 0 && url.pathname === "/" && url.search.length === 0 && url.hash.length === 0;
+    return url.protocol === "https:" && url.username.length === 0 && url.password.length === 0 && url.origin === value;
   } catch {
     return false;
   }
@@ -126,12 +126,12 @@ function isHttpsOrigin(value: string): boolean {
 
 const validLoginTransaction = (value: LoginTransaction | undefined, nowSeconds: number): value is LoginTransaction =>
   value !== undefined && value.v === 1 && value.e >= nowSeconds &&
-  typeof value.n === "string" && /^[A-Za-z0-9_-]{32,255}$/u.test(value.n) &&
-  typeof value.o === "string" && isHttpsOrigin(value.o);
+  typeof value.n === "string" && /^[A-Za-z0-9_-]{32,255}$/u.test(value.n);
 
 const validSession = (value: OwnerSession | undefined, nowSeconds: number): value is OwnerSession =>
   value !== undefined && value.v === 1 && value.e >= nowSeconds &&
-  typeof value.s === "string" && /^[A-Za-z0-9_-]{32,255}$/u.test(value.s);
+  typeof value.s === "string" && /^[A-Za-z0-9_-]{32,255}$/u.test(value.s) &&
+  typeof value.o === "string" && isHttpsOrigin(value.o);
 
 function passwordMatches(candidate: string, expected: string): boolean {
   if (candidate.length > 4_096) return false;
@@ -158,16 +158,18 @@ export function createOwnerPasswordService(input: Readonly<{
 }>) {
   const now = input.now ?? (() => new Date());
   const keyPromise = signingKey(input.configuration.sessionHmacKey);
+  const verifiedOwnerOrigin = async (cookieHeader: string | null): Promise<string | undefined> => {
+    const session = await verify<OwnerSession>(await keyPromise, parseCookie(cookieHeader, OWNER_SESSION_COOKIE));
+    return validSession(session, Math.floor(now().getTime() / 1_000)) ? session.o : undefined;
+  };
 
   return Object.freeze({
-    async start(requestOrigin: string): Promise<OwnerPasswordLoginStart | undefined> {
-      if (!isHttpsOrigin(requestOrigin)) return undefined;
+    async start(): Promise<OwnerPasswordLoginStart> {
       const issuedAt = Math.floor(now().getTime() / 1_000);
       const transaction: LoginTransaction = Object.freeze({
         v: 1,
         e: issuedAt + LOGIN_MAX_AGE_SECONDS,
-        n: randomValue(),
-        o: requestOrigin
+        n: randomValue()
       });
       const signed = await sign(await keyPromise, transaction);
       return Object.freeze({
@@ -188,7 +190,6 @@ export function createOwnerPasswordService(input: Readonly<{
       const nowSeconds = Math.floor(now().getTime() / 1_000);
       if (
         !validLoginTransaction(transaction, nowSeconds) ||
-        transaction.o !== inputValue.requestOrigin ||
         transaction.n !== inputValue.formToken ||
         !passwordMatches(inputValue.password, input.configuration.ownerPassword)
       ) return denied;
@@ -196,7 +197,8 @@ export function createOwnerPasswordService(input: Readonly<{
       const session: OwnerSession = Object.freeze({
         v: 1,
         e: nowSeconds + SESSION_MAX_AGE_SECONDS,
-        s: randomValue()
+        s: randomValue(),
+        o: inputValue.requestOrigin
       });
       const signed = await sign(await keyPromise, session);
       return Object.freeze({
@@ -206,9 +208,12 @@ export function createOwnerPasswordService(input: Readonly<{
       });
     },
 
+    async getVerifiedOwnerOrigin(cookieHeader: string | null): Promise<string | undefined> {
+      return verifiedOwnerOrigin(cookieHeader);
+    },
+
     async hasVerifiedOwner(cookieHeader: string | null): Promise<boolean> {
-      const session = await verify<OwnerSession>(await keyPromise, parseCookie(cookieHeader, OWNER_SESSION_COOKIE));
-      return validSession(session, Math.floor(now().getTime() / 1_000));
+      return (await verifiedOwnerOrigin(cookieHeader)) !== undefined;
     },
 
     signOutCookie(): string {

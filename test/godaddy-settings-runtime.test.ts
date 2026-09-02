@@ -90,12 +90,12 @@ test("GoDaddy Settings starts only a local owner-password session before it open
   assert.equal(signInCookies.some((cookie) => cookie.startsWith("__Host-personal-consultant-owner=")), true);
 });
 
-test("owner sign-in keeps the public HTTPS origin when GoDaddy reports an HTTP upstream protocol", async () => {
+test("owner sign-in ignores GoDaddy internal Host and HTTP upstream protocol while retaining the public browser origin", async () => {
   const runtime = createGoDaddySettingsRuntime(configuredEnvironment, {
     createPool: () => new UnusedPool(),
     now: () => activeNow
   });
-  const proxyHeaders = { ...originHeaders, "x-forwarded-proto": "http" };
+  const proxyHeaders = { host: "internal-node.godaddy.test", "x-forwarded-proto": "http" };
   const login = await runtime.handle(new Request("https://settings.example.test/auth/sign-in", { headers: proxyHeaders }));
   assert.equal(login?.status, 200);
   const document = await login?.text();
@@ -122,7 +122,6 @@ test("owner sign-in keeps the public HTTPS origin when GoDaddy reports an HTTP u
       ...proxyHeaders,
       cookie: loginCookie.slice(0, loginCookie.indexOf(";")),
       origin: "https://settings.example.test",
-      "sec-fetch-site": "same-origin",
       "content-type": "application/x-www-form-urlencoded",
       "content-length": String(form.length)
     },
@@ -177,6 +176,17 @@ test("the owner-only runtime operation can begin Codex device authorization with
   }));
   assert.equal(operation?.status, 200);
   assert.match(await operation?.text() ?? "", /ABCD-1234/);
+
+  const wrongOrigin = await runtime.handle(new Request("https://settings.example.test/operations/runtime/codex", {
+    method: "POST",
+    headers: {
+      ...originHeaders,
+      cookie: ownerCookie.slice(0, ownerCookie.indexOf(";")),
+      origin: "https://other.example.test",
+      "sec-fetch-site": "cross-site"
+    }
+  }));
+  assert.equal(wrongOrigin?.status, 403);
 
   const denied = await runtime.handle(new Request("https://settings.example.test/operations/runtime/codex", { method: "POST", headers: originHeaders }));
   assert.equal(denied?.status, 403);

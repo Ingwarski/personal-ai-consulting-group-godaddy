@@ -100,23 +100,24 @@ function capabilityReceiptFromEnvironment(environment: Record<string, unknown>, 
   }
 }
 
-function requestOrigin(request: Request): string | undefined {
-  const host = request.headers.get("host");
-  if (host === null || host.length === 0 || host.length > 255 || /[\s/\\@]/u.test(host)) return undefined;
+function submittedHttpsOrigin(request: Request): string | undefined {
+  const value = request.headers.get("origin");
+  if (value === null || value.length === 0 || value.length > 255) return undefined;
   try {
-    // GoDaddy terminates public HTTPS before the Node process.  Its upstream
-    // protocol header can therefore be `http` even though the browser origin
-    // is HTTPS; it is not a safe source for an owner-session origin check.
-    return new URL(`https://${host}`).origin;
+    const origin = new URL(value);
+    return origin.protocol === "https:" && origin.username.length === 0 && origin.password.length === 0 && origin.origin === value
+      ? origin.origin
+      : undefined;
   } catch {
     return undefined;
   }
 }
 
-function isSameOriginNavigation(request: Request, expectedOrigin: string): boolean {
-  return requestOrigin(request) === expectedOrigin &&
-    request.headers.get("origin") === expectedOrigin &&
-    request.headers.get("sec-fetch-site") === "same-origin";
+function isOwnerNavigation(request: Request, expectedOrigin: string): boolean {
+  // A cross-site browser request cannot present the host-only, SameSite=Strict
+  // owner cookie.  Do not depend on proxy-controlled Host/X-Forwarded-Proto:
+  // the signed session holds the browser origin selected at password sign-in.
+  return request.headers.get("sec-fetch-site") !== "cross-site" && submittedHttpsOrigin(request) === expectedOrigin;
 }
 
 async function parseLoginForm(request: Request): Promise<Readonly<{ formToken: string; password: string }> | undefined> {
@@ -293,44 +294,40 @@ export function createGoDaddySettingsRuntime(
     configured: true,
     async handle(request: Request): Promise<Response | undefined> {
       const url = new URL(request.url);
-      const origin = requestOrigin(request);
 
       if (url.pathname === "/auth/sign-in" && request.method === "GET") {
-        if (origin === undefined) return plain("Access denied.", 403);
-        const start = await owner.start(origin);
-        return start === undefined
-          ? plain("Access denied.", 403)
-          : html(loginDocument(start.formToken), 200, [start.setCookie]);
+        const start = await owner.start();
+        return html(loginDocument(start.formToken), 200, [start.setCookie]);
       }
 
       if (url.pathname === "/auth/sign-in") {
         if (request.method !== "POST") return plain("Method not allowed.", 405, { allow: "GET, POST" });
-        if (origin === undefined || !isSameOriginNavigation(request, origin)) return plain("Access denied.", 403);
+        const submittedOrigin = submittedHttpsOrigin(request);
+        if (submittedOrigin === undefined || request.headers.get("sec-fetch-site") === "cross-site") return plain("Access denied.", 403);
         const form = await parseLoginForm(request);
         const result = await owner.finish({
           cookieHeader: request.headers.get("cookie"),
           password: form?.password,
-          requestOrigin: origin,
+          requestOrigin: submittedOrigin,
           formToken: form?.formToken
         });
         if (result.ok) return redirect(receipt === undefined ? "/operations/runtime" : "/settings", [result.setCookie, result.clearCookie]);
-        const retry = await owner.start(origin);
-        return retry === undefined
-          ? plain("Access denied.", 403)
-          : html(loginDocument(retry.formToken, true), 403, [retry.setCookie, result.clearCookie]);
+        const retry = await owner.start();
+        return html(loginDocument(retry.formToken, true), 403, [retry.setCookie, result.clearCookie]);
       }
 
       if (url.pathname === "/auth/sign-out") {
         if (request.method !== "POST") return plain("Method not allowed.", 405, { allow: "POST" });
-        if (origin === undefined || !isSameOriginNavigation(request, origin) || !await owner.hasVerifiedOwner(request.headers.get("cookie"))) {
+        const ownerOrigin = await owner.getVerifiedOwnerOrigin(request.headers.get("cookie"));
+        if (ownerOrigin === undefined || !isOwnerNavigation(request, ownerOrigin)) {
           return plain("Access denied.", 403);
         }
         return redirect("/auth/sign-in", [owner.signOutCookie()]);
       }
 
       if (!isManagedPath(url.pathname)) return undefined;
-      if (origin === undefined) return plain("Access denied.", 403);
-      if (!await owner.hasVerifiedOwner(request.headers.get("cookie"))) {
+      const ownerOrigin = await owner.getVerifiedOwnerOrigin(request.headers.get("cookie"));
+      if (ownerOrigin === undefined) {
         return url.pathname === "/settings" && request.method === "GET"
           ? redirect("/auth/sign-in", [])
           : plain("Access denied.", 403);
@@ -342,7 +339,7 @@ export function createGoDaddySettingsRuntime(
           return html(operationDocument({ ...status, catalogReady: catalog !== undefined }), 200);
         }
         if ((url.pathname === "/operations/runtime/codex" || url.pathname === "/operations/runtime/catalog") && request.method === "POST") {
-          if (!isSameOriginNavigation(request, origin)) return plain("Access denied.", 403);
+          if (!isOwnerNavigation(request, ownerOrigin)) return plain("Access denied.", 403);
           const [status, catalog] = await Promise.all([runtime.status(), loadReceipt()]);
           if (url.pathname === "/operations/runtime/codex") {
             const deviceAuthorization = await runtime.startCodexDeviceAuthorization();
@@ -370,7 +367,7 @@ export function createGoDaddySettingsRuntime(
       }
 
       if (await loadReceipt() === undefined) return plain("Settings are temporarily unavailable.", 503);
-      const verifiedGateway = await gateway(origin);
+      const verifiedGateway = await gateway(ownerOrigin);
       return verifiedGateway === undefined
         ? plain("Settings are temporarily unavailable.", 503)
         : verifiedGateway.handle(request);
