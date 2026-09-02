@@ -195,9 +195,9 @@ function operationDocument(input: Readonly<{
   const device = input.deviceAuthorization === undefined ? "" : `
       <section>
         <h2>Вхід Codex</h2>
-        <p>Відкрийте <a href="${input.deviceAuthorization.verificationUrl}" rel="noreferrer">сторінку авторизації OpenAI</a> і введіть цей одноразовий код:</p>
+        <p>Відкрийте <a href="${input.deviceAuthorization.verificationUrl}" target="_blank" rel="noopener noreferrer">сторінку авторизації OpenAI</a> в новій вкладці й введіть цей одноразовий код:</p>
         <p><strong>${input.deviceAuthorization.userCode}</strong></p>
-        <p>Після завершення поверніться сюди та оновіть сторінку. Код не зберігається у застосунку.</p>
+        <p>Після завершення поверніться до цієї вкладки й оновіть сторінку. Код не зберігається у застосунку.</p>
       </section>`;
   const deviceError = input.deviceAuthorizationFailed === true
     ? '<p role="alert">Не вдалося запустити вхід Codex: runtime Codex не відповів. Повторіть після публікації актуальної версії застосунку.</p>'
@@ -333,7 +333,7 @@ export function createGoDaddySettingsRuntime(
       if (!isManagedPath(url.pathname)) return undefined;
       const ownerOrigin = await owner.getVerifiedOwnerOrigin(request.headers.get("cookie"));
       if (ownerOrigin === undefined) {
-        return url.pathname === "/settings" && request.method === "GET"
+        return request.method === "GET" && (url.pathname === "/settings" || url.pathname === "/operations/runtime")
           ? redirect("/auth/sign-in", [])
           : plain("Access denied.", 403);
       }

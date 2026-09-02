@@ -56,6 +56,10 @@ test("GoDaddy Settings starts only a local owner-password session before it open
   assert.equal(settings?.status, 303);
   assert.equal(settings?.headers.get("location"), "/auth/sign-in");
 
+  const operations = await runtime.handle(new Request("https://settings.example.test/operations/runtime", { headers: originHeaders }));
+  assert.equal(operations?.status, 303);
+  assert.equal(operations?.headers.get("location"), "/auth/sign-in");
+
   const login = await runtime.handle(new Request("https://settings.example.test/auth/sign-in", { headers: originHeaders }));
   assert.equal(login?.status, 200);
   assert.equal(login?.headers.get("referrer-policy"), "same-origin");
@@ -235,7 +239,11 @@ test("the owner-only runtime operation can begin Codex device authorization with
     }
   }));
   assert.equal(operation?.status, 200);
-  assert.match(await operation?.text() ?? "", /ABCD-1234/);
+  const operationDocument = await operation?.text() ?? "";
+  assert.match(operationDocument, /ABCD-1234/);
+  assert.match(operationDocument, /target="_blank"/u);
+  assert.match(operationDocument, /rel="noopener noreferrer"/u);
+  assert.match(operationDocument, /новій вкладці/u);
 
   authorizationAvailable = false;
   const unavailable = await runtime.handle(new Request("https://settings.example.test/operations/runtime/codex", {
