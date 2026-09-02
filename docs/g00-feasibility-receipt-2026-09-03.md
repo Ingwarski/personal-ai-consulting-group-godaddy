@@ -33,6 +33,23 @@ This proves the narrow Node build/start/`PORT`/health/restart contract for the
 Published revision above. It does not prove persistence of product state,
 rollback, a backup or any untested provider capability.
 
+## Provider documentation check
+
+GoDaddy's [Node.js Hosting FAQ](https://www.godaddy.com/en-ph/help/godaddy-nodejs-hosting-faq-42915)
+requires a top-level `package.json`, a build command, a start command, runtime
+packages in `dependencies`, and listening on the assigned `PORT`. Its
+[Node.js Hosting concepts](https://developer.godaddy.com/en/docs/api-users/concepts/nodejs-hosting-concepts)
+document separate Preview and Published variants, per-variant secret metadata,
+and deployment/status polling. Those facts support the narrow runtime result
+above.
+
+The consulted official materials do not provide a contract for a private,
+durable filesystem; process isolation; child-process or native-dependency
+support; egress policy; cryptographic key custody; database isolation; or a
+backup-and-isolated-restore workflow. Absence of those guarantees is not proof
+that they are impossible, but it is insufficient evidence for the retained V1
+invariants.
+
 ## Preview safety decision
 
 The provider's shared-MySQL statement means Preview is not an isolated
