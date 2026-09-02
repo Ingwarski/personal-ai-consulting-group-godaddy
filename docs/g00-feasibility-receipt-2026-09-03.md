@@ -50,6 +50,24 @@ backup-and-isolated-restore workflow. Absence of those guarantees is not proof
 that they are impossible, but it is insufficient evidence for the retained V1
 invariants.
 
+## Matrix readiness and runtime boundary
+
+On 03.09.2026 the Owner confirmed the Matrix owner setup is ready. Per the
+setup contract, this is limited to a `matrix.org` owner account, Secure Backup,
+and one verified Mac device. No Matrix ID, recovery key, password, access token,
+bot account, or room identifier was collected or recorded.
+
+The current Node app has no Matrix client dependency or startup path. The
+official [Matrix JavaScript SDK](https://github.com/matrix-org/matrix-js-sdk)
+states that Node E2EE without a persistent store creates a new device after a
+restart. The official
+[`matrix-sdk-crypto-nodejs` binding](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/blob/main/src/machine.rs)
+persists crypto state through an encrypted SQLite store at a filesystem path.
+GoDaddy currently provides no verified durable writable filesystem contract for
+that store, and the Git-connected Files surface is read-only. Creating a bot or
+private E2EE room before resolving this would produce an unsafe, non-restart-safe
+runtime rather than an integration result.
+
 ## Preview safety decision
 
 The provider's shared-MySQL statement means Preview is not an isolated
