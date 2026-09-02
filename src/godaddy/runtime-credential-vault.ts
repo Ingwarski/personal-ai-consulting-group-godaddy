@@ -6,11 +6,13 @@ const MAX_CREDENTIAL_BYTES = 64 * 1024;
 export interface RuntimeCredentialStorage {
   get<T>(key: string): Promise<T | undefined>;
   put<T>(key: string, value: T): Promise<void>;
+  delete(key: string): Promise<void>;
 }
 
 export type RuntimeCredentialVault = Readonly<{
   read: (key: string) => Promise<Uint8Array | undefined>;
   write: (key: string, value: Uint8Array) => Promise<void>;
+  clear: (key: string) => Promise<void>;
 }>;
 
 type SealedCredential = Readonly<{
@@ -108,6 +110,10 @@ export function createRuntimeCredentialVault(input: Readonly<{
         ivBase64: encodeBase64(iv),
         ciphertextBase64: encodeBase64(ciphertext)
       }));
+    },
+    async clear(key: string): Promise<void> {
+      if (!safeKey(key)) throw new Error("Runtime credential key is invalid.");
+      await input.storage.delete(key);
     }
   });
 }

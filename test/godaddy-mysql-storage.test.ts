@@ -66,6 +66,10 @@ class MemoryPool implements MySqlPool {
       const stateValue = valuesByKey.get(compositeKey);
       return [stateValue === undefined ? [] : [{ stateValue }], []] as const;
     }
+    if (statement.startsWith("DELETE")) {
+      valuesByKey.delete(compositeKey);
+      return [{ affectedRows: 1 }, []] as const;
+    }
     const payload = values[2];
     if (typeof payload !== "string") throw new Error("invalid fixture payload");
     valuesByKey.set(compositeKey, payload);
@@ -128,4 +132,7 @@ test("MySQL storage commits only whole transactions and never creates schema", a
   assert.deepEqual(await storage.get("document"), { revision: 1 });
   assert.equal(pool.connections[1]?.rolledBack, 1);
   assert.equal(pool.connections[1]?.released, 1);
+
+  await storage.delete("ledger");
+  assert.equal(await storage.get("ledger"), undefined);
 });

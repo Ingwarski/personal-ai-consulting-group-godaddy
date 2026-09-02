@@ -194,12 +194,17 @@ test("a rejected password rotates the one-time login challenge without clearing 
 
 test("the owner-only runtime operation can begin Codex device authorization without exposing a credential to public routes", async () => {
   let authorizationAvailable = true;
+  let resetCount = 0;
   const bootstrap: RuntimeBootstrap = {
     loadCatalog: async () => undefined,
     status: async () => ({ codex: "auth_required", claude: "ready" }),
     startCodexDeviceAuthorization: async () => authorizationAvailable
       ? ({ verificationUrl: "https://auth.openai.com/codex/device", userCode: "ABCD-1234" })
       : undefined,
+    resetCodexAuthorization: async () => {
+      resetCount += 1;
+      return true;
+    },
     refreshCatalog: async () => ({ ok: false, code: "codex_not_ready" }),
     close: async () => {}
   };
@@ -244,6 +249,19 @@ test("the owner-only runtime operation can begin Codex device authorization with
   assert.match(operationDocument, /target="_blank"/u);
   assert.match(operationDocument, /rel="noopener noreferrer"/u);
   assert.match(operationDocument, /новій вкладці/u);
+
+  const reset = await runtime.handle(new Request("https://settings.example.test/operations/runtime/codex/reconnect", {
+    method: "POST",
+    headers: {
+      ...originHeaders,
+      cookie: ownerCookie.slice(0, ownerCookie.indexOf(";")),
+      origin: "https://settings.example.test",
+      "sec-fetch-site": "same-origin"
+    }
+  }));
+  assert.equal(reset?.status, 200);
+  assert.equal(resetCount, 1);
+  assert.match(await reset?.text() ?? "", /Попередній вхід Codex і його каталог очищено/u);
 
   authorizationAvailable = false;
   const unavailable = await runtime.handle(new Request("https://settings.example.test/operations/runtime/codex", {

@@ -13,6 +13,10 @@ class MemoryStorage implements RuntimeCredentialStorage {
   async put<T>(key: string, value: T): Promise<void> {
     this.records.set(key, value);
   }
+
+  async delete(key: string): Promise<void> {
+    this.records.delete(key);
+  }
 }
 
 const rootSecret = "a-random-root-secret-used-only-in-this-test-and-never-in-production";
@@ -40,4 +44,17 @@ test("fails closed when a sealed record is tampered with or opened under a diffe
   const second = createRuntimeCredentialVault({ storage, rootSecret: "a-different-random-root-secret-used-only-for-a-negative-test" });
   if (second === undefined) throw new Error("Expected vault.");
   assert.equal(await second.read("codex_auth_state"), undefined);
+});
+
+test("clears only the requested sealed credential", async () => {
+  const storage = new MemoryStorage();
+  const vault = createRuntimeCredentialVault({ storage, rootSecret });
+  if (vault === undefined) throw new Error("Expected vault.");
+  await vault.write("codex_auth_state", new TextEncoder().encode("old-auth"));
+  await vault.write("claude_auth_state", new TextEncoder().encode("other-auth"));
+
+  await vault.clear("codex_auth_state");
+
+  assert.equal(await vault.read("codex_auth_state"), undefined);
+  assert.equal(runtimeCredentialVaultText((await vault.read("claude_auth_state"))!), "other-auth");
 });

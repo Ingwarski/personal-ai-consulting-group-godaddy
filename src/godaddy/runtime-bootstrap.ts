@@ -11,6 +11,7 @@ const CATALOG_NAMESPACE = "runtime-capability-v1";
 
 export type RuntimeBootstrapStatus = Readonly<{
   codex: "ready" | "auth_required" | "quota_blocked" | "unavailable";
+  codexPlanType?: string;
   claude: "ready" | "auth_required" | "quota_blocked" | "unavailable";
 }>;
 
@@ -18,6 +19,7 @@ export type RuntimeBootstrap = Readonly<{
   loadCatalog: () => Promise<CapabilityReceipt | undefined>;
   status: () => Promise<RuntimeBootstrapStatus>;
   startCodexDeviceAuthorization: () => Promise<CodexDeviceAuthorization | undefined>;
+  resetCodexAuthorization: () => Promise<boolean>;
   refreshCatalog: () => Promise<RuntimeCapabilityCatalogResult>;
   close: () => Promise<void>;
 }>;
@@ -82,11 +84,22 @@ export function createRuntimeBootstrap(options: RuntimeBootstrapOptions): Runtim
       ]);
       return Object.freeze({
         codex: codexProbe?.runtime.readiness ?? "unavailable",
+        ...(codexProbe?.planType === undefined ? {} : { codexPlanType: codexProbe.planType }),
         claude: claudeStatus?.readiness ?? "unavailable"
       });
     },
     async startCodexDeviceAuthorization(): Promise<CodexDeviceAuthorization | undefined> {
       return codex?.startDeviceAuthorization();
+    },
+    async resetCodexAuthorization(): Promise<boolean> {
+      if (codex === undefined) return false;
+      try {
+        await runtimeStorage.delete(CATALOG_STORAGE_KEY);
+        catalog = undefined;
+      } catch {
+        return false;
+      }
+      return codex.resetAuthorization();
     },
     async refreshCatalog(): Promise<RuntimeCapabilityCatalogResult> {
       if (codex === undefined || claude === undefined) return { ok: false, code: "private_boundary_failed" };

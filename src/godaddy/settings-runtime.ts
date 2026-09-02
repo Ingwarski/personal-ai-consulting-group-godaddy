@@ -51,6 +51,7 @@ const settingsPaths = new Set([
 const runtimeOperationPaths = new Set([
   "/operations/runtime",
   "/operations/runtime/codex",
+  "/operations/runtime/codex/reconnect",
   "/operations/runtime/catalog"
 ]);
 
@@ -89,6 +90,13 @@ const assetResponse = (body: Uint8Array, asset: SettingsAsset): Response =>
 
 const asSecret = (value: unknown): string | undefined =>
   typeof value === "string" && value.length >= 32 && value.length <= 4_096 ? value : undefined;
+
+const escapeHtml = (value: string): string => value
+  .replaceAll("&", "&amp;")
+  .replaceAll("<", "&lt;")
+  .replaceAll(">", "&gt;")
+  .replaceAll('"', "&quot;")
+  .replaceAll("'", "&#39;");
 
 function capabilityReceiptFromEnvironment(environment: Record<string, unknown>, now: Date): CapabilityReceipt | undefined {
   const raw = environment.CAPABILITY_CATALOG_JSON;
@@ -185,23 +193,30 @@ const defaultReadAsset = (asset: SettingsAsset): Promise<Uint8Array> =>
 
 function operationDocument(input: Readonly<{
   codex: string;
+  codexPlanType?: string;
   claude: string;
   catalogReady: boolean;
   deviceAuthorization?: Readonly<{ verificationUrl: string; userCode: string }>;
   deviceAuthorizationFailed?: boolean;
+  codexResetResult?: "cleared" | "failed";
   catalogResult?: "updated" | "unavailable";
 }>): string {
   const state = input.catalogReady ? "Каталог можливостей активний." : "Каталог можливостей ще не створено.";
   const device = input.deviceAuthorization === undefined ? "" : `
       <section>
         <h2>Вхід Codex</h2>
-        <p>Відкрийте <a href="${input.deviceAuthorization.verificationUrl}" target="_blank" rel="noopener noreferrer">сторінку авторизації OpenAI</a> в новій вкладці й введіть цей одноразовий код:</p>
+        <p>Відкрийте <a href="${input.deviceAuthorization.verificationUrl}" target="_blank" rel="noopener noreferrer">сторінку авторизації OpenAI</a> у новій вкладці режиму інкогніто, увійдіть саме в обліковий запис із потрібною Codex-підпискою й введіть цей одноразовий код:</p>
         <p><strong>${input.deviceAuthorization.userCode}</strong></p>
         <p>Після завершення поверніться до цієї вкладки й оновіть сторінку. Код не зберігається у застосунку.</p>
       </section>`;
   const deviceError = input.deviceAuthorizationFailed === true
     ? '<p role="alert">Не вдалося запустити вхід Codex: runtime Codex не відповів. Повторіть після публікації актуальної версії застосунку.</p>'
     : "";
+  const resetResult = input.codexResetResult === "cleared"
+    ? '<p role="status">Попередній вхід Codex і його каталог очищено. Тепер почніть новий вхід.</p>'
+    : input.codexResetResult === "failed"
+      ? '<p role="alert">Не вдалося повністю очистити попередній вхід Codex. Стан на екрані може бути застарілим; не починайте новий вхід і повторіть очищення.</p>'
+      : "";
   const catalogResult = input.catalogResult === "updated"
     ? '<p role="status">Каталог можливостей оновлено.</p>'
     : input.catalogResult === "unavailable" ? '<p role="alert">Каталог не оновлено. Перевірте готовність обох підписок і повторіть дію.</p>' : "";
@@ -211,11 +226,14 @@ function operationDocument(input: Readonly<{
   <body>
     <main>
       <h1>Підготовка runtime</h1>
-      <p>Codex: ${input.codex}. Claude Code: ${input.claude}.</p>
+      <p>Codex: ${input.codex}${input.codexPlanType === undefined ? "" : ` (план: ${escapeHtml(input.codexPlanType)})`}. Claude Code: ${input.claude}.</p>
       <p>${state}</p>
       ${catalogResult}
+      ${resetResult}
       ${deviceError}
       ${device}
+      <p>Якщо показаний план відрізняється від вашої Codex-підписки або потрібна інша модель, очистіть попередній вхід перед повторною авторизацією.</p>
+      <form action="/operations/runtime/codex/reconnect" method="post"><button type="submit">Очистити попередній вхід Codex</button></form>
       <form action="/operations/runtime/codex" method="post"><button type="submit">Почати вхід Codex</button></form>
       <form action="/operations/runtime/catalog" method="post"><button type="submit">Перевірити підписки й оновити каталог</button></form>
       ${input.catalogReady ? '<p><a href="/settings">Відкрити Налаштування власника</a></p>' : ""}
@@ -343,7 +361,7 @@ export function createGoDaddySettingsRuntime(
           const [status, catalog] = await Promise.all([runtime.status(), loadReceipt()]);
           return html(operationDocument({ ...status, catalogReady: catalog !== undefined }), 200);
         }
-        if ((url.pathname === "/operations/runtime/codex" || url.pathname === "/operations/runtime/catalog") && request.method === "POST") {
+        if ((url.pathname === "/operations/runtime/codex" || url.pathname === "/operations/runtime/codex/reconnect" || url.pathname === "/operations/runtime/catalog") && request.method === "POST") {
           if (!isOwnerNavigation(request, ownerOrigin)) return plain("Access denied.", 403);
           const [status, catalog] = await Promise.all([runtime.status(), loadReceipt()]);
           if (url.pathname === "/operations/runtime/codex") {
@@ -353,6 +371,15 @@ export function createGoDaddySettingsRuntime(
               catalogReady: catalog !== undefined,
               ...(deviceAuthorization === undefined ? { deviceAuthorizationFailed: true } : { deviceAuthorization })
             }), deviceAuthorization === undefined ? 503 : 200);
+          }
+          if (url.pathname === "/operations/runtime/codex/reconnect") {
+            const reset = await runtime.resetCodexAuthorization();
+            const afterReset = await runtime.status();
+            return html(operationDocument({
+              ...afterReset,
+              catalogReady: reset ? false : catalog !== undefined,
+              codexResetResult: reset ? "cleared" : "failed"
+            }), reset ? 200 : 503);
           }
           const refreshed = await runtime.refreshCatalog();
           if (refreshed.ok) receipt = refreshed.receipt;

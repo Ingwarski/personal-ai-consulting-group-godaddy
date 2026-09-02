@@ -27,6 +27,7 @@ export type CodexDeviceAuthorization = Readonly<{
 export type GoDaddyCodexAppServer = Readonly<{
   inspectSubscription: () => Promise<CodexAppServerProbe>;
   startDeviceAuthorization: () => Promise<CodexDeviceAuthorization | undefined>;
+  resetAuthorization: () => Promise<boolean>;
   close: () => Promise<void>;
 }>;
 
@@ -40,6 +41,7 @@ export type GoDaddyCodexAppServerOptions = Readonly<{
 type ActiveConnection = Readonly<{
   client: JsonRpcClient;
   connection: CodexAppServerConnection;
+  authEpoch: number;
 }>;
 
 const asPath = (value: unknown): string =>
@@ -158,23 +160,50 @@ export function createSubprocessCodexAppServerLauncher(input: Readonly<{
 export function createGoDaddyCodexAppServer(options: GoDaddyCodexAppServerOptions): GoDaddyCodexAppServer {
   const launch = options.launch ?? createSubprocessCodexAppServerLauncher(options);
   let active: Promise<ActiveConnection> | undefined;
+  let authEpoch = 0;
+  let credentialOperations = Promise.resolve();
 
-  const persist = async (connection: CodexAppServerConnection): Promise<void> => {
-    const state = await connection.readAuthState();
-    if (state !== undefined && state.byteLength <= MAX_AUTH_STATE_BYTES) await options.vault.write(CODEX_AUTH_STORAGE_KEY, state);
+  const queueCredentialOperation = async (operation: () => Promise<void>): Promise<void> => {
+    const queued = credentialOperations.then(operation, operation);
+    credentialOperations = queued.catch(() => undefined);
+    return queued;
+  };
+
+  const persist = async (connection: CodexAppServerConnection, epoch = authEpoch): Promise<void> => {
+    await queueCredentialOperation(async () => {
+      if (epoch !== authEpoch) return;
+      const state = await connection.readAuthState();
+      if (epoch !== authEpoch || state === undefined || state.byteLength > MAX_AUTH_STATE_BYTES) return;
+      await options.vault.write(CODEX_AUTH_STORAGE_KEY, state);
+    });
+  };
+
+  const closeActive = async (persistState: boolean): Promise<void> => {
+    const current = active;
+    active = undefined;
+    if (current === undefined) return;
+    try {
+      const resolved = await current;
+      if (persistState) await persist(resolved.connection, resolved.authEpoch);
+      resolved.client.close();
+      await resolved.connection.close();
+    } catch {
+      return;
+    }
   };
 
   const getActive = async (): Promise<ActiveConnection> => {
     if (active === undefined) {
       active = (async () => {
+        const connectionEpoch = authEpoch;
         const connection = await launch(await options.vault.read(CODEX_AUTH_STORAGE_KEY));
         const client = new JsonRpcClient({ channel: connection.channel });
         try {
           await client.initialize({ name: "personal-consultant-godaddy", title: "Personal Consultant", version: "1" });
           client.onNotification((notification) => {
-            if (notification.method === "account/login/completed") void persist(connection);
+            if (notification.method === "account/login/completed" || notification.method === "account/updated") void persist(connection, connectionEpoch);
           });
-          return Object.freeze({ client, connection });
+          return Object.freeze({ client, connection, authEpoch: connectionEpoch });
         } catch {
           client.close();
           await connection.close().catch(() => undefined);
@@ -191,7 +220,7 @@ export function createGoDaddyCodexAppServer(options: GoDaddyCodexAppServerOption
       try {
         const current = await getActive();
         const probe = await probeCodexAppServer(current.client, { privateSingleOwner: true });
-        await persist(current.connection);
+        await persist(current.connection, current.authEpoch);
         return probe;
       } catch {
         return Object.freeze({
@@ -204,24 +233,35 @@ export function createGoDaddyCodexAppServer(options: GoDaddyCodexAppServerOption
       try {
         const current = await getActive();
         const result = await current.client.request("account/login/start", { type: "chatgptDeviceCode" });
-        await persist(current.connection);
+        await persist(current.connection, current.authEpoch);
         return parseDeviceAuthorization(result);
       } catch {
         return undefined;
       }
     },
-    async close(): Promise<void> {
+    async resetAuthorization(): Promise<boolean> {
+      authEpoch += 1;
       const current = active;
-      active = undefined;
-      if (current === undefined) return;
       try {
-        const resolved = await current;
-        await persist(resolved.connection);
-        resolved.client.close();
-        await resolved.connection.close();
+        if (current !== undefined) {
+          const resolved = await current;
+          await resolved.client.request("account/logout", {});
+        }
       } catch {
-        return;
+        // The persistent credential is cleared below even when the old child
+        // process cannot respond, so a restart cannot revive it.
+      } finally {
+        await closeActive(false);
       }
+      try {
+        await queueCredentialOperation(() => options.vault.clear(CODEX_AUTH_STORAGE_KEY));
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    async close(): Promise<void> {
+      await closeActive(true);
     }
   });
 }

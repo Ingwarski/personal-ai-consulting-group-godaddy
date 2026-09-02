@@ -13,13 +13,20 @@ class MemoryStorage implements RuntimeCredentialStorage {
   readonly records = new Map<string, unknown>();
   async get<T>(key: string): Promise<T | undefined> { return this.records.get(key) as T | undefined; }
   async put<T>(key: string, value: T): Promise<void> { this.records.set(key, value); }
+  async delete(key: string): Promise<void> { this.records.delete(key); }
 }
 
 const rootSecret = "a-random-root-secret-used-only-in-this-test-and-never-in-production";
 
-function launcher(responses: Record<string, unknown>, authState = new TextEncoder().encode('{"managed":"oauth"}')): Readonly<{ launch: CodexAppServerLauncher; calls: string[]; emit: (line: string) => void }> {
+function launcher(responses: Record<string, unknown>, initialAuthState = new TextEncoder().encode('{"managed":"oauth"}')): Readonly<{
+  launch: CodexAppServerLauncher;
+  calls: string[];
+  emit: (line: string) => void;
+  setAuthState: (value: Uint8Array | undefined) => void;
+}> {
   const listeners = new Set<(line: string) => void>();
   const calls: string[] = [];
+  let authState = initialAuthState;
   const channel: JsonRpcLineChannel = {
     async send(line): Promise<void> {
       const request = JSON.parse(line) as { id?: number; method: string };
@@ -36,8 +43,23 @@ function launcher(responses: Record<string, unknown>, authState = new TextEncode
   return Object.freeze({
     launch: async () => Object.freeze({ channel, readAuthState: async () => authState, close: async () => {} }),
     calls,
-    emit: (line) => { for (const listener of listeners) listener(line); }
+    emit: (line) => { for (const listener of listeners) listener(line); },
+    setAuthState: (value) => { authState = value; }
   });
+}
+
+async function eventually(assertion: () => void | Promise<void>): Promise<void> {
+  let last: unknown;
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    try {
+      await assertion();
+      return;
+    } catch (error) {
+      last = error;
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    }
+  }
+  throw last;
 }
 
 const responses = Object.freeze({
@@ -95,4 +117,33 @@ test("never returns a malformed device-code response", async () => {
   const runtime = createGoDaddyCodexAppServer({ environment: {}, vault, launch: fake.launch });
   assert.equal(await runtime.startDeviceAuthorization(), undefined);
   await runtime.close();
+});
+
+test("persists the updated auth state after App Server reports an account change", async () => {
+  const storage = new MemoryStorage();
+  const vault = createRuntimeCredentialVault({ storage, rootSecret });
+  if (vault === undefined) throw new Error("Expected vault.");
+  const fake = launcher(responses);
+  const runtime = createGoDaddyCodexAppServer({ environment: {}, vault, launch: fake.launch });
+  await runtime.inspectSubscription();
+  const renewed = new TextEncoder().encode('{"managed":"renewed"}');
+  fake.setAuthState(renewed);
+  fake.emit(JSON.stringify({ jsonrpc: "2.0", method: "account/updated", params: { authMode: "chatgpt", planType: "pro" } }));
+
+  await eventually(async () => assert.deepEqual(Array.from((await vault.read("codex_auth_state")) ?? []), Array.from(renewed)));
+
+  await runtime.close();
+});
+
+test("clears the sealed Codex state before a replacement login", async () => {
+  const storage = new MemoryStorage();
+  const vault = createRuntimeCredentialVault({ storage, rootSecret });
+  if (vault === undefined) throw new Error("Expected vault.");
+  const fake = launcher({ ...responses, "account/logout": {} });
+  const runtime = createGoDaddyCodexAppServer({ environment: {}, vault, launch: fake.launch });
+  await runtime.inspectSubscription();
+
+  assert.equal(await runtime.resetAuthorization(), true);
+  assert.ok(fake.calls.includes("account/logout"));
+  assert.equal(await vault.read("codex_auth_state"), undefined);
 });

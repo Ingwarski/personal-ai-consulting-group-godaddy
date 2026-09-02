@@ -38,6 +38,7 @@ const SELECT_VALUE_FOR_UPDATE = `${SELECT_VALUE} FOR UPDATE`;
 const UPSERT_VALUE = `INSERT INTO ${GODADDY_STATE_TABLE} (state_namespace, state_key, state_value)
   VALUES (?, ?, CAST(? AS JSON))
   ON DUPLICATE KEY UPDATE state_value = VALUES(state_value), updated_at = UTC_TIMESTAMP(6)`;
+const DELETE_VALUE = `DELETE FROM ${GODADDY_STATE_TABLE} WHERE state_namespace = ? AND state_key = ?`;
 
 const asRequiredString = (value: unknown): string | undefined =>
   typeof value === "string" && value.trim().length > 0 && value.length <= 1_024 ? value : undefined;
@@ -97,6 +98,11 @@ export class MySqlKeyValueStorage implements RegistrarStorage, SettingsStorage {
     const serialized = JSON.stringify(value);
     if (serialized === undefined) throw new Error("MySQL storage value cannot be serialized.");
     await this.#executor.execute(UPSERT_VALUE, [this.#namespace, key, serialized]);
+  }
+
+  async delete(key: string): Promise<void> {
+    if (key.length === 0 || key.length > 191) throw new Error("MySQL storage key is invalid.");
+    await this.#executor.execute(DELETE_VALUE, [this.#namespace, key]);
   }
 
   async transaction<T>(operation: (storage: MySqlKeyValueStorage) => Promise<T>): Promise<T> {
