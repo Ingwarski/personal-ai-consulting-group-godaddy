@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { GODADDY_STATE_DATABASE_ROLE, type MySqlConnection, type MySqlPool } from "../src/godaddy/mysql-storage.ts";
 import { createGoDaddySettingsRuntime } from "../src/godaddy/settings-runtime.ts";
+import type { RuntimeBootstrap } from "../src/godaddy/runtime-bootstrap.ts";
 import { activeNow, createCapabilityReceipt } from "./fixtures/capability-receipt.ts";
 
 class UnusedPool implements MySqlPool {
@@ -87,4 +88,54 @@ test("GoDaddy Settings starts only a local owner-password session before it open
   assert.equal(signedIn?.headers.get("location"), "/settings");
   const signInCookies = (signedIn?.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie?.() ?? [];
   assert.equal(signInCookies.some((cookie) => cookie.startsWith("__Host-personal-consultant-owner=")), true);
+});
+
+test("the owner-only runtime operation can begin Codex device authorization without exposing a credential to public routes", async () => {
+  const bootstrap: RuntimeBootstrap = {
+    loadCatalog: async () => undefined,
+    status: async () => ({ codex: "auth_required", claude: "ready" }),
+    startCodexDeviceAuthorization: async () => ({ verificationUrl: "https://auth.openai.com/codex/device", userCode: "ABCD-1234" }),
+    refreshCatalog: async () => ({ ok: false, code: "codex_not_ready" }),
+    close: async () => {}
+  };
+  const runtime = createGoDaddySettingsRuntime({ ...configuredEnvironment, CAPABILITY_CATALOG_JSON: "" }, {
+    createPool: () => new UnusedPool(),
+    createRuntimeBootstrap: () => bootstrap,
+    now: () => activeNow
+  });
+  const login = await runtime.handle(new Request("https://settings.example.test/auth/sign-in", { headers: originHeaders }));
+  const document = await login?.text();
+  const loginCookie = (login?.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie?.()[0];
+  const formToken = /name="formToken" value="([A-Za-z0-9_-]+)"/u.exec(document ?? "")?.[1];
+  if (loginCookie === undefined || formToken === undefined) throw new Error("Expected login challenge.");
+  const form = new URLSearchParams({ formToken, password: configuredEnvironment.SETTINGS_OWNER_PASSWORD }).toString();
+  const signedIn = await runtime.handle(new Request("https://settings.example.test/auth/sign-in", {
+    method: "POST",
+    headers: {
+      ...originHeaders,
+      cookie: loginCookie.slice(0, loginCookie.indexOf(";")),
+      origin: "https://settings.example.test",
+      "sec-fetch-site": "same-origin",
+      "content-type": "application/x-www-form-urlencoded",
+      "content-length": String(form.length)
+    },
+    body: form
+  }));
+  const ownerCookie = (signedIn?.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie?.()
+    .find((cookie) => cookie.startsWith("__Host-personal-consultant-owner="));
+  if (ownerCookie === undefined) throw new Error("Expected owner session.");
+  const operation = await runtime.handle(new Request("https://settings.example.test/operations/runtime/codex", {
+    method: "POST",
+    headers: {
+      ...originHeaders,
+      cookie: ownerCookie.slice(0, ownerCookie.indexOf(";")),
+      origin: "https://settings.example.test",
+      "sec-fetch-site": "same-origin"
+    }
+  }));
+  assert.equal(operation?.status, 200);
+  assert.match(await operation?.text() ?? "", /ABCD-1234/);
+
+  const denied = await runtime.handle(new Request("https://settings.example.test/operations/runtime/codex", { method: "POST", headers: originHeaders }));
+  assert.equal(denied?.status, 403);
 });

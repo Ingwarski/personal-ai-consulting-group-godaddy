@@ -113,3 +113,32 @@ test("fails closed for a rejected authentication check or malformed completion",
     (error: unknown) => error instanceof SafeConsiliumFailure && error.message === "claude_invalid_completion"
   );
 });
+
+test("discovers only aliases that complete under each actual supported effort", async () => {
+  const calls: Parameters<CommandRunner>[0][] = [];
+  const run: CommandRunner = async (input) => {
+    calls.push(input);
+    if (input.arguments[0] === "auth") return { exitCode: 0, stdout: "{}", stderr: "" };
+    const effort = input.arguments[input.arguments.indexOf("--effort") + 1];
+    const model = input.arguments[input.arguments.indexOf("--model") + 1];
+    if (model === "sonnet" && effort !== "xhigh") {
+      return { exitCode: 0, stdout: JSON.stringify({ result: "READY", session_id: `sonnet-${effort}` }), stderr: "" };
+    }
+    return { exitCode: 1, stdout: "", stderr: "" };
+  };
+  const process = createGoDaddyClaudeCodeProcess({
+    environment: { ...secretEnvironment, CLAUDE_CODE_MODEL_CANDIDATES: "sonnet,opus" },
+    getModels: models,
+    run
+  });
+  if (process === undefined) throw new Error("Expected process.");
+  assert.deepEqual(await process.discoverModels(), [{
+    productId: "claude-sonnet",
+    displayName: "Claude Sonnet",
+    runtimeModelId: "sonnet",
+    availability: "available",
+    supportedReasoningDepths: ["low", "medium", "high"],
+    reasoningMappings: { low: "low", medium: "medium", high: "high" }
+  }]);
+  assert.equal(calls.length, 9);
+});

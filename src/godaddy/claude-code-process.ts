@@ -28,6 +28,7 @@ export type CommandRunner = (input: Readonly<{
 
 export type GoDaddyClaudeCodeProcess = ClaudeCodeSubscriptionProcess & Readonly<{
   processRef: string;
+  discoverModels: () => Promise<readonly ProviderModelCapability[]>;
 }>;
 
 export type GoDaddyClaudeCodeProcessOptions = Readonly<{
@@ -65,6 +66,25 @@ function processReference(value: string | undefined): string {
 
 function executablePath(value: string | undefined): string {
   return value ?? resolve(process.cwd(), "node_modules", ".bin", "claude");
+}
+
+function candidateModels(environment: Record<string, unknown>): readonly string[] {
+  const configured = typeof environment.CLAUDE_CODE_MODEL_CANDIDATES === "string"
+    ? environment.CLAUDE_CODE_MODEL_CANDIDATES.split(",").map((value) => value.trim()).filter((value) => value.length > 0)
+    : ["sonnet"];
+  const unique = [...new Set(configured)];
+  return unique.length > 0 && unique.length <= 4 && unique.every((value) => /^[A-Za-z0-9._-]{1,128}$/u.test(value))
+    ? Object.freeze(unique)
+    : Object.freeze([]);
+}
+
+function displayName(candidate: string): string {
+  const builtIn: Record<string, string> = { sonnet: "Claude Sonnet", opus: "Claude Opus", haiku: "Claude Haiku" };
+  return builtIn[candidate] ?? `Claude ${candidate}`;
+}
+
+function productId(candidate: string): string {
+  return `claude-${candidate.replaceAll(/[^A-Za-z0-9]+/gu, "-").replace(/^-+|-+$/gu, "")}`;
 }
 
 function commandEnvironment(environment: Record<string, unknown>, token: string, directory: string): Readonly<Record<string, string>> {
@@ -162,6 +182,7 @@ export function createGoDaddyClaudeCodeProcess(options: GoDaddyClaudeCodeProcess
   const processRef = processReference(options.processRef);
   const run = options.run ?? runClaudeCommand;
   const timeoutMilliseconds = options.timeoutMilliseconds ?? DEFAULT_TIMEOUT_MILLISECONDS;
+  const candidates = candidateModels(options.environment);
 
   const execute = async (argumentsList: readonly string[]): Promise<CommandResult> => {
     const directory = await mkdtemp(join(tmpdir(), "personal-consultant-claude-"));
@@ -215,6 +236,42 @@ export function createGoDaddyClaudeCodeProcess(options: GoDaddyClaudeCodeProcess
       const completion = parseCompletion(result.stdout);
       if (completion === undefined) throw new SafeConsiliumFailure("claude_invalid_completion");
       return completion;
+    },
+    async discoverModels(): Promise<readonly ProviderModelCapability[]> {
+      const status = await execute(["auth", "status", "--json"]);
+      if (status.exitCode !== 0) return Object.freeze([]);
+      const models: ProviderModelCapability[] = [];
+      for (const candidate of candidates) {
+        const supportedReasoningDepths: ReasoningDepth[] = [];
+        for (const effort of ["low", "medium", "high", "xhigh"] as const) {
+          const probe = await execute([
+            "--print",
+            "--output-format", "json",
+            "--no-session-persistence",
+            "--safe-mode",
+            "--restricted",
+            "--tools", "",
+            "--strict-mcp-config",
+            "--permission-mode", "dontAsk",
+            "--model", candidate,
+            "--effort", effort,
+            "Reply with the single word READY."
+          ]);
+          if (probe.exitCode === 0 && parseCompletion(probe.stdout) !== undefined) supportedReasoningDepths.push(effort);
+        }
+        if (supportedReasoningDepths.length === 0) continue;
+        const reasoningMappings: Partial<Record<ReasoningDepth, string>> = {};
+        for (const effort of supportedReasoningDepths) reasoningMappings[effort] = effort;
+        models.push(Object.freeze({
+          productId: productId(candidate),
+          displayName: displayName(candidate),
+          runtimeModelId: candidate,
+          availability: "available",
+          supportedReasoningDepths: Object.freeze(supportedReasoningDepths),
+          reasoningMappings: Object.freeze(reasoningMappings)
+        }));
+      }
+      return Object.freeze(models);
     }
   });
 }

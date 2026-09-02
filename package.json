@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@anthropic-ai/claude-code": "2.1.258",
+    "@openai/codex": "0.152.1",
     "mysql2": "^3.24.2"
   }
 }
