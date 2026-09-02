@@ -105,4 +105,13 @@ destructive action is eligible. The following evidence is still required:
    post-action absence checks, and a fresh owner confirmation.
 
 Until those gates are evidenced, preserve the legacy source and all secrets and
-database state. The next plan unit must not start as an implementation claim.
+database state. No later unit may be represented as a production cutover or
+destructive migration claim.
+
+## Owner scheduling direction
+
+On 03.09.2026 the Owner directed that historical HappyPro recovery and backup
+work be deferred and that non-destructive Personal Consultant development
+continue. This changes the development sequence only: it does not authorize a
+legacy wipe, source deletion, secret deletion, database mutation, or a claim
+that historical state is recoverable.
