@@ -44,18 +44,25 @@ function parseModels(value: unknown): Readonly<{ models: readonly ProviderModelC
     if (item.hidden === true) continue;
     if (!nonEmptyString(item.id) || !nonEmptyString(item.model) ||
       !nonEmptyString(item.displayName) || !Array.isArray(item.supportedReasoningEfforts)) return undefined;
-    const depths = item.supportedReasoningEfforts.map((effort) =>
-      isRecord(effort) ? allowedEffort(effort.reasoningEffort) : undefined
-    );
-    if (depths.some((depth) => depth === undefined) || new Set(depths).size !== depths.length || depths.length === 0) return undefined;
+    // Codex advertises reasoning efforts as open strings.  This application
+    // intentionally supports only its own approved subset, so additional
+    // provider capabilities must not invalidate a compatible model.
+    const depths: ReasoningDepth[] = [];
+    for (const effort of item.supportedReasoningEfforts) {
+      if (!isRecord(effort) || !nonEmptyString(effort.reasoningEffort)) return undefined;
+      const depth = allowedEffort(effort.reasoningEffort);
+      if (depth !== undefined) depths.push(depth);
+    }
+    if (new Set(depths).size !== depths.length) return undefined;
+    if (depths.length === 0) continue;
     const mappings: Partial<Record<ReasoningDepth, string>> = {};
-    for (const depth of depths as ReasoningDepth[]) mappings[depth] = depth;
+    for (const depth of depths) mappings[depth] = depth;
     models.push(Object.freeze({
       productId: item.id,
       displayName: item.displayName,
       runtimeModelId: item.model,
       availability: "available",
-      supportedReasoningDepths: Object.freeze(depths as ReasoningDepth[]),
+      supportedReasoningDepths: Object.freeze(depths),
       reasoningMappings: Object.freeze(mappings)
     }));
     if (item.isDefault === true) {
