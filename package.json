@@ -1,6 +1,7 @@
 {
   "name": "personal-ai-consulting-group",
   "version": "0.1.0",
+  "main": "src/godaddy/server.mjs",
   "private": true,
   "type": "module",
   "engines": {
