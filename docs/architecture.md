@@ -403,7 +403,7 @@ Production gates include `matrix.org` room/device/invariant proof, confirmation 
 | Native Element intake, attachments, consent, routing | `US-001–US-008`; `FR-001–FR-013`; `NFR-001–NFR-005`; `AC-001–AC-004` |
 | Live verbatim consilium, Registrar, A2A, roles/replies | `US-009–US-014`; `FR-014–FR-026`; `NFR-006–NFR-008`; `AC-005–AC-008` |
 | Final, failure, archive, export/delete, costs, permission | `US-015–US-023`; `FR-027–FR-036`; `NFR-009–NFR-015`; `AC-009–AC-011` |
-| Google-only Settings access and auth isolation | `US-024`; `FR-037–FR-040`; `NFR-016`; `AC-012`; `SG-01`; `SS-30–SS-33` |
+| Owner Settings access and auth isolation | `US-024`; `FR-037–FR-040`; `NFR-016`; `AC-012`; `SG-01`; `SS-30–SS-33`; GoDaddy exception AD-15 |
 | Model selectors and capability catalog | `US-025`; `FR-041`; `NFR-017`; `AC-013`; `SG-02`; `SS-34–SS-38` |
 | Shared reasoning depth without downgrade | `US-026`; `FR-042`; `NFR-017, NFR-019`; `AC-014`; `SG-03`; `SS-35–SS-38` |
 | Orchestration speed without Fast/PAYG | `US-027`; `FR-043, FR-046`; `AC-014`; `SG-04`; `SS-35–SS-38` |
@@ -416,7 +416,7 @@ Coverage closure: `US-001–US-029`, `FR-001–FR-046`, `NFR-001–NFR-019` і `
 
 - public/multiuser/team SaaS, registration, team roles або commercial service;
 - будь-який веб-чат, archive UI, live execution view, cost dashboard або admin console;
-- password, OTP, magic link, інший IdP, Access bypass/service token чи public settings route;
+- password, OTP, magic link, інший IdP, Access bypass/service token чи public settings route, except for the narrow Published-only GoDaddy owner-secret boundary recorded in AD-15;
 - API keys, API/PAYG, usage credits, provider Fast/priority tier, Claude Fast Mode/extra usage;
 - free-text model slug, четверта settings group, sound/motion, per-agent/per-unit override;
 - окремі Matrix identities агентів, Matrix bridges/widgets/guests/federation;
@@ -434,7 +434,7 @@ Multiuser, third-party access або commercial-service expansion анулює �
 4. Затвердити числові значення `SpeedPolicyCatalog` у межах 2–5 specialists і 5/30/60/10 UX invariants без paid acceleration.
 5. Підтвердити, що chosen Cloudflare/Matrix plans покривають recovery, encrypted storage, logs і on-call needs одного власника.
 
-Жодне відкрите рішення не дозволяє додати третю surface, альтернативний login, API/PAYG fallback, нову settings group або послабити confirmed guards.
+Жодне відкрите рішення не дозволяє додати третю surface, інший альтернативний login beyond the narrow GoDaddy owner-secret boundary in AD-15, API/PAYG fallback, нову settings group або послабити confirmed guards.
 
 ## 25. All-GoDaddy target: feasibility and migration boundary (02.09.2026)
 
@@ -465,7 +465,7 @@ The all-GoDaddy implementation may proceed only after an architecture revision s
 | Node runtime | Node 22-compatible build, explicit `start`/`PORT` contract, health endpoint and restart/redeploy behavior |
 | Matrix ingress | Long-lived sync plus encrypted, private, restart-safe crypto state; verified room/device and idempotent delivery proof |
 | Canonical order | A single MySQL-backed transaction/lease/unique-key/outbox design that proves dedupe, ordering, cancellation and late-output fencing across concurrent requests and restart |
-| Owner Settings | Exact Google-only owner authentication and origin request protection with positive, wrong-account and bypass evidence; a replacement must be approved before it supersedes Cloudflare Access/JWT |
+| Owner Settings | Published-only owner-secret authentication, one-time same-origin login challenge and origin request protection, with positive, wrong-secret and bypass evidence; this approved GoDaddy exception supersedes the Google-only adapter requirement only for Settings |
 | Subscription OAuth | Isolated Codex credential writer and separate Claude critic process; no API/PAYG/Fast/credits fallback and no credential leakage |
 | Archive | Application-layer encryption, independent key custody, immutable export/delete lifecycle and restore verification without assuming R2 |
 | Preview safety | Provider-side isolated database/schema plus separate credential, or stateless Preview only; shared tables are not isolation |
@@ -485,24 +485,24 @@ The former Cloudflare lineage remains an immutable reference and rollback source
 
 1. Can GoDaddy demonstrate an isolated database/schema+credential for stateful Preview and a safe recovery target?
 2. Which private durable storage and process model safely sustain Matrix crypto/OAuth boundaries across restart?
-3. Is a GoDaddy-native Google-only Settings boundary approved as an equivalent to the current Cloudflare Access/JWT contract, or is an exception/new product decision required?
+3. Resolved on 02.09.2026: the shared GoDaddy hostname cannot safely be a Google OAuth redirect domain without a user-controlled verified domain. The Node Settings adapter uses a strong Published-only owner secret and signed local session instead; this is limited to the GoDaddy Settings slice and does not change subscription OAuth isolation.
 4. Which source action preserves HappyPro rollback: Git disconnect/repoint while retaining the repository, or eventual permanent repository deletion after the stabilization period?
 
 ### 25.6. Node 22 replatform boundary
 
-The GoDaddy implementation is a separate adapter layer. It preserves the existing domain modules as reference contracts and does not make the Cloudflare Worker executable inside the Node process. The first transferable product slice is `Налаштування власника`: its typed settings domain, full-object/CAS/idempotency rules and responsive presentation can run behind a Node HTTP adapter only after an equivalent Google-only access boundary and persistent transaction boundary exist.
+The GoDaddy implementation is a separate adapter layer. It preserves the existing domain modules as reference contracts and does not make the Cloudflare Worker executable inside the Node process. The first transferable product slice is `Налаштування власника`: its typed settings domain, full-object/CAS/idempotency rules and responsive presentation can run behind a Node HTTP adapter only after a strong owner-secret access boundary and persistent transaction boundary exist.
 
 | Boundary | Node 22 responsibility | Fail-closed rule |
 |---|---|---|
-| Google-only Settings access | Authorization-code flow with state and nonce; server-side Google ID-token verification against the discovery/JWKS metadata; exact configured owner email; secure signed session cookie | Missing, invalid, expired, wrongly issued/audienced, wrong-email or unverified-email assertion returns denial and creates no session. No password, OTP, magic-link, alternative IdP or browser-supplied identity is accepted. |
+| Owner-secret Settings access | A distinct high-entropy Published secret is submitted only through a same-origin, one-time login form; a separate HMAC key signs a 12-hour secure session cookie | Missing or short secrets, a malformed/expired/cross-origin login challenge, an incorrect secret or an invalid/expired session returns denial and creates no session. The secret never appears in a cookie, document, logs or Git. |
 | Settings persistence | MySQL transaction adapter for the existing `SettingsStorage` contract, namespaced separately from registrar state | The adapter performs no automatic DDL and does not initialize or write unless a production-bound storage configuration and the exact schema are already present. Preview remains stateless unless the provider proves separate database/schema+credential. |
 | Capability truth | Versioned, typed capability receipt supplied outside the repository and validated by the existing domain | An absent, malformed, stale or incompatible receipt leaves Settings unavailable; model names or defaults are never invented in Node configuration. |
 | Registrar state | MySQL transaction adapter for the existing `RegistrarStorage` contract with a single fixed owner namespace | No Matrix event, agent start or visible message is accepted until the Matrix runtime, room/device invariant and production persistence boundary are separately configured and verified. |
 | Matrix, subscription OAuth and archive | Separate Node processes/adapters must be selected and evidenced before activation | No placeholder agent, synthetic Matrix reply, API/PAYG credential or unencrypted archive is permitted as a migration shortcut. |
 
-The source repository may include the Node adapters and explicit schema tooling, but a deployment never applies schema changes implicitly. A schema write, Google OAuth client configuration, Matrix bot/crypto state, subscription OAuth provisioning and Published activation remain distinct, just-in-time actions. None is authorized by a Preview pull.
+The source repository may include the Node adapters and explicit schema tooling, but a deployment never applies schema changes implicitly. A schema write, owner-secret configuration, Matrix bot/crypto state, subscription OAuth provisioning and Published activation remain distinct, just-in-time actions. None is authorized by a Preview pull.
 
-**Configuration contract (names only):** `RUNTIME_MODE`, the GoDaddy-injected `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `GODADDY_STATE_DATABASE_ROLE`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OWNER_EMAIL`, `GOOGLE_REDIRECT_URI`, `GOOGLE_SESSION_HMAC_KEY`, `SETTINGS_CSRF_HMAC_KEY` and `CAPABILITY_CATALOG_JSON`. Provider credentials, Google tokens, database values and the capability receipt’s internal runtime provenance never enter Git, logs or an archive; the authenticated Settings document receives only the model labels and mappings it needs to render the approved controls.
+**Configuration contract (names only):** `RUNTIME_MODE`, the GoDaddy-injected `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `GODADDY_STATE_DATABASE_ROLE`, `SETTINGS_OWNER_PASSWORD`, `SETTINGS_SESSION_HMAC_KEY`, `SETTINGS_CSRF_HMAC_KEY` and `CAPABILITY_CATALOG_JSON`. Provider credentials, owner secrets, database values and the capability receipt’s internal runtime provenance never enter Git, logs or an archive; the authenticated Settings document receives only the model labels and mappings it needs to render the approved controls.
 
 **Decision AD-14 — Stateless Preview before isolated state proof.**
 
@@ -511,12 +511,12 @@ The source repository may include the Node adapters and explicit schema tooling,
 - **Decision:** Preview remains stateless. Product persistence is enabled only by an explicit production-bound database role after the schema exists and the state boundary is verified.
 - **Consequence:** Preview can prove Node build, protected-route denial and presentation assets, but cannot prove session, Matrix, archive or settings persistence.
 
-**Decision AD-15 — Google OIDC is the Node Settings equivalent, not an alternate product login.**
+**Decision AD-15 — Local owner-secret auth is the GoDaddy Settings exception.**
 
-- **Source:** `FR-038`–`FR-039`, `NFR-016`, `AC-012`, and Google’s server-side OpenID Connect validation contract.
-- **Options:** accept a shared token/header; retain Cloudflare Access; or use a server-side Google OIDC authorization-code boundary.
-- **Decision:** use server-side Google OIDC only, validate the signed ID token’s issuer, audience, expiry, nonce, verified-email claim and exact owner email, then issue an application session that contains no Google or AI token.
-- **Consequence:** Settings stays unavailable until the owner provisions a Google web client and exact redirect URI; this is safer than a temporary alternate login and does not alter subscription OAuth isolation.
+- **Source:** owner instruction to retain only the standard GoDaddy hostname, plus Google’s requirement that OAuth redirect domains be owned or explicitly authorized.
+- **Options:** attach and verify a user-controlled domain for Google OAuth; retain Cloudflare Access; or use a dedicated high-entropy owner secret held only in GoDaddy Publish Secrets.
+- **Decision:** use the dedicated owner secret with a one-time same-origin login challenge, constant-time comparison and a separate HMAC-signed 12-hour secure session. No Google identity, redirect URI, client secret or provider token enters the Settings adapter.
+- **Consequence:** Settings remains unavailable until the owner provisions all three owner/CSRF/session secrets and a current capability receipt. This exception applies only to the GoDaddy Settings slice and does not alter Codex or Claude subscription OAuth isolation.
 
 **Implementation note — canonical Registrar state.**
 

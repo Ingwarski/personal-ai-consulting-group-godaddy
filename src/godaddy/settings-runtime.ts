@@ -10,7 +10,7 @@ import { parseCapabilityReceipt } from "../settings/capability-receipt.ts";
 import { createVerifiedSettingsGateway, type VerifiedSettingsGateway } from "../settings/gateway.ts";
 import { OwnerSettingsDO } from "../settings/owner-settings-do.ts";
 import type { CapabilityReceipt } from "../settings/types.ts";
-import { createGoogleOidcService, parseGoogleOidcConfiguration } from "./google-oidc.ts";
+import { createOwnerPasswordService, parseOwnerPasswordConfiguration } from "./owner-password-auth.ts";
 import {
   MySqlKeyValueStorage,
   parseGodaddyDatabaseConfiguration,
@@ -53,6 +53,12 @@ const plain = (body: string, status: number, headers: HeadersInit = {}): Respons
     status,
     headers: securityHeaders(new Headers({ "content-type": "text/plain; charset=utf-8", ...headers }))
   });
+
+const html = (body: string, status: number, cookies: readonly string[] = []): Response => {
+  const headers = securityHeaders(new Headers({ "content-type": "text/html; charset=utf-8" }));
+  for (const cookie of cookies) headers.append("set-cookie", cookie);
+  return new Response(body, { status, headers });
+};
 
 const redirect = (location: string, cookies: readonly string[]): Response => {
   const headers = securityHeaders(new Headers({ location }));
@@ -99,6 +105,49 @@ function isSameOriginNavigation(request: Request, expectedOrigin: string): boole
     request.headers.get("sec-fetch-site") === "same-origin";
 }
 
+async function parseLoginForm(request: Request): Promise<Readonly<{ formToken: string; password: string }> | undefined> {
+  const contentType = request.headers.get("content-type");
+  const contentLength = request.headers.get("content-length");
+  if (contentType === null || !contentType.startsWith("application/x-www-form-urlencoded") || contentLength === null || !/^[1-9][0-9]{0,4}$/u.test(contentLength)) {
+    return undefined;
+  }
+  if (Number(contentLength) > 4_096) return undefined;
+  const body = await request.text();
+  if (body.length > 4_096) return undefined;
+  const form = new URLSearchParams(body);
+  const formTokens = form.getAll("formToken");
+  const passwords = form.getAll("password");
+  if (formTokens.length !== 1 || passwords.length !== 1) return undefined;
+  const [formToken] = formTokens;
+  const [password] = passwords;
+  if (
+    formToken === undefined || password === undefined ||
+    !/^[A-Za-z0-9_-]{32,255}$/u.test(formToken) || password.length > 4_096
+  ) return undefined;
+  return Object.freeze({ formToken, password });
+}
+
+const loginDocument = (formToken: string, denied = false): string => `<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Вхід власника — Personal Consultant</title>
+  </head>
+  <body>
+    <main>
+      <h1>Налаштування власника</h1>
+      <p>Введіть ключ входу, збережений лише у GoDaddy Publish Secrets.</p>
+      ${denied ? '<p role="alert">Доступ відхилено.</p>' : ""}
+      <form action="/auth/sign-in" method="post">
+        <input type="hidden" name="formToken" value="${formToken}" />
+        <label>Ключ входу <input name="password" type="password" autocomplete="current-password" minlength="32" maxlength="4096" required autofocus /></label>
+        <button type="submit">Увійти</button>
+      </form>
+    </main>
+  </body>
+</html>`;
+
 const isProtectedPath = (pathname: string): boolean => protectedPaths.has(pathname);
 
 function defaultPool(configuration: GodaddyDatabaseConfiguration): MySqlPool {
@@ -120,8 +169,8 @@ const defaultReadAsset = (asset: SettingsAsset): Promise<Uint8Array> =>
 
 /**
  * The Node 22 Settings slice intentionally requires three independently
- * configured boundaries: Google identity, a current capability receipt, and
- * an explicitly Published MySQL state role. Preview therefore stays
+ * configured boundaries: a local owner secret, a current capability receipt,
+ * and an explicitly Published MySQL state role. Preview therefore stays
  * stateless while it validates the deployable process.
  */
 export function createGoDaddySettingsRuntime(
@@ -130,23 +179,22 @@ export function createGoDaddySettingsRuntime(
 ): GoDaddySettingsRuntime {
   const now = dependencies.now ?? (() => new Date());
   const database = parseGodaddyDatabaseConfiguration(environment);
-  const oidc = parseGoogleOidcConfiguration(environment);
+  const ownerPassword = parseOwnerPasswordConfiguration(environment);
   const csrfSecret = asSecret(environment.SETTINGS_CSRF_HMAC_KEY);
   const receipt = capabilityReceiptFromEnvironment(environment, now());
 
-  if (!database.ok || !oidc.ok || csrfSecret === undefined || receipt === undefined) {
+  if (!database.ok || !ownerPassword.ok || csrfSecret === undefined || receipt === undefined) {
     return Object.freeze({
       configured: false,
       async handle(request: Request): Promise<Response | undefined> {
-        return isProtectedPath(new URL(request.url).pathname) || new URL(request.url).pathname.startsWith("/auth/google/")
+        return isProtectedPath(new URL(request.url).pathname) || new URL(request.url).pathname.startsWith("/auth/")
           ? plain("Settings are temporarily unavailable.", 503)
           : undefined;
       }
     });
   }
 
-  const settingsOrigin = new URL(oidc.value.redirectUri).origin;
-  const google = createGoogleOidcService({ configuration: oidc.value, now });
+  const owner = createOwnerPasswordService({ configuration: ownerPassword.value, now });
   const pool = (dependencies.createPool ?? defaultPool)(database.value);
   const storage = new MySqlKeyValueStorage({
     executor: pool,
@@ -162,14 +210,14 @@ export function createGoDaddySettingsRuntime(
   const csrfKey = importCsrfHmacKey(csrfSecret);
   const readAsset = dependencies.readAsset ?? defaultReadAsset;
 
-  const gateway = async (): Promise<VerifiedSettingsGateway | undefined> => {
+  const gateway = async (settingsOrigin: string): Promise<VerifiedSettingsGateway | undefined> => {
     const key = await csrfKey;
     if (key === undefined) return undefined;
     return createVerifiedSettingsGateway({
       ownerSettings,
       getCapabilityReceipt: () => receipt,
       csrf: createCsrfTokenService({ key, now }),
-      csrfBinding: { principal: "owner", audience: "google-owner", origin: settingsOrigin },
+      csrfBinding: { principal: "owner", audience: "local-owner-password", origin: settingsOrigin },
       now
     });
   };
@@ -180,37 +228,44 @@ export function createGoDaddySettingsRuntime(
       const url = new URL(request.url);
       const origin = requestOrigin(request);
 
-      if (url.pathname === "/auth/google/start") {
-        if (request.method !== "GET" || origin === undefined) return plain("Access denied.", 403);
-        const start = await google.start(origin);
-        return start === undefined ? plain("Access denied.", 403) : redirect(start.authorizationUrl, [start.setCookie]);
+      if (url.pathname === "/auth/sign-in" && request.method === "GET") {
+        if (origin === undefined) return plain("Access denied.", 403);
+        const start = await owner.start(origin);
+        return start === undefined
+          ? plain("Access denied.", 403)
+          : html(loginDocument(start.formToken), 200, [start.setCookie]);
       }
 
-      if (url.pathname === "/auth/google/callback") {
-        if (request.method !== "GET" || origin === undefined) return plain("Access denied.", 403);
-        const result = await google.finish({
+      if (url.pathname === "/auth/sign-in") {
+        if (request.method !== "POST") return plain("Method not allowed.", 405, { allow: "GET, POST" });
+        if (origin === undefined || !isSameOriginNavigation(request, origin)) return plain("Access denied.", 403);
+        const form = await parseLoginForm(request);
+        const result = await owner.finish({
           cookieHeader: request.headers.get("cookie"),
-          code: url.searchParams.get("code"),
+          password: form?.password,
           requestOrigin: origin,
-          state: url.searchParams.get("state")
+          formToken: form?.formToken
         });
-        return result.ok
-          ? redirect("/settings", [result.setCookie, result.clearCookie])
-          : plain("Access denied.", 403, { "set-cookie": result.clearCookie });
+        if (result.ok) return redirect("/settings", [result.setCookie, result.clearCookie]);
+        const retry = await owner.start(origin);
+        return retry === undefined
+          ? plain("Access denied.", 403)
+          : html(loginDocument(retry.formToken, true), 403, [retry.setCookie, result.clearCookie]);
       }
 
       if (url.pathname === "/auth/sign-out") {
         if (request.method !== "POST") return plain("Method not allowed.", 405, { allow: "POST" });
-        if (!isSameOriginNavigation(request, settingsOrigin) || !await google.hasVerifiedOwner(request.headers.get("cookie"))) {
+        if (origin === undefined || !isSameOriginNavigation(request, origin) || !await owner.hasVerifiedOwner(request.headers.get("cookie"))) {
           return plain("Access denied.", 403);
         }
-        return redirect("/settings", [google.signOutCookie()]);
+        return redirect("/auth/sign-in", [owner.signOutCookie()]);
       }
 
       if (!isProtectedPath(url.pathname)) return undefined;
-      if (!await google.hasVerifiedOwner(request.headers.get("cookie"))) {
+      if (origin === undefined) return plain("Access denied.", 403);
+      if (!await owner.hasVerifiedOwner(request.headers.get("cookie"))) {
         return url.pathname === "/settings" && request.method === "GET"
-          ? redirect("/auth/google/start", [])
+          ? redirect("/auth/sign-in", [])
           : plain("Access denied.", 403);
       }
 
@@ -224,7 +279,7 @@ export function createGoDaddySettingsRuntime(
         }
       }
 
-      const verifiedGateway = await gateway();
+      const verifiedGateway = await gateway(origin);
       return verifiedGateway === undefined
         ? plain("Settings are temporarily unavailable.", 503)
         : verifiedGateway.handle(request);

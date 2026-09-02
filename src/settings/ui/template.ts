@@ -103,7 +103,7 @@ export function renderAccessDeniedDocument(): string {
       <section class="access-boundary error" role="alert" aria-labelledby="access-denied-title">
         <span class="access-symbol" aria-hidden="true">!</span>
         <div>
-          <p class="settings-eyebrow">Google-доступ</p>
+          <p class="settings-eyebrow">Доступ власника</p>
           <h1 id="access-denied-title">Доступ відхилено</h1>
           <p>Цей обліковий запис не має доступу до налаштувань. Значення налаштувань не показано.</p>
         </div>
@@ -160,11 +160,14 @@ export function renderSettingsDocument(model: SettingsPageModel): string {
 
       <section class="identity-section" aria-labelledby="access-title">
         <div>
-          <p class="section-kicker">Google-доступ</p>
+          <p class="section-kicker">Доступ власника</p>
           <h2 id="access-title">Власник підтверджений</h2>
-          <p>Доступ перевірено. Дані підписки та OAuth-облікові дані тут не відображаються.</p>
+          <p>Доступ перевірено. Ключ входу, дані підписок та OAuth-облікові дані тут не відображаються.</p>
         </div>
-        <span class="access-state">Доступ надано</span>
+        <div>
+          <span class="access-state">Доступ надано</span>
+          <form action="/auth/sign-out" method="post"><button class="button quiet" type="submit">Вийти</button></form>
+        </div>
       </section>
 
       <section class="values-section" aria-labelledby="values-title">

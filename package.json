@@ -18,11 +18,11 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260815.1",
+    "@types/node": "^22.0.0",
     "typescript": "^7.0.2",
     "wrangler": "^4.123.0"
   },
   "dependencies": {
-    "google-auth-library": "^10.9.1",
     "mysql2": "^3.24.2"
   }
 }

@@ -22,11 +22,8 @@ const configuredEnvironment = Object.freeze({
   DB_NAME: "personal_consultant",
   DB_USER: "application",
   DB_PASSWORD: "test-only-password",
-  GOOGLE_OAUTH_CLIENT_ID: "google-client-id",
-  GOOGLE_OAUTH_CLIENT_SECRET: "google-client-secret",
-  GOOGLE_OWNER_EMAIL: "owner@example.test",
-  GOOGLE_REDIRECT_URI: "https://settings.example.test/auth/google/callback",
-  GOOGLE_SESSION_HMAC_KEY: "a-very-long-test-session-secret-that-is-never-a-production-secret",
+  SETTINGS_OWNER_PASSWORD: "a-very-long-random-owner-secret-that-is-never-a-production-secret",
+  SETTINGS_SESSION_HMAC_KEY: "a-very-long-test-session-secret-that-is-never-a-production-secret",
   SETTINGS_CSRF_HMAC_KEY: "a-very-long-test-csrf-secret-that-is-never-a-production-secret",
   CAPABILITY_CATALOG_JSON: JSON.stringify(createCapabilityReceipt())
 });
@@ -44,7 +41,7 @@ test("GoDaddy Settings runtime is unavailable until every identity, state and ca
   assert.equal(await response?.text(), "Settings are temporarily unavailable.");
 });
 
-test("GoDaddy Settings starts only Google OIDC before it opens application state", async () => {
+test("GoDaddy Settings starts only a local owner-password session before it opens application state", async () => {
   const runtime = createGoDaddySettingsRuntime(configuredEnvironment, {
     createPool: () => new UnusedPool(),
     now: () => activeNow
@@ -56,13 +53,38 @@ test("GoDaddy Settings starts only Google OIDC before it opens application state
 
   const settings = await runtime.handle(new Request("https://settings.example.test/settings", { headers: originHeaders }));
   assert.equal(settings?.status, 303);
-  assert.equal(settings?.headers.get("location"), "/auth/google/start");
+  assert.equal(settings?.headers.get("location"), "/auth/sign-in");
 
-  const login = await runtime.handle(new Request("https://settings.example.test/auth/google/start", { headers: originHeaders }));
-  assert.equal(login?.status, 303);
-  assert.equal(login?.headers.get("location")?.startsWith("https://accounts.google.com/"), true);
+  const login = await runtime.handle(new Request("https://settings.example.test/auth/sign-in", { headers: originHeaders }));
+  assert.equal(login?.status, 200);
+  const loginDocument = await login?.text();
+  assert.equal(loginDocument?.includes("Ключ входу"), true);
   const cookies = (login?.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie?.() ?? [];
   assert.equal(cookies.length, 1);
-  assert.equal(cookies[0]?.startsWith("__Host-personal-consultant-oidc="), true);
-  assert.equal(cookies[0]?.includes("HttpOnly; Secure; SameSite=Lax"), true);
+  assert.equal(cookies[0]?.startsWith("__Host-personal-consultant-login="), true);
+  assert.equal(cookies[0]?.includes("HttpOnly; Secure; SameSite=Strict"), true);
+
+  const formToken = /name="formToken" value="([A-Za-z0-9_-]+)"/u.exec(loginDocument ?? "")?.[1];
+  assert.notEqual(formToken, undefined);
+  if (formToken === undefined || cookies[0] === undefined) throw new Error("Expected a local owner login challenge.");
+  const form = new URLSearchParams({
+    formToken,
+    password: configuredEnvironment.SETTINGS_OWNER_PASSWORD
+  }).toString();
+  const signedIn = await runtime.handle(new Request("https://settings.example.test/auth/sign-in", {
+    method: "POST",
+    headers: {
+      ...originHeaders,
+      cookie: cookies[0].slice(0, cookies[0].indexOf(";")),
+      origin: "https://settings.example.test",
+      "sec-fetch-site": "same-origin",
+      "content-type": "application/x-www-form-urlencoded",
+      "content-length": String(form.length)
+    },
+    body: form
+  }));
+  assert.equal(signedIn?.status, 303);
+  assert.equal(signedIn?.headers.get("location"), "/settings");
+  const signInCookies = (signedIn?.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie?.() ?? [];
+  assert.equal(signInCookies.some((cookie) => cookie.startsWith("__Host-personal-consultant-owner=")), true);
 });
