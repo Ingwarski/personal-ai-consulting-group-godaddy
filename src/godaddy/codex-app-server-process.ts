@@ -62,6 +62,17 @@ function parseDeviceAuthorization(value: unknown): CodexDeviceAuthorization | un
   }
 }
 
+type CodexProcessLineWriter = Readonly<{
+  write: (line: string, callback: (error?: Error | null) => void) => unknown;
+}>;
+
+/** @internal Exported so the child-process success contract stays regression-tested. */
+export async function writeCodexAppServerLine(writer: CodexProcessLineWriter, line: string): Promise<void> {
+  await new Promise<void>((resolveWrite, rejectWrite) => {
+    writer.write(`${line}\n`, (error) => error == null ? resolveWrite() : rejectWrite(error));
+  });
+}
+
 /**
  * Starts app-server in a per-process private directory.  GoDaddy only
  * promises deployment-persistent files beneath public assets, which is never
@@ -94,16 +105,15 @@ export function createSubprocessCodexAppServerLauncher(input: Readonly<{
     });
     const reader = createInterface({ input: child.stdout, crlfDelay: Infinity });
     let closed = false;
-    child.once("error", () => {
+    const markClosed = (): void => {
       closed = true;
       reader.close();
-    });
+    };
+    child.once("error", markClosed);
     const channel: JsonRpcLineChannel = Object.freeze({
       async send(line: string): Promise<void> {
         if (closed || !child.stdin.writable) throw new Error("Codex app-server is closed.");
-        await new Promise<void>((resolveWrite, rejectWrite) => {
-          child.stdin.write(`${line}\n`, (error) => error === undefined ? resolveWrite() : rejectWrite(error));
-        });
+        await writeCodexAppServerLine(child.stdin, line);
       },
       onLine(listener: (line: string) => void): () => void {
         reader.on("line", listener);

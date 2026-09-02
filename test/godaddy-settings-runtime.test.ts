@@ -189,10 +189,13 @@ test("a rejected password rotates the one-time login challenge without clearing 
 });
 
 test("the owner-only runtime operation can begin Codex device authorization without exposing a credential to public routes", async () => {
+  let authorizationAvailable = true;
   const bootstrap: RuntimeBootstrap = {
     loadCatalog: async () => undefined,
     status: async () => ({ codex: "auth_required", claude: "ready" }),
-    startCodexDeviceAuthorization: async () => ({ verificationUrl: "https://auth.openai.com/codex/device", userCode: "ABCD-1234" }),
+    startCodexDeviceAuthorization: async () => authorizationAvailable
+      ? ({ verificationUrl: "https://auth.openai.com/codex/device", userCode: "ABCD-1234" })
+      : undefined,
     refreshCatalog: async () => ({ ok: false, code: "codex_not_ready" }),
     close: async () => {}
   };
@@ -233,6 +236,19 @@ test("the owner-only runtime operation can begin Codex device authorization with
   }));
   assert.equal(operation?.status, 200);
   assert.match(await operation?.text() ?? "", /ABCD-1234/);
+
+  authorizationAvailable = false;
+  const unavailable = await runtime.handle(new Request("https://settings.example.test/operations/runtime/codex", {
+    method: "POST",
+    headers: {
+      ...originHeaders,
+      cookie: ownerCookie.slice(0, ownerCookie.indexOf(";")),
+      origin: "https://settings.example.test",
+      "sec-fetch-site": "same-origin"
+    }
+  }));
+  assert.equal(unavailable?.status, 503);
+  assert.match(await unavailable?.text() ?? "", /Не вдалося запустити вхід Codex/u);
 
   const wrongOrigin = await runtime.handle(new Request("https://settings.example.test/operations/runtime/codex", {
     method: "POST",

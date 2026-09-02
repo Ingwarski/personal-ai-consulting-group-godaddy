@@ -188,6 +188,7 @@ function operationDocument(input: Readonly<{
   claude: string;
   catalogReady: boolean;
   deviceAuthorization?: Readonly<{ verificationUrl: string; userCode: string }>;
+  deviceAuthorizationFailed?: boolean;
   catalogResult?: "updated" | "unavailable";
 }>): string {
   const state = input.catalogReady ? "Каталог можливостей активний." : "Каталог можливостей ще не створено.";
@@ -198,6 +199,9 @@ function operationDocument(input: Readonly<{
         <p><strong>${input.deviceAuthorization.userCode}</strong></p>
         <p>Після завершення поверніться сюди та оновіть сторінку. Код не зберігається у застосунку.</p>
       </section>`;
+  const deviceError = input.deviceAuthorizationFailed === true
+    ? '<p role="alert">Не вдалося запустити вхід Codex: runtime Codex не відповів. Повторіть після публікації актуальної версії застосунку.</p>'
+    : "";
   const catalogResult = input.catalogResult === "updated"
     ? '<p role="status">Каталог можливостей оновлено.</p>'
     : input.catalogResult === "unavailable" ? '<p role="alert">Каталог не оновлено. Перевірте готовність обох підписок і повторіть дію.</p>' : "";
@@ -210,6 +214,7 @@ function operationDocument(input: Readonly<{
       <p>Codex: ${input.codex}. Claude Code: ${input.claude}.</p>
       <p>${state}</p>
       ${catalogResult}
+      ${deviceError}
       ${device}
       <form action="/operations/runtime/codex" method="post"><button type="submit">Почати вхід Codex</button></form>
       <form action="/operations/runtime/catalog" method="post"><button type="submit">Перевірити підписки й оновити каталог</button></form>
@@ -343,7 +348,11 @@ export function createGoDaddySettingsRuntime(
           const [status, catalog] = await Promise.all([runtime.status(), loadReceipt()]);
           if (url.pathname === "/operations/runtime/codex") {
             const deviceAuthorization = await runtime.startCodexDeviceAuthorization();
-            return html(operationDocument({ ...status, catalogReady: catalog !== undefined, ...(deviceAuthorization === undefined ? {} : { deviceAuthorization }) }), deviceAuthorization === undefined ? 503 : 200);
+            return html(operationDocument({
+              ...status,
+              catalogReady: catalog !== undefined,
+              ...(deviceAuthorization === undefined ? { deviceAuthorizationFailed: true } : { deviceAuthorization })
+            }), deviceAuthorization === undefined ? 503 : 200);
           }
           const refreshed = await runtime.refreshCatalog();
           if (refreshed.ok) receipt = refreshed.receipt;

@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createGoDaddyCodexAppServer, type CodexAppServerLauncher } from "../src/godaddy/codex-app-server-process.ts";
+import {
+  createGoDaddyCodexAppServer,
+  writeCodexAppServerLine,
+  type CodexAppServerLauncher
+} from "../src/godaddy/codex-app-server-process.ts";
 import { createRuntimeCredentialVault, type RuntimeCredentialStorage } from "../src/godaddy/runtime-credential-vault.ts";
 import type { JsonRpcLineChannel } from "../src/runtime/json-rpc-client.ts";
 
@@ -45,6 +49,26 @@ const responses = Object.freeze({
   }] },
   "account/rateLimits/read": { rateLimits: { rateLimitReachedType: null } },
   "account/login/start": { type: "chatgptDeviceCode", verificationUrl: "https://auth.openai.com/codex/device", userCode: "ABCD-1234" }
+});
+
+test("accepts Node's null child-process write callback as success", async () => {
+  let written = "";
+  await writeCodexAppServerLine({
+    write(line, callback) {
+      written = line;
+      callback(null);
+      return true;
+    }
+  }, '{"jsonrpc":"2.0"}');
+  assert.equal(written, '{"jsonrpc":"2.0"}\n');
+
+  const failure = new Error("write failed");
+  await assert.rejects(writeCodexAppServerLine({
+    write(_line, callback) {
+      callback(failure);
+      return false;
+    }
+  }, "{}"), failure);
 });
 
 test("uses Codex-managed device OAuth and seals its restored auth state", async () => {
