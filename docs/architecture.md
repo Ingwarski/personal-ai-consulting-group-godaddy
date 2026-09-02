@@ -180,8 +180,8 @@ JWKS кешується з bounded TTL. За недоступного JWKS мо�
 Логічний `SettingsDocument` містить:
 
 - `schema_version`, `revision`, `defaults_version`, `catalog_version`;
-- typed `codex_model_id` і typed `claude_model_id` з окремих allowlists;
-- спільний `reasoning_depth`: `low | medium | high | xhigh`;
+- typed `codex.model_id` і `claude.model_id` з окремих allowlists;
+- незалежні `codex.reasoning_effort` і `claude.reasoning_effort`; `null` означає default відповідної моделі;
 - `speed_preset`: `швидко | збалансовано | ретельно`;
 - `created_at`, `updated_at` і actor label `owner`.
 
@@ -209,12 +209,12 @@ Catalog — signed/release-managed immutable artifact з `catalog_version`, crea
 
 - Codex allowlist: stable product ID, supported Codex runtime model ID, supported reasoning values, subscription/runtime constraints;
 - Claude allowlist: stable product ID, supported Claude Code model/alias pin, supported reasoning values, subscription/runtime constraints;
-- provider-specific mapping для кожного shared `low/medium/high/xhigh`;
+- provider-specific mapping лише для рівнів, які реально підтримує відповідна модель;
 - explicit availability state і provenance timestamp.
 
-UI показує тільки перетин release allowlist з фактичними capabilities поточного subscription runtime. Для Codex джерелом runtime truth є app-server `model/list`/provider capabilities; офіційний app-server повертає `supportedReasoningEfforts`. Для Claude release allowlist звіряється з installed Claude Code version, subscription identity та актуальною model/effort metadata.
+UI показує незалежні provider-specific можливості поточного subscription runtime, а не їхній перетин. Для Codex джерелом runtime truth є app-server `model/list`/provider capabilities; офіційний app-server повертає `supportedReasoningEfforts`. Для Claude Code модель проходить базовий subscription probe, а її explicit efforts — окремі probes; модель без explicit effort лишається доступною з default.
 
-Невідомий slug, hidden/deprecated/retired model, provider mismatch, unavailable subscription entitlement або stale catalog є invalid. Якщо shared depth не підтримується обома вибраними моделями, save і session start блокуються. Особливо важливо: Claude Code документує fallback `xhigh` до нижчого supported effort на деяких моделях; gateway мусить відхилити таку пару до process launch, тому silent downgrade не відбудеться.
+Невідомий slug, hidden/deprecated/retired model, provider mismatch, unavailable subscription entitlement або stale catalog є invalid. Якщо effort не підтримується обраною моделлю свого провайдера, save і session start блокуються. Однакове ім'я effort у Codex і Claude Code не інтерпретується як спільна шкала; silent downgrade не відбудеться.
 
 Catalog update не переписує stored settings. Він може зробити їх incompatible для наступної сесії; `SUR-02` показує safe correction path, а активна сесія продовжується зі своєю snapshot/catalog version.
 
@@ -405,7 +405,7 @@ Production gates include `matrix.org` room/device/invariant proof, confirmation 
 | Final, failure, archive, export/delete, costs, permission | `US-015–US-023`; `FR-027–FR-036`; `NFR-009–NFR-015`; `AC-009–AC-011` |
 | Owner Settings access and auth isolation | `US-024`; `FR-037–FR-040`; `NFR-016`; `AC-012`; `SG-01`; `SS-30–SS-33`; GoDaddy exception AD-15 |
 | Model selectors and capability catalog | `US-025`; `FR-041`; `NFR-017`; `AC-013`; `SG-02`; `SS-34–SS-38` |
-| Shared reasoning depth without downgrade | `US-026`; `FR-042`; `NFR-017, NFR-019`; `AC-014`; `SG-03`; `SS-35–SS-38` |
+| Independent provider reasoning without downgrade | `US-026`; `FR-042`; `NFR-017, NFR-019`; `AC-014`; `SG-03`; `SS-35–SS-38` |
 | Orchestration speed without Fast/PAYG | `US-027`; `FR-043, FR-046`; `AC-014`; `SG-04`; `SS-35–SS-38` |
 | Atomic save/reset/effective values | `US-028`; `FR-044`; `NFR-017–NFR-019`; `AC-013, AC-015–AC-016`; `SG-05`; `SS-39–SS-46` |
 | Immutable active snapshot and drift block | `US-029`; `FR-045–FR-046`; `NFR-017, NFR-019`; `AC-014–AC-016`; `SS-38, SS-44–SS-46` |

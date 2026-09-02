@@ -14,7 +14,8 @@ test("accepts a complete settings set backed by both provider capability maps", 
 
   assert.equal(result.ok, true);
   if (result.ok) {
-    assert.equal(result.value.reasoningDepth, "high");
+    assert.equal(result.value.codex.reasoningEffort, "high");
+    assert.equal(result.value.claude.reasoningEffort, "high");
     assert.equal(result.codex.runtimeModelId, "codex-runtime-primary");
     assert.equal(result.claude.runtimeModelId, "claude-runtime-critic");
   }
@@ -25,27 +26,27 @@ test("rejects arbitrary model text and partial settings objects", () => {
 
   assert.deepEqual(
     validateOwnerSettings(
-      { ...receipt.defaults, codexModelId: "some-model-from-free-text" },
+      { ...receipt.defaults, codex: { ...receipt.defaults.codex, modelId: "some-model-from-free-text" } },
       receipt,
       activeNow
     ),
     { ok: false, code: "unknown_codex_model" }
   );
   assert.deepEqual(
-    validateOwnerSettings({ codexModelId: receipt.defaults.codexModelId }, receipt, activeNow),
+    validateOwnerSettings({ codexModelId: receipt.defaults.codex.modelId }, receipt, activeNow),
     { ok: false, code: "unexpected_settings_shape" }
   );
 });
 
-test("blocks a shared reasoning depth rather than silently downgrading it", () => {
+test("blocks an unavailable effort for its own provider rather than silently changing it", () => {
   const receipt = createCapabilityReceipt();
   const result = validateOwnerSettings(
-    { ...receipt.defaults, reasoningDepth: "xhigh" },
+    { ...receipt.defaults, claude: { ...receipt.defaults.claude, reasoningEffort: "xhigh" } },
     receipt,
     activeNow
   );
 
-  assert.deepEqual(result, { ok: false, code: "incompatible_reasoning_depth" });
+  assert.deepEqual(result, { ok: false, code: "claude_reasoning_effort_unavailable" });
 });
 
 test("fails closed for untrusted or stale capability receipts", () => {
@@ -65,10 +66,10 @@ test("validates catalog defaults through the same whole-set guard", () => {
   const receipt = createCapabilityReceipt();
   assert.equal(getValidatedDefaults(receipt, activeNow).ok, true);
 
-  const brokenDefaults = { ...receipt, defaults: { ...receipt.defaults, reasoningDepth: "xhigh" as const } };
+  const brokenDefaults = { ...receipt, defaults: { ...receipt.defaults, claude: { ...receipt.defaults.claude, reasoningEffort: "xhigh" as const } } };
   assert.deepEqual(getValidatedDefaults(brokenDefaults, activeNow), {
     ok: false,
-    code: "incompatible_reasoning_depth"
+    code: "claude_reasoning_effort_unavailable"
   });
 });
 

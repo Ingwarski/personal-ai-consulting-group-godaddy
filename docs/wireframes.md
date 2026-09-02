@@ -166,7 +166,7 @@ V1 має рівно дві користувацькі поверхні: при�
 | 1 | Identity/status header | `H1` | `P0` | Назва `Налаштування власника`; підтверджена owner identity; статус свіжості/доступу; короткий вихід до штатного Element. Жодних Codex/Claude credential, token, setup-token або OAuth-state details |
 | 2 | Фактичні значення й межа сесії (`SG-05`) | `H2` | `P0` | Видимі current, default та, якщо є Активна сесія, її immutable effective snapshot; пояснення, що save/reset діє лише для нової Сесії |
 | 3 | `Моделі` (`SG-02`) | `H2` | `P1` | Два окремі typed allowlisted selectors: `Codex-агенти` і `Claude Code-критик`; current/default маркери біля кожного; free text та довільний slug відсутні |
-| 4 | `Глибина міркування` (`SG-03`) | `H2` | `P1` | Один segmented/select control `low` / `medium` / `high` / `xhigh`; нижче — фактичне mapping/status окремо для Codex і Claude; несумісність пояснюється inline й блокує save без silent downgrade |
+| 4 | Provider-specific міркування (`SG-03`) | `H2` | `P1` | Окремі select controls у блоках Codex і Claude Code: «За замовчуванням моделі» плюс тільки фактично підтверджені рівні; provider-specific несумісність пояснюється inline й блокує save без silent downgrade |
 | 5 | `Швидкість` (`SG-04`) | `H2` | `P1` | Один вибір `швидко` / `збалансовано` / `ретельно`; біля кожного стислий orchestration impact на pacing/budget, але без послаблення обов'язкових перевірок |
 | 6 | Validation summary (`SG-05`) | `H2` | `P0` за помилки, `P1` за valid | Показує валідність усього набору, capability freshness, offline/version conflict і точну групу з помилкою; не перетворюється на fourth settings group |
 | 7 | Action row (`SG-05`) | `H1` | `P0` | Primary `Зберегти` виконує одну atomic validated save; secondary `Повернути default` відкриває явне підтвердження; `Скасувати зміни` відкидає лише локальний dirty set |
@@ -437,7 +437,7 @@ Claude Code-агент-критик · HH:MM                               MG-07
 |---|---|---|
 | `SG-01` | `H1/P0` Google access entry/status; `H2/P1` точна owner identity після grant; `H2/P0` safe denied reason category без protected values; чітке відокремлення від Subscription OAuth | Дозволений Google-вхід → settings load; denied → повторити тільки дозволений Google-вхід або exit |
 | `SG-02` | `H1/P1` `Моделі`; `H2/P1` Codex typed allowlisted selector; `H2/P1` окремий Claude critic typed allowlisted selector; current/default markers | Валідний вибір → shared validation; unknown/arbitrary value недоступне |
-| `SG-03` | `H1/P1` `Глибина міркування`; один control `low`/`medium`/`high`/`xhigh`; `H2/P1` Codex effective mapping/status; `H2/P1` Claude effective mapping/status; `H1/P0` inline incompatibility | Сумісний shared value → dirty valid; incompatibility/drift → save і нова сесія blocked |
+| `SG-03` | `H1/P1` provider-specific міркування; окремий control у кожному provider block; `H2/P1` Codex capability/status; `H2/P1` Claude Code capability/status; `H1/P0` inline incompatibility | Обидва незалежні значення валідні → dirty valid; provider incompatibility/drift → save і нова сесія blocked |
 | `SG-04` | `H1/P1` `Швидкість`; три mutually exclusive presets; біля кожного короткий orchestration impact; `H2/P0` mandatory guards unchanged | Вибір змінює лише pacing/budget наступної сесії |
 | `SG-05` | `H1/P0` current/default/effective + snapshot notice; `H1/P0/P1` validation/result; primary atomic save; secondary reset confirmation і cancel | Save/reset → whole-version result; cancel → current; active snapshot лишається незмінним |
 

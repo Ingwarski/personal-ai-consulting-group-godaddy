@@ -32,7 +32,7 @@
 
 Власник хоче в одній приватній invite-only E2EE Matrix-кімнаті в Element перетворити практичну проблему на рішення: для простого запиту — швидко отримати пряму відповідь, для складного або високоризикового — побачити справжню дискусію окремих агентів і отримати одну синтезовану фінальну рекомендацію з не більш як трьома наступними діями, ризиками та умовою перегляду. `[PI: «Результат для користувача», «Принципи продукту»; PRD: §2, US-005–US-017, US-022; PC: §2, §6]`
 
-Окрема рідкісна ціль — за потреби безпечно змінити лише `Моделі`, `Глибину міркування` та `Швидкість` майбутніх консультацій у responsive `Налаштуваннях власника`, переконатися, що набір сумісний і застосовуватиметься лише до наступної сесії, а потім повернутися до Element. `[PRD: US-024–US-029, FR-037–FR-046; PC: §6–8; CT: «Налаштування власника»]`
+Окрема рідкісна ціль — за потреби безпечно змінити лише `Codex-агенти`, `Claude Code-критик` та `Швидкість консиліуму` майбутніх консультацій у responsive `Налаштуваннях власника`, переконатися, що набір сумісний і застосовуватиметься лише до наступної сесії, а потім повернутися до Element. `[PRD: US-024–US-029, FR-037–FR-046; PC: §6–8; CT: «Налаштування власника»]`
 
 Мотивація — ухвалити краще практичне рішення й перейти до перевірюваної дії, не витрачаючи увагу на технічні журнали, приховану імітацію консиліуму або самостійне узгодження суперечливих агентських висновків. `[PI: «Основний користувач і проблема»; PRD: §1–2; PC: §2, §5]`
 
@@ -59,7 +59,7 @@
 - V1 є приватною одноосібною не-SaaS системою. Запити ініціює й результати отримує лише Власник; його підписки не обслуговують клієнтів, працівників або інших третіх осіб. Зміна eligibility чи правил провайдера блокує залежний запуск до окремого перегляду. `[PI: «Модель використання підписок і витрат»; PRD: §3.1, §8; GR: Scope Boundaries, When To Stop]`
 - Агенти аналізують і рекомендують. Зовнішня або високоризикова дія, а також особисті коучингові запитання про внутрішні конфлікти потребують окремого явного дозволу Власника. `[PRD: §3.4, FR-035; GR: When To Ask]`
 - `Налаштування власника` не є чатом, архівом, live status або щоденним дашбордом і не показують жодних Codex/Claude OAuth token, setup-token, `auth.json`, refresh state чи reauth material. `Google-вхід` захищає лише Settings і не замінює `Subscription OAuth`. `[PRD: §3.6, FR-037–FR-039; CT: відповідні терміни; GR: Forbidden Changes]`
-- Settings мають рівно три групи. `Моделі` обираються з окремих typed allowlists; `Глибина міркування` має значення `low / medium / high / xhigh` із capability validation без silent downgrade; `Швидкість` має лише `швидко / збалансовано / ретельно`. Жодний пресет не є Claude Fast Mode, API/PAYG або usage credits і не послаблює critic/A2A/E2EE/verbatim/research/safety/privacy/permission інваріанти. `[PRD: FR-040–FR-046; GR: Forbidden Changes, Scope Boundaries]`
+- Settings мають рівно три групи. `Codex-агенти` та `Claude Code-критик` мають незалежні typed model+effort allowlists з provider-specific capability validation без silent downgrade; `Швидкість консиліуму` має лише `швидко / збалансовано / ретельно`. Жодний пресет не є Claude Fast Mode, API/PAYG або usage credits і не послаблює critic/A2A/E2EE/verbatim/research/safety/privacy/permission інваріанти. `[PRD: FR-040–FR-046; GR: Forbidden Changes, Scope Boundaries]`
 
 ## Journey Overview
 
@@ -190,11 +190,11 @@
 
 #### S2. Перегляд чинного й стандартного наборів
 
-**Очікувана відповідь.** Після входу Власник бачить чинні effective values для наступної сесії та source-backed standard values рівно для трьох груп: окремих `Моделей` Codex-агентів і Claude Code-агента-критика, спільної `Глибини міркування` та `Пресету швидкості`. Якщо консультація вже активна, текст прямо пояснює, що її незмінні `Фактичні налаштування сесії` не зміняться; це пояснення не перетворює Settings на live-status дашборд. `[PRD: US-025–US-029, FR-040–FR-045; CT: відповідні терміни]`
+**Очікувана відповідь.** Після входу Власник бачить чинні effective values для наступної сесії та source-backed standard values рівно для трьох груп: окремих `Codex-агентів` (модель + міркування), `Claude Code-критика` (модель + міркування) та `Пресету швидкості`. Якщо консультація вже активна, текст прямо пояснює, що її незмінні `Фактичні налаштування сесії` не зміняться; це пояснення не перетворює Settings на live-status дашборд. `[PRD: US-025–US-029, FR-040–FR-045; CT: відповідні терміни]`
 
 #### S3. Зміна та inline compatibility validation
 
-**Дія Власника.** Власник змінює одну чи кілька з рівно трьох дозволених груп або готує повернення всього набору до standard values. Для `Моделей` доступні лише окремі typed allowlists без довільного slug; для `Глибини міркування` — `low / medium / high / xhigh`; для `Швидкості` — `швидко / збалансовано / ретельно`. `[PRD: US-025–US-028, FR-040–FR-044]`
+**Дія Власника.** Власник змінює одну чи кілька з рівно трьох дозволених груп або готує повернення всього набору до standard values. Для Codex і Claude Code доступні лише незалежні typed allowlists без довільного slug; кожен effort належить тільки своїй моделі; для швидкості доступні `швидко / збалансовано / ретельно`. `[PRD: US-025–US-028, FR-040–FR-044]`
 
 **Очікувана відповідь.** Під час зміни Власник отримує inline compatibility validation за актуальною capability map: підтримувана комбінація готова до збереження, а unsupported, unknown або stale model/depth mapping має конкретне зрозуміле пояснення без silent downgrade. `Швидкість` перевіряється лише як orchestration preset; навіть `швидко` не є Fast Mode, API/PAYG або usage-credit режимом і не може послабити критика, A2A, Matrix E2EE, дослівність, потрібне дослідження, safety, privacy чи permission gates. `[PRD: US-026–US-027, FR-042–FR-043, FR-046, NFR-019; AC-014; GR: When To Stop]`
 
@@ -375,7 +375,7 @@
 - Повсякденна консультація лишається в Element. Єдиний web-виняток — рідкісні responsive `Налаштування власника` без чату, архіву, live execution status або дашборду; після зміни Власник повертається до Element.
 - Settings access використовує лише `Google-вхід` exact allowlisted email і fail-closed перевірку Access JWT. Wrong Google account, інший login method, missing/invalid/expired token, wrong issuer або audience не дають доступу.
 - `Google-вхід` відокремлений від `Subscription OAuth`; Settings не показують і не змінюють AI OAuth credentials або reauth material.
-- Settings мають рівно `Моделі`, `Глибину міркування`, `Швидкість`: typed allowlists, capability validation без silent downgrade та orchestration presets `швидко / збалансовано / ретельно`, які ніколи не вмикають Fast Mode, API/PAYG чи usage credits і не послаблюють mandatory safeguards.
+- Settings мають рівно `Codex-агенти`, `Claude Code-критик`, `Швидкість консиліуму`: незалежні typed allowlists і provider-specific capability validation без silent downgrade та orchestration presets `швидко / збалансовано / ретельно`, які ніколи не вмикають Fast Mode, API/PAYG чи usage credits і не послаблюють mandatory safeguards.
 - Save та повернення standard values є all-or-nothing. Incompatible set, capability drift або write failure не змінюють effective values і не запускають нову сесію. Валідна зміна застосовується лише до наступної сесії; активні `Фактичні налаштування сесії` залишаються незмінними.
 
 Усі пункти цього розділу підтверджені `docs/product-idea.md`, `docs/prd.md`, `docs/project-context.md`, `docs/canonical-terms.md` і `docs/guardrails.md`; непідтверджені механізми реалізації до journey не додано.

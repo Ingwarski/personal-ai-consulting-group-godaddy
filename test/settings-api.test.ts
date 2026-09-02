@@ -75,12 +75,15 @@ test("PUT rejects a partial payload and atomically saves a valid full object", a
     new Request("https://settings.example.test/api/settings", {
       method: "PUT",
       headers: headers(),
-      body: JSON.stringify({ ...createCapabilityReceipt().defaults, reasoningDepth: "medium" })
+      body: JSON.stringify({
+        ...createCapabilityReceipt().defaults,
+        codex: { ...createCapabilityReceipt().defaults.codex, reasoningEffort: "medium" }
+      })
     })
   );
   assert.equal(saved.status, 200);
   assert.equal(saved.headers.get("etag"), '"settings-2"');
-  assert.equal((await ownerSettings.read())?.document.settings.reasoningDepth, "medium");
+  assert.equal((await ownerSettings.read())?.document.settings.codex.reasoningEffort, "medium");
 });
 
 test("reset requires explicit confirmation and has a distinct endpoint", async () => {

@@ -1,7 +1,7 @@
 import { preflightSubscriptionRuntimes } from "./provider-preflight.ts";
 import { probeCodexAppServer, type CodexAppServerProbe, type CodexAppServerTransport } from "./codex-app-server.ts";
 import type { ClaudeCodeSubscriptionProcess, ClaudeCodeSubscriptionStatus } from "./claude-code-critic.ts";
-import type { CapabilityReceipt, EffectiveSessionSnapshot, ProviderModelCapability, ReasoningDepth } from "../settings/types.ts";
+import type { CapabilityReceipt, EffectiveSessionSnapshot, ProviderModelCapability, ProviderReasoningEffort } from "../settings/types.ts";
 
 export type SessionSubscriptionPreflightFailureCode =
         | "forbidden_environment"
@@ -27,12 +27,13 @@ export type SessionSubscriptionPreflightResult =
   | Readonly<{ ok: true; codex: CodexAppServerProbe; claude: ClaudeCodeSubscriptionStatus }>
   | Readonly<{ ok: false; code: SessionSubscriptionPreflightFailureCode }>;
 
-const supportsExactEffort = (models: readonly ProviderModelCapability[], productId: string, reasoningEffort: ReasoningDepth): boolean => {
+const supportsSelectedEffort = (models: readonly ProviderModelCapability[], productId: string, reasoningEffort: ProviderReasoningEffort | null): boolean => {
   const model = models.find((candidate) => candidate.productId === productId);
   return model !== undefined &&
     model.availability === "available" &&
-    model.supportedReasoningDepths.includes(reasoningEffort) &&
-    typeof model.reasoningMappings[reasoningEffort] === "string";
+    (reasoningEffort === null ||
+      (model.supportedReasoningEfforts.includes(reasoningEffort) &&
+        typeof model.reasoningMappings[reasoningEffort] === "string"));
 };
 
 function claudeUnavailable(): ClaudeCodeSubscriptionStatus {
@@ -90,10 +91,10 @@ export async function preflightSessionSubscriptions(input: Readonly<{
   });
   if (!base.ok) return base;
   if (claude.bareMode) return { ok: false, code: "claude_auth_mode_invalid" };
-  if (!supportsExactEffort(codex.models, input.snapshot.settings.codexModelId, input.snapshot.settings.reasoningDepth)) {
+  if (!supportsSelectedEffort(codex.models, input.snapshot.settings.codex.modelId, input.snapshot.settings.codex.reasoningEffort)) {
     return { ok: false, code: "codex_effort_unavailable" };
   }
-  if (!supportsExactEffort(claude.models, input.snapshot.settings.claudeModelId, input.snapshot.settings.reasoningDepth)) {
+  if (!supportsSelectedEffort(claude.models, input.snapshot.settings.claude.modelId, input.snapshot.settings.claude.reasoningEffort)) {
     return { ok: false, code: "claude_effort_unavailable" };
   }
   return { ok: true, codex, claude };

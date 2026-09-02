@@ -25,9 +25,9 @@ test("settings page has exactly three labelled groups and only catalog-provided 
   const model = await pageModel();
   const html = renderSettingsDocument(model);
 
-  assert.match(html, /<h2 id="models-title">Моделі<\/h2>/);
-  assert.match(html, /<h2 id="reasoning-title">Глибина міркування<\/h2>/);
-  assert.match(html, /<h2 id="speed-title">Швидкість<\/h2>/);
+  assert.match(html, /<h2 id="codex-title">Codex-агенти<\/h2>/);
+  assert.match(html, /<h2 id="claude-title">Claude Code-критик<\/h2>/);
+  assert.match(html, /<h2 id="speed-title">Швидкість консиліуму<\/h2>/);
   assert.equal((html.match(/class="group-number"/g) ?? []).length, 3);
   assert.match(html, />Codex primary<\/option>/);
   assert.match(html, />Claude critic<\/option>/);
@@ -46,7 +46,10 @@ test("save is disabled without a whole valid changed set and becomes available f
   assert.equal(unchanged.canSave, false);
 
   const changed = deriveSettingsFormState(
-    { ...model.read.document.settings, reasoningDepth: "medium" },
+    {
+      ...model.read.document.settings,
+      codex: { ...model.read.document.settings.codex, reasoningEffort: "medium" }
+    },
     model.read.document.settings,
     model.capabilityReceipt,
     activeNow
@@ -54,13 +57,16 @@ test("save is disabled without a whole valid changed set and becomes available f
   assert.equal(changed.canSave, true);
 
   const incompatible = deriveSettingsFormState(
-    { ...model.read.document.settings, reasoningDepth: "xhigh" },
+    {
+      ...model.read.document.settings,
+      claude: { ...model.read.document.settings.claude, reasoningEffort: "xhigh" }
+    },
     model.read.document.settings,
     model.capabilityReceipt,
     activeNow
   );
   assert.equal(incompatible.canSave, false);
-  assert.match(incompatible.validationMessage, /не буде знижено автоматично/);
+  assert.match(incompatible.validationMessage, /не буде змінено автоматично/);
 });
 
 test("access denial renders no settings values, selectors, credentials or sign-in form", () => {

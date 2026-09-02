@@ -17,7 +17,7 @@ export function createCapabilityReceipt(
         displayName: "Codex primary",
         runtimeModelId: "codex-runtime-primary",
         availability: "available",
-        supportedReasoningDepths: ["low", "medium", "high", "xhigh"],
+        supportedReasoningEfforts: ["low", "medium", "high", "xhigh"],
         reasoningMappings: {
           low: "low",
           medium: "medium",
@@ -32,7 +32,7 @@ export function createCapabilityReceipt(
         displayName: "Claude critic",
         runtimeModelId: "claude-runtime-critic",
         availability: "available",
-        supportedReasoningDepths: ["low", "medium", "high"],
+        supportedReasoningEfforts: ["low", "medium", "high"],
         reasoningMappings: {
           low: "low",
           medium: "medium",
@@ -41,9 +41,8 @@ export function createCapabilityReceipt(
       }
     ],
     defaults: {
-      codexModelId: "codex-current-primary",
-      claudeModelId: "claude-current-critic",
-      reasoningDepth: "high",
+      codex: { modelId: "codex-current-primary", reasoningEffort: "high" },
+      claude: { modelId: "claude-current-critic", reasoningEffort: "high" },
       speedPreset: "збалансовано"
     },
     ...overrides

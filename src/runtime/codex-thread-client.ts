@@ -1,4 +1,4 @@
-import type { ReasoningDepth } from "../settings/types.ts";
+import type { ProviderReasoningEffort } from "../settings/types.ts";
 import type { CodexAppServerTransport } from "./codex-app-server.ts";
 import { JsonRpcClient, type JsonRpcNotification } from "./json-rpc-client.ts";
 import { isExternalRuntimeId } from "../identity/ids.ts";
@@ -102,7 +102,7 @@ export class CodexAppServerThreadClient {
   async runTextTurn(input: Readonly<{
     lease: CodexThreadLease;
     body: string;
-    reasoningEffort: ReasoningDepth;
+    reasoningEffort: ProviderReasoningEffort | null;
     outputSchema?: unknown;
     timeoutMilliseconds?: number;
   }>): Promise<CodexTurnResult> {
@@ -125,7 +125,7 @@ export class CodexAppServerThreadClient {
         threadId: input.lease.threadId,
         input: [{ type: "text", text: input.body, text_elements: [] }],
         model: input.lease.modelId,
-        effort: input.reasoningEffort,
+        ...(input.reasoningEffort === null ? {} : { effort: input.reasoningEffort }),
         ...(input.outputSchema === undefined ? {} : { outputSchema: input.outputSchema })
       });
       if (!isRecord(response) || !isRecord(response.turn) || !isExternalRuntimeId(response.turn.id)) {

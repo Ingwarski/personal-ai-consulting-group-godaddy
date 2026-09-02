@@ -16,24 +16,38 @@
 
   const codexModel = form.elements.namedItem("codexModelId");
   const claudeModel = form.elements.namedItem("claudeModelId");
+  const codexEffort = form.elements.namedItem("codexReasoningEffort");
+  const claudeEffort = form.elements.namedItem("claudeReasoningEffort");
   const saveButton = form.querySelector('button[type="submit"]');
   const resetButton = document.getElementById("reset-button");
   const cancelButton = document.getElementById("cancel-button");
-  if (!(codexModel instanceof HTMLSelectElement) || !(claudeModel instanceof HTMLSelectElement) || !(saveButton instanceof HTMLButtonElement)) return;
+  if (!(codexModel instanceof HTMLSelectElement) || !(claudeModel instanceof HTMLSelectElement) ||
+    !(codexEffort instanceof HTMLSelectElement) || !(claudeEffort instanceof HTMLSelectElement) ||
+    !(saveButton instanceof HTMLButtonElement)) return;
 
   const currentValues = () => ({
-    codexModelId: codexModel.value,
-    claudeModelId: claudeModel.value,
-    reasoningDepth: form.querySelector('input[name="reasoningDepth"]:checked')?.value || "",
+    codex: {
+      modelId: codexModel.value,
+      reasoningEffort: codexEffort.value || null
+    },
+    claude: {
+      modelId: claudeModel.value,
+      reasoningEffort: claudeEffort.value || null
+    },
     speedPreset: form.querySelector('input[name="speedPreset"]:checked')?.value || ""
   });
 
   const isSame = (left, right) => JSON.stringify(left) === JSON.stringify(right);
-  const availableDepths = () => {
-    const codex = catalog.codexModels?.find((model) => model.id === codexModel.value && model.availability === "available");
-    const claude = catalog.claudeModels?.find((model) => model.id === claudeModel.value && model.availability === "available");
-    if (!codex || !claude) return [];
-    return codex.depths.filter((depth) => claude.depths.includes(depth));
+  const selectedProvider = (models, modelId) =>
+    models?.find((model) => model.id === modelId && model.availability === "available");
+
+  const syncEffortOptions = (select, provider, previous) => {
+    const efforts = provider?.efforts || [];
+    select.replaceChildren(
+      new Option("За замовчуванням моделі", ""),
+      ...efforts.map((effort) => new Option(effort, effort))
+    );
+    select.value = previous && efforts.includes(previous) ? previous : "";
   };
 
   const setStatus = (kind, text, title) => {
@@ -46,17 +60,20 @@
   };
 
   const refreshForm = () => {
-    const supportedDepths = availableDepths();
+    const codex = selectedProvider(catalog.codexModels, codexModel.value);
+    const claude = selectedProvider(catalog.claudeModels, claudeModel.value);
     const values = currentValues();
-    const depthControls = [...form.querySelectorAll('input[name="reasoningDepth"]')];
-    for (const control of depthControls) control.disabled = !supportedDepths.includes(control.value);
-    const compatible = supportedDepths.includes(values.reasoningDepth);
+    const codexCompatible = Boolean(codex) && (values.codex.reasoningEffort === null || codex.efforts.includes(values.codex.reasoningEffort));
+    const claudeCompatible = Boolean(claude) && (values.claude.reasoningEffort === null || claude.efforts.includes(values.claude.reasoningEffort));
+    const compatible = codexCompatible && claudeCompatible;
     const dirty = !isSame(values, current);
     saveButton.disabled = !dirty || !compatible;
     if (!compatible) {
-      setStatus("error", "Ця глибина міркування не підтверджена для обох обраних моделей. Значення не буде знижено автоматично.");
+      setStatus("error", !codexCompatible
+        ? "Codex: обрана модель або рівень міркування більше не підтверджені."
+        : "Claude Code: обрана модель або рівень міркування більше не підтверджені.");
     } else if (dirty) {
-      setStatus("success", "Увесь набір сумісний. Збереження застосує його лише до наступної сесії.");
+      setStatus("success", "Незалежні налаштування Codex і Claude Code підтверджені. Збереження застосує їх лише до наступної сесії.");
     } else {
       setStatus("success", "Набір сумісний. Змін для збереження немає.");
     }
@@ -147,7 +164,11 @@
     }
   };
 
-  form.addEventListener("change", refreshForm);
+  form.addEventListener("change", (event) => {
+    if (event.target === codexModel) syncEffortOptions(codexEffort, selectedProvider(catalog.codexModels, codexModel.value), codexEffort.value);
+    if (event.target === claudeModel) syncEffortOptions(claudeEffort, selectedProvider(catalog.claudeModels, claudeModel.value), claudeEffort.value);
+    refreshForm();
+  });
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const values = currentValues();
@@ -158,5 +179,7 @@
     if (window.confirm("Повернути стандартні значення для наступної сесії?")) void submit("/api/settings/reset", { confirmed: true });
   });
   cancelButton?.addEventListener("click", () => window.location.reload());
+  syncEffortOptions(codexEffort, selectedProvider(catalog.codexModels, codexModel.value), current.codex?.reasoningEffort);
+  syncEffortOptions(claudeEffort, selectedProvider(catalog.claudeModels, claudeModel.value), current.claude?.reasoningEffort);
   refreshForm();
 })();

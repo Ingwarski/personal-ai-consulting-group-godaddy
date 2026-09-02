@@ -9,8 +9,10 @@ export type SettingsFormState = Readonly<{
 }>;
 
 const VALIDATION_MESSAGES: Readonly<Record<string, string>> = Object.freeze({
-  incompatible_reasoning_depth:
-    "Ця глибина міркування не підтверджена для обох вибраних моделей. Значення не буде знижено автоматично.",
+  codex_reasoning_effort_unavailable:
+    "Обраний рівень міркування Codex не підтверджений для цієї моделі. Значення не буде змінено автоматично.",
+  claude_reasoning_effort_unavailable:
+    "Обраний рівень міркування Claude Code не підтверджений для цієї моделі. Значення не буде змінено автоматично.",
   catalog_stale: "Каталог моделей потребує оновлення. Нічого не збережено.",
   catalog_untrusted: "Джерело доступних моделей не підтверджене. Нічого не збережено."
 });

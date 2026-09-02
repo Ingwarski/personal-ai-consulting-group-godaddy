@@ -3,7 +3,7 @@ import type {
   CapabilityReceipt,
   OwnerSettings,
   ProviderModelCapability,
-  ReasoningDepth
+  ProviderSettings
 } from "./types.ts";
 
 export type SettingsValidationError =
@@ -15,7 +15,8 @@ export type SettingsValidationError =
   | "unknown_claude_model"
   | "codex_model_unavailable"
   | "claude_model_unavailable"
-  | "incompatible_reasoning_depth";
+  | "codex_reasoning_effort_unavailable"
+  | "claude_reasoning_effort_unavailable";
 
 export type SettingsValidationResult =
   | Readonly<{
@@ -31,10 +32,12 @@ const asEpoch = (value: string): number | null => {
   return Number.isNaN(epoch) ? null : epoch;
 };
 
-const supportsDepth = (capability: ProviderModelCapability, depth: ReasoningDepth): boolean =>
-  capability.supportedReasoningDepths.includes(depth) &&
-  typeof capability.reasoningMappings[depth] === "string" &&
-  capability.reasoningMappings[depth].length > 0;
+const supportsSelectedEffort = (capability: ProviderModelCapability, settings: ProviderSettings): boolean => {
+  if (settings.reasoningEffort === null) return true;
+  const mapping = capability.reasoningMappings[settings.reasoningEffort];
+  return capability.supportedReasoningEfforts.includes(settings.reasoningEffort) &&
+    typeof mapping === "string" && mapping.length > 0;
+};
 
 function validateCatalogTiming(receipt: CapabilityReceipt, now: Date): SettingsValidationError | null {
   if (!receipt.trusted) return "catalog_untrusted";
@@ -63,17 +66,16 @@ export function validateOwnerSettings(
   const catalogProblem = validateCatalogTiming(receipt, now);
   if (catalogProblem !== null) return { ok: false, code: catalogProblem };
 
-  const codex = receipt.codexModels.find((model) => model.productId === parsed.value.codexModelId);
+  const codex = receipt.codexModels.find((model) => model.productId === parsed.value.codex.modelId);
   if (codex === undefined) return { ok: false, code: "unknown_codex_model" };
   if (codex.availability !== "available") return { ok: false, code: "codex_model_unavailable" };
 
-  const claude = receipt.claudeModels.find((model) => model.productId === parsed.value.claudeModelId);
+  const claude = receipt.claudeModels.find((model) => model.productId === parsed.value.claude.modelId);
   if (claude === undefined) return { ok: false, code: "unknown_claude_model" };
   if (claude.availability !== "available") return { ok: false, code: "claude_model_unavailable" };
 
-  if (!supportsDepth(codex, parsed.value.reasoningDepth) || !supportsDepth(claude, parsed.value.reasoningDepth)) {
-    return { ok: false, code: "incompatible_reasoning_depth" };
-  }
+  if (!supportsSelectedEffort(codex, parsed.value.codex)) return { ok: false, code: "codex_reasoning_effort_unavailable" };
+  if (!supportsSelectedEffort(claude, parsed.value.claude)) return { ok: false, code: "claude_reasoning_effort_unavailable" };
 
   return { ok: true, value: parsed.value, codex, claude };
 }

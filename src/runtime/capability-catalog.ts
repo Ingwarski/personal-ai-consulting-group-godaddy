@@ -17,7 +17,7 @@ const allAvailable = (models: readonly ProviderModelCapability[]): boolean =>
   models.length > 0 && new Set(models.map((model) => model.productId)).size === models.length &&
   models.every((model) =>
     model.availability === "available" && model.productId.length > 0 && model.displayName.length > 0 && model.runtimeModelId.length > 0 &&
-    model.supportedReasoningDepths.length > 0 && model.supportedReasoningDepths.every((depth) => typeof model.reasoningMappings[depth] === "string")
+    model.supportedReasoningEfforts.every((effort) => typeof model.reasoningMappings[effort] === "string")
   );
 
 const isReady = (readiness: ProviderReadiness): boolean => readiness === "ready";

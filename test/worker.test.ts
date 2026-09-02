@@ -183,11 +183,14 @@ test("the local Worker vertical slice serves Settings and commits one CSRF/CAS-p
       "sec-fetch-site": "same-origin",
       "x-csrf-token": csrfToken
     },
-    body: JSON.stringify({ ...createCapabilityReceipt().defaults, reasoningDepth: "medium" })
+    body: JSON.stringify({
+      ...createCapabilityReceipt().defaults,
+      codex: { ...createCapabilityReceipt().defaults.codex, reasoningEffort: "medium" }
+    })
   }), environment);
-  const savedBody = await saved.json() as { document: { revision: number; settings: { reasoningDepth: string } } };
+  const savedBody = await saved.json() as { document: { revision: number; settings: { codex: { reasoningEffort: string } } } };
   assert.equal(saved.status, 200);
   assert.equal(savedBody.document.revision, 2);
-  assert.equal(savedBody.document.settings.reasoningDepth, "medium");
+  assert.equal(savedBody.document.settings.codex.reasoningEffort, "medium");
   assert.equal(saved.headers.get("cache-control"), "no-store");
 });

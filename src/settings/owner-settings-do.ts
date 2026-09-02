@@ -1,6 +1,6 @@
 import { getValidatedDefaults, validateOwnerSettings, type SettingsValidationError } from "./catalog.ts";
 import type { SettingsStorage } from "./storage.ts";
-import type { CapabilityReceipt, OwnerSettings } from "./types.ts";
+import type { CapabilityReceipt, OwnerSettings, ProviderModelCapability, ProviderReasoningEffort, ProviderSettings, SpeedPreset } from "./types.ts";
 import { parseOwnerSettings } from "./schema.ts";
 
 const SETTINGS_DOCUMENT_KEY = "owner-settings:document";
@@ -10,7 +10,7 @@ const MAX_IDEMPOTENCY_ENTRIES = 64;
 const IDEMPOTENCY_TTL_MILLISECONDS = 24 * 60 * 60_000;
 
 export type SettingsDocument = Readonly<{
-  schemaVersion: "1";
+  schemaVersion: "2";
   revision: number;
   defaultsVersion: string;
   catalogVersion: string;
@@ -22,8 +22,8 @@ export type SettingsDocument = Readonly<{
 
 export type SettingsAuditRecord = Readonly<{
   revision: number;
-  action: "save" | "reset";
-  actor: "owner";
+  action: "save" | "reset" | "migrate";
+  actor: "owner" | "system";
   at: string;
   beforeRevision: number;
   afterRevision: number;
@@ -95,6 +95,96 @@ export type OwnerSettingsDOOptions = Readonly<{
 
 const makeEtag = (revision: number): string => `"settings-${revision}"`;
 
+type LegacySettingsDocument = Readonly<{
+  schemaVersion: "1";
+  revision: number;
+  defaultsVersion: string;
+  catalogVersion: string;
+  settings: Readonly<{
+    codexModelId: string;
+    claudeModelId: string;
+    reasoningDepth: string;
+    speedPreset: string;
+  }>;
+  createdAt: string;
+}>;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const isIsoDate = (value: unknown): value is string =>
+  typeof value === "string" && Number.isFinite(Date.parse(value));
+
+const supportedLegacyEffort = (
+  model: ProviderModelCapability | undefined,
+  effort: string
+): ProviderReasoningEffort | null =>
+  model !== undefined && model.availability === "available" &&
+    model.supportedReasoningEfforts.includes(effort) &&
+    typeof model.reasoningMappings[effort] === "string"
+    ? effort
+    : null;
+
+function parseLegacyDocument(value: unknown): LegacySettingsDocument | undefined {
+  if (!isRecord(value) || value.schemaVersion !== "1" || typeof value.revision !== "number" ||
+    !Number.isSafeInteger(value.revision) || value.revision < 1 ||
+    typeof value.defaultsVersion !== "string" || typeof value.catalogVersion !== "string" ||
+    !isIsoDate(value.createdAt) || !isRecord(value.settings)) return undefined;
+  const settings = value.settings;
+  if (typeof settings.codexModelId !== "string" || typeof settings.claudeModelId !== "string" ||
+    typeof settings.reasoningDepth !== "string" || typeof settings.speedPreset !== "string") return undefined;
+  return Object.freeze({
+    schemaVersion: "1",
+    revision: value.revision,
+    defaultsVersion: value.defaultsVersion,
+    catalogVersion: value.catalogVersion,
+    settings: Object.freeze({
+      codexModelId: settings.codexModelId,
+      claudeModelId: settings.claudeModelId,
+      reasoningDepth: settings.reasoningDepth,
+      speedPreset: settings.speedPreset
+    }),
+    createdAt: value.createdAt
+  });
+}
+
+function isCurrentDocument(value: unknown): value is SettingsDocument {
+  return isRecord(value) && value.schemaVersion === "2" && typeof value.revision === "number" && Number.isSafeInteger(value.revision) &&
+    value.revision >= 1 && typeof value.defaultsVersion === "string" && typeof value.catalogVersion === "string" &&
+    isIsoDate(value.createdAt) && isIsoDate(value.updatedAt) && value.actor === "owner" &&
+    parseOwnerSettings(value.settings).ok;
+}
+
+function migrateProviderSettings(
+  legacyModelId: string,
+  legacyEffort: string,
+  models: readonly ProviderModelCapability[],
+  fallback: ProviderSettings
+): ProviderSettings {
+  const selected = models.find((model) => model.productId === legacyModelId && model.availability === "available");
+  const model = selected ?? models.find((candidate) => candidate.productId === fallback.modelId);
+  if (model === undefined) return fallback;
+  return Object.freeze({
+    modelId: model.productId,
+    reasoningEffort: supportedLegacyEffort(model, legacyEffort)
+  });
+}
+
+function migrateLegacySettings(
+  legacy: LegacySettingsDocument,
+  defaults: OwnerSettings,
+  receipt: CapabilityReceipt
+): OwnerSettings {
+  const speedPreset = ["швидко", "збалансовано", "ретельно"].includes(legacy.settings.speedPreset)
+    ? legacy.settings.speedPreset as SpeedPreset
+    : defaults.speedPreset;
+  return Object.freeze({
+    codex: migrateProviderSettings(legacy.settings.codexModelId, legacy.settings.reasoningDepth, receipt.codexModels, defaults.codex),
+    claude: migrateProviderSettings(legacy.settings.claudeModelId, legacy.settings.reasoningDepth, receipt.claudeModels, defaults.claude),
+    speedPreset
+  });
+}
+
 function safeActiveSessionSummary(value: ActiveSessionSummary): ActiveSessionSummary | undefined {
   const settings = parseOwnerSettings(value.effectiveSettings);
   if (
@@ -143,14 +233,46 @@ export class OwnerSettingsDO implements OwnerSettingsService {
     if (!defaults.ok) return defaults;
 
     return this.#storage.transaction(async (storage) => {
-      const existing = await storage.get<SettingsDocument>(SETTINGS_DOCUMENT_KEY);
+      const existing = await storage.get<unknown>(SETTINGS_DOCUMENT_KEY);
       if (existing !== undefined) {
-        return { ok: true, document: existing, etag: makeEtag(existing.revision), replayed: true };
+        if (isCurrentDocument(existing)) {
+          return { ok: true, document: existing, etag: makeEtag(existing.revision), replayed: true };
+        }
+        const legacy = parseLegacyDocument(existing);
+        if (legacy === undefined) return { ok: false, code: "not_initialized" };
+        const migrated = migrateLegacySettings(legacy, defaults.value, receipt);
+        const validated = validateOwnerSettings(migrated, receipt, now);
+        if (!validated.ok) return validated;
+        const timestamp = now.toISOString();
+        const document: SettingsDocument = Object.freeze({
+          schemaVersion: "2",
+          revision: legacy.revision + 1,
+          defaultsVersion: receipt.catalogVersion,
+          catalogVersion: receipt.catalogVersion,
+          settings: validated.value,
+          createdAt: legacy.createdAt,
+          updatedAt: timestamp,
+          actor: "owner"
+        });
+        const audit: SettingsAuditRecord = Object.freeze({
+          revision: document.revision,
+          action: "migrate",
+          actor: "system",
+          at: timestamp,
+          beforeRevision: legacy.revision,
+          afterRevision: document.revision,
+          catalogVersion: receipt.catalogVersion,
+          requestHash: await hashValue({ action: "migrate", legacyRevision: legacy.revision, settings: validated.value }),
+          result: "committed"
+        });
+        await storage.put(SETTINGS_DOCUMENT_KEY, document);
+        await storage.put(`${AUDIT_KEY_PREFIX}${document.revision}`, audit);
+        return { ok: true, document, etag: makeEtag(document.revision), replayed: false };
       }
 
       const timestamp = now.toISOString();
       const document: SettingsDocument = Object.freeze({
-        schemaVersion: "1",
+        schemaVersion: "2",
         revision: 1,
         defaultsVersion: receipt.catalogVersion,
         catalogVersion: receipt.catalogVersion,
@@ -165,8 +287,9 @@ export class OwnerSettingsDO implements OwnerSettingsService {
   }
 
   async read(): Promise<SettingsReadModel | undefined> {
-    const document = await this.#storage.get<SettingsDocument>(SETTINGS_DOCUMENT_KEY);
-    if (document === undefined) return undefined;
+    const stored = await this.#storage.get<unknown>(SETTINGS_DOCUMENT_KEY);
+    if (!isCurrentDocument(stored)) return undefined;
+    const document = stored;
 
     const receipt = this.#getCapabilityReceipt();
     const now = this.#now();
@@ -243,8 +366,8 @@ export class OwnerSettingsDO implements OwnerSettingsService {
     const bodyHash = await hashValue({ action: input.action, settings: validated.value });
 
     return this.#storage.transaction(async (storage) => {
-      const previous = await storage.get<SettingsDocument>(SETTINGS_DOCUMENT_KEY);
-      if (previous === undefined) return { ok: false, code: "not_initialized" };
+      const previous = await storage.get<unknown>(SETTINGS_DOCUMENT_KEY);
+      if (!isCurrentDocument(previous)) return { ok: false, code: "not_initialized" };
 
       const nowEpoch = now.getTime();
       const ledger = ((await storage.get<readonly IdempotencyRecord[]>(IDEMPOTENCY_LEDGER_KEY)) ?? [])
@@ -268,7 +391,7 @@ export class OwnerSettingsDO implements OwnerSettingsService {
 
       const timestamp = now.toISOString();
       const document: SettingsDocument = Object.freeze({
-        schemaVersion: "1",
+        schemaVersion: "2",
         revision: previous.revision + 1,
         defaultsVersion: receipt.catalogVersion,
         catalogVersion: receipt.catalogVersion,

@@ -4,7 +4,7 @@ import { createGoDaddyCodexAppServer, type CodexDeviceAuthorization, type GoDadd
 import { MySqlKeyValueStorage, type MySqlPool } from "./mysql-storage.ts";
 import { createRuntimeCredentialVault } from "./runtime-credential-vault.ts";
 import { parseCapabilityReceipt } from "../settings/capability-receipt.ts";
-import type { CapabilityReceipt, OwnerSettings, ProviderModelCapability, ReasoningDepth } from "../settings/types.ts";
+import type { CapabilityReceipt, OwnerSettings, ProviderModelCapability } from "../settings/types.ts";
 
 const CATALOG_STORAGE_KEY = "current";
 const CATALOG_NAMESPACE = "runtime-capability-v1";
@@ -31,20 +31,13 @@ export type RuntimeBootstrapOptions = Readonly<{
   claude?: GoDaddyClaudeCodeProcess;
 }>;
 
-const selectedDepths = ["high", "medium", "low", "xhigh"] as const;
-
 function chooseDefaults(codexModels: readonly ProviderModelCapability[], claudeModels: readonly ProviderModelCapability[], codexDefault?: string): OwnerSettings | undefined {
   const codex = codexModels.find((model) => model.productId === codexDefault) ?? codexModels[0];
   const claude = claudeModels[0];
   if (codex === undefined || claude === undefined) return undefined;
-  const reasoningDepth = selectedDepths.find((depth) =>
-    codex.supportedReasoningDepths.includes(depth) && claude.supportedReasoningDepths.includes(depth)
-  ) as ReasoningDepth | undefined;
-  if (reasoningDepth === undefined) return undefined;
   return Object.freeze({
-    codexModelId: codex.productId,
-    claudeModelId: claude.productId,
-    reasoningDepth,
+    codex: Object.freeze({ modelId: codex.productId, reasoningEffort: null }),
+    claude: Object.freeze({ modelId: claude.productId, reasoningEffort: null }),
     speedPreset: "збалансовано"
   });
 }

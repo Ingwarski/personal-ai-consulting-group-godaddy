@@ -53,7 +53,7 @@ test("Codex discovery skips a provider-returned hidden model but still rejects m
   assert.equal(malformedVisible.runtime.readiness, "unavailable");
 });
 
-test("Codex discovery keeps only this application's approved subset of provider-advertised efforts", async () => {
+test("Codex discovery preserves the current provider-advertised efforts for the selected model", async () => {
   const result = await probeCodexAppServer({
     request: async (method) => method === "model/list" ? {
       data: [{
@@ -68,8 +68,8 @@ test("Codex discovery keeps only this application's approved subset of provider-
     } : readyResponses[method]
   }, { privateSingleOwner: true });
   assert.equal(result.runtime.readiness, "ready");
-  assert.deepEqual(result.models[0]?.supportedReasoningDepths, ["low", "high"]);
-  assert.deepEqual(result.models[0]?.reasoningMappings, { low: "low", high: "high" });
+  assert.deepEqual(result.models[0]?.supportedReasoningEfforts, ["minimal", "low", "high", "ultra"]);
+  assert.deepEqual(result.models[0]?.reasoningMappings, { minimal: "minimal", low: "low", high: "high", ultra: "ultra" });
 });
 
 test("Codex discovery fails closed for a key/cloud auth mode, a reached subscription limit, malformed catalog or transport error", async () => {

@@ -32,20 +32,24 @@ test("a capability catalog requires explicit whole defaults and both live subscr
     },
     models: [{
       productId: "runtime-claude", displayName: "Runtime Claude", runtimeModelId: "runtime-claude", availability: "available" as const,
-      supportedReasoningDepths: ["low", "medium", "high"] as const,
+      supportedReasoningEfforts: ["low", "medium", "high"] as const,
       reasoningMappings: { low: "low", medium: "medium", high: "high" }
     }]
   };
   const result = createRuntimeCapabilityCatalog({
     codex,
     claude,
-    defaults: { codexModelId: "runtime-codex", claudeModelId: "runtime-claude", reasoningDepth: "high", speedPreset: source.defaults.speedPreset },
+    defaults: {
+      codex: { modelId: "runtime-codex", reasoningEffort: "high" },
+      claude: { modelId: "runtime-claude", reasoningEffort: "high" },
+      speedPreset: source.defaults.speedPreset
+    },
     catalogVersion: "runtime-catalog-1",
     issuedAt: activeNow,
     expiresAt: new Date("2026-08-16T12:05:00.000Z")
   });
   assert.equal(result.ok, true);
-  if (result.ok) assert.equal(result.receipt.defaults.codexModelId, "runtime-codex");
+  if (result.ok) assert.equal(result.receipt.defaults.codex.modelId, "runtime-codex");
 });
 
 test("catalog issuance blocks paid Claude acceleration and never selects a replacement default", async () => {
@@ -55,11 +59,15 @@ test("catalog issuance blocks paid Claude acceleration and never selects a repla
     codex,
     claude: {
       runtime: { authMode: "claude_code_oauth" as const, readiness: "ready" as const, privateSingleOwner: true, availableModelIds: ["runtime-claude"], fastModeEnabled: true, extraUsageEnabled: false },
-      models: [{ productId: "runtime-claude", displayName: "Runtime Claude", runtimeModelId: "runtime-claude", availability: "available" as const, supportedReasoningDepths: ["low", "medium", "high"] as const, reasoningMappings: { low: "low", medium: "medium", high: "high" } }]
+      models: [{ productId: "runtime-claude", displayName: "Runtime Claude", runtimeModelId: "runtime-claude", availability: "available" as const, supportedReasoningEfforts: ["low", "medium", "high"] as const, reasoningMappings: { low: "low", medium: "medium", high: "high" } }]
     },
-    defaults: { codexModelId: "runtime-codex", claudeModelId: "runtime-claude", reasoningDepth: "high" as const, speedPreset: source.defaults.speedPreset },
+    defaults: {
+      codex: { modelId: "runtime-codex", reasoningEffort: "high" as const },
+      claude: { modelId: "runtime-claude", reasoningEffort: "high" as const },
+      speedPreset: source.defaults.speedPreset
+    },
     catalogVersion: "runtime-catalog-1", issuedAt: activeNow, expiresAt: new Date("2026-08-16T12:05:00.000Z")
   };
   assert.deepEqual(createRuntimeCapabilityCatalog(base), { ok: false, code: "claude_paid_acceleration_forbidden" });
-  assert.deepEqual(createRuntimeCapabilityCatalog({ ...base, claude: { ...base.claude, runtime: { ...base.claude.runtime, fastModeEnabled: false } }, defaults: { ...base.defaults, codexModelId: "not-selected" } }), { ok: false, code: "invalid_defaults" });
+  assert.deepEqual(createRuntimeCapabilityCatalog({ ...base, claude: { ...base.claude, runtime: { ...base.claude.runtime, fastModeEnabled: false } }, defaults: { ...base.defaults, codex: { ...base.defaults.codex, modelId: "not-selected" } } }), { ok: false, code: "invalid_defaults" });
 });

@@ -1,7 +1,7 @@
 import type { ConsiliumAgentRuntime, ConsiliumEvidence, ConsiliumPhase, RuntimeEmission } from "../consilium/router.ts";
 import type { AgentRegistration } from "../consilium/roster.ts";
 import type { ProviderReadiness } from "./provider-preflight.ts";
-import type { ProviderModelCapability, ReasoningDepth } from "../settings/types.ts";
+import type { ProviderModelCapability, ProviderReasoningEffort } from "../settings/types.ts";
 import { deriveInternalEventId, isAgentId, isExternalRuntimeId } from "../identity/ids.ts";
 import { SafeConsiliumFailure, type ConsiliumFailureCause } from "../consilium/failures.ts";
 
@@ -27,7 +27,7 @@ export interface ClaudeCodeSubscriptionProcess {
   runCritique(input: Readonly<{
     modelId: string;
     runtimeModelId: string;
-    reasoningEffort: ReasoningDepth;
+    reasoningEffort: ProviderReasoningEffort | null;
     prompt: string;
   }>): Promise<Readonly<{ turnRef: string; body: string }>>;
 }
@@ -37,16 +37,17 @@ export type ClaudeCodeCriticRuntimeInput = Readonly<{
   process: ClaudeCodeSubscriptionProcess;
   headAgentId: string;
   modelId: string;
-  reasoningEffort: ReasoningDepth;
+  reasoningEffort: ProviderReasoningEffort | null;
 }>;
 
 const nonEmpty = (value: unknown, maximum = 32_000): value is string =>
   typeof value === "string" && value.trim().length > 0 && value.length <= maximum;
 
-function supportsExactEffort(model: ProviderModelCapability, reasoningEffort: ReasoningDepth): boolean {
+function supportsSelectedEffort(model: ProviderModelCapability, reasoningEffort: ProviderReasoningEffort | null): boolean {
   return model.availability === "available" &&
-    model.supportedReasoningDepths.includes(reasoningEffort) &&
-    typeof model.reasoningMappings[reasoningEffort] === "string";
+    (reasoningEffort === null ||
+      (model.supportedReasoningEfforts.includes(reasoningEffort) &&
+        typeof model.reasoningMappings[reasoningEffort] === "string"));
 }
 
 function criticPrompt(task: string, assignment: string, evidence: readonly ConsiliumEvidence[]): string {
@@ -70,7 +71,7 @@ export class ClaudeCodeCriticRuntime implements ConsiliumAgentRuntime {
   readonly #process: ClaudeCodeSubscriptionProcess;
   readonly #headAgentId: string;
   readonly #modelId: string;
-  readonly #reasoningEffort: ReasoningDepth;
+  readonly #reasoningEffort: ProviderReasoningEffort | null;
 
   constructor(input: ClaudeCodeCriticRuntimeInput) {
     if (input.registration.provider !== "claude_code" || !isExternalRuntimeId(input.registration.runtimeSessionRef) || !isAgentId(input.headAgentId)) {
@@ -102,7 +103,7 @@ export class ClaudeCodeCriticRuntime implements ConsiliumAgentRuntime {
     const eligibilityFailure = this.#eligibilityFailure(status);
     if (eligibilityFailure !== undefined) throw new SafeConsiliumFailure(eligibilityFailure, status.resetAt);
     const model = status.models.find((candidate) => candidate.productId === this.#modelId);
-    if (model === undefined || !supportsExactEffort(model, this.#reasoningEffort)) {
+    if (model === undefined || !supportsSelectedEffort(model, this.#reasoningEffort)) {
       throw new SafeConsiliumFailure(model === undefined ? "claude_model_not_available" : "claude_effort_unavailable");
     }
     const completed = await this.#process.runCritique({

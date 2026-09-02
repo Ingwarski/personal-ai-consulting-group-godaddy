@@ -5,7 +5,7 @@ import { join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 
 import { SafeConsiliumFailure } from "../consilium/failures.ts";
-import type { ProviderModelCapability, ReasoningDepth } from "../settings/types.ts";
+import type { ProviderModelCapability, ProviderReasoningEffort } from "../settings/types.ts";
 import type { ClaudeCodeSubscriptionProcess, ClaudeCodeSubscriptionStatus } from "../runtime/claude-code-critic.ts";
 
 const MAX_OUTPUT_BYTES = 96 * 1024;
@@ -47,7 +47,7 @@ export type GoDaddyClaudeCodeProcessOptions = Readonly<{
 type CritiqueInput = Readonly<{
   modelId: string;
   runtimeModelId: string;
-  reasoningEffort: ReasoningDepth;
+  reasoningEffort: ProviderReasoningEffort | null;
   prompt: string;
 }>;
 
@@ -71,7 +71,7 @@ function executablePath(value: string | undefined): string {
 function candidateModels(environment: Record<string, unknown>): readonly string[] {
   const configured = typeof environment.CLAUDE_CODE_MODEL_CANDIDATES === "string"
     ? environment.CLAUDE_CODE_MODEL_CANDIDATES.split(",").map((value) => value.trim()).filter((value) => value.length > 0)
-    : ["sonnet", "opus"];
+    : ["sonnet", "opus", "haiku", "fable"];
   const unique = [...new Set(configured)];
   return unique.length > 0 && unique.length <= 4 && unique.every((value) => /^[A-Za-z0-9._-]{1,128}$/u.test(value))
     ? Object.freeze(unique)
@@ -79,7 +79,7 @@ function candidateModels(environment: Record<string, unknown>): readonly string[
 }
 
 function displayName(candidate: string): string {
-  const builtIn: Record<string, string> = { sonnet: "Claude Sonnet", opus: "Claude Opus", haiku: "Claude Haiku" };
+  const builtIn: Record<string, string> = { sonnet: "Claude Sonnet", opus: "Claude Opus", haiku: "Claude Haiku", fable: "Claude Fable" };
   return builtIn[candidate] ?? `Claude ${candidate}`;
 }
 
@@ -229,7 +229,7 @@ export function createGoDaddyClaudeCodeProcess(options: GoDaddyClaudeCodeProcess
         "--strict-mcp-config",
         "--permission-mode", "dontAsk",
         "--model", input.runtimeModelId,
-        "--effort", input.reasoningEffort,
+        ...(input.reasoningEffort === null ? [] : ["--effort", input.reasoningEffort]),
         input.prompt
       ]);
       if (result.exitCode !== 0) throw new SafeConsiliumFailure("claude_unavailable");
@@ -242,8 +242,21 @@ export function createGoDaddyClaudeCodeProcess(options: GoDaddyClaudeCodeProcess
       if (status.exitCode !== 0) return Object.freeze([]);
       const models: ProviderModelCapability[] = [];
       for (const candidate of candidates) {
-        const supportedReasoningDepths: ReasoningDepth[] = [];
-        for (const effort of ["low", "medium", "high", "xhigh"] as const) {
+        const baseline = await execute([
+          "--print",
+          "--output-format", "json",
+          "--no-session-persistence",
+          "--safe-mode",
+          "--restricted",
+          "--tools", "",
+          "--strict-mcp-config",
+          "--permission-mode", "dontAsk",
+          "--model", candidate,
+          "Reply with the single word READY."
+        ]);
+        if (baseline.exitCode !== 0 || parseCompletion(baseline.stdout) === undefined) continue;
+        const supportedReasoningEfforts: ProviderReasoningEffort[] = [];
+        for (const effort of ["low", "medium", "high", "xhigh", "max"] as const) {
           const probe = await execute([
             "--print",
             "--output-format", "json",
@@ -257,17 +270,16 @@ export function createGoDaddyClaudeCodeProcess(options: GoDaddyClaudeCodeProcess
             "--effort", effort,
             "Reply with the single word READY."
           ]);
-          if (probe.exitCode === 0 && parseCompletion(probe.stdout) !== undefined) supportedReasoningDepths.push(effort);
+          if (probe.exitCode === 0 && parseCompletion(probe.stdout) !== undefined) supportedReasoningEfforts.push(effort);
         }
-        if (supportedReasoningDepths.length === 0) continue;
-        const reasoningMappings: Partial<Record<ReasoningDepth, string>> = {};
-        for (const effort of supportedReasoningDepths) reasoningMappings[effort] = effort;
+        const reasoningMappings: Record<ProviderReasoningEffort, string> = {};
+        for (const effort of supportedReasoningEfforts) reasoningMappings[effort] = effort;
         models.push(Object.freeze({
           productId: productId(candidate),
           displayName: displayName(candidate),
           runtimeModelId: candidate,
           availability: "available",
-          supportedReasoningDepths: Object.freeze(supportedReasoningDepths),
+          supportedReasoningEfforts: Object.freeze(supportedReasoningEfforts),
           reasoningMappings: Object.freeze(reasoningMappings)
         }));
       }

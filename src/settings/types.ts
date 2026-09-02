@@ -1,14 +1,21 @@
-export const REASONING_DEPTHS = ["low", "medium", "high", "xhigh"] as const;
 export const SPEED_PRESETS = ["швидко", "збалансовано", "ретельно"] as const;
 
-export type ReasoningDepth = (typeof REASONING_DEPTHS)[number];
 export type SpeedPreset = (typeof SPEED_PRESETS)[number];
 export type ModelAvailability = "available" | "unavailable";
+export type ProviderReasoningEffort = string;
+
+export type ProviderSettings = Readonly<{
+  modelId: string;
+  /**
+   * Null means this provider chooses the documented default for the selected
+   * model. It is deliberately independent for Codex and Claude.
+   */
+  reasoningEffort: ProviderReasoningEffort | null;
+}>;
 
 export type OwnerSettings = Readonly<{
-  codexModelId: string;
-  claudeModelId: string;
-  reasoningDepth: ReasoningDepth;
+  codex: ProviderSettings;
+  claude: ProviderSettings;
   speedPreset: SpeedPreset;
 }>;
 
@@ -17,8 +24,9 @@ export type ProviderModelCapability = Readonly<{
   displayName: string;
   runtimeModelId: string;
   availability: ModelAvailability;
-  supportedReasoningDepths: readonly ReasoningDepth[];
-  reasoningMappings: Readonly<Partial<Record<ReasoningDepth, string>>>;
+  supportedReasoningEfforts: readonly ProviderReasoningEffort[];
+  reasoningMappings: Readonly<Record<ProviderReasoningEffort, string>>;
+  defaultReasoningEffort?: ProviderReasoningEffort;
 }>;
 
 export type CapabilityReceipt = Readonly<{

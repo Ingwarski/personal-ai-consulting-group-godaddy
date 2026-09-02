@@ -1,5 +1,5 @@
 import type { ProviderReadiness } from "./provider-preflight.ts";
-import { REASONING_DEPTHS, type ProviderModelCapability, type ReasoningDepth } from "../settings/types.ts";
+import type { ProviderModelCapability, ProviderReasoningEffort } from "../settings/types.ts";
 
 export interface CodexAppServerTransport {
   request(method: string, params: unknown): Promise<unknown>;
@@ -23,9 +23,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const nonEmptyString = (value: unknown, maximum = 512): value is string =>
   typeof value === "string" && value.trim().length > 0 && value.length <= maximum;
 
-const allowedEffort = (value: unknown): ReasoningDepth | undefined =>
-  typeof value === "string" && REASONING_DEPTHS.includes(value as ReasoningDepth)
-    ? value as ReasoningDepth
+const allowedEffort = (value: unknown): ProviderReasoningEffort | undefined =>
+  typeof value === "string" && /^[a-z][a-z0-9_-]{0,127}$/iu.test(value)
+    ? value
     : undefined;
 
 function unavailable(privateSingleOwner: boolean): CodexAppServerProbe {
@@ -44,26 +44,31 @@ function parseModels(value: unknown): Readonly<{ models: readonly ProviderModelC
     if (item.hidden === true) continue;
     if (!nonEmptyString(item.id) || !nonEmptyString(item.model) ||
       !nonEmptyString(item.displayName) || !Array.isArray(item.supportedReasoningEfforts)) return undefined;
-    // Codex advertises reasoning efforts as open strings.  This application
-    // intentionally supports only its own approved subset, so additional
-    // provider capabilities must not invalidate a compatible model.
-    const depths: ReasoningDepth[] = [];
+    // App Server owns this provider-specific capability list. Preserve it
+    // exactly instead of projecting it onto a shared cross-provider scale.
+    const efforts: ProviderReasoningEffort[] = [];
     for (const effort of item.supportedReasoningEfforts) {
       if (!isRecord(effort) || !nonEmptyString(effort.reasoningEffort)) return undefined;
-      const depth = allowedEffort(effort.reasoningEffort);
-      if (depth !== undefined) depths.push(depth);
+      const parsedEffort = allowedEffort(effort.reasoningEffort);
+      if (parsedEffort === undefined) return undefined;
+      efforts.push(parsedEffort);
     }
-    if (new Set(depths).size !== depths.length) return undefined;
-    if (depths.length === 0) continue;
-    const mappings: Partial<Record<ReasoningDepth, string>> = {};
-    for (const depth of depths) mappings[depth] = depth;
+    if (new Set(efforts).size !== efforts.length) return undefined;
+    const mappings: Record<ProviderReasoningEffort, string> = {};
+    for (const effort of efforts) mappings[effort] = effort;
+    const defaultReasoningEffort = item.defaultReasoningEffort === undefined
+      ? undefined
+      : allowedEffort(item.defaultReasoningEffort);
+    if (item.defaultReasoningEffort !== undefined &&
+      (defaultReasoningEffort === undefined || !efforts.includes(defaultReasoningEffort))) return undefined;
     models.push(Object.freeze({
       productId: item.id,
       displayName: item.displayName,
       runtimeModelId: item.model,
       availability: "available",
-      supportedReasoningDepths: Object.freeze(depths),
-      reasoningMappings: Object.freeze(mappings)
+      supportedReasoningEfforts: Object.freeze(efforts),
+      reasoningMappings: Object.freeze(mappings),
+      ...(defaultReasoningEffort === undefined ? {} : { defaultReasoningEffort })
     }));
     if (item.isDefault === true) {
       if (defaultModelId !== undefined) return undefined;

@@ -1,15 +1,14 @@
 import {
-  REASONING_DEPTHS,
   SPEED_PRESETS,
   type OwnerSettings,
-  type ReasoningDepth,
+  type ProviderReasoningEffort,
+  type ProviderSettings,
   type SpeedPreset
 } from "./types.ts";
 
 const SETTINGS_KEYS = [
-  "codexModelId",
-  "claudeModelId",
-  "reasoningDepth",
+  "codex",
+  "claude",
   "speedPreset"
 ] as const;
 
@@ -17,21 +16,44 @@ export type SettingsParseError =
   | "not_an_object"
   | "unexpected_settings_shape"
   | "invalid_model_id"
-  | "invalid_reasoning_depth"
+  | "invalid_reasoning_effort"
   | "invalid_speed_preset";
 
 export type SettingsParseResult =
   | Readonly<{ ok: true; value: OwnerSettings }>
   | Readonly<{ ok: false; code: SettingsParseError }>;
 
+type ProviderSettingsParseResult =
+  | Readonly<{ ok: true; value: ProviderSettings }>
+  | Readonly<{ ok: false; code: SettingsParseError }>;
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-const isReasoningDepth = (value: string): value is ReasoningDepth =>
-  REASONING_DEPTHS.includes(value as ReasoningDepth);
+const isReasoningEffort = (value: unknown): value is ProviderReasoningEffort =>
+  typeof value === "string" && /^[a-z][a-z0-9_-]{0,127}$/iu.test(value);
 
 const isSpeedPreset = (value: string): value is SpeedPreset =>
   SPEED_PRESETS.includes(value as SpeedPreset);
+
+function parseProviderSettings(input: unknown): ProviderSettingsParseResult {
+  if (!isRecord(input) || Object.keys(input).sort().join(",") !== "modelId,reasoningEffort") {
+    return { ok: false, code: "unexpected_settings_shape" };
+  }
+  if (typeof input.modelId !== "string" || input.modelId.trim().length === 0 || input.modelId.length > 512) {
+    return { ok: false, code: "invalid_model_id" };
+  }
+  if (input.reasoningEffort !== null && !isReasoningEffort(input.reasoningEffort)) {
+    return { ok: false, code: "invalid_reasoning_effort" };
+  }
+  return Object.freeze({
+    ok: true,
+    value: Object.freeze({
+      modelId: input.modelId,
+      reasoningEffort: input.reasoningEffort
+    })
+  });
+}
 
 export function parseOwnerSettings(input: unknown): SettingsParseResult {
   if (!isRecord(input)) {
@@ -44,26 +66,17 @@ export function parseOwnerSettings(input: unknown): SettingsParseResult {
     return { ok: false, code: "unexpected_settings_shape" };
   }
 
-  const { codexModelId, claudeModelId, reasoningDepth, speedPreset } = input;
-  if (
-    typeof codexModelId !== "string" ||
-    codexModelId.length === 0 ||
-    typeof claudeModelId !== "string" ||
-    claudeModelId.length === 0
-  ) {
-    return { ok: false, code: "invalid_model_id" };
-  }
+  const codex = parseProviderSettings(input.codex);
+  if (!codex.ok) return codex;
+  const claude = parseProviderSettings(input.claude);
+  if (!claude.ok) return claude;
 
-  if (typeof reasoningDepth !== "string" || !isReasoningDepth(reasoningDepth)) {
-    return { ok: false, code: "invalid_reasoning_depth" };
-  }
-
-  if (typeof speedPreset !== "string" || !isSpeedPreset(speedPreset)) {
+  if (typeof input.speedPreset !== "string" || !isSpeedPreset(input.speedPreset)) {
     return { ok: false, code: "invalid_speed_preset" };
   }
 
   return {
     ok: true,
-    value: Object.freeze({ codexModelId, claudeModelId, reasoningDepth, speedPreset })
+    value: Object.freeze({ codex: codex.value, claude: claude.value, speedPreset: input.speedPreset })
   };
 }

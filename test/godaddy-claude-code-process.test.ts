@@ -114,12 +114,13 @@ test("fails closed for a rejected authentication check or malformed completion",
   );
 });
 
-test("defaults to Sonnet and Opus, then discovers only aliases that complete under each actual supported effort", async () => {
+test("probes current Claude aliases and exposes only the usable per-model efforts", async () => {
   const calls: Parameters<CommandRunner>[0][] = [];
   const run: CommandRunner = async (input) => {
     calls.push(input);
     if (input.arguments[0] === "auth") return { exitCode: 0, stdout: "{}", stderr: "" };
-    const effort = input.arguments[input.arguments.indexOf("--effort") + 1];
+    const effortIndex = input.arguments.indexOf("--effort");
+    const effort = effortIndex === -1 ? null : input.arguments[effortIndex + 1];
     const model = input.arguments[input.arguments.indexOf("--model") + 1];
     if (model === "sonnet" && effort !== "xhigh") {
       return { exitCode: 0, stdout: JSON.stringify({ result: "READY", session_id: `sonnet-${effort}` }), stderr: "" };
@@ -137,9 +138,9 @@ test("defaults to Sonnet and Opus, then discovers only aliases that complete und
     displayName: "Claude Sonnet",
     runtimeModelId: "sonnet",
     availability: "available",
-    supportedReasoningDepths: ["low", "medium", "high"],
-    reasoningMappings: { low: "low", medium: "medium", high: "high" }
+    supportedReasoningEfforts: ["low", "medium", "high", "max"],
+    reasoningMappings: { low: "low", medium: "medium", high: "high", max: "max" }
   }]);
-  assert.equal(calls.length, 9);
+  assert.equal(calls.length, 10);
   assert.equal(calls.some((call) => call.arguments.includes("opus")), true);
 });

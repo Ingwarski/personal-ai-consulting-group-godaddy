@@ -98,7 +98,7 @@ export class ConsiliumSessionLauncher {
       now: this.#now()
     });
     if (!preflight.ok) return { ok: false, code: "preflight_failed", preflightCode: preflight.code };
-    const selectedCodex = preflight.codex.models.find((model) => model.productId === input.snapshot.settings.codexModelId);
+    const selectedCodex = preflight.codex.models.find((model) => model.productId === input.snapshot.settings.codex.modelId);
     if (selectedCodex === undefined) return { ok: false, code: "preflight_failed", preflightCode: "codex_model_not_available" };
 
     const headLease = await this.#codex.startIsolatedThread({ modelId: selectedCodex.runtimeModelId });
@@ -132,14 +132,14 @@ export class ConsiliumSessionLauncher {
         threadClient: this.#codex,
         criticAgentId: critic.agentId,
         headAgentId: head.agentId,
-        reasoningEffort: input.snapshot.settings.reasoningDepth
+        reasoningEffort: input.snapshot.settings.codex.reasoningEffort
       })),
       new ClaudeCodeCriticRuntime({
         registration: critic,
         process: this.#claude,
         headAgentId: head.agentId,
-        modelId: input.snapshot.settings.claudeModelId,
-        reasoningEffort: input.snapshot.settings.reasoningDepth
+        modelId: input.snapshot.settings.claude.modelId,
+        reasoningEffort: input.snapshot.settings.claude.reasoningEffort
       })
     ]);
     return {
@@ -162,7 +162,7 @@ export class ConsiliumSessionLauncher {
           critic,
           lease: headLease.value,
           threadClient: this.#codex,
-          reasoningEffort: input.snapshot.settings.reasoningDepth
+          reasoningEffort: input.snapshot.settings.codex.reasoningEffort
         }),
         finalizer: new CriticGatedFinalizer({
           registrar: this.#registrar,

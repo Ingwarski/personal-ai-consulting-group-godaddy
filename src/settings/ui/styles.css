@@ -53,6 +53,7 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .group-heading > div { min-width: 0; gap: .7rem; }
 .group-number { display: grid; width: 1.8rem; height: 1.8rem; place-items: center; margin: 0; border-radius: 50%; color: var(--happypro-blue); background: #e7f1ff; font-size: .75rem; font-weight: 800; }
 .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1rem; }
+.provider-description { max-width: 52rem; margin: .8rem 0 0; color: var(--muted); font-size: .84rem; line-height: 1.48; }
 .field-grid label > span, .field-grid label > small { display: block; }
 .field-grid label > span { margin-bottom: .38rem; font-size: .8rem; font-weight: 750; }
 .field-grid select { width: 100%; min-height: 2.9rem; padding: .55rem .7rem; border: 1px solid #aeb8bf; border-radius: .48rem; color: var(--ink); background: var(--surface); }

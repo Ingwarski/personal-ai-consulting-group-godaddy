@@ -1,6 +1,6 @@
 import { deriveSettingsFormState } from "./controller.ts";
 import type { SettingsReadModel } from "../owner-settings-do.ts";
-import type { CapabilityReceipt, OwnerSettings, ProviderModelCapability, ReasoningDepth, SpeedPreset } from "../types.ts";
+import type { CapabilityReceipt, OwnerSettings, ProviderModelCapability, ProviderReasoningEffort, SpeedPreset } from "../types.ts";
 
 export type SettingsPageModel = Readonly<{
   read: SettingsReadModel;
@@ -10,7 +10,6 @@ export type SettingsPageModel = Readonly<{
   now: Date;
 }>;
 
-const DEPTHS: readonly ReasoningDepth[] = ["low", "medium", "high", "xhigh"];
 const SPEEDS: ReadonlyArray<Readonly<{ value: SpeedPreset; title: string; description: string }>> = [
   { value: "швидко", title: "Швидко", description: "Менше додаткових перевірок, один обов’язковий цикл критики." },
   { value: "збалансовано", title: "Збалансовано", description: "Рекомендований баланс темпу, перевірки й повноти." },
@@ -25,10 +24,10 @@ const escapeHtml = (value: string): string =>
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 
-const isDepthSupported = (model: ProviderModelCapability, depth: ReasoningDepth): boolean =>
+const isEffortSupported = (model: ProviderModelCapability, effort: ProviderReasoningEffort): boolean =>
   model.availability === "available" &&
-  model.supportedReasoningDepths.includes(depth) &&
-  typeof model.reasoningMappings[depth] === "string";
+  model.supportedReasoningEfforts.includes(effort) &&
+  typeof model.reasoningMappings[effort] === "string";
 
 function findDisplayName(models: readonly ProviderModelCapability[], id: string): string {
   return models.find((model) => model.productId === id)?.displayName ?? "Недоступна модель";
@@ -36,9 +35,8 @@ function findDisplayName(models: readonly ProviderModelCapability[], id: string)
 
 function formatSettings(settings: OwnerSettings, receipt: CapabilityReceipt): string {
   return [
-    findDisplayName(receipt.codexModels, settings.codexModelId),
-    findDisplayName(receipt.claudeModels, settings.claudeModelId),
-    settings.reasoningDepth,
+    "Codex: " + findDisplayName(receipt.codexModels, settings.codex.modelId) + " (" + (settings.codex.reasoningEffort ?? "за замовчуванням моделі") + ")",
+    "Claude Code: " + findDisplayName(receipt.claudeModels, settings.claude.modelId) + " (" + (settings.claude.reasoningEffort ?? "за замовчуванням моделі") + ")",
     settings.speedPreset
   ]
     .map(escapeHtml)
@@ -76,17 +74,17 @@ function renderModelOptions(models: readonly ProviderModelCapability[], selected
     .join("");
 }
 
-function renderDepthOptions(
-  codex: ProviderModelCapability | undefined,
-  claude: ProviderModelCapability | undefined,
-  selected: ReasoningDepth
-): string {
-  return DEPTHS.map((depth) => {
-    const supported = codex !== undefined && claude !== undefined && isDepthSupported(codex, depth) && isDepthSupported(claude, depth);
-    const checked = depth === selected ? " checked" : "";
-    const disabled = supported ? "" : " disabled aria-describedby=\"reasoning-help\"";
-    return `<label><input type="radio" name="reasoningDepth" value="${depth}"${checked}${disabled} /><span>${depth}</span></label>`;
-  }).join("");
+function renderEffortOptions(model: ProviderModelCapability | undefined, selected: ProviderReasoningEffort | null): string {
+  const efforts = model === undefined
+    ? []
+    : model.supportedReasoningEfforts.filter((effort) => isEffortSupported(model, effort));
+  const defaultOption = '<option value=""' + (selected === null ? " selected" : "") + '>За замовчуванням моделі</option>';
+  return [
+    defaultOption,
+    ...efforts.map((effort) =>
+      '<option value="' + escapeHtml(effort) + '"' + (selected === effort ? " selected" : "") + '>' + escapeHtml(effort) + "</option>"
+    )
+  ].join("");
 }
 
 export function renderAccessDeniedDocument(): string {
@@ -117,20 +115,20 @@ export function renderSettingsDocument(model: SettingsPageModel): string {
   const current = model.read.document.settings;
   const draft = model.draft ?? current;
   const formState = deriveSettingsFormState(draft, current, model.capabilityReceipt, model.now);
-  const codex = model.capabilityReceipt.codexModels.find((item) => item.productId === draft.codexModelId);
-  const claude = model.capabilityReceipt.claudeModels.find((item) => item.productId === draft.claudeModelId);
+  const codex = model.capabilityReceipt.codexModels.find((item) => item.productId === draft.codex.modelId);
+  const claude = model.capabilityReceipt.claudeModels.find((item) => item.productId === draft.claude.modelId);
   const saveDisabled = formState.canSave ? "" : " disabled";
   const changed = formState.isDirty ? '<span class="changed-label">Змінено</span>' : "";
   const clientCatalog = jsonForScript({
     codexModels: model.capabilityReceipt.codexModels.map((item) => ({
       id: item.productId,
       availability: item.availability,
-      depths: item.supportedReasoningDepths
+      efforts: item.supportedReasoningEfforts
     })),
     claudeModels: model.capabilityReceipt.claudeModels.map((item) => ({
       id: item.productId,
       availability: item.availability,
-      depths: item.supportedReasoningDepths
+      efforts: item.supportedReasoningEfforts
     }))
   });
 
@@ -181,22 +179,26 @@ export function renderSettingsDocument(model: SettingsPageModel): string {
       </section>
 
       <form id="settings-form" method="post" novalidate data-etag="${escapeHtml(model.read.etag)}" data-current="${escapeHtml(JSON.stringify(current))}">
-        <section class="settings-group" aria-labelledby="models-title">
-          <div class="group-heading"><div><p class="group-number">1</p><h2 id="models-title">Моделі</h2></div>${changed}</div>
+        <section class="settings-group" aria-labelledby="codex-title">
+          <div class="group-heading"><div><p class="group-number">1</p><h2 id="codex-title">Codex-агенти</h2></div>${changed}</div>
+          <p class="provider-description">Модель і міркування Codex налаштовуються лише для Codex. Вони не змінюють Claude Code.</p>
           <div class="field-grid">
-            <label for="codex-model"><span>Codex-агенти</span><select id="codex-model" name="codexModelId">${renderModelOptions(model.capabilityReceipt.codexModels, draft.codexModelId)}</select><small>Лише моделі, які підтвердив поточний subscription runtime.</small></label>
-            <label for="claude-model"><span>Claude Code-критик</span><select id="claude-model" name="claudeModelId">${renderModelOptions(model.capabilityReceipt.claudeModels, draft.claudeModelId)}</select><small>Окремий критик залишається обов’язковим у кожному пресеті.</small></label>
+            <label for="codex-model"><span>Модель Codex</span><select id="codex-model" name="codexModelId">${renderModelOptions(model.capabilityReceipt.codexModels, draft.codex.modelId)}</select><small>Лише моделі, які повернув поточний Codex runtime.</small></label>
+            <label for="codex-effort"><span>Міркування Codex</span><select id="codex-effort" name="codexReasoningEffort">${renderEffortOptions(codex, draft.codex.reasoningEffort)}</select><small>«За замовчуванням моделі» не передає окремий рівень у Codex.</small></label>
           </div>
         </section>
 
-        <section class="settings-group" aria-labelledby="reasoning-title">
-          <div class="group-heading"><div><p class="group-number">2</p><h2 id="reasoning-title">Глибина міркування</h2></div>${changed}</div>
-          <fieldset class="choice-row"><legend class="sr-only">Виберіть глибину міркування</legend>${renderDepthOptions(codex, claude, draft.reasoningDepth)}</fieldset>
-          <p id="reasoning-help" class="mapping-note">Доступні лише спільно підтверджені рівні двох обраних моделей. Непідтримуваний рівень не буде знижено автоматично.</p>
+        <section class="settings-group" aria-labelledby="claude-title">
+          <div class="group-heading"><div><p class="group-number">2</p><h2 id="claude-title">Claude Code-критик</h2></div>${changed}</div>
+          <p class="provider-description">Claude Code працює як незалежний критик. Його модель і рівень міркування не мають спільної шкали з Codex.</p>
+          <div class="field-grid">
+            <label for="claude-model"><span>Модель Claude Code</span><select id="claude-model" name="claudeModelId">${renderModelOptions(model.capabilityReceipt.claudeModels, draft.claude.modelId)}</select><small>Показані лише моделі, успішно перевірені в поточній Claude Code підписці.</small></label>
+            <label for="claude-effort"><span>Міркування Claude Code</span><select id="claude-effort" name="claudeReasoningEffort">${renderEffortOptions(claude, draft.claude.reasoningEffort)}</select><small>Рівні залежать від обраної Claude-моделі; однакові назви не означають однакову інтенсивність із Codex.</small></label>
+          </div>
         </section>
 
         <section class="settings-group" aria-labelledby="speed-title">
-          <div class="group-heading"><div><p class="group-number">3</p><h2 id="speed-title">Швидкість</h2></div>${changed}</div>
+          <div class="group-heading"><div><p class="group-number">3</p><h2 id="speed-title">Швидкість консиліуму</h2></div>${changed}</div>
           <fieldset class="speed-options"><legend class="sr-only">Виберіть швидкість оркестрації</legend>${SPEEDS.map((speed) => `<label><input type="radio" name="speedPreset" value="${speed.value}"${speed.value === draft.speedPreset ? " checked" : ""} /><span><strong>${speed.title}</strong><small>${speed.description}</small></span></label>`).join("")}</fieldset>
           <p class="mapping-note">Це лише оркестрація агентів. Обов’язкові межі безпеки не змінюються.</p>
         </section>

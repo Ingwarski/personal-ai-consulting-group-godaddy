@@ -1,6 +1,6 @@
 import { isValidFinalRecommendation, type FinalRecommendation } from "../consilium/final-recommendation.ts";
 import type { AgentRegistration } from "../consilium/roster.ts";
-import type { ReasoningDepth } from "../settings/types.ts";
+import type { ProviderReasoningEffort } from "../settings/types.ts";
 import type { RegistrarDO } from "../session/registrar-do.ts";
 import { CodexAppServerThreadClient, type CodexThreadLease } from "./codex-thread-client.ts";
 
@@ -91,7 +91,7 @@ export class CodexHeadSynthesizer {
   readonly #critic: AgentRegistration;
   readonly #lease: CodexThreadLease;
   readonly #threadClient: CodexAppServerThreadClient;
-  readonly #reasoningEffort: ReasoningDepth;
+  readonly #reasoningEffort: ProviderReasoningEffort | null;
 
   constructor(input: Readonly<{
     registrar: RegistrarDO;
@@ -99,7 +99,7 @@ export class CodexHeadSynthesizer {
     critic: AgentRegistration;
     lease: CodexThreadLease;
     threadClient: CodexAppServerThreadClient;
-    reasoningEffort: ReasoningDepth;
+    reasoningEffort: ProviderReasoningEffort | null;
   }>) {
     if (input.head.provider !== "codex" || input.head.runtimeSessionRef !== input.lease.threadId || input.critic.provider !== "claude_code") {
       throw new Error("The final synthesizer needs the registered head thread and Claude critic.");

@@ -1,6 +1,6 @@
 import type { ConsiliumAgentRuntime, ConsiliumEvidence, ConsiliumPhase, RuntimeEmission } from "../consilium/router.ts";
 import type { AgentRegistration } from "../consilium/roster.ts";
-import type { ReasoningDepth } from "../settings/types.ts";
+import type { ProviderReasoningEffort } from "../settings/types.ts";
 import { CodexAppServerThreadClient, type CodexThreadLease } from "./codex-thread-client.ts";
 import { deriveInternalEventId } from "../identity/ids.ts";
 import { SafeConsiliumFailure } from "../consilium/failures.ts";
@@ -13,7 +13,7 @@ export type CodexConsiliumAgentRuntimeInput = Readonly<{
   threadClient: CodexAppServerThreadClient;
   criticAgentId: string;
   headAgentId: string;
-  reasoningEffort: ReasoningDepth;
+  reasoningEffort: ProviderReasoningEffort | null;
 }>;
 
 function buildPrompt(input: Readonly<{
@@ -46,7 +46,7 @@ export class CodexConsiliumAgentRuntime implements ConsiliumAgentRuntime {
   readonly #threadClient: CodexAppServerThreadClient;
   readonly #criticAgentId: string;
   readonly #headAgentId: string;
-  readonly #reasoningEffort: ReasoningDepth;
+  readonly #reasoningEffort: ProviderReasoningEffort | null;
 
   constructor(input: CodexConsiliumAgentRuntimeInput) {
     if (input.registration.provider !== "codex" || input.registration.runtimeSessionRef !== input.lease.threadId) {

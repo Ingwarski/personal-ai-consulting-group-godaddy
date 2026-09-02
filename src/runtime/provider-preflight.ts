@@ -85,10 +85,10 @@ export function preflightSubscriptionRuntimes(
   if (codexFailure !== null) return codexFailure;
   const claudeFailure = readinessFailure("claude", input.claude.readiness);
   if (claudeFailure !== null) return claudeFailure;
-  if (!input.codex.availableModelIds.includes(input.settings.codexModelId)) {
+  if (!input.codex.availableModelIds.includes(input.settings.codex.modelId)) {
     return { ok: false, code: "codex_model_not_available" };
   }
-  if (!input.claude.availableModelIds.includes(input.settings.claudeModelId)) {
+  if (!input.claude.availableModelIds.includes(input.settings.claude.modelId)) {
     return { ok: false, code: "claude_model_not_available" };
   }
 

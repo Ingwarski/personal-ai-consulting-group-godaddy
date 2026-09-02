@@ -54,10 +54,13 @@ test("one verified local gateway wires the settings page and API to the same dur
       "sec-fetch-site": "same-origin",
       "x-csrf-token": token
     },
-    body: JSON.stringify({ ...createCapabilityReceipt().defaults, reasoningDepth: "medium" })
+    body: JSON.stringify({
+      ...createCapabilityReceipt().defaults,
+      codex: { ...createCapabilityReceipt().defaults.codex, reasoningEffort: "medium" }
+    })
   }));
   assert.equal(saved.status, 200);
-  assert.equal((await ownerSettings.read())?.document.settings.reasoningDepth, "medium");
+  assert.equal((await ownerSettings.read())?.document.settings.codex.reasoningEffort, "medium");
 });
 
 test("the verified gateway still refuses an unsafe mutation and unsupported method", async () => {
@@ -97,7 +100,10 @@ test("an Access-verified same-origin request can renew CSRF without persisting o
       "sec-fetch-site": "same-origin",
       "x-csrf-token": csrfToken
     },
-    body: JSON.stringify({ ...createCapabilityReceipt().defaults, reasoningDepth: "medium" })
+    body: JSON.stringify({
+      ...createCapabilityReceipt().defaults,
+      codex: { ...createCapabilityReceipt().defaults.codex, reasoningEffort: "medium" }
+    })
   }));
   assert.equal(saved.status, 200);
   assert.equal((await ownerSettings.read())?.document.revision, 2);
