@@ -71,7 +71,7 @@ function executablePath(value: string | undefined): string {
 function candidateModels(environment: Record<string, unknown>): readonly string[] {
   const configured = typeof environment.CLAUDE_CODE_MODEL_CANDIDATES === "string"
     ? environment.CLAUDE_CODE_MODEL_CANDIDATES.split(",").map((value) => value.trim()).filter((value) => value.length > 0)
-    : ["sonnet"];
+    : ["sonnet", "opus"];
   const unique = [...new Set(configured)];
   return unique.length > 0 && unique.length <= 4 && unique.every((value) => /^[A-Za-z0-9._-]{1,128}$/u.test(value))
     ? Object.freeze(unique)

@@ -114,7 +114,7 @@ test("fails closed for a rejected authentication check or malformed completion",
   );
 });
 
-test("discovers only aliases that complete under each actual supported effort", async () => {
+test("defaults to Sonnet and Opus, then discovers only aliases that complete under each actual supported effort", async () => {
   const calls: Parameters<CommandRunner>[0][] = [];
   const run: CommandRunner = async (input) => {
     calls.push(input);
@@ -127,7 +127,7 @@ test("discovers only aliases that complete under each actual supported effort", 
     return { exitCode: 1, stdout: "", stderr: "" };
   };
   const process = createGoDaddyClaudeCodeProcess({
-    environment: { ...secretEnvironment, CLAUDE_CODE_MODEL_CANDIDATES: "sonnet,opus" },
+    environment: secretEnvironment,
     getModels: models,
     run
   });
@@ -141,4 +141,5 @@ test("discovers only aliases that complete under each actual supported effort", 
     reasoningMappings: { low: "low", medium: "medium", high: "high" }
   }]);
   assert.equal(calls.length, 9);
+  assert.equal(calls.some((call) => call.arguments.includes("opus")), true);
 });
