@@ -61,6 +61,33 @@ dashboard table list are not database isolation.
 No Preview state was created or inspected during this verification. No database
 row, schema object, export or import was changed.
 
+## Read-only database and recovery inventory
+
+The GoDaddy read-only table browser returned exactly three base tables in the
+shared hosted database:
+
+| Table | Read-only schema metadata |
+| --- | --- |
+| `personal_consultant_state` | `state_namespace`, `state_key` (composite primary key), `state_value`, `updated_at` |
+| `personal_consultant_archives` | `archive_id` (primary key), `lifecycle`, `created_at`, `manifest`, `iv_base64`, `ciphertext_base64` |
+| `personal_consultant_archive_tombstones` | `archive_id` (primary key), `deleted_at`, `plaintext_sha256` |
+
+No table data, row counts, secrets, exports, imports or schema mutations were
+read or performed. The browser does not provide the needed metadata-only
+catalog of views, triggers, events, object sizes, counts or privileges.
+
+The isolated repository's historical migration record establishes that legacy
+HappyPro persistence used `happypro_access_store`, including certificate PDF
+payload and integrity-digest evidence. It does not map that historical runtime
+to the currently attached GoDaddy database. The current three-table inventory
+therefore cannot prove that the old state was recovered, absent, or exclusive
+to this app.
+
+Exporting the currently attached database would only create a backup of this
+unreconciled current state, not a recovery backup of the historical HappyPro
+state. No export or restore was performed, because no isolated recovery target
+has been evidenced.
+
 ## G-00 result: documented no-go for destructive migration
 
 The Node runtime/restart portion is verified, but G-00 is not complete and no
