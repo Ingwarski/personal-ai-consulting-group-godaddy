@@ -1,0 +1,64 @@
+# G-00 feasibility receipt — 03.09.2026
+
+## Scope
+
+This receipt records a non-destructive verification of the existing GoDaddy
+Node.js app `wy2v0putg6`. It does not authorize legacy cleanup, secret
+rotation, database import/export, schema mutation, domain changes or a
+HappyPro repository action.
+
+## Redacted environment inventory
+
+| Item | Observed result |
+| --- | --- |
+| Provider application | GoDaddy Node.js app `wy2v0putg6` (`Personal AI Consulting Group`) |
+| Published source | Git `main`, commit `31fdf9e51e18174c892265c5f6792c241a0f3aaa` |
+| Published runtime | Node.js 22, Europe region |
+| Published status | GoDaddy dashboard reported infrastructure and site status as operational |
+| Database resource | One GoDaddy hosted MySQL resource |
+| Database variant boundary | GoDaddy states that Preview and Published use the same database |
+| Secret handling observed | The dashboard labels values encrypted and runtime-only; no value was viewed, copied or recorded |
+
+## Controlled Published restart
+
+1. Before the restart, `GET /healthz` returned HTTP 200 with the Node runtime
+   readiness response.
+2. The Published restart control was invoked in the GoDaddy dashboard.
+3. GoDaddy returned the success notice: Published application restarted.
+4. Immediately after that notice, `GET https://wy2v0putg6.c35.airoapp.ai/healthz`
+   returned HTTP 200 with `cache-control: no-store` and the expected Node 22
+   readiness response.
+
+This proves the narrow Node build/start/`PORT`/health/restart contract for the
+Published revision above. It does not prove persistence of product state,
+rollback, a backup or any untested provider capability.
+
+## Preview safety decision
+
+The provider's shared-MySQL statement means Preview is not an isolated
+persistence environment. The Node adapter therefore retains the existing
+fail-closed boundary: storage requires the exact Published state role, and
+Preview must remain stateless. Shared tables, a different app variant, or a
+dashboard table list are not database isolation.
+
+No Preview state was created or inspected during this verification. No database
+row, schema object, export or import was changed.
+
+## G-00 result: documented no-go for destructive migration
+
+The Node runtime/restart portion is verified, but G-00 is not complete and no
+destructive action is eligible. The following evidence is still required:
+
+1. A content-free deployed-app-to-database mapping, reconciliation of the
+   historic `happypro_access_store` evidence, an encrypted backup, and an
+   isolated restore/reconciliation drill.
+2. A provider-supported design and evidence for private durable Matrix crypto
+   state, isolated subscription OAuth credentials, child-process/native-module
+   behavior, outbound-network policy, and application-encrypted archive
+   storage across restart.
+3. An action-time destructive manifest naming the exact legacy source routing,
+   each secret entry, database-object allowlist, upstream revoke/rotate steps,
+   post-action absence checks, and a fresh owner confirmation.
+
+Until those gates are evidenced, preserve the legacy source and all secrets and
+database state. The next plan unit must not start as an implementation claim.
