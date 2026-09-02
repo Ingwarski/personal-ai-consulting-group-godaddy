@@ -23,6 +23,7 @@
     "wrangler": "^4.123.0"
   },
   "dependencies": {
+    "@anthropic-ai/claude-code": "2.1.258",
     "mysql2": "^3.24.2"
   }
 }
