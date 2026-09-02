@@ -114,10 +114,10 @@ function submittedHttpsOrigin(request: Request): string | undefined {
 }
 
 function isOwnerNavigation(request: Request, expectedOrigin: string): boolean {
-  // A cross-site browser request cannot present the host-only, SameSite=Strict
-  // owner cookie.  Do not depend on proxy-controlled Host/X-Forwarded-Proto:
-  // the signed session holds the browser origin selected at password sign-in.
-  return request.headers.get("sec-fetch-site") !== "cross-site" && submittedHttpsOrigin(request) === expectedOrigin;
+  // Do not depend on proxy-controlled Host/X-Forwarded-Proto. The signed
+  // session holds the browser origin selected at password sign-in, while
+  // Fetch Metadata must independently identify the request as same-origin.
+  return request.headers.get("sec-fetch-site") === "same-origin" && submittedHttpsOrigin(request) === expectedOrigin;
 }
 
 async function parseLoginForm(request: Request): Promise<Readonly<{ formToken: string; password: string }> | undefined> {
@@ -303,7 +303,7 @@ export function createGoDaddySettingsRuntime(
       if (url.pathname === "/auth/sign-in") {
         if (request.method !== "POST") return plain("Method not allowed.", 405, { allow: "GET, POST" });
         const submittedOrigin = submittedHttpsOrigin(request);
-        if (submittedOrigin === undefined || request.headers.get("sec-fetch-site") === "cross-site") return plain("Access denied.", 403);
+        if (submittedOrigin === undefined || request.headers.get("sec-fetch-site") !== "same-origin") return plain("Access denied.", 403);
         const form = await parseLoginForm(request);
         const result = await owner.finish({
           cookieHeader: request.headers.get("cookie"),
@@ -313,7 +313,7 @@ export function createGoDaddySettingsRuntime(
         });
         if (result.ok) return redirect(receipt === undefined ? "/operations/runtime" : "/settings", [result.setCookie, result.clearCookie]);
         const retry = await owner.start();
-        return html(loginDocument(retry.formToken, true), 403, [retry.setCookie, result.clearCookie]);
+        return html(loginDocument(retry.formToken, true), 403, [result.clearCookie, retry.setCookie]);
       }
 
       if (url.pathname === "/auth/sign-out") {

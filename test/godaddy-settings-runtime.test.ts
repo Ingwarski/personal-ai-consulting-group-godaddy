@@ -58,6 +58,7 @@ test("GoDaddy Settings starts only a local owner-password session before it open
 
   const login = await runtime.handle(new Request("https://settings.example.test/auth/sign-in", { headers: originHeaders }));
   assert.equal(login?.status, 200);
+  assert.equal(login?.headers.get("referrer-policy"), "same-origin");
   const loginDocument = await login?.text();
   assert.equal(loginDocument?.includes("Ключ входу"), true);
   const cookies = (login?.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie?.() ?? [];
@@ -122,6 +123,7 @@ test("owner sign-in ignores GoDaddy internal Host and HTTP upstream protocol whi
       ...proxyHeaders,
       cookie: loginCookie.slice(0, loginCookie.indexOf(";")),
       origin: "https://settings.example.test",
+      "sec-fetch-site": "same-origin",
       "content-type": "application/x-www-form-urlencoded",
       "content-length": String(form.length)
     },
@@ -129,6 +131,61 @@ test("owner sign-in ignores GoDaddy internal Host and HTTP upstream protocol whi
   }));
   assert.equal(signedIn?.status, 303);
   assert.equal(signedIn?.headers.get("location"), "/settings");
+});
+
+test("a rejected password rotates the one-time login challenge without clearing the replacement cookie", async () => {
+  const runtime = createGoDaddySettingsRuntime(configuredEnvironment, {
+    createPool: () => new UnusedPool(),
+    now: () => activeNow
+  });
+  const login = await runtime.handle(new Request("https://settings.example.test/auth/sign-in", { headers: originHeaders }));
+  const loginDocument = await login?.text();
+  const loginCookie = (login?.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie?.()[0];
+  const formToken = /name="formToken" value="([A-Za-z0-9_-]+)"/u.exec(loginDocument ?? "")?.[1];
+  if (loginCookie === undefined || formToken === undefined) throw new Error("Expected login challenge.");
+
+  const wrongForm = new URLSearchParams({ formToken, password: "not-the-owner-password" }).toString();
+  const rejected = await runtime.handle(new Request("https://settings.example.test/auth/sign-in", {
+    method: "POST",
+    headers: {
+      ...originHeaders,
+      cookie: loginCookie.slice(0, loginCookie.indexOf(";")),
+      origin: "https://settings.example.test",
+      "sec-fetch-site": "same-origin",
+      "content-type": "application/x-www-form-urlencoded",
+      "content-length": String(wrongForm.length)
+    },
+    body: wrongForm
+  }));
+  assert.equal(rejected?.status, 403);
+  const retryDocument = await rejected?.text();
+  assert.match(retryDocument ?? "", /Доступ відхилено\./u);
+  const retryToken = /name="formToken" value="([A-Za-z0-9_-]+)"/u.exec(retryDocument ?? "")?.[1];
+  const retryCookies = (rejected?.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie?.()
+    .filter((cookie) => cookie.startsWith("__Host-personal-consultant-login=")) ?? [];
+  const finalRetryCookie = retryCookies.at(-1);
+  assert.equal(retryCookies.length, 2);
+  assert.equal(retryCookies[0]?.includes("Max-Age=0"), true);
+  assert.equal(finalRetryCookie?.includes("Max-Age=600"), true);
+  if (retryToken === undefined || finalRetryCookie === undefined) throw new Error("Expected replacement login challenge.");
+
+  const correctForm = new URLSearchParams({
+    formToken: retryToken,
+    password: configuredEnvironment.SETTINGS_OWNER_PASSWORD
+  }).toString();
+  const signedIn = await runtime.handle(new Request("https://settings.example.test/auth/sign-in", {
+    method: "POST",
+    headers: {
+      ...originHeaders,
+      cookie: finalRetryCookie.slice(0, finalRetryCookie.indexOf(";")),
+      origin: "https://settings.example.test",
+      "sec-fetch-site": "same-origin",
+      "content-type": "application/x-www-form-urlencoded",
+      "content-length": String(correctForm.length)
+    },
+    body: correctForm
+  }));
+  assert.equal(signedIn?.status, 303);
 });
 
 test("the owner-only runtime operation can begin Codex device authorization without exposing a credential to public routes", async () => {

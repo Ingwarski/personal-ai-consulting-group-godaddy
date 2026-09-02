@@ -286,7 +286,7 @@ Matrix transcript і R2 archive зберігають тільки фактичн
 `SUR-02` не завантажує third-party scripts, fonts, analytics або remote embeds. Мінімальна policy:
 
 - CSP: `default-src 'self'`, `script-src 'self'`, `style-src 'self'`, `connect-src 'self'`, `img-src 'self' data:`, `object-src 'none'`, `base-uri 'none'`, `form-action 'self'`, `frame-ancestors 'none'`;
-- `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`;
+- `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` so same-origin HTML form submissions retain their exact `Origin` while cross-origin destinations receive no `Referer`;
 - restrictive `Permissions-Policy`, HSTS на hostname, secure Access cookies;
 - no inline script/eval, no source maps із secrets/config, no sensitive browser persistence;
 - API/HTML/assets `Cache-Control: no-store`; error pages теж не кешуються.
