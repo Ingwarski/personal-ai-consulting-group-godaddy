@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { FORBIDDEN_RUNTIME_ENVIRONMENT_NAMES } from "./forbidden-environment.mjs";
+import { GoDaddyNode22CryptoCompatibilityProbe } from "./node22-crypto-compatibility-probe.mjs";
 import { createGoDaddySettingsRuntime } from "./settings-runtime.ts";
 
 export const GODADDY_NODE_MAJOR = 22;
@@ -82,7 +83,11 @@ const writeResponse = async (response, output) => {
   output.end(Buffer.from(await response.arrayBuffer()));
 };
 
-export function createGodaddyServer({ environment = process.env, nodeVersion = process.version } = {}) {
+export function createGodaddyServer({
+  environment = process.env,
+  nodeVersion = process.version,
+  node22CryptoCompatibilityProbe = new GoDaddyNode22CryptoCompatibilityProbe()
+} = {}) {
   const status = getGodaddyRuntimeStatus({ environment, nodeVersion });
   const settings = status.ok ? createGoDaddySettingsRuntime(environment) : undefined;
 
@@ -98,6 +103,13 @@ export function createGodaddyServer({ environment = process.env, nodeVersion = p
       return json(response, status.ok ? 200 : 503, status.ok
         ? { status: "runtime_ready", code: "personal_consultant_settings_slice_pending_configuration" }
         : { status: "blocked", code: status.code });
+    }
+
+    if (url.pathname === "/__godaddy-node22-crypto-compatibility") {
+      if (!status.ok) return json(response, 503, { status: "blocked", code: status.code });
+      if (request.method === "POST") return json(response, 200, await node22CryptoCompatibilityProbe.start());
+      if (request.method === "DELETE") return json(response, 200, await node22CryptoCompatibilityProbe.remove());
+      return json(response, 405, { status: "method_not_allowed" });
     }
 
     if (status.ok && settings !== undefined) {
