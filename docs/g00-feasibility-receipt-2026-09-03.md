@@ -68,6 +68,14 @@ that store, and the Git-connected Files surface is read-only. Creating a bot or
 private E2EE room before resolving this would produce an unsafe, non-restart-safe
 runtime rather than an integration result.
 
+A later Preview-only compatibility probe did mechanically import the current
+`@matrix-org/matrix-sdk-crypto-nodejs` `0.6.6` musl binding and create then
+close synthetic encrypted SQLite stores on GoDaddy Node `v22.23.2`. The package
+declares Node `>=24`; therefore this is an observed compatibility result, not a
+vendor-supported production design. The complete scope, prior `0.4.0` ABI
+failure and cleanup receipt are recorded in
+[`godaddy-preview-matrix-capability-probe-2026-09-03.md`](./godaddy-preview-matrix-capability-probe-2026-09-03.md).
+
 ## Preview safety decision
 
 The provider's shared-MySQL statement means Preview is not an isolated
