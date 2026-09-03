@@ -45,30 +45,6 @@ test("GoDaddy health fails closed without runtime configuration or with forbidde
   });
 });
 
-test("the temporary native-import diagnostic has a narrow read-only contract", async (t) => {
-  const receipt = {
-    ok: true,
-    packageInstalled: true,
-    nativeBinding: "unavailable",
-    node: "v22.16.0",
-    platform: "linux",
-    architecture: "x64",
-    failure: { kind: "module_or_native_binary_missing", code: "ERR_MODULE_NOT_FOUND", message: "test" }
-  };
-  await withServer(t, {
-    environment: supportedEnvironment,
-    nodeVersion: "v22.16.0",
-    diagnoseNativeImport: async () => receipt
-  }, async (origin) => {
-    const response = await fetch(`${origin}/__godaddy-native-import-diagnostic`);
-    assert.equal(response.status, 200);
-    assert.deepEqual(await response.json(), receipt);
-
-    const rejected = await fetch(`${origin}/__godaddy-native-import-diagnostic`, { method: "POST" });
-    assert.equal(rejected.status, 405);
-  });
-});
-
 test("GoDaddy server preserves its health probe while Settings stays unavailable without configuration", async (t) => {
   await withServer(t, { environment: supportedEnvironment, nodeVersion: "v22.16.0" }, async (origin) => {
     const root = await fetch(`${origin}/`);

@@ -3,7 +3,6 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { FORBIDDEN_RUNTIME_ENVIRONMENT_NAMES } from "./forbidden-environment.mjs";
-import { diagnoseMatrixNativeImport } from "./native-import-diagnostic.mjs";
 import { createGoDaddySettingsRuntime } from "./settings-runtime.ts";
 
 export const GODADDY_NODE_MAJOR = 22;
@@ -83,11 +82,7 @@ const writeResponse = async (response, output) => {
   output.end(Buffer.from(await response.arrayBuffer()));
 };
 
-export function createGodaddyServer({
-  environment = process.env,
-  nodeVersion = process.version,
-  diagnoseNativeImport = diagnoseMatrixNativeImport
-} = {}) {
+export function createGodaddyServer({ environment = process.env, nodeVersion = process.version } = {}) {
   const status = getGodaddyRuntimeStatus({ environment, nodeVersion });
   const settings = status.ok ? createGoDaddySettingsRuntime(environment) : undefined;
 
@@ -103,12 +98,6 @@ export function createGodaddyServer({
       return json(response, status.ok ? 200 : 503, status.ok
         ? { status: "runtime_ready", code: "personal_consultant_settings_slice_pending_configuration" }
         : { status: "blocked", code: status.code });
-    }
-
-    if (url.pathname === "/__godaddy-native-import-diagnostic") {
-      if (!status.ok) return json(response, 503, { status: "blocked", code: status.code });
-      if (request.method !== "GET") return json(response, 405, { status: "method_not_allowed" });
-      return json(response, 200, await diagnoseNativeImport());
     }
 
     if (status.ok && settings !== undefined) {
