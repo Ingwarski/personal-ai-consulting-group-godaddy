@@ -45,6 +45,36 @@ test("GoDaddy health fails closed without runtime configuration or with forbidde
   });
 });
 
+test("the temporary capability probe has a narrow method-only contract and remains unavailable to an invalid runtime", async (t) => {
+  const calls = [];
+  const capabilityProbe = {
+    start: async () => { calls.push("start"); return { ok: true, phase: "started" }; },
+    status: async () => { calls.push("status"); return { ok: true, phase: "status" }; },
+    remove: async () => { calls.push("remove"); return { ok: true, phase: "removed" }; }
+  };
+  await withServer(t, {
+    environment: supportedEnvironment,
+    nodeVersion: "v22.16.0",
+    capabilityProbe
+  }, async (origin) => {
+    const started = await fetch(`${origin}/__godaddy-capability-probe`, { method: "POST" });
+    const status = await fetch(`${origin}/__godaddy-capability-probe`);
+    const removed = await fetch(`${origin}/__godaddy-capability-probe`, { method: "DELETE" });
+    const rejected = await fetch(`${origin}/__godaddy-capability-probe`, { method: "PATCH" });
+    assert.deepEqual(await started.json(), { ok: true, phase: "started" });
+    assert.deepEqual(await status.json(), { ok: true, phase: "status" });
+    assert.deepEqual(await removed.json(), { ok: true, phase: "removed" });
+    assert.equal(rejected.status, 405);
+    assert.deepEqual(calls, ["start", "status", "remove"]);
+  });
+
+  await withServer(t, { environment: {}, capabilityProbe }, async (origin) => {
+    const response = await fetch(`${origin}/__godaddy-capability-probe`);
+    assert.equal(response.status, 503);
+    assert.deepEqual(await response.json(), { status: "blocked", code: "invalid_runtime_mode" });
+  });
+});
+
 test("GoDaddy server preserves its health probe while Settings stays unavailable without configuration", async (t) => {
   await withServer(t, { environment: supportedEnvironment, nodeVersion: "v22.16.0" }, async (origin) => {
     const root = await fetch(`${origin}/`);
