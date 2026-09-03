@@ -52,13 +52,15 @@ test("the capability probe creates only synthetic crypto stores and proves their
   assert.equal(await first.directoryExists("tmp"), false);
 });
 
-test("the capability probe fails closed when the native module is unavailable", async () => {
+test("the capability probe proves filesystem persistence when the native module is unavailable", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "godaddy-capability-probe-no-native-test-"));
   const probe = new GoDaddyMatrixCapabilityProbe({
-    workingDirectory: join(tmpdir(), "probe-no-native-app"),
-    temporaryDirectory: join(tmpdir(), "probe-no-native-tmp"),
+    workingDirectory: join(root, "app"),
+    temporaryDirectory: join(root, "tmp"),
     fetchImpl: async () => { throw new Error("blocked"); },
     loadCrypto: async () => { throw new Error("native module unavailable"); }
   });
+  t.after(() => probe.remove());
   const result = await probe.start();
   assert.deepEqual(result, {
     ok: true,
@@ -66,8 +68,23 @@ test("the capability probe fails closed when the native module is unavailable", 
     childProcess: true,
     matrixHttps: false,
     stores: [
-      { kind: "app", writable: false, cryptoStore: false },
-      { kind: "tmp", writable: false, cryptoStore: false }
+      { kind: "app", writable: true, cryptoStore: false },
+      { kind: "tmp", writable: true, cryptoStore: false }
+    ]
+  });
+
+  const restarted = new GoDaddyMatrixCapabilityProbe({
+    workingDirectory: join(root, "app"),
+    temporaryDirectory: join(root, "tmp"),
+    fetchImpl: async () => { throw new Error("blocked"); },
+    loadCrypto: async () => { throw new Error("native module unavailable"); }
+  });
+  assert.deepEqual(await restarted.status(), {
+    ok: true,
+    nativeCrypto: false,
+    stores: [
+      { kind: "app", survivedRestart: true, cryptoStoreReopened: false },
+      { kind: "tmp", survivedRestart: true, cryptoStoreReopened: false }
     ]
   });
 });

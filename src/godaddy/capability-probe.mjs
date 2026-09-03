@@ -75,6 +75,23 @@ const loadMarker = async (path) => {
   }
 };
 
+const writeMarker = async (directory, bootId) => {
+  try {
+    await mkdir(directory, { recursive: true, mode: 0o700 });
+    await writeFile(join(directory, MARKER_FILE_NAME), JSON.stringify({
+      version: 1,
+      writerBootId: bootId,
+      createdAt: now()
+    }), {
+      encoding: "utf8",
+      mode: 0o600
+    });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 /**
  * This route exists only for a one-time, content-free GoDaddy Preview
  * capability check. It has no Matrix credential, no real Matrix identity,
@@ -116,6 +133,11 @@ export class GoDaddyMatrixCapabilityProbe {
   }
 
   async #start() {
+    const writableByKind = new Map();
+    for (const target of this.#directories) {
+      writableByKind.set(target.kind, await writeMarker(target.directory, this.#bootId));
+    }
+
     let crypto;
     try {
       crypto = await this.#loadCrypto();
@@ -125,23 +147,26 @@ export class GoDaddyMatrixCapabilityProbe {
         nativeCrypto: false,
         childProcess: await runChildProcess(this.#spawn),
         matrixHttps: await checkMatrixEgress(this.#fetch),
-        stores: this.#directories.map(({ kind }) => ({ kind, writable: false, cryptoStore: false }))
+        stores: this.#directories.map(({ kind }) => ({
+          kind,
+          writable: writableByKind.get(kind),
+          cryptoStore: false
+        }))
       };
     }
 
     const stores = [];
     for (const target of this.#directories) {
       const cryptoDirectory = join(target.directory, CRYPTO_DIRECTORY_NAME);
-      const markerPath = join(target.directory, MARKER_FILE_NAME);
       let writable = false;
       let cryptoStore = false;
       try {
+        writable = writableByKind.get(target.kind);
+        if (!writable) {
+          stores.push({ kind: target.kind, writable, cryptoStore });
+          continue;
+        }
         await mkdir(cryptoDirectory, { recursive: true, mode: 0o700 });
-        await writeFile(markerPath, JSON.stringify({ version: 1, writerBootId: this.#bootId, createdAt: now() }), {
-          encoding: "utf8",
-          mode: 0o600
-        });
-        writable = true;
         const machine = await crypto.OlmMachine.initialize(
           new crypto.UserId(SYNTHETIC_USER_ID),
           new crypto.DeviceId(SYNTHETIC_DEVICE_ID),
@@ -171,7 +196,18 @@ export class GoDaddyMatrixCapabilityProbe {
     try {
       crypto = await this.#loadCrypto();
     } catch {
-      return { ok: true, nativeCrypto: false, stores: this.#directories.map(({ kind }) => ({ kind, survivedRestart: false, cryptoStoreReopened: false })) };
+      return {
+        ok: true,
+        nativeCrypto: false,
+        stores: await Promise.all(this.#directories.map(async ({ kind, directory }) => {
+          const marker = await loadMarker(join(directory, MARKER_FILE_NAME));
+          return {
+            kind,
+            survivedRestart: marker !== undefined && marker.writerBootId !== this.#bootId,
+            cryptoStoreReopened: false
+          };
+        }))
+      };
     }
 
     const stores = [];
