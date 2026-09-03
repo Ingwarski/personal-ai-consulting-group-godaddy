@@ -45,27 +45,6 @@ test("GoDaddy health fails closed without runtime configuration or with forbidde
   });
 });
 
-test("the temporary Node 22 crypto compatibility probe is constrained to Preview-safe methods", async (t) => {
-  const calls = [];
-  const probe = {
-    start: async () => { calls.push("start"); return { ok: true, imported: true }; },
-    remove: async () => { calls.push("remove"); return { ok: true, removed: true }; }
-  };
-  await withServer(t, {
-    environment: supportedEnvironment,
-    nodeVersion: "v22.16.0",
-    node22CryptoCompatibilityProbe: probe
-  }, async (origin) => {
-    const started = await fetch(`${origin}/__godaddy-node22-crypto-compatibility`, { method: "POST" });
-    const removed = await fetch(`${origin}/__godaddy-node22-crypto-compatibility`, { method: "DELETE" });
-    const rejected = await fetch(`${origin}/__godaddy-node22-crypto-compatibility`);
-    assert.deepEqual(await started.json(), { ok: true, imported: true });
-    assert.deepEqual(await removed.json(), { ok: true, removed: true });
-    assert.equal(rejected.status, 405);
-    assert.deepEqual(calls, ["start", "remove"]);
-  });
-});
-
 test("GoDaddy server preserves its health probe while Settings stays unavailable without configuration", async (t) => {
   await withServer(t, { environment: supportedEnvironment, nodeVersion: "v22.16.0" }, async (origin) => {
     const root = await fetch(`${origin}/`);
