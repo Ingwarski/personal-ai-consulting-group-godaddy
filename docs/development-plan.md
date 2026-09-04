@@ -1,7 +1,7 @@
 # Development Plan
 
-- `status`: Node 22 runtime scaffold locally verified; all-GoDaddy production feasibility remains blocked
-- `updated_at`: `2026-09-02`
+- `status`: Node 22 scaffold and Preview Rust Matrix capability gate verified; all-GoDaddy production feasibility remains blocked
+- `updated_at`: `2026-09-04`
 
 ## Source References
 
@@ -19,7 +19,7 @@
 
 ## All-GoDaddy precondition
 
-The user-selected hosting direction is the existing GoDaddy Node.js app, not a direct Worker deployment. The original checkout required Node.js `>=24`, supplied no Node HTTP `start` contract, and contains Cloudflare Worker/DO/R2-oriented adapters. A Node 22 build/start/`PORT`/health scaffold is now locally verified, but it fails closed and presents no product surface. The remaining feasibility gate must pass before legacy-code cleanup, secret removal, database cleanup or any production claim.
+The user-selected hosting direction is the existing GoDaddy Node.js app, not a direct Worker deployment. The original checkout required Node.js `>=24`, supplied no Node HTTP `start` contract, and contains Cloudflare Worker/DO/R2-oriented adapters. A Node 22 build/start/`PORT`/health scaffold is now locally verified. On 04.09.2026, the temporary Preview Rust Matrix gate also proved verified static-binary execution, encrypted SQLite create/reopen, wrong-key rejection, Matrix HTTPS request construction, exclusive locking and persistence through restart/redeploy. The synthetic store, route, workflow and artifact were removed after the receipt. This advances only the Matrix-native capability subgate; the remaining feasibility gates must pass before legacy-code cleanup, secret removal, database cleanup or any production claim.
 
 `Preview` and `Published` must not be treated as isolated merely because they are variants. A stateful Preview requires provider-proven separate database/schema+credential; otherwise its scope is stateless build/UI verification only. An empty database table list in the dashboard is insufficient proof of legacy-data absence or exclusive ownership.
 
@@ -49,11 +49,11 @@ The user-selected hosting direction is the existing GoDaddy Node.js app, not a d
 - **Purpose:** establish whether the requested GoDaddy target can satisfy retained V1 invariants and whether legacy HappyPro state can be recovered before any irreversible change.
 - **Source References:** architecture §25; PRD `FR-001`–`FR-046`, `NFR-001`–`NFR-019`; DoD `G-01`, `G-02`–`G-20`; QA `QA-RR-001` and all applicable `QA-PA-*`.
 - **Depends On:** explicit hosting direction from the Owner; no legacy or provider-data mutation.
-- **Work Items:** inventory deployed app/source/variant/database resource metadata without secret values or database payloads; map runtime to database; reconcile historic HappyPro persistence evidence; preserve immutable Git rollback artifact; create encrypted backup and prove an isolated restore; verify Node 22 build/start/`PORT` and restart semantics in an isolated target; obtain provider evidence for database isolation, private durable storage, child-process/native-dependency feasibility and outbound policy; define a GoDaddy-equivalent design for registrar, Matrix crypto state, Google-only Settings, subscription OAuth and encrypted archive. The local Node 22 build/start/health contract is complete; Preview returned a zero-table read-only metadata receipt and its temporary probe is retired. Restart/redeploy proof in GoDaddy and all stateful-equivalence work remain open.
+- **Work Items:** inventory deployed app/source/variant/database resource metadata without secret values or database payloads; map runtime to database; reconcile historic HappyPro persistence evidence; preserve immutable Git rollback artifact; create encrypted backup and prove an isolated restore; obtain provider evidence for database isolation and outbound policy; define and verify GoDaddy-equivalent registrar, Matrix crypto state, owner-secret Settings, subscription OAuth and encrypted archive. The local Node 22 build/start/health contract is complete. Preview returned a zero-table read-only metadata receipt; the 04.09.2026 Rust Matrix synthetic-store gate proved verified native execution and restart/redeploy persistence, then was retired. Published process supervision, real Matrix room/device evidence and all remaining stateful-equivalence work remain open.
 - **Acceptance Checks:** dashboard table absence is never accepted as database-wipe authority; no legacy source/secrets/data are deleted; no stateful Preview is used without independent database/schema+credential; all missing provider guarantees become an explicit blocker rather than an assumption.
-- **Verification:** redacted metadata inventory; backup hash and restore/reconciliation result; Node 22 build/start/health/restart receipt; provider capability evidence; architecture review mapping every V1 invariant to a GoDaddy equivalent or a no-go result.
+- **Verification:** redacted metadata inventory; backup hash and restore/reconciliation result; Node 22 build/start/health receipt; the completed content-free Preview Rust Matrix gate receipt; provider capability evidence; architecture review mapping every V1 invariant to a GoDaddy equivalent or a no-go result.
 - **Delivery Layer:** feasibility/recovery.
-- **Interfaces Produced:** content-free environment inventory, recovery receipt, and an approved GoDaddy runtime contract or a documented no-go.
+- **Interfaces Produced:** content-free environment inventory, recovery receipt, Rust Matrix capability receipt, and an approved GoDaddy runtime contract or a documented no-go.
 - **Interfaces Consumed:** none.
 - **Integration Verification:** no destructive action is eligible until the G-00 evidence bundle and action-time destructive manifest are both complete.
 
@@ -157,9 +157,9 @@ The user-selected hosting direction is the existing GoDaddy Node.js app, not a d
 - **Purpose:** attach one `matrix.org` bot to the registrar, enforce the room/device invariant and deliver confirmed messages into the same private E2EE room.
 - **Source References:** PRD `FR-001`–`FR-006`, `FR-014`–`FR-019`, `FR-034`; architecture §§4–6, 16–17; DoD `G-02`, `G-03`, `G-12`, `G-14`; QA `QA-PA-005`–`QA-PA-006`, `QA-DEV-001`–`QA-DEV-006`.
 - **Depends On:** U-01, U-05; hosted-provider authorization is required only immediately before deploy/test.
-- **Work Items:** create `src/matrix/bridge.ts`, room-invariant validator, consent/intake policy projection and Matrix-event formatter; use persistent encrypted bot crypto store; map native replies to registrar relation records; distinguish provider acceptance from device delivery.
+- **Work Items:** create `src/matrix/bridge.ts`, a Node supervisor that launches one checksum-pinned static Rust `matrix-sdk` sidecar through bounded private NDJSON stdio, room-invariant validator, consent/intake policy projection and Matrix-event formatter; use the sidecar's persistent encrypted bot crypto store; map native replies to registrar relation records; distinguish provider acceptance from device delivery. Rebuild the sidecar source and CI artifact as production work rather than reusing the retired Preview probe.
 - **Acceptance Checks:** incorrect room, identity or device starts no session and reads no protected data; secret content stops before dispatch/storage; visible role/time/body comes only after registrar confirmation.
-- **Verification:** local adapter contract tests with sanitized event fixtures; controlled `matrix.org` room/device E2E after the owner account and bot are configured; four-client Matrix evidence required before release claim.
+- **Verification:** checksum/NDJSON/timeout/lock negative tests and sanitized adapter fixtures; controlled `matrix.org` room/device E2E only after separate just-in-time authorization configures the owner account and bot; four-client Matrix evidence required before release claim. The 04.09.2026 Preview gate is feasibility evidence only, not U-06 completion.
 - **Delivery Layer:** integration.
 - **Baseline Impact:** user-visible states/data/actions enabled for `SUR-01`, `MG-01`–`MG-13`, `SS-01`–`SS-29`.
 - **Prototype Reuse:** none.

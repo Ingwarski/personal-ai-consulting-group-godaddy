@@ -2,10 +2,10 @@
 
 ## Метадані
 
-- `status`: all-GoDaddy target recorded; Node 22 runtime scaffold locally verified; production feasibility blocked
+- `status`: all-GoDaddy target recorded; Node 22 scaffold and Preview Rust Matrix capability gate verified; production feasibility remains blocked
 - `architecture_owner`: `to-architecture`
 - `owner_invocation_id`: `e05a1a53-1bfe-4a6b-a6db-a3ba80de9266`
-- `updated_at`: `2026-09-02`
+- `updated_at`: `2026-09-04`
 - `design_direction`: Candidate B для живого дослівного консиліуму
 - `product_surfaces`: 2 (`SUR-01`, `SUR-02`)
 - `requirements`: 29 user stories, 46 FR, 19 NFR, 16 AC
@@ -442,7 +442,7 @@ Multiuser, third-party access або commercial-service expansion анулює �
 
 Власник визначив ціль: перенести V1 повністю до існуючого GoDaddy Node.js app після removal legacy HappyPro code, secrets and database state. Це є **target direction**, а не дозвіл назвати current checkout deployable або очистити legacy state без recovery proof.
 
-Verified platform evidence: GoDaddy Published is described by the provider as a persistent Node.js 22 process that supports long-lived connections. This removes the Preview idle-sleep concern; it does not prove restart/redeploy behavior, private durable storage, process isolation, database isolation, native dependency support, credential fencing, or rollback for this V1.
+Verified platform evidence: GoDaddy Published is described by the provider as a persistent Node.js 22 process that supports long-lived connections. This removes the Preview idle-sleep concern; it does not by itself prove private durable storage, process isolation, database isolation, credential fencing, or rollback for this V1. On 04.09.2026, a Preview-only, content-free Rust Matrix capability gate separately proved that a verified static x86_64 musl binary can open an encrypted Matrix SDK SQLite store, reject a wrong passphrase, reach the Matrix HTTPS request path, enforce an exclusive store lock, and reopen the same store after both Preview restart and code redeploy. Its synthetic store and temporary route were deleted after the receipt. This is narrow runtime/storage evidence, not a Published or real Matrix-room claim.
 
 The locally verified Node 22 scaffold has an explicit `build`, `start`, `PORT` and `/healthz` contract. It starts only as a safe deployment gate: an invalid runtime mode, forbidden provider environment material or a non-Node-22 runtime makes health return `503`. When the runtime is valid, the root returns `200` solely so GoDaddy can verify the process; its response explicitly states that the Settings slice still requires configuration. It is not a production topology approval or evidence that the V1 is migrated.
 
@@ -452,7 +452,7 @@ On 02.09.2026 the temporary Preview-only metadata probe completed one `informati
 
 - The Cloudflare reference topology is not directly deployable to GoDaddy: it depends on `OWNER_SETTINGS`, `REGISTRAR`, asset bindings and Cloudflare Access JWT behavior. The checkout now has a separate Node.js 22 build/start/`PORT` contract, but that is not a replacement for those dependencies.
 - `src/worker.ts` depends on `OWNER_SETTINGS`, `REGISTRAR`, asset binding and Cloudflare Access JWT behavior; `CAPABILITY_CATALOG` is not yet wired. Archive code has an R2 adapter.
-- The approved architecture requires `MatrixBridgeContainer`, `RegistrarDO`, `OwnerSettingsDO`, Cloudflare Access and R2. Matrix E2EE runtime, subscription-OAuth runtime, live capability catalog and archive storage are not production-connected.
+- The approved architecture requires `MatrixBridgeContainer`, `RegistrarDO`, `OwnerSettingsDO`, Cloudflare Access and R2. The Preview gate removes only the native Rust/SQLite feasibility uncertainty for an isolated future Matrix process; real Matrix E2EE runtime, subscription-OAuth runtime, live capability catalog and archive storage are not production-connected.
 - In GoDaddy, Files is Git-connected and read-only. Replacing legacy source requires an explicit source disconnect/repoint or a separate GitHub repository decision; it cannot be accomplished by deleting UI files.
 - The read-only dashboard showed one hosted database with no visible tables. This alone does not identify the legacy runtime database, establish exclusive ownership, or reconcile the historic `happypro_access_store` evidence.
 
@@ -463,7 +463,7 @@ The all-GoDaddy implementation may proceed only after an architecture revision s
 | Required invariant | GoDaddy-target proof required before cutover |
 |---|---|
 | Node runtime | Node 22-compatible build, explicit `start`/`PORT` contract, health endpoint and restart/redeploy behavior |
-| Matrix ingress | Long-lived sync plus encrypted, private, restart-safe crypto state; verified room/device and idempotent delivery proof |
+| Matrix ingress | A supervised Rust `matrix-sdk` sidecar with encrypted, private, restart-safe crypto state; the Preview synthetic-store gate passed, while long-lived sync, verified room/device and idempotent delivery proof remain required |
 | Canonical order | A single MySQL-backed transaction/lease/unique-key/outbox design that proves dedupe, ordering, cancellation and late-output fencing across concurrent requests and restart |
 | Owner Settings | Published-only owner-secret authentication, one-time same-origin login challenge and origin request protection, with positive, wrong-secret and bypass evidence; this approved GoDaddy exception supersedes the Google-only adapter requirement only for Settings |
 | Subscription OAuth | Isolated Codex credential writer and separate Claude critic process; no API/PAYG/Fast/credits fallback and no credential leakage |
@@ -484,7 +484,7 @@ The former Cloudflare lineage remains an immutable reference and rollback source
 ### 25.5. Open blockers
 
 1. Can GoDaddy demonstrate an isolated database/schema+credential for stateful Preview and a safe recovery target?
-2. Which private durable storage and process model safely sustain Matrix crypto/OAuth boundaries across restart?
+2. The static Rust Matrix-store capability is now proven only in Preview. Which supervised process lifecycle, durable-path policy and health/recovery contract safely sustain a real Matrix crypto store and OAuth boundaries in Published?
 3. Resolved on 02.09.2026: the shared GoDaddy hostname cannot safely be a Google OAuth redirect domain without a user-controlled verified domain. The Node Settings adapter uses a strong Published-only owner secret and signed local session instead; this is limited to the GoDaddy Settings slice and does not change subscription OAuth isolation.
 4. Which source action preserves HappyPro rollback: Git disconnect/repoint while retaining the repository, or eventual permanent repository deletion after the stabilization period?
 
@@ -498,7 +498,7 @@ The GoDaddy implementation is a separate adapter layer. It preserves the existin
 | Settings persistence | MySQL transaction adapter for the existing `SettingsStorage` contract, namespaced separately from registrar state | The adapter performs no automatic DDL and does not initialize or write unless a production-bound storage configuration and the exact schema are already present. Preview remains stateless unless the provider proves separate database/schema+credential. |
 | Capability truth | Versioned, typed capability receipt supplied outside the repository and validated by the existing domain | An absent, malformed, stale or incompatible receipt leaves Settings unavailable; model names or defaults are never invented in Node configuration. |
 | Registrar state | MySQL transaction adapter for the existing `RegistrarStorage` contract with a single fixed owner namespace | No Matrix event, agent start or visible message is accepted until the Matrix runtime, room/device invariant and production persistence boundary are separately configured and verified. |
-| Matrix, subscription OAuth and archive | Separate Node processes/adapters must be selected and evidenced before activation | No placeholder agent, synthetic Matrix reply, API/PAYG credential or unencrypted archive is permitted as a migration shortcut. |
+| Matrix, subscription OAuth and archive | A Node-supervised Rust `matrix-sdk` sidecar is the selected Matrix crypto seam; subscription OAuth and archive remain separate adapters to select and evidence before activation | No real Matrix identity/room or credential reaches the Preview gate; no placeholder agent, synthetic Matrix reply, API/PAYG credential or unencrypted archive is permitted as a migration shortcut. |
 
 The source repository may include the Node adapters and explicit schema tooling, but a deployment never applies schema changes implicitly. A schema write, owner-secret configuration, Matrix bot/crypto state, subscription OAuth provisioning and Published activation remain distinct, just-in-time actions. None is authorized by a Preview pull.
 
@@ -517,6 +517,13 @@ The source repository may include the Node adapters and explicit schema tooling,
 - **Options:** attach and verify a user-controlled domain for Google OAuth; retain Cloudflare Access; or use a dedicated high-entropy owner secret held only in GoDaddy Publish Secrets.
 - **Decision:** use the dedicated owner secret with a one-time same-origin login challenge, constant-time comparison and a separate HMAC-signed 12-hour secure session. No Google identity, redirect URI, client secret or provider token enters the Settings adapter.
 - **Consequence:** Settings remains unavailable until the owner provisions all three owner/CSRF/session secrets and a current capability receipt. This exception applies only to the GoDaddy Settings slice and does not alter Codex or Claude subscription OAuth isolation.
+
+**Decision AD-16 — Rust Matrix crypto sidecar feasibility gate passed in Preview.**
+
+- **Source:** retained Matrix E2EE/persistent-crypto obligations in `FR-001`–`FR-006`, `FR-014`–`FR-019`, `NFR-001`–`NFR-005`; GoDaddy Node 22 target; Preview receipt on 04.09.2026.
+- **Options:** retain the incompatible Node native crypto module; use a persistent Matrix SDK store with an unsupported Node/WASM path; introduce a paid/locally hosted alternative; or use a static Rust `matrix-sdk` process behind the existing Node host.
+- **Decision:** use a Rust `matrix-sdk` sidecar for future Matrix crypto ownership. The verified `matrix-sdk` 0.18.0 musl binary was run only through a temporary Preview route with no caller input, Matrix identity, room, credential or message content. It verified binary integrity, encrypted SQLite create/reopen, wrong-passphrase rejection, Matrix HTTPS request construction, exclusive store locking, restart persistence and redeploy persistence. The synthetic directory and route were then deleted.
+- **Consequence:** U-06 may implement a fresh, private Node-supervisor/NDJSON seam for this sidecar, but cannot activate it or configure a real Matrix account, room, device, token, sync loop or Published deployment without separate just-in-time authorization and the remaining G-00 evidence.
 
 **Implementation note — canonical Registrar state.**
 
