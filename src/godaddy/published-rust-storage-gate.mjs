@@ -8,8 +8,8 @@ export const PUBLISHED_RUST_STORAGE_GATE_LOG_PREFIX = "G00_PUBLISHED_RUST_STORAG
  * "cleanup" for the final exact-directory removal pass.
  */
 export const PUBLISHED_RUST_STORAGE_GATE_CONFIGURATION = Object.freeze({
-  operation: "verify",
-  deploymentId: "published-g00-b"
+  operation: "cleanup",
+  deploymentId: "published-g00-cleanup"
 });
 
 const isPublishedRuntime = (environment) => environment.RUNTIME_MODE === "production"
