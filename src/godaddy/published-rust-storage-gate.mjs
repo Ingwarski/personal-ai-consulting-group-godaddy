@@ -9,7 +9,7 @@ export const PUBLISHED_RUST_STORAGE_GATE_LOG_PREFIX = "G00_PUBLISHED_RUST_STORAG
  */
 export const PUBLISHED_RUST_STORAGE_GATE_CONFIGURATION = Object.freeze({
   operation: "verify",
-  deploymentId: "published-g00-a"
+  deploymentId: "published-g00-b"
 });
 
 const isPublishedRuntime = (environment) => environment.RUNTIME_MODE === "production"
