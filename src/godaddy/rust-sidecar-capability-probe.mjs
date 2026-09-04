@@ -65,14 +65,18 @@ export function createRustProbeExecutor({ binaryPath, environment = process.env,
         child.kill("SIGKILL");
       }
     });
+    let timeout;
     const outcome = await Promise.race([
       once(child, "close").then((code) => ({ code, timedOut: false })),
       once(child, "error").then(() => ({ code: undefined, timedOut: false })),
-      new Promise((resolveTimeout) => setTimeout(() => {
-        child.kill("SIGKILL");
-        resolveTimeout({ code: undefined, timedOut: true });
-      }, timeoutMilliseconds))
+      new Promise((resolveTimeout) => {
+        timeout = setTimeout(() => {
+          child.kill("SIGKILL");
+          resolveTimeout({ code: undefined, timedOut: true });
+        }, timeoutMilliseconds);
+      })
     ]);
+    clearTimeout(timeout);
     // `status` intentionally exits non-zero when an already-held store lock
     // rejects access. Its one-line structured response is the evidence this
     // caller needs, so parse it before judging the process status.
