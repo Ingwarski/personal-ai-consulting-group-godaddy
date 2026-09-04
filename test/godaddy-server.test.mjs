@@ -61,6 +61,14 @@ test("GoDaddy server preserves its health probe while Settings stays unavailable
   });
 });
 
+test("the temporary Published storage gate has no HTTP control route", async (t) => {
+  await withServer(t, { environment: supportedEnvironment, nodeVersion: "v22.16.0" }, async (origin) => {
+    const response = await fetch(`${origin}/__godaddy-rust-sidecar-probe`);
+    assert.equal(response.status, 404);
+    assert.deepEqual(await response.json(), { status: "not_found" });
+  });
+});
+
 test("runtime and port validation are explicit", () => {
   assert.deepEqual(getGodaddyRuntimeStatus({ environment: supportedEnvironment, nodeVersion: "v22.0.0" }), {
     ok: true,

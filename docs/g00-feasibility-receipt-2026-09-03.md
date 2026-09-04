@@ -36,20 +36,27 @@ rollback, a backup or any untested provider capability.
 
 ## Provider documentation check
 
-GoDaddy's [Node.js Hosting FAQ](https://www.godaddy.com/en-ph/help/godaddy-nodejs-hosting-faq-42915)
-requires a top-level `package.json`, a build command, a start command, runtime
-packages in `dependencies`, and listening on the assigned `PORT`. Its
+GoDaddy's [Node.js Hosting deployment guide](https://www.godaddy.com/en-uk/help/deploy-my-cursor-or-claude-app-with-godaddy-nodejs-hosting-42908)
+explicitly directs applications that need files to persist between deployments
+to write them under `/public/assets/`. Its
+[Node.js Hosting launch reference](https://www.godaddy.com/resources/ca/news/godaddy-nodejs-hosting-launch)
+describes Published as a real persistent Node.js 22 process rather than a
+serverless invocation. The
+[Node.js Hosting FAQ](https://www.godaddy.com/en-ph/help/godaddy-nodejs-hosting-faq-42915)
+also requires a top-level `package.json`, a build command, a start command,
+runtime packages in `dependencies`, and listening on the assigned `PORT`. Its
 [Node.js Hosting concepts](https://developer.godaddy.com/en/docs/api-users/concepts/nodejs-hosting-concepts)
 document separate Preview and Published variants, per-variant secret metadata,
 and deployment/status polling. Those facts support the narrow runtime result
 above.
 
-The consulted official materials do not provide a contract for a private,
-durable filesystem; process isolation; child-process or native-dependency
-support; egress policy; cryptographic key custody; database isolation; or a
-backup-and-isolated-restore workflow. Absence of those guarantees is not proof
-that they are impossible, but it is insufficient evidence for the retained V1
-invariants.
+The official materials now establish a provider-designated durable path and a
+persistent Published Node process. They do not establish that files below that
+path are unreachable over public HTTP, nor do they document child-process
+isolation, native-sidecar recovery, cryptographic key custody, database
+isolation or a backup-and-isolated-restore workflow. Those remaining properties
+require a controlled content-free Published check before the retained V1
+invariants can rely on them.
 
 ## Matrix readiness and runtime boundary
 
@@ -64,10 +71,11 @@ states that Node E2EE without a persistent store creates a new device after a
 restart. The official
 [`matrix-sdk-crypto-nodejs` binding](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/blob/main/src/machine.rs)
 persists crypto state through an encrypted SQLite store at a filesystem path.
-GoDaddy currently provides no verified durable writable filesystem contract for
-that store, and the Git-connected Files surface is read-only. Creating a bot or
-private E2EE room before resolving this would produce an unsafe, non-restart-safe
-runtime rather than an integration result.
+GoDaddy now documents `/public/assets/` as its persistence location, while the
+Git-connected Files surface remains read-only. The unresolved question is
+whether an exact private subdirectory stays durable through a real Published
+restart and redeploy without becoming publicly retrievable. Creating a bot or
+private E2EE room before that deployed check would still be premature.
 
 A prior Preview-only probe showed that a Node-native Matrix binding was an
 unsupported production direction on this Node 22 host. It did not create a
@@ -140,10 +148,11 @@ eligible. The following evidence is still required:
 1. A content-free deployed-app-to-database mapping, reconciliation of the
    historic `happypro_access_store` evidence, an encrypted backup, and an
    isolated restore/reconciliation drill.
-2. A provider-supported Published process-supervision, durable-path and
-   recovery design for the Rust Matrix sidecar; isolated subscription OAuth
-   credentials; outbound-network policy; and application-encrypted archive
-   storage across restart.
+2. A content-free Published check proving that the documented durable path is
+   not publicly retrievable, that the Rust Matrix store reopens after restart
+   and redeploy, and that Node can supervise its lock-owning child process. The
+   later production design must retain isolated subscription OAuth credentials,
+   outbound-network policy and application-encrypted archive storage.
 3. An action-time destructive manifest naming the exact legacy source routing,
    each secret entry, database-object allowlist, upstream revoke/rotate steps,
    post-action absence checks, and a fresh owner confirmation.

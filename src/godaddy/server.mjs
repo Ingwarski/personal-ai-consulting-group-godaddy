@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { FORBIDDEN_RUNTIME_ENVIRONMENT_NAMES } from "./forbidden-environment.mjs";
+import { runPublishedRustStorageGate } from "./published-rust-storage-gate.mjs";
 import { createGoDaddySettingsRuntime } from "./settings-runtime.ts";
 
 export const GODADDY_NODE_MAJOR = 22;
@@ -140,4 +141,5 @@ if (isDirectExecution()) {
   const port = typeof address === "object" && address !== null ? address.port : process.env.PORT;
   const status = getGodaddyRuntimeStatus({ environment: process.env });
   console.log(`GoDaddy Node runtime listening on ${port}; health=${status.ok ? "ready" : "blocked"}.`);
+  void runPublishedRustStorageGate();
 }
