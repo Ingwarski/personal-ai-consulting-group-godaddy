@@ -148,7 +148,7 @@ async fn build_client(root: &Path, passphrase: &str) -> Result<Client, ()> {
 
 async fn check_matrix_https(client: &Client) -> bool {
     client
-        .send(get_supported_versions::v3::Request::new(), None)
+        .send(get_supported_versions::Request::new())
         .await
         .map(|response| !response.versions.is_empty())
         .unwrap_or(false)
