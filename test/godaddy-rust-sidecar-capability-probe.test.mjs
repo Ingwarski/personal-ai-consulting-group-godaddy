@@ -1,11 +1,15 @@
 import assert from "node:assert/strict";
+import { EventEmitter } from "node:events";
 import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
 import { verifyGoDaddyRustProbeArtifact } from "../scripts/verify-godaddy-rust-probe-artifact.mjs";
-import { GoDaddyRustSidecarCapabilityProbe } from "../src/godaddy/rust-sidecar-capability-probe.mjs";
+import {
+  GoDaddyRustSidecarCapabilityProbe,
+  createRustProbeExecutor
+} from "../src/godaddy/rust-sidecar-capability-probe.mjs";
 
 const result = (overrides = {}) => ({
   ok: true,
@@ -79,4 +83,26 @@ test("the temporary probe never converts malformed Rust output into a capability
     executor: { checkLockContention: async () => true, execute: async () => ({ ok: true, matrix_https: true }) }
   });
   assert.deepEqual(await probe.start(), { ok: false, code: "probe_execution_failed" });
+});
+
+test("the executor preserves the structured store-lock refusal from Rust", async () => {
+  const spawnImpl = () => {
+    const child = Object.assign(new EventEmitter(), {
+      killed: false,
+      stdout: new EventEmitter(),
+      kill() { this.killed = true; }
+    });
+    queueMicrotask(() => {
+      child.stdout.emit("data", Buffer.from('{"ok":false,"code":"store_locked"}\n'));
+      child.emit("close", 5);
+    });
+    return child;
+  };
+  const executor = createRustProbeExecutor({ binaryPath: "/fixed/probe", spawnImpl });
+  assert.deepEqual(await executor.execute({
+    command: "status",
+    root: "/fixed/public/assets/godaddy-rust-matrix-probe-v1",
+    bootId: "boot_a",
+    deploymentId: "deploy_a"
+  }), { ok: false, code: "store_locked" });
 });
