@@ -142,7 +142,7 @@ export class GoDaddyRustSidecarCapabilityProbe {
     workingDirectory = process.cwd(),
     environment = process.env,
     bootId = randomUUID(),
-    deploymentId = "rust-sidecar-probe-a",
+    deploymentId = "rust-sidecar-probe-b",
     artifactPath = resolve(workingDirectory, ...ARTIFACT_DIRECTORY, "godaddy-rust-probe"),
     checksumPath = resolve(workingDirectory, ...ARTIFACT_DIRECTORY, "SHA256SUMS"),
     verifyArtifact = verifyGoDaddyRustProbeArtifact,
