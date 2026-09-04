@@ -9,7 +9,8 @@
   },
   "scripts": {
     "build:settings-assets": "node scripts/build-settings-assets.mjs",
-    "build": "npm run build:settings-assets",
+    "verify:godaddy-rust-probe": "node scripts/verify-godaddy-rust-probe-artifact.mjs vendor/godaddy-rust-probe/linux-x64-musl/godaddy-rust-probe vendor/godaddy-rust-probe/linux-x64-musl/SHA256SUMS",
+    "build": "npm run verify:godaddy-rust-probe && npm run build:settings-assets",
     "start": "npm run build && node --experimental-strip-types src/godaddy/server.mjs",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test test/*.test.ts test/*.test.mjs",
