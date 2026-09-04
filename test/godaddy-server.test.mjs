@@ -61,6 +61,32 @@ test("GoDaddy server preserves its health probe while Settings stays unavailable
   });
 });
 
+test("the temporary Rust sidecar probe is test-only and has an exact method contract", async (t) => {
+  const calls = [];
+  const probe = {
+    start: async () => { calls.push("start"); return { ok: true, phase: "started" }; },
+    status: async () => { calls.push("status"); return { ok: true, phase: "status" }; },
+    remove: async () => { calls.push("remove"); return { ok: true, phase: "removed" }; }
+  };
+  await withServer(t, {
+    environment: { RUNTIME_MODE: "test" },
+    nodeVersion: "v22.16.0",
+    rustSidecarCapabilityProbe: probe
+  }, async (origin) => {
+    assert.deepEqual(await (await fetch(`${origin}/__godaddy-rust-sidecar-probe`, { method: "POST" })).json(), { ok: true, phase: "started" });
+    assert.deepEqual(await (await fetch(`${origin}/__godaddy-rust-sidecar-probe`)).json(), { ok: true, phase: "status" });
+    assert.deepEqual(await (await fetch(`${origin}/__godaddy-rust-sidecar-probe`, { method: "DELETE" })).json(), { ok: true, phase: "removed" });
+    assert.equal((await fetch(`${origin}/__godaddy-rust-sidecar-probe`, { method: "PATCH" })).status, 405);
+  });
+  assert.deepEqual(calls, ["start", "status", "remove"]);
+
+  await withServer(t, { environment: supportedEnvironment, nodeVersion: "v22.16.0", rustSidecarCapabilityProbe: probe }, async (origin) => {
+    const response = await fetch(`${origin}/__godaddy-rust-sidecar-probe`);
+    assert.equal(response.status, 404);
+    assert.deepEqual(await response.json(), { status: "not_found" });
+  });
+});
+
 test("runtime and port validation are explicit", () => {
   assert.deepEqual(getGodaddyRuntimeStatus({ environment: supportedEnvironment, nodeVersion: "v22.0.0" }), {
     ok: true,
