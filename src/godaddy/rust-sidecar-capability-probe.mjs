@@ -73,7 +73,10 @@ export function createRustProbeExecutor({ binaryPath, environment = process.env,
         resolveTimeout({ code: undefined, timedOut: true });
       }, timeoutMilliseconds))
     ]);
-    if (overflow || outcome.timedOut || outcome.code !== 0) return undefined;
+    // `status` intentionally exits non-zero when an already-held store lock
+    // rejects access. Its one-line structured response is the evidence this
+    // caller needs, so parse it before judging the process status.
+    if (overflow || outcome.timedOut) return undefined;
     return parseJsonResult(output);
   };
 
