@@ -13,7 +13,7 @@ import/export, schema mutation, domain changes or a HappyPro repository action.
 | Item | Observed result |
 | --- | --- |
 | Provider application | GoDaddy Node.js app `wy2v0putg6` (`Personal AI Consulting Group`) |
-| Current Preview source | Git `main`, commit `93de2a1b02d7673d1343bcbf52d8ae812e477331` |
+| Published storage-gate lineage | Initial `e72e7bc`, redeploy marker `cb6dd38`, cleanup `c70f1e4` |
 | Published runtime | Node.js 22, Europe region |
 | Published status | GoDaddy dashboard reported infrastructure and site status as operational |
 | Database resource | One GoDaddy hosted MySQL resource |
@@ -50,13 +50,12 @@ document separate Preview and Published variants, per-variant secret metadata,
 and deployment/status polling. Those facts support the narrow runtime result
 above.
 
-The official materials now establish a provider-designated durable path and a
-persistent Published Node process. They do not establish that files below that
-path are unreachable over public HTTP, nor do they document child-process
-isolation, native-sidecar recovery, cryptographic key custody, database
-isolation or a backup-and-isolated-restore workflow. Those remaining properties
-require a controlled content-free Published check before the retained V1
-invariants can rely on them.
+The official materials establish a provider-designated durable path and a
+persistent Published Node process. Public-path isolation and native child
+execution were then checked on the actual Published app as recorded below.
+GoDaddy's public documentation still does not establish cryptographic key
+custody, database isolation or a backup-and-isolated-restore workflow; those
+remain separate design and recovery obligations.
 
 ## Matrix readiness and runtime boundary
 
@@ -71,25 +70,51 @@ states that Node E2EE without a persistent store creates a new device after a
 restart. The official
 [`matrix-sdk-crypto-nodejs` binding](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/blob/main/src/machine.rs)
 persists crypto state through an encrypted SQLite store at a filesystem path.
-GoDaddy now documents `/public/assets/` as its persistence location, while the
-Git-connected Files surface remains read-only. The unresolved question is
-whether an exact private subdirectory stays durable through a real Published
-restart and redeploy without becoming publicly retrievable. Creating a bot or
-private E2EE room before that deployed check would still be premature.
+GoDaddy documents `/public/assets/` as its persistence location, while the
+Git-connected Files surface remains read-only. The Published check below proved
+that the selected exact subdirectory survives restart and redeploy without
+becoming retrievable at either tested public URL root.
 
 A prior Preview-only probe showed that a Node-native Matrix binding was an
 unsupported production direction on this Node 22 host. It did not create a
 Matrix account, room, credential, user record or application database state.
 
-On 04.09.2026, a separate, content-free static Rust `matrix-sdk` 0.18.0 musl
+Earlier on 04.09.2026, a separate, content-free static Rust `matrix-sdk` 0.18.0 musl
 binary passed a narrow Preview feasibility gate: verified binary identity,
 encrypted SQLite create/reopen, wrong-passphrase rejection, Matrix HTTPS request
 construction, exclusive-store locking, and synthetic-store persistence through
 Preview restart and source redeploy. The temporary route, synthetic directory,
 workflow and artifact were then removed; the current Preview commit above
 returns `404` for that route. This proves only the native-crypto sidecar
-capability. It does not prove a Published supervisor, long-running sync loop,
-real Matrix device or room, credential custody, or delivery semantics.
+capability.
+
+## Published Rust Matrix storage and process gate
+
+On 04.09.2026 the same checksum-pinned static artifact was exercised through a
+temporary startup-only Published gate with no HTTP control route. It used no
+Matrix account, room, token, recovery key, message, subscription credential or
+MySQL call.
+
+1. Published commit `e72e7bc` emitted a passing receipt for binary integrity,
+   Node child-process supervision, exclusive lock contention, encrypted SQLite
+   create/reopen, wrong-passphrase rejection and Matrix HTTPS.
+2. The exact marker returned HTTP 404 with the normal `not_found` response at
+   both `/assets/godaddy-rust-matrix-probe-v1/probe-receipt.json` and
+   `/public/assets/godaddy-rust-matrix-probe-v1/probe-receipt.json` while the
+   store was known to exist.
+3. A dashboard Published restart emitted `store_created=false` and
+   `survived_restart=true` under marker `published-g00-a`.
+4. Published redeploy commit `cb6dd38` emitted `store_created=false`,
+   `survived_restart=true` and `survived_redeploy=true` under marker
+   `published-g00-b`.
+5. Published cleanup commit `c70f1e4` emitted `phase=cleanup`, `ok=true` and
+   `removed=true` for the one fixed synthetic directory.
+
+This passes the GoDaddy-specific process/durable-private-path feasibility gate
+for a future Node-supervised Rust Matrix crypto sidecar. It does not prove a
+real long-running sync loop, Matrix identity, private room, verified device,
+credential custody or delivery semantics. Those remain controlled integration
+work, not hosting-capability uncertainty.
 
 ## Preview safety decision
 
@@ -139,19 +164,17 @@ unreconciled current state, not a recovery backup of the historical HappyPro
 state. No export or restore was performed, because no isolated recovery target
 has been evidenced.
 
-## G-00 result: documented no-go for destructive migration
+## G-00 result: Matrix host gate passed; destructive migration still blocked
 
-The Node runtime/restart contract and the Preview-only Rust crypto capability
-subgate are verified, but G-00 is not complete and no destructive action is
-eligible. The following evidence is still required:
+The Node runtime/restart contract and the Published Rust crypto host subgate are
+verified. G-00 is still incomplete for destructive migration, and no legacy
+deletion is eligible. The following evidence is still required:
 
 1. A content-free deployed-app-to-database mapping, reconciliation of the
    historic `happypro_access_store` evidence, an encrypted backup, and an
    isolated restore/reconciliation drill.
-2. A content-free Published check proving that the documented durable path is
-   not publicly retrievable, that the Rust Matrix store reopens after restart
-   and redeploy, and that Node can supervise its lock-owning child process. The
-   later production design must retain isolated subscription OAuth credentials,
+2. The production sidecar implementation and controlled real-Matrix evidence
+   must retain isolated subscription OAuth credentials, bounded private IPC,
    outbound-network policy and application-encrypted archive storage.
 3. An action-time destructive manifest naming the exact legacy source routing,
    each secret entry, database-object allowlist, upstream revoke/rotate steps,

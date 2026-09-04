@@ -40,3 +40,21 @@ Matrix bot, room, identity, session or product feature.
 Any missing or malformed receipt, non-404 marker response, restart/redeploy
 failure or cleanup failure is a no-go. It must not be worked around with MySQL,
 a public download route or real Matrix credentials.
+
+## Result — passed and retired on 04.09.2026
+
+| Check | Published evidence |
+| --- | --- |
+| Initial boot (`e72e7bc`) | `ok=true`, `store_created=true`, `store_reopened=true`, `wrong_key_rejected=true`, `matrix_https=true`, `binary_verified=true`, `lock_contention=true` |
+| Public retrieval | Both candidate marker URLs returned HTTP 404 and the ordinary `not_found` body |
+| Published restart | `store_created=false`, `survived_restart=true` under marker `published-g00-a` |
+| Source redeploy (`cb6dd38`) | `store_created=false`, `survived_restart=true`, `survived_redeploy=true` under marker `published-g00-b` |
+| Exact cleanup (`c70f1e4`) | `phase=cleanup`, `ok=true`, `removed=true` |
+
+The result proves the GoDaddy host capability needed by the selected design:
+one Published Node 22 process can launch and stop a checksum-pinned static Rust
+child, while an encrypted Matrix SDK SQLite store in the provider-designated
+persistent path stays private at the tested HTTP roots and survives restart and
+redeploy. It does not claim that a real Matrix identity, room, sync loop,
+credential or delivery flow exists. The temporary gate source, artifact and
+startup hook were removed after the cleanup receipt.
