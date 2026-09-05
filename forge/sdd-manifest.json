@@ -2,7 +2,7 @@
   "checker_contract_version": 1,
   "pipeline_version": "1.1.0",
   "state": "awaiting_input",
-  "updated_at": "2026-09-05T02:26:38Z",
+  "updated_at": "2026-09-05T03:11:23Z",
   "language": {
     "working_language": "uk",
     "selection_source": "recorded-preference",
@@ -56,7 +56,7 @@
     "prd": {
       "path": "docs/prd.md",
       "owner_skill": "to-sdd-prd",
-      "owner_invocation_id": "676b12e7-1d7a-4e5c-831a-bb88c1493e50",
+      "owner_invocation_id": "1e0f7892-70e6-42e2-9da6-f58e26d7023c",
       "declared_output_set": [
         "docs/prd.md"
       ],
@@ -69,21 +69,33 @@
         "product-idea": "validated"
       },
       "source_hashes": {
-        "docs/product-idea.md": "74e9727a63cf4e5648671d0467265b27e098fc819601b0833ee53b17a3acb320"
+        "docs/product-idea.md": "c7e0dec20e60f5eae35a16192a3b21a74e43faffb8853f8c15accf457f1eefee"
       },
-      "consumed_source_fragments": {},
-      "content_hash": "1ba8803bc2a9273013009d3585ec2e27ef8f707c15caee257964799d36e1b612",
+      "consumed_source_fragments": {
+        "forge/google-owner-login-investigation-20260905.md": [
+          {"heading": "## What actually happened", "content_hash": "64ea68c2eb22ad325eb4e64cce0a7831b889679d88ac71d01fa1cd7bfbd5189b"},
+          {"heading": "## Reproduced application defect", "content_hash": "8c2ef1c7764acc1de4bb3cdbf1abff6a01b4fbd38f72b98f86e54a2674f2a1cc"},
+          {"heading": "## What Google's current documentation establishes", "content_hash": "bff74667e47f11fd5afa0c88821d37d70787f9b67a8f2dacc070ac40738fc96d"}
+        ]
+      },
+      "content_hash": "2d783713f3ef232c02f150996037d20635554c686f467d179b3a8f36a49573c7",
       "validation": {
         "result": "blocked",
         "working_language": "uk",
-        "evidence_scope": "current scoped owner reconciliation; not product execution"
+        "evidence_scope": "Google owner-login auth reconciliation passed; full current PRD use-case coverage is not established. Not implementation or live-login evidence.",
+        "submitted_at": "2026-09-05T03:06:05.787Z",
+        "auth_reconciliation_result": "passed",
+        "stage_postcheck": {"result": "blocked", "exit_code": 1, "issues": ["not_validated", "missing_validation"], "reason": "Overall PRD validation intentionally withheld for the recorded use-case coverage gap; auth/source hashes verified independently."},
+        "limitations": ["Existing JOB-to-UC mappings and canonical UC records are absent. This bounded auth reconciliation did not repair or validate full use-case coverage; do not advance on an overall PRD-complete claim."],
+        "decision_ids": ["PI-AUTH-20260905"]
       },
       "security_review": {
         "version": 1,
         "asvs_version": "5.0.0",
         "scope": "web-api",
         "level": 2,
-        "status": "blocked",
+        "status": "complete",
+        "review_scope": "Current Google owner-login obligations and documented no-application-MFA exception only; unaffected records retained, not a new full-system audit or compliance claim.",
         "rationale": "Рівень обрано через приватні бізнес-документи, credential material, зовнішні інтеграції, state-changing Settings і остаточне видалення сесій.",
         "definition_ref": {
           "path": "docs/prd.md",
@@ -116,6 +128,8 @@
             "asvs_ids": [
               "v5.0.0-10.1.1",
               "v5.0.0-13.1.1",
+              "v5.0.0-13.3.1",
+              "v5.0.0-13.3.2",
               "v5.0.0-14.2.1",
               "v5.0.0-14.2.3",
               "v5.0.0-15.1.1",
@@ -223,7 +237,7 @@
             "requirement_id": "NFR-016",
             "definition_ref": {
               "path": "docs/prd.md",
-              "heading": "## Security Requirements"
+              "heading": "### NFR-016. Обов'язки Google-входу та сесії"
             },
             "asvs_ids": [
               "v5.0.0-3.3.1",
@@ -238,11 +252,13 @@
               "v5.0.0-3.5.1",
               "v5.0.0-4.1.1",
               "v5.0.0-6.1.1",
-              "v5.0.0-6.2.8",
-              "v5.0.0-6.2.9",
               "v5.0.0-6.3.1",
               "v5.0.0-6.3.3",
+              "v5.0.0-6.8.2",
+              "v5.0.0-6.8.4",
               "v5.0.0-7.1.1",
+              "v5.0.0-7.1.2",
+              "v5.0.0-7.1.3",
               "v5.0.0-7.2.1",
               "v5.0.0-7.2.2",
               "v5.0.0-7.2.3",
@@ -250,14 +266,23 @@
               "v5.0.0-7.3.1",
               "v5.0.0-7.3.2",
               "v5.0.0-7.4.1",
+              "v5.0.0-7.4.2",
               "v5.0.0-7.4.4",
               "v5.0.0-7.4.5",
+              "v5.0.0-7.6.1",
+              "v5.0.0-7.6.2",
               "v5.0.0-9.1.1",
               "v5.0.0-9.1.2",
               "v5.0.0-9.1.3",
               "v5.0.0-9.2.1",
               "v5.0.0-9.2.2",
               "v5.0.0-9.2.3",
+              "v5.0.0-10.1.2",
+              "v5.0.0-10.2.1",
+              "v5.0.0-10.5.1",
+              "v5.0.0-10.5.2",
+              "v5.0.0-10.5.3",
+              "v5.0.0-10.5.4",
               "v5.0.0-11.5.1",
               "v5.0.0-14.2.2",
               "v5.0.0-14.3.2",
@@ -295,12 +320,17 @@
         ]
       },
       "open_questions": [
-        "Owner decision required: retain password-only with explicit MFA residual-risk acceptance, or authorize a second factor. No full ASVS Level 2 compliance claim."
+        "Owner task, not another user-choice question: reconcile missing product JOB-to-UC mappings and canonical use-case coverage before declaring the entire PRD validated."
       ],
       "supersedes": {
-        "owner_invocation_id": "4f5ce7bd-6f8a-47d3-be6a-6e2a422928e6",
-        "content_hash": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
-        "git_revision": "7f3cedde79e4f3d6a0556ca897fe9ea3b55bb541"
+        "owner_invocation_id": "676b12e7-1d7a-4e5c-831a-bb88c1493e50",
+        "content_hash": "1ba8803bc2a9273013009d3585ec2e27ef8f707c15caee257964799d36e1b612",
+        "git_revision": "ab566f5",
+        "previous_supersedes": {
+          "owner_invocation_id": "4f5ce7bd-6f8a-47d3-be6a-6e2a422928e6",
+          "content_hash": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
+          "git_revision": "7f3cedde79e4f3d6a0556ca897fe9ea3b55bb541"
+        }
       }
     },
     "project-context": {
@@ -822,14 +852,22 @@
     },
     {
       "id": "google-oauth-client-inspection",
-      "status": "awaiting_user_action",
+      "status": "completed",
       "question": "Unlock the Mac so the existing Google OAuth client and its registered callback can be inspected.",
       "blocking_node": "google-owner-login-provider-verification",
+      "resolution": "Inspected the existing Google project in external Chrome. Owner confirmed it is the correct project; its sole listed client uses the legacy Cloudflare callback. No Google configuration was saved.",
+      "evidence_ref": "forge/google-owner-login-investigation-20260905.md"
+    },
+    {
+      "id": "google-godaddy-client-creation",
+      "status": "awaiting_answer",
+      "question": "May I create a separate GoDaddy OAuth web client in the confirmed project with only the exact GoDaddy callback, and store the generated client secret only in this app's GoDaddy Published Secrets? No deployment, DNS change, legacy-client modification or MFA.",
+      "blocking_node": "google-owner-login-provider-configuration",
       "evidence_ref": "forge/google-owner-login-investigation-20260905.md"
     }
   ],
   "next_ready_nodes": [],
-  "pause_reason": "The Owner answered the auth decision: Google owner login, no application MFA in the MVP. Current Google client inspection awaits browser access after the locked-Mac interruption. PRD/security and downstream reconciliation remain pending; old source bindings and the invalid implementation gate are preserved. Investigation is not live-login or release evidence.",
+  "pause_reason": "Google project inspection is complete and the Owner confirmed the selected project. The GoDaddy callback is absent from its legacy Cloudflare client. Separate client creation and Published-only secret storage await explicit scoped approval. Bounded PRD auth reconciliation passed, but overall PRD advancement remains blocked by existing absent JOB-to-UC/use-case coverage, not by the answered MFA choice. Existing downstream source bindings and the invalid implementation gate remain preserved. No live-login or release success is claimed.",
   "resume_history": [{
     "type": "audit_remediation_request",
     "timestamp": null,
