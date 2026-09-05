@@ -2,8 +2,9 @@
 
 - Продукт: `Personal Consultant`
 - Версія шляху: V1
-- Дата: 16.08.2026
-- owner_invocation_id: `10a17293-be04-4021-9ee4-b0de7bb42a81`
+- Дата актуалізації: 04.09.2026
+- Робоча мова: `uk`
+- owner_invocation_id: `6b63b10a-0d12-4280-9535-4aa115266fcb`
 
 ## Source References
 
@@ -11,14 +12,15 @@
 
 - `docs/product-idea.md`: «Позиціонування», «Основний користувач і проблема», «Результат для користувача», «Основний сценарій», «Досвід живого чату», «Фінальна рекомендація», «Налаштування власника», «Межі V1», «Правила даних і доступу», «Модель використання підписок і витрат», «Стандарт швидкості», «Критерій готовності V1», «Підтверджені рішення» та «Припущення та відкладені рішення».
 - `docs/prd.md`: розділи 1–5; `US-001`–`US-029`; `FR-001`–`FR-046`; `NFR-001`–`NFR-019`; розділи 8–12; `AC-001`–`AC-016`.
-- `docs/project-context.md`: «Target Users», «Main User Problems», «Desired User Outcomes», «Platform Targets», «Core Scenarios», «MVP Boundaries», «Out of Scope», «Constraints», «Assumptions», «Risks» та «Open Questions».
-- `docs/canonical-terms.md`: `Власник`, `Запит`, `Сесія`, `Консиліум`, `Дослівний консиліум`, `Підтверджена репліка агента`, `Фінальна рекомендація`, `Технічна частина`, `Приватна Matrix-кімната`, `Дозволена Matrix-пара`, `Перевірений Matrix-пристрій`, `Hosted Matrix homeserver`, `Matrix E2EE`, `Recovery key`, `Згода на обробку даних`, `Особливо чутливий документ`, `Секрет`, `Архів сесій`, `Облік витрат`, `Subscription OAuth`, `Codex OAuth-стан`, `Claude Code OAuth token`, `Реальна Codex-сесія/тред`, `Fail-closed auth/quota`, `Налаштування власника`, `Google-вхід`, `Моделі`, `Глибина міркування`, `Швидкість`, `Пресет швидкості`, `Фактичні налаштування сесії`; дії `Стоп`, `Нова задача`, `Витрати`, експорт і видалення; продуктові стани та канонічні назви потоків.
+- `docs/project-context.md`: «Цільові користувачі», «Основні проблеми користувача», «Бажані результати користувача», «Цільові платформи», «Основні сценарії», «Межі V1», «Поза межами V1», «Обмеження», «Припущення», «Ризики» та «Відкриті питання».
+- `docs/canonical-terms.md`: `Власник`, `Запит`, `Сесія`, `Консиліум`, `Дослівний консиліум`, `Підтверджена репліка агента`, `Фінальна рекомендація`, `Технічна частина`, `Приватна Matrix-кімната`, `Дозволена Matrix-пара`, `Перевірений Matrix-пристрій`, Matrix/data/archive terms, агентські OAuth-терміни, `Налаштування власника`, `Локальний вхід власника`, `Пароль власника`, `GoDaddy Node runtime`, `MySQL-сховище`, `Stateless Preview`, `Гейт незворотного очищення`, `Моделі`, `Глибина міркування`, `Швидкість`, `Пресет швидкості`, `Фактичні налаштування сесії`; дії `Стоп`, `Нова задача`, `Витрати`, експорт і видалення; продуктові стани та канонічні назви потоків.
 - `docs/guardrails.md`: `Source Of Truth Order`, `AI Autonomy Boundaries`, `Forbidden Changes`, `Scope Boundaries`, `When To Ask`, `When To Stop`, `Verification Rules`, `Evidence Requirements` та `Open Questions`.
+- Узгоджена upstream-межа: наявний GoDaddy Node.js application і MySQL є чинними runtime/storage; локальний owner password/session є чинним Settings auth; використовується штатний GoDaddy hostname без перенесення домену. Cloudflare Worker/DO/R2 та Google OAuth/Cloudflare Access допустимі лише як historical superseded context. HappyPro не входить до journey, а destructive legacy cleanup лишається за окремим JIT-дозволом.
 - `README.md`: лише початкове позиціонування, принцип «результат → діагностика → рішення → дія → перевірка» та мінімальний контекст першої консультації. Історичний browser-preview не використано як поверхню V1.
 
 Скорочення трасування нижче: `PI` — `docs/product-idea.md`; `PRD` — `docs/prd.md`; `PC` — `docs/project-context.md`; `CT` — `docs/canonical-terms.md`; `GR` — `docs/guardrails.md`; `RE` — `README.md`.
 
-Використані SHA-256: `docs/product-idea.md` — `263a5d15949e2ebf70f9fb4fa8ba67ff1e882cb5ae2774ecf218ccff16586ac5`; `docs/prd.md` — `2d9546dd7b0f4cd25dea0f225ffa35c0819966e3edb9efaa72f781f3fb70d660`; `docs/project-context.md` — `529ee8b70ec81b2a4734cb7580e5bfc84052a9f2552b039cd52bd42dfe4b2fee`; `docs/canonical-terms.md` — `75e8ab94a47faa0f89a51605543f2f643ce9b53c8513d26ee7d5bb54037f26fc`; `docs/guardrails.md` — `54c7ccd20d612e908f1038499c2db101d47e587c141a2d5363e003b2a0dbb3bc`.
+Використані SHA-256: `docs/product-idea.md` — `ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a`; `docs/prd.md` — `32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94`; `docs/project-context.md` — `1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15`; `docs/canonical-terms.md` — `e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da`; `docs/guardrails.md` — `4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48`.
 
 ## Primary User
 
@@ -44,13 +46,13 @@
 - На першому використанні ще може не бути `Згоди на обробку даних`; під час подальшого використання одноразова згода вже чинна, але не замінює окремого підтвердження для `Особливо чутливого документа`. `[PI: «Правила даних і доступу»; PRD: FR-002, FR-006, AC-005; CT: відповідні терміни]`
 - До робочого запуску Власник поза Matrix один раз завершує захищену provider-managed авторизацію: Codex отримує один авторитетний ChatGPT OAuth-стан зі штатним refresh, а Claude Code-агент-критик — subscription OAuth token від `claude setup-token`. Це інфраструктурна передумова, а не окрема продуктова поверхня; token, setup-token, `auth.json`, refresh state, URL або code повторної авторизації ніколи не надсилаються в кімнату. `[PI: «Правила даних і доступу»; PRD: §3.5, NFR-006; CT: «Codex OAuth-стан», «Claude Code OAuth token»; GR: When To Ask]`
 - Для Власника важливі швидкість, конфіденційність, видимий реальний поступ, якість доказів, контроль витрат і право зупинити або змінити задачу. `[PI: «Основний користувач і проблема», «Стандарт швидкості»; PRD: US-010–US-013, US-017–US-021; PC: §5–6]`
-- Якщо Власник вирішує змінити параметри наступної консультації, він виходить із щоденного Element-потоку до єдиної вузької responsive web surface `Налаштування власника`. Вхід можливий лише через Google-акаунт із точно дозволеною email-адресою; інший спосіб входу не є альтернативною гілкою. `[PRD: §3.6, US-024, FR-037–FR-039; PC: §7]`
+- Якщо Власник вирішує змінити параметри наступної консультації, він виходить із щоденного Element-потоку до єдиної вузької responsive web surface `Налаштування власника` на штатному GoDaddy hostname. Вхід можливий лише через локальну перевірку owner password і чинну захищену owner session; registration, recovery/reset чи інша identity не є альтернативною гілкою. `[GR: Scope Boundaries, Forbidden Changes]`
 
 ## Stakes And Constraints
 
-- Бізнес-дані проходять через `matrix.org`, Cloudflare, OpenAI та Anthropic, тому перша звичайна обробка потребує одноразової згоди, а контекст агентів має бути мінімізовано. Matrix E2EE захищає зміст між перевіреними пристроями, але `matrix.org` бачить службові метадані; E2EE завершується на verified Matrix device бота в Cloudflare runtime, де розшифрований зміст передається OpenAI й Anthropic через TLS. `[PRD: FR-002, FR-004, NFR-005, NFR-008; GR: AI Autonomy Boundaries, Scope Boundaries]`
+- Бізнес-дані проходять через `matrix.org`, GoDaddy hosting, OpenAI та Anthropic, тому перша звичайна обробка потребує одноразової згоди, а контекст агентів має бути мінімізовано. Matrix E2EE захищає зміст між перевіреними пристроями, але `matrix.org` бачить службові метадані; E2EE завершується на verified Matrix device бота в GoDaddy Node.js runtime, де розшифрований зміст передається OpenAI й Anthropic через TLS. `[PRD: FR-002, FR-004, NFR-005, NFR-008; GR: AI Autonomy Boundaries, Scope Boundaries]`
 - Кімната має залишатися invite-only з E2EE, рівно двома joined-учасниками без інших pending invites, history visibility `joined`, без public address/listing, guests, bridges і widgets. Публічний `matrix.org` не надає Власнику server-level контролю federation, тому V1 не покладається на `m.federate: false`. `[GR: Forbidden Changes, When To Stop]`
-- Production працює на `matrix.org` і Cloudflare, а не на платному Matrix-hosting, власному VPS, власному Matrix homeserver чи локальному Mac. Продукт не створює власного звуку; сповіщення визначають штатні налаштування Element та операційної системи. `[PI: «Межі V1»; PRD: §8; GR: Forbidden Changes]`
+- Production працює на `matrix.org` і в наявному GoDaddy Node.js application з MySQL на штатному hostname, а не на Cloudflare Worker/DO/R2, платному Matrix-hosting, власному Matrix homeserver чи локальному Mac. Це hosting-рішення, не перенесення домену. Репозиторій HappyPro не є частиною шляху й не змінюється; destructive cleanup старих ресурсів не є користувацькою дією та потребує окремого JIT-дозволу. Продукт не створює власного звуку; сповіщення визначають штатні налаштування Element та операційної системи. `[GR: Forbidden Changes, Scope Boundaries]`
 - `Секрет` не приймається, не передається агентам і не входить до незмінного журналу, архіву чи експорту. `[PRD: FR-005, AC-005; CT: «Секрет»; GR: Forbidden Changes, When To Stop]`
 - Власник має відрізняти реальний `Консиліум` від одного монологу, оформленого як кілька ролей; видимість кількох ролей сама по собі не є доказом. `[PRD: FR-011–FR-016, NFR-010–NFR-012; GR: Evidence Requirements]`
 - Стандарт часу має чотири окремі межі: підтвердження до 5 секунд, перша видима агентська репліка до 30 секунд, не більш як 60 секунд без змістовного оновлення або пояснення очікування, фінальна рекомендація стандартного консиліуму до 10 хвилин або запит дозволу продовжити. `[PI: «Стандарт швидкості»; PRD: NFR-001–NFR-004; GR: Verification Rules]`
@@ -58,7 +60,7 @@
 - `Облік витрат` не є token-cost сесії. V1 показує налаштовані місячні платежі ChatGPT/Codex і Claude, фактичні інфраструктурні витрати та доступний provider-reported usage/ліміт/reset; підписне AI-використання позначається як `входить у підписку`, а недоступне значення — як `невідомо`. Непідтверджений жорсткий грошовий ліміт не вводиться. `[PI: «Модель використання підписок і витрат»; PRD: FR-033, AC-009; CT: «Облік витрат»]`
 - V1 є приватною одноосібною не-SaaS системою. Запити ініціює й результати отримує лише Власник; його підписки не обслуговують клієнтів, працівників або інших третіх осіб. Зміна eligibility чи правил провайдера блокує залежний запуск до окремого перегляду. `[PI: «Модель використання підписок і витрат»; PRD: §3.1, §8; GR: Scope Boundaries, When To Stop]`
 - Агенти аналізують і рекомендують. Зовнішня або високоризикова дія, а також особисті коучингові запитання про внутрішні конфлікти потребують окремого явного дозволу Власника. `[PRD: §3.4, FR-035; GR: When To Ask]`
-- `Налаштування власника` не є чатом, архівом, live status або щоденним дашбордом і не показують жодних Codex/Claude OAuth token, setup-token, `auth.json`, refresh state чи reauth material. `Google-вхід` захищає лише Settings і не замінює `Subscription OAuth`. `[PRD: §3.6, FR-037–FR-039; CT: відповідні терміни; GR: Forbidden Changes]`
+- `Налаштування власника` не є чатом, архівом, live status або щоденним дашбордом і не показують owner password, password verifier, session secret або жодних Codex/Claude OAuth token, setup-token, `auth.json`, refresh state чи reauth material. Локальна owner session захищає лише Settings і не замінює `Subscription OAuth`. `[GR: Forbidden Changes, Verification Rules]`
 - Settings мають рівно три групи. `Codex-агенти` та `Claude Code-критик` мають незалежні typed model+effort allowlists з provider-specific capability validation без silent downgrade; `Швидкість консиліуму` має лише `швидко / збалансовано / ретельно`. Жодний пресет не є Claude Fast Mode, API/PAYG або usage credits і не послаблює critic/A2A/E2EE/verbatim/research/safety/privacy/permission інваріанти. `[PRD: FR-040–FR-046; GR: Forbidden Changes, Scope Boundaries]`
 
 ## Journey Overview
@@ -67,7 +69,7 @@
 
 Під час `Активної сесії` Власник може уточнити задачу, отримати `Облік витрат`, зупинити роботу командою `Стоп` або закрити поточну сесію й почати іншу командою `Нова задача`. Ці дії не створюють паралельних сесій. `[PRD: §3.3–4, FR-020–FR-022, FR-033; CT: §4–6]`
 
-Окремий короткий шлях налаштувань запускається лише за потреби: Element → responsive `Налаштування власника` → Google-вхід exact email і валідний Access JWT → перегляд чинних effective та стандартних значень → зміна рівно трьох дозволених груп з inline compatibility validation → атомарне save або повернення стандартного набору → явне підтвердження «лише для наступної сесії» → повернення до Element. Він не замінює й не перериває основну консультаційну подорож. `[PRD: §3.6, §4.2, AC-012–AC-016]`
+Окремий короткий шлях налаштувань запускається лише за потреби: Element → responsive `Налаштування власника` на штатному GoDaddy hostname → локальний owner password → захищена owner session → перегляд чинних effective та стандартних значень → зміна рівно трьох дозволених груп з inline compatibility validation → атомарне MySQL save або повернення стандартного набору → явне підтвердження «лише для наступної сесії» → повернення до Element. Він не замінює й не перериває основну консультаційну подорож. `[PRD: §3.6, §4.2, AC-013–AC-016; GR: Scope Boundaries, Verification Rules]`
 
 ## Journey Stages
 
@@ -85,7 +87,7 @@
 
 ### 2. Перше використання і згода
 
-**Дія Власника.** Під час першого використання Власник явно надає або не надає одноразову `Згоду на обробку даних` через `matrix.org`, Cloudflare, OpenAI та Anthropic. Пояснення прямо відділяє Matrix E2EE від подальшої серверної обробки: `matrix.org` бачить метадані, а розшифрований у Cloudflare runtime зміст передається AI-провайдерам через TLS. `[PI: «Правила даних і доступу»; PRD: FR-002, NFR-005; CT: «Згода на обробку даних», «Matrix E2EE»]`
+**Дія Власника.** Під час першого використання Власник явно надає або не надає одноразову `Згоду на обробку даних` через `matrix.org`, GoDaddy hosting, OpenAI та Anthropic. Пояснення прямо відділяє Matrix E2EE від подальшої серверної обробки: `matrix.org` бачить метадані, а розшифрований у GoDaddy Node.js runtime зміст передається AI-провайдерам через TLS. `[PRD: FR-002, NFR-005; CT: «Згода на обробку даних», «Matrix E2EE»; GR: Scope Boundaries]`
 
 **Розгалуження.** Після згоди звичайна обробка бізнес-даних може тривати. Без згоди система не починає таку обробку; загальна згода не поширюється на особливо чутливі документи або зовнішні дії. `[PRD: §3.2, FR-002, FR-006, FR-035; GR: When To Ask, When To Stop]`
 
@@ -138,7 +140,7 @@
 ### 7. Втручання Власника під час активної сесії
 
 - **Уточнення.** Нове звичайне повідомлення додається до контексту поточної задачі; паралельна сесія не створюється. `[PRD: FR-020, AC-004; CT: «Уточнити задачу»]`
-- **`Витрати`.** Система окремо показує налаштовані місячні платежі ChatGPT/Codex і Claude, фактичні витрати Cloudflare, R2 та іншої інфраструктури, а також поточний статус `matrix.org` (`0` лише доки доступний безкоштовний план) і доступний provider-reported usage/ліміт/reset. Subscription AI usage поточної сесії позначається як `входить у підписку`; показник, якого провайдер не надав, — як `невідомо`. Команда не вигадує per-session token charge, не купує usage credits і не встановлює жорсткого грошового ліміту. `[PI: «Модель використання підписок і витрат»; PRD: US-021, FR-033, AC-009; CT: «Витрати», «Облік витрат»]`
+- **`Витрати`.** Система окремо показує налаштовані місячні платежі ChatGPT/Codex і Claude, фактичні витрати GoDaddy Node.js/MySQL та іншої чинної інфраструктури, а також поточний статус `matrix.org` (`0` лише доки доступний безкоштовний план) і доступний provider-reported usage/ліміт/reset. Subscription AI usage поточної сесії позначається як `входить у підписку`; показник, якого провайдер не надав, — як `невідомо`. Команда не вигадує per-session token charge, не купує usage credits і не встановлює жорсткого грошового ліміту. `[PRD: US-021, FR-033, AC-009; CT: «Витрати», «Облік витрат»; GR: Scope Boundaries]`
 - **`Стоп`.** Система не запускає нових модельних викликів цієї сесії, скасовує поточні операції там, де це підтримує провайдер, і не публікує пізні агентські відповіді як продовження зупиненої роботи. Сесія стає `Зупиненою сесією`. `[PRD: FR-021, AC-004; CT: «Стоп», «Зупинена сесія»]`
 - **`Нова задача`.** Система закриває поточну сесію, створює нову й не переносить попередній робочий контекст як активну задачу. До вирішення словникового питання повідомлення має бути буквальним: «поточну сесію закрито, нову створено». `[PRD: FR-022, AC-004; CT: «Нова задача», Open Vocabulary Questions; GR: Open Questions]`
 - **Окремий дозвіл на дію.** Якщо рекомендація переходить у конкретну зовнішню або високоризикову дію, система називає дію, ціль, отримувача або систему й істотний наслідок та чекає окремого явного дозволу. Мовчання, загальна згода на дані або дозвіл на іншу дію не підходять. `[PRD: US-023, FR-035; GR: When To Ask, When To Stop]`
@@ -180,13 +182,13 @@
 
 Цей шлях виникає епізодично, лише коли Власник хоче змінити параметри майбутньої консультації. Він не додає браузерний консультаційний сценарій, не показує перебіг консиліуму й завершується поверненням до Element. `[PRD: US-024, FR-037; PC: §7–8; CT: «Налаштування власника»]`
 
-#### S1. Перехід і Google-вхід
+#### S1. Перехід і локальний owner-вхід
 
-**Дія Власника.** Власник за потреби переходить з Element до responsive surface `Налаштування власника` на mobile або desktop і проходить `Google-вхід` точно дозволеним Google-акаунтом. `[PRD: US-024, FR-037–FR-038, NFR-018; AC-012, AC-016]`
+**Дія Власника.** Власник за потреби переходить з Element до responsive surface `Налаштування власника` на mobile або desktop, вводить локальний owner password і після успішної перевірки отримує захищену owner session. `[PRD: US-024, FR-037, NFR-018, AC-016; GR: Scope Boundaries]`
 
-**Перевірка доступу.** Доступ відкривається лише після fail-closed перевірки підпису й строку дії Access JWT, issuer, audience та exact owner email. Інший Google-акаунт, password, OTP, magic link, інший IdP, реєстрація, відсутній, malformed, unsigned, expired чи інакше invalid JWT, wrong issuer або wrong audience отримують відмову без показу дозволеної email-адреси чи секретів. Якщо сесія `Google-входу` спливає до save/reset, Власник входить повторно; незбережені зміни не застосовуються. `[PRD: FR-038, NFR-016, AC-012; GR: When To Stop, Verification Rules]`
+**Перевірка доступу.** Доступ відкривається лише після server-side fail-closed перевірки правильного owner password і цілісної, чинної owner session. Wrong/missing password, missing/malformed/invalid/expired session, replay/forged cookie, direct protected-route/API access без login, registration, recovery/reset або інша identity отримують відмову без показу password value, hash, session secret чи деталей порівняння. Якщо owner session спливає до save/reset, Власник входить повторно; незбережені зміни не застосовуються. `[GR: When To Stop, Verification Rules]`
 
-**Межа довіри.** `Google-вхід` не відкриває, не змінює й не замінює Codex або Claude Code `Subscription OAuth`. Жодний AI OAuth credential, setup-token, refresh state, `auth.json` або reauth material у Settings не відображається й не проходить через browser/session/data path. `[PRD: FR-039, NFR-006; GR: Forbidden Changes, Verification Rules]`
+**Межа довіри.** Локальний owner password/session не відкриває, не змінює й не замінює Codex або Claude Code `Subscription OAuth`. Password verifier і жодний AI OAuth credential, setup-token, refresh state, `auth.json` або reauth material у Settings не відображаються й не проходять через browser/session/data path. `[PRD: FR-039, NFR-006; GR: Forbidden Changes, Verification Rules]`
 
 #### S2. Перегляд чинного й стандартного наборів
 
@@ -200,7 +202,7 @@
 
 #### S4. Атомарне save, cancel або повернення стандартних значень
 
-**Валідний шлях.** Save атомарно зберігає весь повністю валідний набір. Cancel відкидає незбережені зміни. Повернення standard values проходить ту саму свіжу validation і застосовується як один узгоджений набір, а не як часткові записи. Після успіху показані effective values відповідають фактично збереженим. `[PRD: US-028, FR-044, NFR-017; AC-013]`
+**Валідний шлях.** Save однією MySQL-транзакцією атомарно зберігає весь повністю валідний набір. Cancel відкидає незбережені зміни. Повернення standard values проходить ту саму свіжу validation і застосовується як один узгоджений набір, а не як часткові записи. Після успіху показані effective values відповідають фактично збереженим. `[PRD: US-028, FR-044, NFR-017; AC-013; GR: Verification Rules]`
 
 **Невалідний шлях.** Якщо будь-яке поле несумісне, capability map stale/unknown або atomic write не підтверджено, не зберігається жодне поле; попередній валідний набір залишається effective. Такий набір не створює `Фактичні налаштування сесії` й не запускає нову сесію. Після capability drift уже збережений set повторно перевіряється на старті наступної сесії та fail closed блокує її до сумісної зміни; активна сесія продовжується зі своїм незмінним snapshot. `[PRD: US-029, FR-044–FR-045, NFR-017, NFR-019; AC-013–AC-015; GR: When To Stop]`
 
@@ -234,7 +236,7 @@
 | Чи змінює нова репліка активну задачу? | Власник через зміст або точну команду | Звичайне повідомлення — уточнення; `Стоп` — зупинка; `Нова задача` — закриття поточної та створення нової сесії | `PRD FR-020–FR-022, AC-004` |
 | Чи готові докази для висновку? | Головний консультант | Достатні — синтезувати; недостатні — назвати невідоме й наступну перевірку | `PRD FR-025, FR-028–FR-030`; `GR Verification Rules` |
 | Що робити із завершеною сесією? | Власник | Зберігати в архіві; експортувати повністю; видалити цілою лише після підтвердження | `PRD FR-031–FR-032, AC-008` |
-| Чи підтверджено доступ до `Налаштувань власника`? | Система за Google identity та Access JWT | Exact email + valid signature/expiry/issuer/audience — відкрити; wrong account, інший login method, missing/invalid/expired JWT — відмовити fail closed | `PRD US-024, FR-038, NFR-016, AC-012`; `GR When To Stop` |
+| Чи підтверджено доступ до `Налаштувань власника`? | Система за локальним owner password і owner session | Correct password + valid session — відкрити; wrong/missing password, missing/invalid/expired/replayed/forged session, direct route/API bypass або інша identity — відмовити fail closed | `GR Scope Boundaries, When To Stop, Verification Rules` |
 | Чи сумісний повний Settings set? | Система за актуальною capability map | Supported — дозволити atomic save/reset; unsupported, unknown або stale — не зберігати й не запускати нову сесію, без silent downgrade | `PRD US-025–US-029, FR-041–FR-045, NFR-019`; `GR When To Stop` |
 | Коли застосувати збережену зміну? | Система на межі нової сесії | Лише наступна сесія після повторної validation отримує новий immutable snapshot; активна сесія не змінюється | `PRD US-029, FR-045, NFR-017, AC-015` |
 
@@ -252,9 +254,9 @@
 | Використання приватних підписок для третьої особи | Exact single-owner доступ і private non-SaaS межа перевіряються до залежного запуску | Зміна користувацької моделі або правил провайдера потребує нового рішення про auth, licensing і billing поза V1 |
 | Хибна впевненість через згоду агентів | Факти, припущення, судження й невідоме розділяються; актуальні та високоризикові твердження перевіряються за першоджерелами | Спільні сліпі зони ШІ залишаються; зовнішні дані або профільний фахівець можуть бути необхідні |
 | Сторонній доступ або втрачений пристрій | Exact allowlist `room_id` + `owner_mxid`, verified device, recovery і revocation передують обробці | Компрометація recovery key або запізніле відкликання залишають ризик; до відновлення довіри робота зупиняється |
-| Хибне відчуття наскрізної конфіденційності до AI | Перша згода чесно пояснює метадані homeserver і завершення E2EE на боті в Cloudflare runtime | Розшифрований зміст обробляють Cloudflare, OpenAI та Anthropic; мінімізація контексту залишається необхідною |
+| Хибне відчуття наскрізної конфіденційності до AI | Перша згода чесно пояснює метадані homeserver і завершення E2EE на боті в GoDaddy runtime | Розшифрований зміст обробляють GoDaddy runtime, OpenAI та Anthropic; мінімізація контексту залишається необхідною |
 | Порушення повноти або порядку сесії | Element-відображення, архів та експорт мають зберігати повне тіло й канонічний порядок без дублів | Повторна доставка чи конкуренція повідомлень може зіпсувати порядок; без доказу сесія не вважається коректно завершеною |
-| Сторонній або прострочений Settings-доступ | Exact Google email і повна Access JWT validation; інші акаунти й методи fail closed | Компрометація дозволеного Google-акаунта лишається ризиком, але не повинна відкривати AI OAuth credentials |
+| Сторонній або прострочений Settings-доступ | Server-side owner-password verification і цілісна обмежена в часі owner session; усі bypass paths fail closed | Компрометація owner password або session лишається ризиком, але не повинна відкривати AI OAuth credentials |
 | Несумісна конфігурація або capability drift | Inline validation, validate-before-save, atomic write й повторна перевірка до старту нової сесії | Нова сесія може бути заблокована до оновлення набору; активна сесія має лишитися незмінною |
 | `Швидкість` помилково сприймається як платний або менш безпечний режим | Значення описані лише як orchestration presets; Fast Mode, PAYG і послаблення інваріантів заборонені | Реалізація потребує доказу, що `швидко` не обходить критика, A2A, дослівність чи safety/privacy gates |
 
@@ -263,7 +265,7 @@
 1. **Немає підтвердженого Matrix-доступу.** Інший `room_id` або `owner_mxid`, підроблена подія, неперевірений чи відкликаний пристрій не запускають агентів, не повертають захищених даних і не змінюють активну сесію Власника. `[PRD: US-002, AC-006; GR: When To Stop]`
 2. **Порушено room invariants.** Якщо не підтверджено `matrix.org`, E2EE або invite-only; joined-склад не дорівнює Власник + бот; є інший pending invite; history visibility не `joined`; є public address/listing; дозволено guests; є bridge чи widget; пристрій не verified — робочі запити не обробляються до відновлення інваріантів. `[GR: When To Stop]`
 3. **Recovery або revocation не завершено.** Новий пристрій без відновлених ключів і перевірки не працює; втрачений або скомпрометований пристрій має бути відкликаний. Якщо Matrix E2EE-ключі, verified state чи безпечне recovery/revocation не працюють, нові робочі повідомлення не розшифровуються й не обробляються. `[PRD: US-002, AC-006; GR: When To Stop]`
-4. **Немає першої згоди.** Звичайна обробка бізнес-даних через `matrix.org`, Cloudflare, OpenAI та Anthropic не починається. `[PRD: FR-002; GR: When To Stop]`
+4. **Немає першої згоди.** Звичайна обробка бізнес-даних через `matrix.org`, GoDaddy hosting, OpenAI та Anthropic не починається. `[PRD: FR-002; GR: When To Stop]`
 5. **Непідтримуваний вхід.** Система пояснює обмеження й не запускає аналіз. `[PRD: FR-003]`
 6. **Виявлено секрет.** Секрет зупиняється до агентів і журналу та не повторюється у відповіді. `[PRD: FR-005; GR: When To Stop]`
 7. **Немає підтвердження для чутливого документа.** Обробка цього документа залишається в `Очікуванні дозволу` й не продовжується. `[PRD: FR-006; GR: When To Stop]`
@@ -279,8 +281,8 @@
 17. **Немає окремого дозволу на зовнішню або високоризикову дію.** Консультація може завершитися рекомендацією, але відповідна дія не виконується. `[PRD: US-023, FR-035; GR: When To Stop]`
 18. **Власник надсилає `Стоп`.** Подальша робота припиняється, а пізні агентські відповіді не публікуються як продовження. `[PRD: FR-021]`
 19. **Не доведено цілісність запису.** Сесію не називають успішно завершеною або коректно заархівованою; статус залишається частковим із наступною перевіркою. `[GR: When To Stop, Evidence Requirements]`
-20. **Settings identity не підтверджено.** Wrong Google account, password/OTP/magic link, інший IdP, registration, missing/invalid/expired JWT, wrong issuer чи audience fail closed не відкривають і не змінюють Settings. Відмова не розкриває exact allowlist або секрети. `[PRD: US-024, FR-038, NFR-016, AC-012; GR: When To Stop]`
-21. **Settings auth сплив під час редагування.** Save/reset не виконуються; незбережені зміни не стають effective. Власник повторює `Google-вхід` і після повернення знову перевіряє набір. AI subscription OAuth при цьому не показується й не змінюється. `[PRD: FR-038–FR-039, NFR-016; GR: When To Stop]`
+20. **Settings identity не підтверджено.** Wrong/missing owner password, missing/malformed/invalid/expired session, replay/forged cookie, direct route/API bypass, registration/recovery/reset або інша identity fail closed не відкривають і не змінюють Settings. Відмова не розкриває password value/hash, session secret або AI credentials. `[GR: When To Stop, Verification Rules]`
+21. **Settings auth сплив під час редагування.** Save/reset не виконуються; незбережені зміни не стають effective. Власник повторює локальний owner-вхід і після повернення знову перевіряє набір. AI subscription OAuth при цьому не показується й не змінюється. `[GR: When To Stop]`
 22. **Конфігурація несумісна.** Unsupported model/depth pair, невідомий model slug, заборонений speed effect або інша невідповідність показуються inline; жодне поле не зберігається, і нова сесія з таким набором не стартує. `[PRD: US-025–US-029, FR-041–FR-046, AC-013–AC-015]`
 23. **Capability drift.** Якщо allowlist або capability map змінилися, stale/unknown state не спричиняє silent downgrade. Наступна сесія fail closed блокується до свіжої сумісної validation; попередній persisted set і активний snapshot не мутують. `[PRD: FR-042, FR-045, NFR-019; GR: When To Stop]`
 24. **Atomic save/reset не підтверджено.** Не застосовується жодна частина набору; Власник бачить попередні effective values і категорію помилки без секретних деталей. `[PRD: US-028, FR-044, NFR-017; GR: When To Stop]`
@@ -297,7 +299,7 @@
 - **Через збій або брак доказів:** Власник отримує чесний частковий результат і наступну можливу перевірку замість вигаданого успіху. `[PRD: FR-030; GR: Evidence Requirements]`
 - **Через auth/quota failure:** залежна робота залишається зупиненою до provider-reported reset або захищеної out-of-band reauth і наступного успішного preflight; credential material у Matrix не приймається, API/PAYG fallback не пропонується. `[PRD: FR-030, AC-007; GR: When To Stop]`
 - **Після експорту:** архівний запис не змінюється. Після підтвердженого видалення ціла сесія остаточно видаляється. `[PRD: FR-032; CT: «Експортувати сесію», «Видалити сесію»]`
-- **До відкриття Settings:** wrong Google account, альтернативний login method або missing/invalid/expired Access JWT завершують веб-гілку без доступу й без зміни persisted settings чи AI OAuth. `[PRD: FR-038–FR-039, AC-012]`
+- **До відкриття Settings:** wrong/missing owner password, missing/invalid/expired/replayed/forged owner session, direct route/API bypass або інша identity завершують веб-гілку без доступу й без зміни MySQL settings чи AI OAuth. `[GR: When To Stop, Verification Rules]`
 - **Під час Settings:** cancel повертає до попереднього effective set; incompatible set, capability drift або write failure завершують спробу без часткового збереження й без старту нової сесії. `[PRD: FR-042–FR-045, AC-013–AC-015]`
 - **Після Settings success:** Власник бачить, що валідна зміна стосується лише наступної сесії, і повертається до Element. Активна сесія лишається незмінною. `[PRD: US-029, AC-015]`
 
@@ -313,7 +315,7 @@
 
 ### Налаштування власника
 
-Власник за потреби відкрив єдину responsive Settings surface через exact allowlisted Google account і валідний Access JWT, побачив чинні effective та standard values, змінив рівно дозволені `Моделі`, `Глибину міркування` й `Швидкість`, отримав inline compatibility validation та атомарно зберіг або повернув валідний повний набір. Жодний AI OAuth credential не з'явився в Settings; жодний `Пресет швидкості` не ввімкнув Fast Mode/PAYG і не послабив обов'язкові safeguards. Власник отримав правдиве підтвердження, що зміна застосовується лише до наступної сесії, активна сесія не змінилася, і повернувся до Element. `[PRD: US-024–US-029, AC-012–AC-016; GR: Verification Rules]`
+Власник за потреби відкрив єдину responsive Settings surface на штатному GoDaddy hostname через правильний owner password і чинну захищену owner session, побачив чинні effective та standard values, змінив рівно дозволені `Моделі`, `Глибину міркування` й `Швидкість`, отримав inline compatibility validation та однією MySQL-транзакцією атомарно зберіг або повернув валідний повний набір. Password/session secrets та AI OAuth credentials не з'явилися в Settings; жодний `Пресет швидкості` не ввімкнув Fast Mode/PAYG і не послабив обов'язкові safeguards. Власник отримав правдиве підтвердження, що зміна застосовується лише до наступної сесії, активна сесія не змінилася, і повернувся до Element. `[PRD: US-024–US-029, AC-013–AC-016; GR: Verification Rules]`
 
 Практичний критерій цінності в усіх описаних гілках — зміна рішення або дії Власника, а не кількість тексту, агентів чи фреймворків. `[PI: «Результат для користувача», «Принципи продукту»; PC: §2]`
 
@@ -344,7 +346,7 @@
 | `US-021` | Stage 7 corrected `Витрати` semantics and cost uncertainty |
 | `US-022` | All working stages stay in the same private E2EE Matrix room in Element |
 | `US-023` | Stages 7–9 explicit permission for external/high-risk action and >10-minute continuation |
-| `US-024` | Settings S1: responsive owner-only surface, exact Google account and fail-closed JWT access; return to Element |
+| `US-024` | Settings S1: responsive owner-only surface, local owner password and fail-closed owner session; return to Element |
 | `US-025` | Settings S2–S3: separate typed allowlisted Codex and Claude Code model choices |
 | `US-026` | Settings S3: shared `low / medium / high / xhigh` with inline capability validation and no silent downgrade |
 | `US-027` | Settings S3: `швидко / збалансовано / ретельно` orchestration only, never Fast Mode/PAYG or weaker safeguards |
@@ -356,7 +358,7 @@
 - V1 має одного `Власника`, одну `Дозволену Matrix-пару`, одну `Приватну Matrix-кімнату` й не більше однієї `Активної сесії`.
 - Єдиний користувацький канал — штатний Element на Mac, iPhone, Samsung Flip7/Android і Windows PC; окремого browser-chat, live-preview або повсякденної панелі немає.
 - Кімната `matrix.org` invite-only з E2EE; у ній рівно один Matrix-акаунт Власника й один Matrix-акаунт бота, без інших pending invites, public address/listing, guests, bridges чи widgets, з history visibility `joined`. Exact allowlist — `room_id` + `owner_mxid`; пристрої перевіряються, новий відновлюється за recovery key, а втрачений або скомпрометований відкликається.
-- Matrix E2EE завершується на verified Matrix device бота в Cloudflare runtime; `matrix.org` бачить метадані, а розшифрований зміст передається OpenAI та Anthropic через TLS. Production не використовує платний Matrix-hosting, власний VPS, власний Matrix homeserver або локальний Mac.
+- Matrix E2EE завершується на verified Matrix device бота в GoDaddy Node.js runtime; `matrix.org` бачить метадані, а розшифрований зміст передається OpenAI та Anthropic через TLS. Production використовує наявний GoDaddy Node.js application і MySQL на штатному hostname, не Cloudflare Worker/DO/R2 і не перенесення домену; платний Matrix-hosting, власний Matrix homeserver та локальний Mac не використовуються.
 - Підтримувані входи — текст, зображення та PDF.
 - Перше використання потребує одноразової `Згоди на обробку даних`; `Особливо чутливий документ` потребує окремого підтвердження; `Секрет` не приймається й не журналюється.
 - Головний консультант обирає між `Прямою відповіддю` і `Консиліумом`. Повний консиліум — це 2–5 окремих Codex-агентів-спеціалістів та окремий Claude Code-агент-критик із фактичними адресованими повідомленнями через A2A.
@@ -373,8 +375,9 @@
 - Агенти аналізують і рекомендують; зовнішні та високоризикові дії потребують окремого явного дозволу Власника.
 - Продукт не створює власного звуку й покладається на нативні сповіщення Element та операційної системи.
 - Повсякденна консультація лишається в Element. Єдиний web-виняток — рідкісні responsive `Налаштування власника` без чату, архіву, live execution status або дашборду; після зміни Власник повертається до Element.
-- Settings access використовує лише `Google-вхід` exact allowlisted email і fail-closed перевірку Access JWT. Wrong Google account, інший login method, missing/invalid/expired token, wrong issuer або audience не дають доступу.
-- `Google-вхід` відокремлений від `Subscription OAuth`; Settings не показують і не змінюють AI OAuth credentials або reauth material.
+- Settings access використовує лише локальний owner password і fail-closed захищену owner session. Wrong/missing password, missing/invalid/expired/replayed/forged session, direct route/API bypass, registration/recovery/reset або інша identity не дають доступу.
+- Локальна Settings auth відокремлена від `Subscription OAuth`; Settings не показують і не змінюють password/session secrets, AI OAuth credentials або reauth material.
+- Репозиторій HappyPro, його deployment, credentials і дані не належать journey та не змінюються. Destructive legacy cleanup потребує окремого JIT-дозволу після exact inventory і перевіреного backup/restore path.
 - Settings мають рівно `Codex-агенти`, `Claude Code-критик`, `Швидкість консиліуму`: незалежні typed allowlists і provider-specific capability validation без silent downgrade та orchestration presets `швидко / збалансовано / ретельно`, які ніколи не вмикають Fast Mode, API/PAYG чи usage credits і не послаблюють mandatory safeguards.
 - Save та повернення standard values є all-or-nothing. Incompatible set, capability drift або write failure не змінюють effective values і не запускають нову сесію. Валідна зміна застосовується лише до наступної сесії; активні `Фактичні налаштування сесії` залишаються незмінними.
 

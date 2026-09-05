@@ -2,14 +2,13 @@ import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { createPool } from "mysql2/promise";
-
 import { createCsrfTokenService, importCsrfHmacKey } from "../access/csrf.ts";
 import { securityHeaders } from "../http/security-headers.ts";
 import { parseCapabilityReceipt } from "../settings/capability-receipt.ts";
 import { createVerifiedSettingsGateway, type VerifiedSettingsGateway } from "../settings/gateway.ts";
 import { OwnerSettingsDO } from "../settings/owner-settings-do.ts";
 import type { CapabilityReceipt } from "../settings/types.ts";
+import { parseRuntimeEnvironment } from "../runtime/environment.ts";
 import { createOwnerPasswordService, parseOwnerPasswordConfiguration } from "./owner-password-auth.ts";
 import {
   MySqlKeyValueStorage,
@@ -17,7 +16,8 @@ import {
   type GodaddyDatabaseConfiguration,
   type MySqlPool
 } from "./mysql-storage.ts";
-import { createGoDaddyRegistrarRuntime } from "./registrar-runtime.ts";
+import { createGodaddyMySqlPool } from "./mysql-pool.ts";
+import { createGoDaddyRegistrarRuntime, type GoDaddyRegistrarRuntime } from "./registrar-runtime.ts";
 import { createRuntimeBootstrap, type RuntimeBootstrap } from "./runtime-bootstrap.ts";
 
 type SettingsAsset = "settings.css" | "settings.js";
@@ -25,9 +25,12 @@ type SettingsAsset = "settings.css" | "settings.js";
 export type GoDaddySettingsRuntime = Readonly<{
   configured: boolean;
   handle: (request: Request) => Promise<Response | undefined>;
+  close: () => Promise<void>;
 }>;
 
 export type GoDaddySettingsRuntimeDependencies = Readonly<{
+  /** A process-owned pool supplied by the application composition root. */
+  pool?: MySqlPool;
   createPool?: (configuration: GodaddyDatabaseConfiguration) => MySqlPool;
   now?: () => Date;
   readAsset?: (asset: SettingsAsset) => Promise<Uint8Array>;
@@ -37,6 +40,7 @@ export type GoDaddySettingsRuntimeDependencies = Readonly<{
     now: () => Date;
     initialCatalog?: CapabilityReceipt;
   }>) => RuntimeBootstrap;
+  registrarRuntime?: GoDaddyRegistrarRuntime;
 }>;
 
 const settingsPaths = new Set([
@@ -175,17 +179,7 @@ const isSettingsPath = (pathname: string): boolean => settingsPaths.has(pathname
 const isManagedPath = (pathname: string): boolean => isSettingsPath(pathname) || runtimeOperationPaths.has(pathname);
 
 function defaultPool(configuration: GodaddyDatabaseConfiguration): MySqlPool {
-  return createPool({
-    host: configuration.host,
-    port: configuration.port,
-    database: configuration.database,
-    user: configuration.user,
-    password: configuration.password,
-    waitForConnections: true,
-    connectionLimit: 4,
-    queueLimit: 0,
-    enableKeepAlive: true
-  }) as unknown as MySqlPool;
+  return createGodaddyMySqlPool(configuration);
 }
 
 const defaultReadAsset = (asset: SettingsAsset): Promise<Uint8Array> =>
@@ -253,29 +247,32 @@ export function createGoDaddySettingsRuntime(
   dependencies: GoDaddySettingsRuntimeDependencies = {}
 ): GoDaddySettingsRuntime {
   const now = dependencies.now ?? (() => new Date());
+  const runtimeEnvironment = parseRuntimeEnvironment(environment);
   const database = parseGodaddyDatabaseConfiguration(environment);
   const ownerPassword = parseOwnerPasswordConfiguration(environment);
   const csrfSecret = asSecret(environment.SETTINGS_CSRF_HMAC_KEY);
   let receipt = capabilityReceiptFromEnvironment(environment, now());
 
-  if (!database.ok || !ownerPassword.ok || csrfSecret === undefined) {
+  if (!runtimeEnvironment.ok || !database.ok || !ownerPassword.ok || csrfSecret === undefined) {
     return Object.freeze({
       configured: false,
       async handle(request: Request): Promise<Response | undefined> {
         return isManagedPath(new URL(request.url).pathname) || new URL(request.url).pathname.startsWith("/auth/")
           ? plain("Settings are temporarily unavailable.", 503)
           : undefined;
-      }
+      },
+      async close(): Promise<void> {}
     });
   }
 
   const owner = createOwnerPasswordService({ configuration: ownerPassword.value, now });
-  const pool = (dependencies.createPool ?? defaultPool)(database.value);
+  const ownsPool = dependencies.pool === undefined;
+  const pool = dependencies.pool ?? (dependencies.createPool ?? defaultPool)(database.value);
   const storage = new MySqlKeyValueStorage({
     executor: pool,
     namespace: "owner-settings-v1"
   });
-  const registrar = createGoDaddyRegistrarRuntime({ pool, now });
+  const registrar = dependencies.registrarRuntime ?? createGoDaddyRegistrarRuntime({ pool, now });
   const runtime = (dependencies.createRuntimeBootstrap ?? createRuntimeBootstrap)({
     environment,
     pool,
@@ -313,8 +310,23 @@ export function createGoDaddySettingsRuntime(
     });
   };
 
+  let closePromise: Promise<void> | undefined;
+  const close = (): Promise<void> => {
+    closePromise ??= (async () => {
+      try {
+        await runtime.close();
+      } finally {
+        if (ownsPool && "end" in pool && typeof pool.end === "function") {
+          await (pool as MySqlPool & Readonly<{ end: () => Promise<void> }>).end();
+        }
+      }
+    })();
+    return closePromise;
+  };
+
   return Object.freeze({
     configured: true,
+    close,
     async handle(request: Request): Promise<Response | undefined> {
       const url = new URL(request.url);
 

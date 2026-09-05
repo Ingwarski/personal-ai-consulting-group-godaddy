@@ -78,6 +78,40 @@ test("appends only one verbatim confirmed message for an idempotent event", asyn
   assert.equal(message.value.body, "Повний текст **без скорочення**.");
   assert.equal(retry.replayed, true);
   assert.deepEqual(await registrar.getConfirmedMessages(1), [message.value]);
+  assert.deepEqual(await registrar.getLocalMatrixOutboxRecordForTest(1, 1), {
+    generation: 1,
+    sequence: 1,
+    transactionId: `pc-1-1-${message.value.bodyHash.slice(0, 24)}`,
+    state: "pending",
+    kind: "message",
+    message: message.value,
+    createdAt: message.value.confirmedAt
+  });
+});
+
+test("rolls back confirmation and sequence when the transaction-local outbox projection fails", async () => {
+  const receipt = createCapabilityReceipt();
+  const snapshot = resolveEffectiveSessionSnapshot({
+    sessionId: "rollback-source",
+    settingsRevision: 7,
+    settings: receipt.defaults,
+    capabilityReceipt: receipt
+  }, activeNow);
+  if (!snapshot.ok) throw new Error("Test snapshot must resolve.");
+  const registrar = new RegistrarDO({
+    storage: new MemoryRegistrarStorage(),
+    now: () => activeNow,
+    projectConfirmedMessage: async () => { throw new Error("outbox unavailable"); }
+  });
+  await registrar.startSession({ sessionId: "task-rollback", settingsSnapshot: snapshot.value });
+  await assert.rejects(registrar.appendConfirmedMessage({
+    generation: 1,
+    eventId: firstEvent,
+    role: "Критик",
+    body: "Не може бути підтверджено частково."
+  }), /outbox unavailable/);
+  assert.deepEqual(await registrar.getConfirmedMessages(1), []);
+  assert.equal((await registrar.getActiveSession())?.nextSequence, 1);
 });
 
 test("rejects a duplicate event with a changed body", async () => {
@@ -89,17 +123,46 @@ test("rejects a duplicate event with a changed body", async () => {
   assert.deepEqual(changed, { ok: false, code: "idempotency_conflict" });
 });
 
+test("includes the native reply relation in the idempotency fingerprint", async () => {
+  const { registrar, snapshot } = createRegistrar();
+  await registrar.startSession({ sessionId: "task-1", settingsSnapshot: snapshot });
+  const first = await registrar.appendConfirmedMessage({
+    generation: 1, eventId: firstEvent, role: "Стратег", body: "Відповідь.", replyToEventId: "$owner-event-A"
+  });
+  const changedRelation = await registrar.appendConfirmedMessage({
+    generation: 1, eventId: firstEvent, role: "Стратег", body: "Відповідь.", replyToEventId: "$owner-event-B"
+  });
+  assert.equal(first.ok, true);
+  assert.deepEqual(changedRelation, { ok: false, code: "idempotency_conflict" });
+});
+
+test("enforces the 64 KiB UTF-8 confirmed-body boundary before storage", async () => {
+  const { registrar, snapshot } = createRegistrar();
+  await registrar.startSession({ sessionId: "task-1", settingsSnapshot: snapshot });
+  const exact = await registrar.appendConfirmedMessage({
+    generation: 1, eventId: "agent-message-event-exact-limit", role: "Стратег", body: "ї".repeat(32_768)
+  });
+  const oversized = await registrar.appendConfirmedMessage({
+    generation: 1, eventId: "agent-message-event-over-limit", role: "Стратег", body: "ї".repeat(32_769)
+  });
+  assert.equal(exact.ok, true);
+  assert.deepEqual(oversized, { ok: false, code: "invalid_event" });
+});
+
 test("stop and new task fence late output from the obsolete generation", async () => {
   const { registrar, snapshot, advanceClock } = createRegistrar();
   await registrar.startSession({ sessionId: "task-1", settingsSnapshot: snapshot });
   await registrar.appendConfirmedMessage({ generation: 1, eventId: firstEvent, role: "Маркетолог", body: "Початкова репліка." });
-  const stopped = await registrar.stopSession(1);
+  const stopped = await registrar.stopSession(1, { publishControl: true });
   advanceClock(60_000);
   const lateAfterStop = await registrar.appendConfirmedMessage({ generation: 1, eventId: secondEvent, role: "Маркетолог", body: "Запізніла репліка." });
   const secondTask = await registrar.startNewTask({ sessionId: "task-2", settingsSnapshot: snapshot });
   const lateAfterNewTask = await registrar.appendConfirmedMessage({ generation: 1, eventId: "agent-message-event-0003", role: "Маркетолог", body: "Ще пізніше." });
 
   assert.equal(stopped.ok, true);
+  const stoppedMessages = await registrar.getConfirmedMessages(1);
+  assert.equal(stoppedMessages.at(-1)?.internalEventId, "control-stop-event-1");
+  assert.equal((await registrar.getLocalMatrixOutboxRecordForTest(1, 2))?.kind, "control");
   assert.deepEqual(lateAfterStop, { ok: false, code: "session_not_active" });
   assert.equal(secondTask.ok, true);
   if (secondTask.ok) assert.equal(secondTask.value.generation, 2);

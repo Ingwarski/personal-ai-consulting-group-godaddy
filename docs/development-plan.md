@@ -1,277 +1,274 @@
-# Development Plan
+# План розробки
 
-- `status`: Node 22 and Published Rust Matrix persistence/process gate verified; destructive migration recovery remains blocked
+- `status`: `validated`; локальна реалізація `U-06` дозволена окремим user prompt, зовнішні credentials/deploy і destructive cleanup не дозволені
+- `definition_status`: `prepared`
+- `execution_status`: `not_run`
+- `release_readiness`: `not_evaluated`
 - `updated_at`: `2026-09-04`
+- `owner_invocation_id`: `990d3f67-1e4a-460d-8722-0292ddf2570b`
+- `working_language`: `uk`
+- Approved Visual Baseline: `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`
+
+Цей артефакт визначає послідовність і межі реалізації. Він не стверджує, що описані QA-перевірки, security review, representative-user sessions, real Matrix integration або release evaluation уже виконані.
 
 ## Source References
 
-- `docs/prd.md`: `US-001`–`US-029`, `FR-001`–`FR-046`, `NFR-001`–`NFR-019`, `AC-001`–`AC-016`.
-- `docs/project-context.md`: §7 Platform Targets, §8 Core Scenarios, §9 MVP Boundaries, §11 Constraints, §13 Risks.
-- `docs/canonical-terms.md`: `Власник`, `Сесія`, `Консиліум`, `Підтверджена репліка агента`, `Налаштування власника`, `Моделі`, `Глибина міркування`, `Пресет швидкості`, `Фактичні налаштування сесії`, `Subscription OAuth`, `Реєстратор`, `Канонічний порядок`.
-- `docs/guardrails.md`: Source Of Truth Order, Allowed/Forbidden Changes, Design Authority Rules, When To Stop, Verification Rules.
-- `docs/user-journey.md`: Stages 1–10, Settings S1–S5, Failure Path, Exit Points.
-- `docs/screen-map.md`: `SUR-01`–`SUR-02`, `MG-01`–`MG-13`, `SG-01`–`SG-05`, `SS-01`–`SS-46`.
-- `docs/wireframes.md`: conversational sequences A–F, Owner Settings structure and atomic-agent-reply pattern.
-- `docs/design-brief.md`: Approved Visual Baseline `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`, immutable target `96b91ba9622f8301809ed10ef661a313006e0c2743712912c624edc36a2ca8eb`.
-- `docs/architecture.md`: §§5–20 and §25, especially the all-GoDaddy feasibility, legacy-cleanup, recovery and equivalence boundaries.
-- `docs/dod-evals.md`: `G-01`–`G-20`, including active `G-16`.
-- `docs/qa-checklist.md`: `QA-PA-*`, `QA-JRN-*`, `QA-SS-*`, `QA-VIS-*`, `QA-INT-*`, `QA-A11Y-*`, `QA-RR-001`.
-
-## All-GoDaddy precondition
-
-The user-selected hosting direction is the existing GoDaddy Node.js app, not a direct Worker deployment. The original checkout required Node.js `>=24`, supplied no Node HTTP `start` contract, and contains Cloudflare Worker/DO/R2-oriented adapters. A Node 22 build/start/`PORT`/health scaffold is verified. On 04.09.2026, a temporary content-free Published Rust Matrix gate proved checksum-pinned static-binary execution, Node child-process control, encrypted SQLite create/reopen, wrong-key rejection, Matrix HTTPS, exclusive locking, HTTP non-retrievability at both candidate roots, and persistence through Published restart and source redeploy. The fixed synthetic store was deleted and the gate was retired after its receipt. This resolves the Matrix host-capability subgate; recovery and destructive-migration gates still must pass before legacy-code cleanup, secret removal, database cleanup or a cutover claim.
-
-`Preview` and `Published` must not be treated as isolated merely because they are variants. A stateful Preview requires provider-proven separate database/schema+credential; otherwise its scope is stateless build/UI verification only. An empty database table list in the dashboard is insufficient proof of legacy-data absence or exclusive ownership.
+| Джерело | SHA-256 | Спожите рішення |
+|---|---|---|
+| `docs/product-idea.md` | `ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a` | приватний Element/Matrix, GoDaddy Node, локальні Settings, subscription OAuth |
+| `docs/prd.md` | `32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94` | `US-001`–`US-029`, `FR-001`–`FR-046`, `NFR-001`–`NFR-019`, `AC-001`–`AC-016` |
+| `docs/project-context.md` | `1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15` | GoDaddy/MySQL boundary, дві поверхні, приватний single-owner scope |
+| `docs/canonical-terms.md` | `e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da` | канонічні ролі, стани, команди, outbox, liveness/readiness |
+| `docs/guardrails.md` | `4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48` | source authority, permission boundaries, evidence discipline |
+| `docs/user-journey.md` | `dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77` | Element Stages 1–10, Settings S1–S5, recovery та exits |
+| `docs/screen-map.md` | `385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52` | `SUR-01`–`SUR-02`, `MG-01`–`MG-13`, `SG-01`–`SG-05`, `SS-01`–`SS-46` |
+| `docs/wireframes.md` | `49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca` | Matrix sequences, Settings hierarchy, atomic reply pattern |
+| `docs/design-brief.md` | `719a32b4ea4fef9f9eaa0ee08864f00fa57f9637be530e67c404d58d1c2e5608` | approved Candidate B v2 та scoped `DB-D17` auth override |
+| `docs/architecture.md` | `96366beeb83c11336b6466618115af51cb8190a05afec03fe0ad697adc89929e` | GoDaddy supervisor, MySQL, Rust sidecar, private NDJSON, security boundaries |
+| `docs/dod-evals.md` | `135dc8038171a95d4dc84796c2c0d58c8fc886c73ded6d6b9c881b53da1e0fc5` | `G-01`–`G-23`, prepared/not-run semantics |
+| `docs/qa-checklist.md` | `6dcd97be6b137dedc75f13b6c7dd37f6716ef95fe7c67dc5989233783d8b8006` | concrete QA IDs, H1–H10, representative tasks, `QA-SEC-001` |
 
 ## Implementation Strategy
 
-1. Complete the GoDaddy legacy-recovery and destructive-manifest gates before any legacy code, secret or database deletion.
-2. Continue non-destructive adapter implementation only behind the verified Node 22 process/storage and existing fail-closed database/auth boundaries. The existing Cloudflare units are reference contracts, not deployable work items for the new target.
-3. Recreate the canonical registrar, Matrix bridge, Settings access, OAuth fencing and archive only with proven equivalents; no adapter is assumed interchangeable.
-4. Promote only the approved Candidate B v2 presentation fragments for `SUR-02`; `SUR-01` remains native Element/Matrix and is not reimplemented as a browser chat.
-5. Claims progress from local contract evidence → controlled integration evidence → GoDaddy Published, real-device E2E evidence. A green local suite never substitutes a relevant hard gate.
+1. Production target is the existing GoDaddy Node 22 application. Legacy Cloudflare adapters remain reference/rollback code only; they are not a runtime dependency or deployment target.
+2. Keep Preview stateless. It receives no production database, Matrix store, OAuth or owner-session credentials and cannot read or mutate Published state.
+3. Preserve one MySQL-backed canonical registrar. A confirmed agent message and its ordered Matrix outbox record are created in the same transaction; Matrix delivery never defines canonical order.
+4. Run Matrix E2EE in one checksum-pinned Rust sidecar. Node owns HTTP, policy, MySQL, provider orchestration and supervision; the sidecar owns only Matrix SDK/session/crypto/store/media transport.
+5. Complete local deterministic implementation before any credential, real room/device or deployment action. Those effects require separate just-in-time authorization.
+6. Treat the 04.09.2026 Published Rust probe only as host feasibility, not proof of final sidecar, final paths, real Matrix integration or release readiness.
+7. Keep destructive legacy code/secret/database cleanup behind `G-00`: exact inventory, backup, isolated restore/reconciliation, rollback and action-time confirmation.
 
 ## Codebase Map
 
-| Current path | Status | Production treatment |
+| Шлях | Поточна роль | Планова дія |
 |---|---|---|
-| `consilium/live/*` | Historical local preview | Preserve; never import into production runtime or `SUR-02`.
-| `scripts/consilium-*.mjs` | Historical chat evidence utilities | Preserve as reference-only; do not use as a production registrar.
-| `tests/consilium-chat.test.mjs` | Legacy formatting test | Preserve; add isolated MVP tests under a new runtime test tree.
-| `forge/design/candidates/candidate-b/v2/*` | Approved visual evidence | Reuse only selected `SUR-02` presentation via the traced promotion in U-04.
-| `forge/design/evidence/candidate-b/v2/*` | Approved visual evidence | Read-only visual target; use for `G-16`, never as runtime proof.
-| `src/*`, `test/*`, `wrangler.*`, `package.json` | Existing Cloudflare-oriented partial implementation | Preserve as a reference/rollback source during feasibility; do not assert that it is a GoDaddy Node app or delete it before the legacy retention decision. |
+| `src/godaddy/server.mjs` | GoDaddy Node HTTP entrypoint | wire liveness and content-free Matrix readiness after supervisor completion |
+| `src/godaddy/mysql-storage.ts` | transactional MySQL key/value adapter | reuse for registrar/outbox atomicity; no second state authority |
+| `src/session/registrar-do.ts` | registrar domain | add transaction-local publication projection without binding domain logic to Matrix |
+| `src/matrix/*` | policy/formatting reference | revalidate ingress/send policy; consume durable outbox instead of direct publish |
+| `src/godaddy/settings-runtime.ts` | owner-password/session/MySQL Settings runtime | retain as `SUR-02`, isolated from provider OAuth |
+| `src/cloudflare/*`, `src/worker.ts`, `wrangler.*` | legacy reference/rollback | never import from GoDaddy production entrypoint; cleanup only through `G-00` |
+| `native/matrix-sidecar/**` | absent | create production Rust workspace and committed lockfile |
+| `.github/workflows/matrix-sidecar.yml` | absent | create reproducible artifact/SBOM/checksum pipeline |
+| `forge/design/candidates/candidate-b/v2/**` | frozen design evidence | never mutate; only bounded U-04 mapping applies |
 
 ## Implementation Units
 
-### G-00 — All-GoDaddy feasibility and legacy recovery gate
+### G-00 — GoDaddy recovery and destructive-cleanup gate
 
-- **Purpose:** establish whether the requested GoDaddy target can satisfy retained V1 invariants and whether legacy HappyPro state can be recovered before any irreversible change.
-- **Source References:** architecture §25; PRD `FR-001`–`FR-046`, `NFR-001`–`NFR-019`; DoD `G-01`, `G-02`–`G-20`; QA `QA-RR-001` and all applicable `QA-PA-*`.
-- **Depends On:** explicit hosting direction from the Owner; no legacy or provider-data mutation.
-- **Work Items:** inventory deployed app/source/variant/database resource metadata without secret values or database payloads; map runtime to database; reconcile historic HappyPro persistence evidence; preserve immutable Git rollback artifact; create encrypted backup and prove an isolated restore; obtain provider evidence for database isolation and outbound policy; define and verify GoDaddy-equivalent registrar, Matrix crypto state, owner-secret Settings, subscription OAuth and encrypted archive. The Node 22 build/start/health contract and the 04.09.2026 content-free Published Rust Matrix process/private-durable-store gate are complete and retired. Real Matrix room/device evidence and all remaining recovery/stateful-equivalence work remain open.
-- **Acceptance Checks:** dashboard table absence is never accepted as database-wipe authority; no legacy source/secrets/data are deleted; no stateful Preview is used without independent database/schema+credential; all missing provider guarantees become an explicit blocker rather than an assumption.
-- **Verification:** redacted metadata inventory; backup hash and restore/reconciliation result; Node 22 build/start/health receipt; the completed content-free Published Rust Matrix gate receipt; provider capability evidence; architecture review mapping every V1 invariant to a GoDaddy equivalent or a no-go result.
-- **Delivery Layer:** feasibility/recovery.
-- **Interfaces Produced:** content-free environment inventory, recovery receipt, Rust Matrix capability receipt, and an approved GoDaddy runtime contract or a documented no-go.
-- **Interfaces Consumed:** none.
-- **Integration Verification:** no destructive action is eligible until the G-00 evidence bundle and action-time destructive manifest are both complete.
+- **Purpose:** protect recoverable legacy code, secrets and database state before irreversible cutover or cleanup.
+- **Depends On:** exact provider resource inventory and action-time Owner confirmation.
+- **Work Items:** inventory exact app/variant/database/path mappings without secret values; preserve immutable Git rollback; create encrypted backup; prove isolated restore and ownership reconciliation; create exact destructive manifest; recheck immediately before action.
+- **Acceptance Checks:** dashboard emptiness is not proof; no shared database/table/credential is deleted; rollback and restore evidence identify exact targets; ambiguity blocks action.
+- **Verification:** provider metadata, backup hash, isolated restore record, resource-specific destructive manifest and final confirmation receipt.
+- **Status:** Published Node/Rust feasibility subgate is complete and retired; recovery/destructive cleanup remains blocked and does not block local non-destructive U-06.
 
-### U-01 — Runtime scaffold and contract test boundary
+### U-01 — GoDaddy Node 22 runtime and hardening boundary
 
-- **Purpose:** establish a small, deterministic TypeScript/Worker module boundary without changing legacy preview code.
-- **Source References:** architecture §§5, 7, 20; guardrails Allowed/Forbidden Changes; DoD `G-01`, QA `QA-EVD-001`, `QA-LIM-001`.
-- **Depends On:** approved baseline and this plan.
-- **Work Items:** create `package.json`, TypeScript configuration, `wrangler` configuration, `src/`, `test/` and an explicit environment-schema module; make forbidden API/PAYG credential names fail validation; create deterministic test commands for the new code only.
-- **Acceptance Checks:** no production module imports `consilium/live/*`; no required secret is committed; unknown environment mode fails closed.
-- **Verification:** TypeScript check, unit test command, forbidden-env static scan, `git diff --check`.
+- **Purpose:** provide the deterministic production host and supervisor contract.
+- **Depends On:** approved baseline and current plan.
+- **Work Items:** maintain Node 22 build/start/`PORT`; validate required configuration fail-closed; enforce trusted host/forwarded-header policy, minimal routes/methods/headers, timeouts and graceful shutdown; keep Preview stateless.
+- **Acceptance Checks:** build, typecheck, liveness and host-policy tests pass; missing/unknown production configuration prevents dependent work; production entrypoint imports no legacy Cloudflare runtime.
+- **Verification:** `npm run check`, forbidden-env scan, server tests, `git diff --check`.
 - **Delivery Layer:** infrastructure.
-- **Baseline Impact:** none.
-- **Prototype Reuse:** none.
+- **Interfaces Produced:** Node process lifecycle, `/healthz` liveness and readiness aggregation seam.
 
 ### U-02 — Owner Settings domain core
 
-- **Purpose:** implement the typed settings object, separate Codex/Claude allowlists, shared reasoning-depth compatibility, speed presets, defaults, whole-object validation and immutable session snapshot resolver.
-- **Source References:** PRD `FR-039`–`FR-046`, `NFR-017`–`NFR-019`, `AC-013`–`AC-016`; architecture §§9–13; canonical terms `Моделі` through `Фактичні налаштування сесії`; QA `QA-PA-013`–`QA-PA-016`, `QA-INT-016`–`QA-INT-018`.
+- **Purpose:** retain typed complete settings, separate provider catalogs, compatibility validation, defaults and immutable session snapshot.
 - **Depends On:** U-01.
-- **Work Items:** create `src/settings/schema.ts`, `catalog.ts`, `compatibility.ts`, `defaults.ts`, `snapshot.ts` and focused tests; model catalog is an injected versioned capability receipt, never hardcoded as proof that a subscription runtime supports a model; accept only `low`, `medium`, `high`, `xhigh`; make unsupported/stale/incompatible selections fail closed; make speed affect orchestration policy only.
-- **Acceptance Checks:** arbitrary model text cannot parse; `xhigh` with an unsupported model blocks the whole save; no setting enables Fast Mode, API, PAYG, credits or a weakened invariant; a resolved Session snapshot is deeply immutable.
-- **Verification:** positive/negative schema matrix; invariant test for each speed preset; snapshot mutation test; catalog-version drift test.
+- **Work Items:** preserve exact Codex/Claude model-effort contracts; reject arbitrary/stale/incompatible choices; keep speed limited to orchestration; prohibit API/PAYG/credits/Fast Mode fallback.
+- **Acceptance Checks:** full-object validation is deterministic; provider defaults transmit no explicit effort; session snapshot cannot mutate.
+- **Verification:** settings/catalog/snapshot and capability-drift tests.
 - **Delivery Layer:** backend.
-- **Baseline Impact:** user-visible states/data/actions enabled later by U-03/U-04.
-- **Prototype Reuse:** none.
-- **Interfaces Produced:** `OwnerSettings`, `ModelCapabilityCatalog`, `CapabilityReceipt`, `EffectiveSessionSnapshot`, validation-result union.
-- **Interfaces Consumed:** none.
-- **API/Data Contract References:** architecture §§9–13; PRD `FR-039`–`FR-046`.
-- **Interface Owner:** settings domain.
-- **Compatibility Expectations:** all callers submit the complete typed object; no partial patch or implicit default merge at write time.
-- **Integration Verification:** U-03 persists and U-06 consumes the same snapshot schema without mutation.
+- **Interfaces Produced:** `OwnerSettings`, capability receipt and effective snapshot.
 
-### U-03 — Versioned OwnerSettingsDO and Settings API
+### U-03 — MySQL-backed Settings API
 
-- **Purpose:** make stored settings atomic and revisioned behind the specified `GET`, full-object `PUT` and confirmed reset contract.
-- **Source References:** architecture §§7–9, 12; PRD `FR-037`–`FR-046`, `AC-012`–`AC-016`; DoD `G-18`–`G-20`; QA `QA-INT-013`–`QA-INT-018`.
+- **Purpose:** persist the complete settings document atomically on GoDaddy.
 - **Depends On:** U-01, U-02.
-- **Work Items:** create `src/settings/owner-settings-do.ts`, `src/settings/api.ts` and request/response types; implement revision/ETag, `If-Match`, idempotency-key body hash, explicit reset and an audit record without sensitive values; reject partial patches, wrong content type, stale revision, double submit and idempotency replay with a different body.
-- **Acceptance Checks:** every successful save writes exactly one complete revision; failure leaves the prior revision unchanged; reset produces a new revision from complete defaults; read response separates stored/current/default/effective values.
-- **Verification:** Durable Object unit/integration test harness; CAS conflict, restart, duplicate key, offline/retry and reset-confirmation API cases; secret-free audit-log scan.
+- **Work Items:** use MySQL transactions for version/ETag, `If-Match`, idempotency-body hash, full-object save and confirmed reset; keep audit records content-free.
+- **Acceptance Checks:** one successful mutation creates one complete revision; stale/concurrent/changed-body retries fail without partial write; restart reads the same revision.
+- **Verification:** MySQL/Settings tests for CAS, idempotency, reset, restart and failure injection.
 - **Delivery Layer:** backend.
-- **Baseline Impact:** user-visible states/data/actions enabled for `SS-34`–`SS-44`.
-- **Prototype Reuse:** none.
-- **Interfaces Produced:** `GET /api/settings`, `PUT /api/settings`, `POST /api/settings/reset` contract and `SettingsRevision`.
-- **Interfaces Consumed:** U-02 schema/catalog/snapshot resolver; U-04 settings client; U-06 session-start resolver.
-- **API/Data Contract References:** architecture §7 route table and §12 sequence.
-- **Interface Owner:** `OwnerSettingsDO`.
-- **Compatibility Expectations:** mutation callers must send full body, `If-Match`, idempotency key and same-origin/CSRF proof; a future session reads a committed revision only.
-- **Integration Verification:** U-04 and U-06 use identical revision/snapshot fixtures.
+- **Interfaces Produced:** `GET /api/settings`, `PUT /api/settings`, `POST /api/settings/reset`, `SettingsRevision`.
+- **Interfaces Consumed:** U-02 schema; U-04 client; U-05 snapshot.
 
-### U-04 — Protected Owner Settings surface
+### U-04 — Local owner-password Settings surface
 
-- **Purpose:** implement the single responsive `SUR-02` page and connect it to U-03 without creating a browser chat or credential UI.
-- **Source References:** Approved Baseline `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`; PRD `FR-037`–`FR-046`, `AC-012`–`AC-016`; screen map `SG-01`–`SG-05`, `SS-30`–`SS-46`; wireframes Owner Settings; QA `QA-VIS-001`–`QA-VIS-003`, `QA-RSP-*`, `QA-A11Y-006`–`QA-A11Y-007`.
+- **Purpose:** deliver `SUR-02` without Google OAuth or provider-auth coupling.
 - **Depends On:** U-01, U-02, U-03.
-- **Work Items:** create `src/settings/ui/*` and protected Worker asset route; render identity/access status, current/default/effective values, exactly three groups, compatibility, one atomic save action, reset confirmation and active-session notice; preserve keyboard focus and safe failure/denied states; do not render Google sign-in, provider OAuth, Fast Mode, credits, sound, motion or live agent status.
-- **Acceptance Checks:** all controls are typed and labelled; save stays disabled for invalid whole set; save/reset result is whole-set only; 390–1440px works without horizontal loss; active session stays read-only in explanation and runtime semantics.
-- **Verification:** `G-16` with baseline-bound captures; DOM/control inventory; keyboard/focus, 200% zoom, 390/430/768/1280/1440 responsive checks; U-03 contract integration tests; no-protected-render case on denied access.
+- **Work Items:** keep fresh same-origin challenge, constant-time high-entropy password verification, signed bounded owner session, secure cookie/origin/CSRF/no-store controls, throttling/rotation/idle and absolute expiry/logout; render current/default/effective values and atomic save/reset.
+- **Acceptance Checks:** missing/wrong/weak/truncated password, replayed/expired/cross-origin challenge and forged/expired session return no protected bytes; active session remains unchanged; no credential/provider OAuth UI appears.
+- **Verification:** `QA-PA-012`–`QA-PA-016`, `QA-INT-013`–`QA-INT-018`, `QA-USER-003`, applicable `QA-HEU-*`, accessibility/responsive and `G-16`.
 - **Delivery Layer:** full-stack.
-- **Approved Baseline ID:** `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`.
-- **Immutable Visual Target Hash:** `96b91ba9622f8301809ed10ef661a313006e0c2743712912c624edc36a2ca8eb`.
-- **Baseline Screens States And Viewports:** `SUR-02`, `SG-01`–`SG-05`, `SS-30`–`SS-46`, 390/430/768/1280/1440px.
-- **Design Contract And Permitted Variance:** one-page settings hierarchy, HappyPro palette, no product sound/motion, system font and responsive reflow; only source-recorded native/access platform variance is permitted.
-- **Operator Visual Overrides:** `SUR-02` HappyPro palette; no product-authored notification sound.
-- **Visual Fidelity Verification:** `approved_visual_baseline_fidelity`.
-- **Prototype Reuse:** traced promote/diff.
-- **Prototype Source Root And Tree Hash:** `forge/design/candidates/candidate-b/v2`; `96b91ba9622f8301809ed10ef661a313006e0c2743712912c624edc36a2ca8eb`.
-- **Prototype To Production Path Map:** `index.html` → `src/settings/ui/template.ts` (`adapt`); `styles.css` → `src/settings/ui/styles.css` (`adapt`); `app.js` → `src/settings/ui/controller.ts` (`reimplement`); `validate.mjs` → `test/settings-ui-baseline.test.ts` (`reimplement`).
-- **Production Base Commit:** `1d879b8d2dc808fd2fa3da451b21b992f7f6a242`.
-- **Allowed Prototype Adaptations:** remove review toolbar, scenario switcher and fixtures; replace simulated state with U-03 contract data; add Access-denied boundary and production CSP; retain only approved `SUR-02` hierarchy/tokens/interaction meaning.
-- **Required PrototypePromotionReceipt:** `forge/runs/U-04/{run_id}/prototype-promotion.json`.
-- **Production Capabilities Added Beyond Prototype:** Access/JWT gateway, real API, persistence/CAS/idempotency, catalog receipt, CSRF, deployment headers and evidence correlation.
-- **Interfaces Produced:** Settings document shell and typed client actions.
-- **Interfaces Consumed:** U-03 API contract and Access identity context.
-- **API/Data Contract References:** architecture §7 and §12.
-- **Interface Owner:** settings UI.
-- **Compatibility Expectations:** only protected `SUR-02` consumes this UI; no Matrix transcript or provider credential enters the browser.
-- **Integration Verification:** deployed Access + Worker test in U-09.
+- **Approved Baseline / Target:** `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`; `07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6`.
+- **Prototype Root / Tree / Algorithm:** `forge/design/candidates/candidate-b/v2`; `4c6f2d51be1baf5962035933deeec7095d31f1d3e6c473ec9e43cb0e3a360744`; `sdd-tree-sha256-v1`.
+- **Scope:** `SUR-02`, `SG-01`–`SG-05`, `SS-30`–`SS-46`; 390/430/768/1280/1440px.
+- **Permitted Variance:** responsive reflow and `DB-D17` local owner-password semantics only; preserve hierarchy, palette and no product-authored sound/motion.
+- **Gates:** approved visual fidelity, H1–H10 where applicable, representative task `QA-USER-003`.
+- **Security Blocker:** ASVS `v5.0.0-6.3.3` needs residual-risk disposition or authorized compatible second factor before release.
 
-### U-05 — Canonical session registrar
+### U-05 — MySQL registrar and atomic publication producer
 
-- **Purpose:** implement one durable owner of session generation, idempotency, canonical order and immutable confirmed agent messages before Matrix/provider integration.
-- **Source References:** PRD `FR-007`, `FR-011`–`FR-024`, `NFR-001`–`NFR-004`, `NFR-009`–`NFR-011`; architecture §§5–6, 13–14; wireframes Atomic agent-reply pattern; DoD `G-04`, `G-06`, `G-08`.
-- **Depends On:** U-01, U-02.
-- **Work Items:** create `src/session/registrar-do.ts`, session state machine, append-only confirmed-message ledger, generation/lease and cancellation model; store role, visible `HH:MM`, formatted body and content hash; keep technical IDs only internal.
-- **Acceptance Checks:** duplicate input is idempotent; late outputs after `Стоп`/new generation cannot publish; a confirmed message cannot be changed, collapsed or reordered; session snapshot is fixed when the session starts.
-- **Verification:** deterministic clock/order tests; duplicate/retry/late-callback/cancel/new-task matrix; body-hash and canonical-order comparison.
+- **Purpose:** make one durable authority for session generation, canonical order, confirmed bodies and Matrix publication intent.
+- **Depends On:** U-01, U-02, U-03.
+- **Work Items:** preserve append-only registrar state; create `ConfirmedAgentMessage` and ordered `MatrixOutboxRecord` in the same MySQL transaction; define deterministic transaction ID, lease/fencing, retry and status transitions; make `afterConfirmed` wake the consumer only.
+- **Acceptance Checks:** no confirmed message lacks an outbox record; concurrent appends keep order; duplicate/retry/crash cannot duplicate visible work; `Стоп`/new generation fences late output.
+- **Verification:** registrar/MySQL/outbox concurrency, rollback, restart, crash-window, duplicate and stale-lease tests.
 - **Delivery Layer:** backend.
-- **Baseline Impact:** user-visible states/data/actions enabled for `MG-04`–`MG-12`, `SS-08`–`SS-20`.
-- **Prototype Reuse:** none.
-- **Interfaces Produced:** `SessionIntent`, `SessionGeneration`, `ConfirmedAgentMessage`, registrar append/result events.
-- **Interfaces Consumed:** U-02 effective snapshot; U-06 Matrix ingress and U-08 agent events.
-- **API/Data Contract References:** architecture §§6, 13–14; `MG-07`/`MG-10`/`MG-12`.
-- **Interface Owner:** `RegistrarDO`.
-- **Compatibility Expectations:** one and only one registrar authorizes visible order; all adapters are append-only clients.
-- **Integration Verification:** U-06 and U-08 correlate adapter evidence to registrar sequence/body hashes.
+- **Interfaces Produced:** `ConfirmedAgentMessage`, `MatrixOutboxRecord`, ordered publication port.
+- **Integration Verification:** U-06 consumes only durable outbox records and never changes canonical order.
 
-### U-06 — Matrix bridge and private-room ingress
+### U-06 — Rust Matrix sidecar, ingress and durable publication
 
-- **Purpose:** attach one `matrix.org` bot to the registrar, enforce the room/device invariant and deliver confirmed messages into the same private E2EE room.
-- **Source References:** PRD `FR-001`–`FR-006`, `FR-014`–`FR-019`, `FR-034`; architecture §§4–6, 16–17; DoD `G-02`, `G-03`, `G-12`, `G-14`; QA `QA-PA-005`–`QA-PA-006`, `QA-DEV-001`–`QA-DEV-006`.
-- **Depends On:** U-01, U-05; hosted-provider authorization is required only immediately before deploy/test.
-- **Work Items:** create `src/matrix/bridge.ts`, a Node supervisor that launches one checksum-pinned static Rust `matrix-sdk` sidecar through bounded private NDJSON stdio, room-invariant validator, consent/intake policy projection and Matrix-event formatter; use the sidecar's persistent encrypted bot crypto store; map native replies to registrar relation records; distinguish provider acceptance from device delivery. Rebuild the sidecar source and CI artifact as production work rather than reusing the retired feasibility probe.
-- **Acceptance Checks:** incorrect room, identity or device starts no session and reads no protected data; secret content stops before dispatch/storage; visible role/time/body comes only after registrar confirmation.
-- **Verification:** checksum/NDJSON/timeout/lock negative tests and sanitized adapter fixtures; controlled `matrix.org` room/device E2E only after separate just-in-time authorization configures the owner account and bot; four-client Matrix evidence required before release claim. The 04.09.2026 Published gate is host-feasibility evidence only, not product-integration completion.
+- **Purpose:** operate one private E2EE Matrix transport on GoDaddy while Node/MySQL retain policy and canonical state.
+- **Depends On:** U-01 and U-05. The retired probe is feasibility evidence only. Real credentials, room/device setup and deployment require separate JIT authorization.
+- **Work Items:**
+  1. Create `native/matrix-sidecar/` with Rust `1.93`, exact `matrix-sdk = "=0.18.0"`, `e2e-encryption`, `bundled-sqlite` and committed `Cargo.lock`.
+  2. Add locked/frozen `x86_64-unknown-linux-musl` CI build, checksum manifest, SBOM and license inventory.
+  3. Hold one process-lifetime exclusive lock for one encrypted SQLite crypto store; quarantine missing/corrupt/wrong-passphrase/device-mismatch state without automatic logout/delete/reset.
+  4. Implement Node supervisor verification of checksum, regular file, owner/mode, version/protocol; enforce hello/ready timeout, bounded 256-KiB UTF-8 NDJSON, strict schema/version/type/ID, queue bounds, backpressure and timeouts.
+  5. Separate `/healthz` Node liveness from content-free Matrix readiness; Matrix-not-ready blocks new Matrix work without marking HTTP dead.
+  6. Revalidate exact homeserver, room, owner/bot mxids, privacy/encryption/history/guest/bridge/widget policy and trusted non-revoked device on ingress and immediately before send.
+  7. Drain U-05 outbox strictly in order with deterministic Matrix transaction IDs; retry the same ID after crash and distinguish `pending`, homeserver `accepted`, separately evidenced `device_delivered` and `read`.
+  8. Persist ingress receipt in MySQL before durable ACK; replay the same Matrix event ID after crash without duplicate session, agent work or outbox.
+  9. Preserve native reply relations and accept text/image/PDF only. Use a private bounded spool with opaque current-instance handles, size/MIME/extension/magic/hash, regular-file/no-symlink/no-path-escape and ACK/TTL cleanup checks.
+  10. Allow only fixed HTTPS homeserver/media egress, disable redirects/discovery/caller-controlled URLs/proxy, and give sidecar no HTTP listener, Unix socket or MySQL access.
+  11. On shutdown stop intake, bounded-drain ACK/outbox, send shutdown frame, then bounded wait, `SIGTERM`, `SIGKILL`; crash recovery uses bounded backoff and never resets store.
+  12. Before credentials, verify final binary/store/spool permissions and HTTP non-retrievability under both URL roots. Permit only fresh device+confirmed-empty store or exact device/token+exact encrypted-store restore.
+- **Acceptance Checks:** checksum/protocol/mode mismatch prevents spawn; second process cannot open store; malformed/oversized/duplicate/late frames fail closed; room/device drift blocks send; crash windows create no duplicate Matrix event; ingress replay creates no duplicate work; invalid/path-escaping media never dispatches; acceptance never becomes delivered/read without evidence.
+- **Verification:** `cargo test --locked`; locked musl build; checksum/SBOM/license verification; `QA-SEC-001`; `QA-INT-019`–`QA-INT-024`; Node supervisor/outbox/ingress failure tests. Real-room/four-client checks remain `not_run` until JIT authorization.
 - **Delivery Layer:** integration.
-- **Baseline Impact:** user-visible states/data/actions enabled for `SUR-01`, `MG-01`–`MG-13`, `SS-01`–`SS-29`.
-- **Prototype Reuse:** none.
-- **Interfaces Produced:** validated `MatrixIngressEvent`, delivery receipt and reply-relation adapter.
-- **Interfaces Consumed:** U-05 registrar messages; U-08 progress/final outputs.
-- **API/Data Contract References:** Matrix Client-Server adapter contract; architecture §6.
-- **Interface Owner:** `MatrixBridgeContainer`.
-- **Compatibility Expectations:** no custom browser chat; Element/OS owns native notifications and sound.
-- **Integration Verification:** device-visible role/time/body/order comparison against registrar ledger.
+- **Baseline / Target:** `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`; `07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6`.
+- **Scope:** `SUR-01`, `MG-01`–`MG-13`, `SS-01`–`SS-29`; native Element clients.
+- **Permitted Variance:** Element/OS-native chrome and notifications; complete body, order, role and `HH:MM` are invariant.
+- **Gates:** approved visual fidelity, applicable H1–H10, representative tasks `QA-USER-001` and `QA-USER-002`.
+- **Interfaces Produced:** `ValidatedMatrixIngress`, `MatrixAcceptanceReceipt`, optional device/read evidence, Matrix readiness.
+- **Interfaces Consumed:** U-05 outbox; U-08 results.
+- **Interface Owner:** Rust owns SDK/store/transport; Node owns policy/supervision/DB.
 
 ### U-07 — Subscription OAuth fencing and provider preflight
 
-- **Purpose:** implement codified fail-closed verification of one Codex OAuth lineage and one separate Claude Code subscription-OAuth critic runtime, without API/PAYG fallback.
-- **Source References:** PRD §3.5, `FR-009`–`FR-010`, `FR-028`–`FR-030`, `NFR-006`, `NFR-012`; architecture §§6, 10–11, 16–20; DoD `G-17`; QA `QA-PA-007`, `QA-INT-009`–`QA-INT-012`.
-- **Depends On:** U-01, U-02, U-05; user authorization is required immediately before creating or configuring real OAuth/checkpoint secrets.
-- **Work Items:** create provider adapter interfaces, content-free preflight result, Codex credential-writer fence/checkpoint seam and Claude auth-status seam; reject forbidden environment variables/routes and unavailable/private-ineligible/quota-failed state before agent launch; map success to invisible `SS-28` and failure to safe `SS-29`.
-- **Acceptance Checks:** no API key/PAYG/credit route can activate; failure makes no dependent call; no token, setup-token, URL/code or auth state reaches Matrix, prompts, logs or archive.
-- **Verification:** mocked auth/quota/eligibility negative matrix and env scan locally; real subscription-runtime validation only after explicit OAuth-secret configuration authorization.
+- **Purpose:** verify one Codex subscription OAuth lineage and separate Claude Code subscription session without API/PAYG fallback.
+- **Depends On:** U-01, U-02, U-05.
+- **Work Items:** retain credential-writer fencing, content-free preflight and per-provider receipts; isolate Settings auth; reject forbidden env, API keys, PAYG, credits, unavailable models and failed/private auth before launch.
+- **Acceptance Checks:** failure makes no dependent call; credentials/auth URLs/codes never reach Matrix, prompts, logs or archive; no Google Access dependency exists.
+- **Verification:** provider/process negative tests; real OAuth only after separate authorization.
 - **Delivery Layer:** integration.
-- **Baseline Impact:** user-visible states/data/actions enabled for invisible `SS-28` and safe `SS-29`.
-- **Prototype Reuse:** none.
-- **Interfaces Produced:** `ProviderPreflightResult`, credential-fence metadata and safe failure category.
-- **Interfaces Consumed:** U-02 catalog; U-05 session launch; U-08 runtime adapter.
-- **API/Data Contract References:** architecture §§10–13 and `MG-11`.
-- **Interface Owner:** provider preflight boundary.
-- **Compatibility Expectations:** subscription OAuth remains isolated from Google Access; a provider’s current capability receipt overrides design mockup catalog labels.
-- **Integration Verification:** U-08 cannot route a turn without a fresh successful preflight.
 
-### U-08 — Real consilium runtime, A2A and critical path
+### U-08 — Consilium runtime, A2A and critical path
 
-- **Purpose:** run one head plus 2–5 separate Codex contexts and one Claude Code critic through registered A2A envelopes, then publish their full confirmed messages and synthesis via the registrar.
-- **Source References:** PRD `FR-008`–`FR-019`, `FR-023`–`FR-030`, `AC-001`–`AC-004`, `AC-007`, `AC-011`; architecture §§6, 13, 17; DoD `G-05`–`G-09`; QA `QA-JRN-001`–`QA-JRN-004`.
+- **Purpose:** run the head, 2–5 separate Codex contexts and one separate Claude critic, then publish only registrar-confirmed bodies.
 - **Depends On:** U-05, U-06, U-07.
-- **Work Items:** create `src/consilium/router.ts`, `roster.ts`, A2A registration/envelope validator, Codex-thread adapter, Claude critic adapter and result synthesizer; select the smallest sufficient mode; start independent first passes; require critic feedback before final series; publish all confirmed agent messages complete and in real time through U-06.
-- **Acceptance Checks:** role labels cannot stand in for a real context; every active agent is registered before route; critic cannot be silently removed by a speed preset; final recommendation has decision, up to three actions, risk/assumption/review condition and Technical part only when needed.
-- **Verification:** deterministic fake-adapter tests for routing/order/cancel/timeout; real controlled subscription and Matrix E2E after U-07 authorization; content calibration review.
+- **Work Items:** route direct/consilium mode; register agents before route; preserve independent first passes, addressed critique/revision and head synthesis; enforce cancellation/generation fences; wake U-06 after U-05 confirmation.
+- **Acceptance Checks:** labels cannot substitute for contexts; critic is never silently removed; final series contains one decision, at most three actions, risk/assumption and review condition; no hidden reasoning/tool log/technical ID publishes.
+- **Verification:** deterministic adapter tests and `QA-JRN-001`–`QA-JRN-004`; controlled provider/Matrix E2E remains `not_run`.
 - **Delivery Layer:** full-stack.
-- **Approved Baseline ID:** `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`.
-- **Immutable Visual Target Hash:** `96b91ba9622f8301809ed10ef661a313006e0c2743712912c624edc36a2ca8eb`.
-- **Baseline Screens States And Viewports:** `SUR-01`, `MG-04`–`MG-12`, `SS-08`–`SS-20`, native Element clients.
-- **Design Contract And Permitted Variance:** native Matrix chat only; full body, canonical order and `Роль · HH:MM` are immutable; Element/OS own chrome, sound and notifications.
-- **Operator Visual Overrides:** no product-authored sound.
-- **Visual Fidelity Verification:** `approved_visual_baseline_fidelity`.
-- **Prototype Reuse:** none.
-- **Interfaces Produced:** registrar-approved consilium messages, roster/progress/final event contracts.
-- **Interfaces Consumed:** U-05 registrar, U-06 Matrix bridge, U-07 preflight.
-- **API/Data Contract References:** architecture §13; `MG-06`–`MG-12`.
-- **Interface Owner:** Agent runtime + registrar boundary.
-- **Compatibility Expectations:** no raw tool logs, hidden reasoning, technical IDs or edited agent body reaches the Owner.
-- **Integration Verification:** A2A registration → real context → registrar append → Element delivery correlation.
+- **Baseline / Scope:** `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`; target `07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6`; `SUR-01`, `MG-04`–`MG-12`, `SS-08`–`SS-20`.
+- **Gates:** approved visual fidelity, applicable H1–H10, `QA-USER-001`–`QA-USER-002`.
 
-### U-09 — Archive, costs, deployed security and release evidence
+### U-09 — Archive, costs, GoDaddy deployment security and release evidence
 
-- **Purpose:** complete the remaining high-risk release path: encrypted archive/export/delete, truthful costs, Cloudflare Access deployment, native-device matrix and evidence bundles.
-- **Source References:** PRD `FR-031`–`FR-038`, `FR-033`, `AC-008`–`AC-010`, `AC-012`; architecture §§7–8, 14–20; DoD `G-10`–`G-20`; QA `QA-PA-008`–`QA-PA-010`, `QA-DEV-*`, `QA-EVD-*`, `QA-RR-001`.
-- **Depends On:** U-03 through U-08; user authorization is required before any real Cloudflare/hosted-Matrix/OAuth secret/deployment or destructive archive test.
-- **Work Items:** implement AEAD archive bundle/manifest, export and whole-session delete confirmation; cost ledger with configured subscriptions, actual infrastructure and provider status only; configure and verify Cloudflare Access exact Google email plus origin JWT; collect evidence through the result schema on Mac, iPhone, Samsung Flip7 and Windows.
-- **Acceptance Checks:** archive is immutable and application-encrypted; individual reply edit/delete is impossible; costs never invent a per-session token amount; all protected assets/API reject bypass paths; release bundle links every AC and hard gate to exact environment evidence.
-- **Verification:** deployed controlled E2E, device captures, export/body-order comparison, delete/recovery testing, security header/JWT matrix and cost-source reconciliation.
+- **Purpose:** complete encrypted archive/export/delete, truthful costs and release evidence on actual GoDaddy Published lineage.
+- **Depends On:** U-03 through U-08; JIT authorization for production credentials/deploy, real Matrix/device tests and destructive archive/delete tests.
+- **Work Items:** store only application-encrypted archive ciphertext in MySQL with external key lifecycle and integrity manifest; implement full export and double-confirmed whole-session deletion; reconcile subscription fees with actual GoDaddy/MySQL/Matrix data and provider status; verify owner-auth bypass/throttle/expiry/rotation/logout, host/origin/headers and Preview isolation; collect deployment/binary/path/readiness and device evidence.
+- **Acceptance Checks:** no plaintext archive or individual reply mutation/deletion; unavailable cost is `невідомо`; release evidence binds exact commit, Published app, DB, binary checksum, paths, Matrix room/devices and all gates.
+- **Verification:** `G-10`–`G-23`, `QA-RR-001`, archive restore/tamper/export/delete, GoDaddy security and real-device tests after authorization.
 - **Delivery Layer:** integration.
-- **Baseline Impact:** all user-visible deployment claims across `SUR-01` and `SUR-02`.
-- **Prototype Reuse:** none.
-- **Interfaces Produced:** `ArchiveManifest`, export/delete receipts, cost response and release evidence bundle.
-- **Interfaces Consumed:** U-03, U-05, U-06, U-08.
-- **API/Data Contract References:** architecture §§14–20; `MG-09`, `MG-13`.
-- **Interface Owner:** archive/cost/deployment boundaries.
-- **Compatibility Expectations:** all evidence is content-free except the minimum transcript comparison required; no secret or user document leaves its permitted boundary.
-- **Integration Verification:** `G-10`–`G-20` and `AC-001`–`AC-016` on one deployed lineage.
 
 ## Dependency Order
 
-`U-01 → U-02 → U-03 → U-04` yields the first locally testable user-facing vertical slice.
+`U-01 → U-02 → U-03 → U-04` is the Settings slice already present locally and subject to remaining security/release evidence.
 
-`U-01 + U-02 → U-05 → U-06 → U-07 → U-08 → U-09` yields the native Element/Matrix consultation path and release evidence.
+`U-01 + U-02 + U-03 → U-05 → U-06 → U-07 → U-08 → U-09` is the native consultation path. The next permitted work is local, non-destructive `U-05/U-06`. Matrix credentials/room/device, OAuth mutation, deployment and cleanup are excluded.
 
-U-04 can proceed in parallel with U-05 after U-03 completes. U-06, U-07 and U-09 each stop at their external-configuration boundary until the necessary just-in-time authorization is given.
+`G-00` runs independently as recovery/destructive-action preparation. It cannot replace U-06 integration, and its unresolved destructive portion does not block local U-06 code/tests.
 
 ## Verification Plan
 
-| Phase | Required proof | Source contract |
+| Phase | Обов'язковий доказ | Статус зараз |
 |---|---|---|
-| Local domain | Typecheck, deterministic unit/integration tests, no-secret/forbidden-env scan, full-object/CAS/snapshot tests | `G-01`, `G-17`–`G-20` |
-| Local presentation | `G-16` baseline comparison, responsive/keyboard/zoom tests for affected `SUR-02` states | `QA-VIS-*`, `QA-RSP-*`, `QA-A11Y-006`–`QA-A11Y-007` |
-| Controlled integrations | Matrix room/device, Access/JWT, OAuth preflight, A2A/registrar and archive tests with content-free evidence | `G-02`–`G-14`, `G-17`–`G-20` |
-| Release candidate | One correlated deployed evidence bundle for `AC-001`–`AC-016` on required clients | `G-15`, `QA-EVD-005`, `QA-RR-001` |
+| SDD gate | current hashes, baseline/receipt, security/QA bindings, separate prompt | prepared; checker must pass before code |
+| Local Node/TS | `npm run check`, supervisor/outbox/ingress/failure tests | not run for this unit |
+| Local Rust | `cargo test --locked`, format/lint, locked/frozen musl build, checksum/SBOM/licenses | not run |
+| Final-path safety | binary/store/spool ownership/mode, lock/quarantine, both-root non-retrievability | not run |
+| Controlled integration | MySQL crash/replay/order and real Matrix room/device/store restore | local DB not run; Matrix needs JIT |
+| UX/security | `G-16`, H1–H10, representative tasks, `QA-SEC-001` | prepared/not_run |
+| Release | correlated GoDaddy Published evidence with blockers closed | not_evaluated |
+
+Passing local tests does not establish Matrix delivery, representative usability, security conformance or release readiness. `accepted`, `device_delivered` and `read` require separate evidence.
+
+## Security Coverage
+
+This is the development-plan consequence map for the exact PRD security set. Every item binds to `G-23 product_security_requirements` and `QA-SEC-001`; planning is not execution.
+
+| PRD ID | Implementation consequence |
+|---|---|
+| `NFR-005` | U-06 Matrix E2EE/device/store continuity; U-09 TLS and MySQL application-layer archive ciphertext/key separation |
+| `NFR-006` | U-06 pinned dependency/toolchain/artifact/checksum/SBOM and secret isolation; U-07 OAuth fencing; U-09 leak evidence |
+| `NFR-007` | U-06 exact room/owner/bot/homeserver/device authorization on ingress and pre-send/read/action |
+| `NFR-008` | U-06 bounded canonical NDJSON/media/process/network boundaries; U-08 instruction/data separation |
+| `NFR-009` | U-05/U-06 idempotency, bounds, backpressure, replay, retries and cleanup |
+| `NFR-010` | U-05 transactional order/atomic outbox; U-06 lease/fencing/ordered publication/crash reconciliation |
+| `NFR-011` | U-05 confirmed-body/order lineage; U-09 archive manifest verified before read/export/restore |
+| `NFR-012` | U-06 content-free correlated status/logging; U-07 truthful failures; U-09 evidence/cost reconciliation |
+| `NFR-016` | U-04 password/challenge/session/throttle/rotation/expiry/logout/origin/CSRF/no-store; MFA blocker retained |
+| `NFR-017` | U-02/U-03 full-object validation and atomic CAS/idempotency; U-05 immutable snapshot |
+| `NFR-019` | U-01/U-03/U-04/U-06/U-09 fail-closed config, minimal host/routes, fixed egress, stateless Preview |
+
+Negative/adversarial verification uses `QA-SEC-001`; no security item is advisory or silently not applicable.
 
 ## Visual And UX Verification
 
-Every user-visible implementation unit must carry the active Baseline ID and immutable target hash. `SUR-01` is verified against native Element content choreography rather than a custom webpage. `SUR-02` is compared against the approved Candidate B v2 hierarchy and HappyPro palette at 390, 430, 768, 1280 and 1440px; any material deviation needs a source-backed operator override or a new baseline.
+- Active baseline: `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`.
+- Target: `forge/design/candidates/candidate-b/v2/index.html`, SHA-256 `07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6`.
+- Frozen root/tree: `forge/design/candidates/candidate-b/v2`, `sdd-tree-sha256-v1`, `4c6f2d51be1baf5962035933deeec7095d31f1d3e6c473ec9e43cb0e3a360744`.
+- `SUR-01` inherits native Element; no browser chat is built.
+- `SUR-02` preserves approved hierarchy/palette; `DB-D17` changes only historical Google/Cloudflare auth semantics to local owner-password/session.
+- `QA-VIS-001`–`003`, `QA-HEU-001`–`010`, `QA-USER-001`–`003` remain prepared/not_run.
 
 ## Prototype Promotion Plan
 
-Only U-04 may reuse design prototype material. Its frozen source root, tree hash, path map, permitted adaptations, production base commit and receipt path are fixed in U-04. The implementation runner records actual source/destination hashes, the Git diff, adaptations, visual evidence and verification status in `forge/runs/U-04/{run_id}/prototype-promotion.json`. No simulation code, Matrix browser-chat frame, scenario switcher or review toolbar may be promoted.
+Only U-04 has bounded presentation reuse:
 
-## Risks And Sequencing Notes
+| Source | Destination | Strategy |
+|---|---|---|
+| `forge/design/candidates/candidate-b/v2/index.html` | `src/settings/ui/template.ts` | `adapt` |
+| `forge/design/candidates/candidate-b/v2/styles.css` | `src/settings/ui/styles.css` | `adapt` |
+| `forge/design/candidates/candidate-b/v2/app.js` | `src/settings/ui/controller.ts` | `reimplement` |
+| `forge/design/candidates/candidate-b/v2/validate.mjs` | `test/settings-ui.test.ts` | `reimplement` |
 
-- The oldest risk is falsely treating a local preview as Matrix, OAuth or Cloudflare evidence. U-01–U-05 therefore make no deployment claim.
-- The model names in Candidate B v2 are visual labels only. U-02/U-07 must accept a model only from a current subscription-runtime capability receipt.
-- `matrix.org` account/room configuration, Cloudflare configuration, OAuth setup tokens/checkpoints and destructive archive testing are external effects. They are sequenced after local contracts and require explicit authorization at the moment of configuration.
-- The unresolved sensitive-document, stopped-session archive and provider-cost feed policies remain release blockers for only their respective paths; they do not block U-01–U-05.
+- Production base commit: `7d2e944f9500a6c38745ce39b414ffc3b946a37c`.
+- Allowed adaptations: remove review/scenario fixtures; connect local auth/MySQL; retain hierarchy, palette and interaction meaning.
+- Missing capabilities: auth/session, API, MySQL/CAS/idempotency, capability receipt, CSRF/headers and deployment evidence.
+- Receipt if a new promotion starts: `forge/runs/U-04/{run_id}/prototype-promotion.json`.
+- U-06 declares no prototype-code reuse.
+
+## Risks And Sequencing
+
+- Highest local risk: delivery outside registrar transaction. U-05 atomic outbox precedes U-06 drain.
+- Highest host risk: corrupting/recreating Matrix crypto state. Lock, checksum, quarantine and restore rules precede credentials.
+- Highest evidence risk: treating retired probe, local tests or homeserver acceptance as release proof.
+- Highest access residual: ASVS `v5.0.0-6.3.3`; it blocks release until disposition or compatible second factor.
+- Credentials, OAuth, room/device state, Published deployment and destructive cleanup are stop boundaries.
 
 ## Out Of Scope
 
-- A third product surface, browser chat, dashboard, archive browser, custom Element chrome or product-authored sound.
-- API key, PAYG, credit, Fast Mode or cloud-provider auth fallback.
-- Multi-owner SaaS, public onboarding, arbitrary model input, per-agent settings or parallel active sessions.
-- OAuth secret creation, Cloudflare deployment, `matrix.org` account/room setup or destructive data action without just-in-time authorization. Matrix provider purchase is out of scope for V1.
+- Third surface, browser chat/dashboard/archive browser, custom Element chrome or product-authored sound.
+- API key, PAYG, credits, Fast Mode, automatic paid fallback or arbitrary model input.
+- Multi-owner SaaS, public onboarding, parallel active sessions or per-agent Settings.
+- Runtime sidecar download/compile, caller-controlled Matrix discovery/URLs/proxy or automatic crypto-store reset.
+- Production credentials, Matrix room/device setup, OAuth mutation, deployment, legacy code/secret deletion or DB cleanup under current local permission.
 
 ## Open Questions
 
-1. Before release, is the `matrix.org` free plan still available and do the live bot, room/device invariant, retention and reliability checks pass?
-2. Which exact supported provider capability receipt exposes model/effort availability for the user’s subscription runtime at deployment time?
-3. Which versioned classification defines `Особливо чутливий документ`?
-4. What retention/export treatment applies after `Стоп` and `Нова задача`?
-5. Which configured subscription-fee records and actual Cloudflare/Matrix/R2 billing sources are authoritative for `Витрати`?
+1. Before real Matrix testing, what exact owner/bot mxids, room ID, homeserver origin and trusted-device policy will be authorized?
+2. Will ASVS `v5.0.0-6.3.3` use an authorized second factor or documented residual-risk disposition?
+3. What final encrypted-store/media-spool paths does GoDaddy Published expose, and do both pass non-retrievability/persistence checks?
+4. Which classification governs `Особливо чутливий документ`, and what retention/export applies after `Стоп`/`Нова задача`?
+5. Which subscription-fee records and actual GoDaddy/MySQL/Matrix billing/usage sources are authoritative for `Витрати`?
+
+## Handoff
+
+Next is local `U-05/U-06`: atomic registrar/outbox production, then Rust sidecar and Node supervisor integration. Definitions are prepared and unexecuted. The separate user implementation prompt authorizes only this local work; external/destructive actions remain gated.

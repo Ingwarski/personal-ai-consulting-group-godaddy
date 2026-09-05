@@ -1,0 +1,19 @@
+{
+  "event": "approve_design_baseline",
+  "actor": "user",
+  "baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+  "selected_candidate": "candidate-b",
+  "selected_version": "v2",
+  "message": "ОК. Закрий хром і продовжуй розробку",
+  "visual_target_path": "forge/design/candidates/candidate-b/v2/index.html",
+  "visual_target_hash": "07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6",
+  "prototype_source_root": "forge/design/candidates/candidate-b/v2",
+  "prototype_tree_hash": "4c6f2d51be1baf5962035933deeec7095d31f1d3e6c473ec9e43cb0e3a360744",
+  "hash_algorithm": "sdd-tree-sha256-v1",
+  "approved_at": "2026-08-16T02:22:48+03:00",
+  "normalization": {
+    "recorded_at": "2026-09-04T21:43:42+03:00",
+    "reason": "Legacy approved-baseline evidence normalized to the current checker contract without changing candidate bytes or approval scope.",
+    "legacy_recorded_hash": "96b91ba9622f8301809ed10ef661a313006e0c2743712912c624edc36a2ca8eb"
+  }
+}

@@ -7,3 +7,5 @@ node_modules/
 .dev.vars.local
 coverage/
 dist/
+native/matrix-sidecar/target/
+public/assets/.personal-consultant-matrix-v1/

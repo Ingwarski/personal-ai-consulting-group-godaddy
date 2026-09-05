@@ -16,7 +16,16 @@ class UnusedPool implements MySqlPool {
   }
 }
 
+class CloseTrackingPool extends UnusedPool {
+  endCount = 0;
+
+  async end(): Promise<void> {
+    this.endCount += 1;
+  }
+}
+
 const configuredEnvironment = Object.freeze({
+  RUNTIME_MODE: "production",
   GODADDY_STATE_DATABASE_ROLE,
   DB_HOST: "db.internal",
   DB_PORT: "3306",
@@ -40,6 +49,51 @@ test("GoDaddy Settings runtime is unavailable until every identity, state and ca
   const response = await runtime.handle(new Request("https://settings.example.test/settings"));
   assert.equal(response?.status, 503);
   assert.equal(await response?.text(), "Settings are temporarily unavailable.");
+});
+
+test("forbidden provider credentials block Settings before pool creation", () => {
+  let pools = 0;
+  const runtime = createGoDaddySettingsRuntime({ ...configuredEnvironment, OPENAI_API_KEY: "forbidden" }, {
+    createPool: () => {
+      pools += 1;
+      return new UnusedPool();
+    }
+  });
+  assert.equal(runtime.configured, false);
+  assert.equal(pools, 0);
+});
+
+test("Settings closes an internally created pool once but never closes an application-owned shared pool", async () => {
+  const bootstrap = (onClose: () => void): RuntimeBootstrap => ({
+    loadCatalog: async () => createCapabilityReceipt(),
+    status: async () => ({ codex: "ready", claude: "ready" }),
+    startCodexDeviceAuthorization: async () => undefined,
+    resetCodexAuthorization: async () => true,
+    refreshCatalog: async () => ({ ok: true, receipt: createCapabilityReceipt() }),
+    close: async () => { onClose(); }
+  });
+
+  const ownedPool = new CloseTrackingPool();
+  let ownedBootstrapCloses = 0;
+  const owned = createGoDaddySettingsRuntime(configuredEnvironment, {
+    createPool: () => ownedPool,
+    createRuntimeBootstrap: () => bootstrap(() => { ownedBootstrapCloses += 1; }),
+    now: () => activeNow
+  });
+  await Promise.all([owned.close(), owned.close()]);
+  assert.equal(ownedBootstrapCloses, 1);
+  assert.equal(ownedPool.endCount, 1);
+
+  const sharedPool = new CloseTrackingPool();
+  let sharedBootstrapCloses = 0;
+  const shared = createGoDaddySettingsRuntime(configuredEnvironment, {
+    pool: sharedPool,
+    createRuntimeBootstrap: () => bootstrap(() => { sharedBootstrapCloses += 1; }),
+    now: () => activeNow
+  });
+  await Promise.all([shared.close(), shared.close()]);
+  assert.equal(sharedBootstrapCloses, 1);
+  assert.equal(sharedPool.endCount, 0);
 });
 
 test("GoDaddy Settings starts only a local owner-password session before it opens application state", async () => {

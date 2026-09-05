@@ -2,9 +2,10 @@
 
 - Статус: базова версія V1
 - Основне джерело продуктового наміру: `docs/product-idea.md`
-- Джерельний SHA-256: `263a5d15949e2ebf70f9fb4fa8ba67ff1e882cb5ae2774ecf218ccff16586ac5`
+- Джерельний SHA-256: `ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a`
 - Дата формування: 16.08.2026
-- `owner_invocation_id`: `81baa3f2-39b5-45d2-8c1c-238ebd66cdbb`
+- Дата повторної валідації: 04.09.2026
+- `owner_invocation_id`: `4f5ce7bd-6f8a-47d3-be6a-6e2a422928e6`
 - Покриття ID: `US-001`–`US-029`; `FR-001`–`FR-046`; `NFR-001`–`NFR-019`; `AC-001`–`AC-016`
 
 ## 1. Проблема
@@ -15,7 +16,7 @@
 
 ## 2. Рішення та цінність
 
-`Personal Consultant` — приватний консультант для одного власника в захищеній Element/Matrix-кімнаті. Він приймає текст, зображення або PDF, визначає, чи потрібна пряма відповідь або консиліум, ситуаційно залучає Codex-агентів-спеціалістів і окремого Claude Code-агента-критика, показує їхню фактичну дискусію наживо та завершує її одним синтезованим рішенням. Щоденна консультація лишається в Element; єдиний веб-виняток — `Налаштування власника` для параметрів майбутніх сесій. Codex і Claude Code працюють лише через OAuth чинних платних підписок цього власника; Google-вхід до Settings є окремою межею доступу й не замінює AI OAuth. API-key, PAYG та автоматичне придбання usage credits не є резервним режимом.
+`Personal Consultant` — приватний консультант для одного власника в захищеній Element/Matrix-кімнаті. Він приймає текст, зображення або PDF, визначає, чи потрібна пряма відповідь або консиліум, ситуаційно залучає Codex-агентів-спеціалістів і окремого Claude Code-агента-критика, показує їхню фактичну дискусію наживо та завершує її одним синтезованим рішенням. Щоденна консультація лишається в Element; єдиний веб-виняток — `Налаштування власника` для параметрів майбутніх сесій. Codex і Claude Code працюють лише через OAuth чинних платних підписок цього власника; локальний owner-password вхід до Settings є окремою межею доступу й не замінює AI OAuth. API-key, PAYG та автоматичне придбання usage credits не є резервним режимом.
 
 Ціннісна пропозиція:
 
@@ -36,7 +37,7 @@
 | Головний консультант | Приймає запит, визначає режим роботи, добирає агентів, реєструє повідомлення, керує дискусією та відповідає за фінальний синтез |
 | Codex-агент-спеціаліст | Виконує окрему предметну частину, застосовує доречні навички та джерела, формує й захищає професійну позицію |
 | Claude Code-агент-критик | Незалежно перевіряє ключову пропозицію, докази, альтернативні пояснення, ризики й умови провалу |
-| Зовнішні провайдери | Google забезпечує ідентифікацію Власника для Settings; `matrix.org`, Cloudflare, OpenAI та Anthropic забезпечують транспорт, контроль доступу, розміщення й агентські можливості; вони не є користувачами продукту |
+| Зовнішні провайдери | `matrix.org`, GoDaddy, MySQL, OpenAI та Anthropic забезпечують транспорт, розміщення, зберігання й агентські можливості; вони не є користувачами продукту |
 
 V1 є строго приватною одноосібною автоматизацією, а не SaaS. Використовуються лише чинні платні підписки власника, план і правила яких дозволяють цей приватний сценарій; вони не застосовуються для обслуговування клієнтів, працівників чи інших третіх осіб, не передаються їм і не перепродаються. Якщо правила або eligibility плану більше не дозволяють сценарій, залежний запуск блокується до окремого перегляду автентифікації, ліцензування й білінгу.
 
@@ -72,8 +73,8 @@ V1 є строго приватною одноосібною автоматиз�
 ### 3.6. Налаштування власника
 
 - `Налаштування власника` — єдина вузька responsive web surface V1. Вона змінює лише параметри майбутніх консультацій і не містить чату, консиліуму, архіву, execution status або іншого дашборду.
-- Доступ має лише Власник через Google login із точною allowlisted email-адресою. Пароль, OTP, magic link, інший IdP, публічна реєстрація та будь-яка інша Google-адреса не підтримуються.
-- Google settings auth відокремлений від subscription OAuth Codex і Claude Code: він не замінює їх, не об'єднує credential state і не надає доступу до AI OAuth-секретів.
+- Доступ має лише Власник через окремий високоентропійний локальний пароль із GoDaddy Publish Secrets, одноразовий same-origin challenge і чинну підписану захищену локальну сесію. OTP, magic link, зовнішній IdP, публічна реєстрація, користувацька зміна чи відновлення пароля не підтримуються.
+- Локальна Settings-автентифікація відокремлена від subscription OAuth Codex і Claude Code: вона не замінює їх, не об'єднує credential state і не надає доступу до AI OAuth-секретів.
 - Поверхня містить рівно три групи: `Моделі`, `Глибина міркування`, `Швидкість`. Інших груп або per-agent/per-session-unit overrides у V1 немає.
 - `Моделі` містять окремі typed allowlisted selectors для Codex-агентів і Claude Code-критика; довільної назви моделі немає.
 - Codex і Claude Code мають незалежні model-specific settings міркування. Підтримка перевіряється за capability map відповідної обраної моделі без спільної шкали та без мовчазного downgrade.
@@ -104,7 +105,7 @@ V1 є строго приватною одноосібною автоматиз�
 
 ### 4.2. Зміна параметрів майбутніх консультацій
 
-1. Власник відкриває `Налаштування власника` на desktop або mobile й проходить Google-only перевірку точної allowlisted email-адреси.
+1. Власник відкриває `Налаштування власника` на desktop або mobile й проходить локальну owner-password перевірку з одноразовим same-origin challenge.
 2. Поверхня показує рівно три групи та чинні effective values без доступу до AI OAuth-секретів.
 3. Власник змінює незалежні typed allowlisted модель+effort Codex, модель+effort Claude Code і orchestration speed або повертає стандартні значення.
 4. Система перевіряє повний набір і зберігає його атомарно; будь-яка помилка залишає попередній набір чинним.
@@ -158,7 +159,7 @@ V1 є строго приватною одноосібною автоматиз�
 
 **US-023.** Як власник, я хочу окремо дозволяти зовнішні й високоризикові дії, щоб агенти не змінювали реальний світ без мого рішення.
 
-**US-024.** Як власник, я хочу відкривати єдину адаптивну поверхню `Налаштування власника` лише через мій точно дозволений Google-акаунт, щоб безпечно змінювати параметри майбутніх консультацій і залишати щоденну роботу в Element.
+**US-024.** Як власник, я хочу відкривати єдину адаптивну поверхню `Налаштування власника` лише через окремий локальний пароль і захищену сесію, щоб безпечно змінювати параметри майбутніх консультацій і залишати щоденну роботу в Element.
 
 **US-025.** Як власник, я хочу окремо вибирати моделі Codex-агентів і Claude Code-критика з типізованих дозволених списків, щоб не вводити непідтримувану або непогоджену модель.
 
@@ -175,7 +176,7 @@ V1 є строго приватною одноосібною автоматиз�
 | ID | Вимога | Пов'язані історії | Джерело |
 |---|---|---|---|
 | FR-001 | V1 має працювати в одній приватній invite-only Matrix-кімнаті з обов'язковим E2EE, одним Matrix-акаунтом власника й одним Matrix-акаунтом бота. Система приймає робочі запити лише від точної allowlist-пари `room_id` і `owner_mxid` після перевірки Matrix-пристроїв; recovery key і відкликання втраченого або скомпрометованого пристрою мають бути передбачені. Інший акаунт або кімната не може запускати агентів, читати архів чи отримувати захищені відповіді. | US-002, US-022 | PI |
-| FR-002 | Перед першою звичайною обробкою система має отримати одноразову згоду на обробку бізнес-даних через `matrix.org`, Cloudflare, OpenAI та Anthropic. | US-004 | PI |
+| FR-002 | Перед першою звичайною обробкою система має отримати одноразову згоду на обробку бізнес-даних через `matrix.org`, GoDaddy, OpenAI та Anthropic. | US-004 | PI |
 | FR-003 | V1 має приймати текст, зображення й PDF; непідтримуваний тип має отримати зрозуміле повідомлення без запуску аналізу. | US-003 | PI |
 | FR-004 | Система має мінімізувати контекст для кожного агента й маскувати непотрібні ідентифікатори перед передаванням. | US-004 | PI, AG |
 | FR-005 | Система не має приймати або включати до незмінного журналу паролі, API-ключі, повні карткові чи банківські реквізити, державні ідентифікатори та інші секрети. | US-004 | PI, AG, CO |
@@ -206,13 +207,13 @@ V1 є строго приватною одноосібною автоматиз�
 | FR-030 | Збій, недоступний агент, неповний консиліум, прострочений або відкликаний OAuth, вичерпана квота чи брак доказів мають повідомлятися прямо. Залежна робота зупиняється fail-closed; система не створює вигадані репліки чи результати, не переходить на API key/PAYG/usage credits і надає лише безпечну out-of-band інструкцію повторної авторизації без токенів у Matrix. | US-018 | PI, AG, CO |
 | FR-031 | Завершена сесія має зберігатися безстроково в зашифрованому архіві з незмінним змістом і порядком повідомлень. | US-019 | PI, CO |
 | FR-032 | Користувач має мати можливість експортувати повну сесію або остаточно видалити її цілою лише після явного підтвердження; окремі репліки завершеної сесії не редагуються й не видаляються. | US-020 | PI |
-| FR-033 | Команда `Витрати` має окремо показувати налаштовані щомісячні платежі за ChatGPT/Codex і Claude, фактичні витрати Cloudflare, R2 та іншої інфраструктури, а також поточний статус плану `matrix.org` (`0` лише доки доступний безкоштовний план) і доступний provider-reported usage/ліміт/reset для Codex і Claude. Subscription AI usage конкретної сесії позначається як таке, що входить у підписку; ненадана сума лишається невідомою, а вигадана per-session token-cost, автоматична купівля usage credits і жорсткі грошові ліміти заборонені. | US-021 | PI |
+| FR-033 | Команда `Витрати` має окремо показувати налаштовані щомісячні платежі за ChatGPT/Codex і Claude, фактичні витрати GoDaddy, MySQL та іншої інфраструктури, а також поточний статус плану `matrix.org` (`0` лише доки доступний безкоштовний план) і доступний provider-reported usage/ліміт/reset для Codex і Claude. Subscription AI usage конкретної сесії позначається як таке, що входить у підписку; ненадана сума лишається невідомою, а вигадана per-session token-cost, автоматична купівля usage credits і жорсткі грошові ліміти заборонені. | US-021 | PI |
 | FR-034 | Усі вихідні репліки мають надходити в ту саму приватну E2EE Matrix-кімнату від одного Matrix-акаунта бота; конкретна роль агента й час `HH:MM` відображаються всередині повідомлення, а окремі Matrix-акаунти агентів чи інша консультаційна поверхня не створюються. | US-009, US-022 | PI |
 | FR-035 | Перед будь-якою зовнішньою дією або переходом високоризикової межі система має отримати окремий явний дозвіл власника. | US-023 | PI, AG |
 | FR-036 | За замовчуванням система має відповідати природною українською, адаптуватися до мови користувача й використовувати термін `лійка продажів`. | US-001, US-015 | AG, WC |
 | FR-037 | V1 має мати рівно одну вузьку responsive web surface `Налаштування власника` лише для параметрів майбутніх консультацій. Вона не містить чату, живого консиліуму, архіву, execution status або іншого дашборду; повсякденна консультація лишається в Element/Matrix. | US-001, US-022, US-024 | PI |
-| FR-038 | `Налаштування власника` мають відкриватися лише після Google login для точної allowlisted email-адреси Власника та валідної перевірки Access JWT. Запит без token, із missing/invalid token, wrong issuer, wrong audience, іншою email-адресою або через пароль, OTP, magic link, інший IdP чи публічну реєстрацію не отримує доступу. | US-024 | PI, OI |
-| FR-039 | Google settings auth має бути логічно й секретно відокремлений від subscription OAuth Codex і Claude Code: Google session не замінює AI auth, не об'єднує credential state і не відкриває AI OAuth tokens або setup-token клієнту чи Settings surface. | US-024 | PI |
+| FR-038 | `Налаштування власника` мають відкриватися лише після успішної перевірки окремого високоентропійного локального пароля Власника з GoDaddy Publish Secrets через одноразовий same-origin challenge. Відсутній, неправильний, повторно використаний, cross-origin або прострочений challenge/response не створює сесію; state-changing запит без чинної підписаної захищеної локальної сесії та перевірки origin/CSRF fail closed. | US-024 | PI, OI |
+| FR-039 | Локальна Settings-автентифікація має бути логічно й секретно відокремлена від subscription OAuth Codex і Claude Code: локальна сесія не замінює AI auth, не об'єднує credential state і не відкриває AI OAuth tokens, setup-token або owner password клієнту чи агентському контексту. | US-024 | PI |
 | FR-040 | `Налаштування власника` мають містити рівно три групи: `Моделі`, `Глибина міркування`, `Швидкість`; інші групи та per-agent/per-session-unit overrides у V1 відсутні. | US-024–US-028 | PI |
 | FR-041 | Група `Моделі` має надавати окремі typed allowlisted selectors для моделі Codex-агентів і моделі Claude Code-критика без довільного текстового вводу. | US-025 | PI |
 | FR-042 | Codex і Claude Code мають окремі provider-specific controls міркування. Codex показує тільки значення з актуального app-server `model/list`; Claude Code показує тільки значення, які успішно підтвердив subscription probe конкретної моделі. `За замовчуванням моделі` не передає explicit effort. Непідтримуване значення не може бути мовчки знижене або замінене. | US-026 | PI |
@@ -238,7 +239,7 @@ V1 є строго приватною одноосібною автоматиз�
 
 | ID | Вимога | Джерело |
 |---|---|---|
-| NFR-005 | Зміст Matrix-подій має бути захищений E2EE між перевіреними Element/Matrix-пристроями власника й бота; `matrix.org` отримує зашифрований зміст, але бачить службові метадані. E2EE завершується на verified Matrix device бота в Cloudflare runtime: розшифрований зміст існує в пам'яті runtime і передається OpenAI та Anthropic через TLS, а архів шифрується під час зберігання. | PI |
+| NFR-005 | Зміст Matrix-подій має бути захищений E2EE між перевіреними Element/Matrix-пристроями власника й бота; `matrix.org` отримує зашифрований зміст, але бачить службові метадані. E2EE завершується на verified Matrix device бота в GoDaddy Node runtime: розшифрований зміст існує в пам'яті runtime і передається OpenAI та Anthropic через TLS, а архів зберігається в MySQL лише як шифротекст прикладного рівня. | PI |
 | NFR-006 | OAuth-стани й setup-token зберігаються лише в захищеному runtime, можуть бути відкликані власником і не можуть міститися в Matrix-повідомленнях, промптах агентів, журналі, експорті, telemetry або клієнтському коді. `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` та інші API/PAYG credentials або provider-auth variables, здатні увімкнути fallback, мають бути відсутні; перед кожним запуском підтверджується subscription OAuth mode. | PI, AG, CO |
 | NFR-007 | Запит має виконуватися лише після перевірки Matrix-події, allowlist-пари `room_id` і `owner_mxid` та дозволеного стану пристрою; підроблена подія, інший акаунт, кімната або відкликаний пристрій не можуть запустити агентів. | PI |
 | NFR-008 | Дані кожного агента мають бути обмежені мінімально необхідним контекстом. | PI, AG |
@@ -264,31 +265,54 @@ V1 є строго приватною одноосібною автоматиз�
 
 | ID | Вимога | Джерело |
 |---|---|---|
-| NFR-016 | Settings access має fail closed за відсутнього, простроченого, непідписаного або інакше невалідного Access JWT, wrong issuer/audience чи email поза exact allowlist; повідомлення про відмову не розкриває токени, allowlisted email або AI OAuth material. | PI |
+| NFR-016 | Settings access має fail closed за відсутнього, неправильного, повторно використаного, cross-origin або простроченого challenge/response, слабкого чи відсутнього owner secret, нечинної підписаної локальної сесії або відсутньої origin/CSRF-перевірки; повідомлення про відмову не розкриває owner secret, session material або AI OAuth material. | PI |
 | NFR-017 | Валідний Settings set має зберігатися як одна узгоджена версія, а effective snapshot активної сесії — залишатися незмінним і відтворюваним протягом її lifecycle; частковий write або silent mutation заборонені. | PI |
 | NFR-018 | Єдина Settings surface має бути придатною на mobile і desktop, керованою клавіатурою та assistive technology, мати програмно визначені labels, видимий focus, зрозумілі validation errors і не покладатися лише на колір для змісту. | PI, OI |
 | NFR-019 | Однакова валідна комбінація settings і capability-map version має давати той самий effective configuration; unsupported mapping або невідомий capability state блокує нову сесію, а не спричиняє silent downgrade. | PI |
+
+## Security Requirements
+
+Для production web/API-поверхонь цільовим requirements-baseline є **OWASP ASVS 5.0.0 Level 2**. Рівень обрано через приватні бізнес-документи, credential material, зовнішні інтеграції, state-changing Settings і остаточне видалення сесій. Це мапування вимог, а не твердження про тестування, відповідність або сертифікацію.
+
+Переглянуто всі розділи ASVS: V1–V16 застосовуються до GoDaddy Node HTTP/Settings, Matrix ingress і bridge, внутрішніх API/process boundaries, MySQL state/archive та provider integrations у наведеному нижче обсязі. V17 не застосовується, бо V1 не містить WebRTC. Специфічні ризики нативних Element-пристроїв/E2EE lifecycle та instruction-boundary для AI доповнюють ASVS і лишаються обов'язковими за `NFR-007`/`NFR-008`.
+
+| Чинна вимога | Обов'язковий дозволений результат | Заборонений / fail-closed результат | ASVS 5.0.0 |
+|---|---|---|---|
+| NFR-005 | Лише TLS до зовнішніх провайдерів, vetted cryptography та app-layer ciphertext для архіву; ключі мають окремий lifecycle і не зберігаються разом із шифротекстом. | Plaintext archive, cleartext transport, слабкий алгоритм/ключ або decrypt після втрати авторизованого key state. | `v5.0.0-11.1.1`, `v5.0.0-11.1.2`, `v5.0.0-11.2.1`, `v5.0.0-11.3.3`, `v5.0.0-12.1.1`, `v5.0.0-12.3.1`, `v5.0.0-14.1.1`, `v5.0.0-14.1.2` |
+| NFR-006 | Secrets надходять лише через визначений secret store, OAuth-транзакція прив'язана до ініційованого flow, а production dependencies походять із trusted pinned sources та мають inventory/remediation policy. | Secret у source/client/log/prompt/export, непогоджений OAuth response, API/PAYG fallback або неперевірена dependency. | `v5.0.0-10.1.1`, `v5.0.0-13.1.1`, `v5.0.0-14.2.1`, `v5.0.0-14.2.3`, `v5.0.0-15.1.1`, `v5.0.0-15.1.2`, `v5.0.0-15.2.1`, `v5.0.0-15.2.3` |
+| NFR-007 | Server-side authorization перевіряє Matrix event, exact `room_id`/`owner_mxid`, device state і право на конкретний record/action при кожному запиті. | Client-side-only check, spoofed event, object-ID tampering, revoked device або unauthorized room/account запускає роботу чи повертає дані. | `v5.0.0-2.3.1`, `v5.0.0-8.1.1`, `v5.0.0-8.2.1`, `v5.0.0-8.2.2`, `v5.0.0-8.3.1` |
+| NFR-008 | Matrix/provider/file input канонікалізується один раз, валідовується на trusted boundary, contextually encodes output і передається до SQL/process/network APIs лише через безпечні параметризовані інтерфейси; agent treats external content as data, not authority. Дозволені image/PDF мають збіг extension/MIME/magic, size/unpacked limits і контрольоване місце зберігання. | Injection/SSRF/path traversal, небезпечний або надмірний файл, raw untrusted output чи вкладена інструкція розширює agent authority або запускає модель/процес. | `v5.0.0-1.1.1`, `v5.0.0-1.2.4`, `v5.0.0-1.3.5`, `v5.0.0-1.3.6`, `v5.0.0-1.5.2`, `v5.0.0-2.1.1`, `v5.0.0-2.2.1`, `v5.0.0-5.1.1`, `v5.0.0-5.2.1`, `v5.0.0-5.2.2`, `v5.0.0-5.3.2`, `v5.0.0-15.3.1` |
+| NFR-009 | Idempotency keys, rate/concurrency bounds, request/body/file/time limits і resource cleanup обмежують повтори та виснаження ресурсів. | Replay, duplicate event, oversized/slow request або retry storm створює повторну дію, необмежену роботу чи неконтрольовану вартість. | `v5.0.0-2.1.3`, `v5.0.0-2.3.2`, `v5.0.0-2.3.4`, `v5.0.0-2.4.1`, `v5.0.0-15.1.3`, `v5.0.0-15.2.2` |
+| NFR-010 | Persisted registration визначає один канонічний порядок; publish/archive transitions перевіряють current state і завершуються транзакційно або з recovery state. | Partial/reordered write або concurrent update видається за підтверджену канонічну репліку. | `v5.0.0-2.3.3`, `v5.0.0-2.3.4`, `v5.0.0-15.3.3` |
+| NFR-011 | Незмінність закритої сесії підтверджується collision-resistant integrity evidence, яке перевіряється перед export/read. | Змінений архів або evidence mismatch повертається як валідна завершена сесія. | `v5.0.0-11.4.3`, `v5.0.0-15.3.3` |
+| NFR-012 | Security events містять when/where/who/what, захищені від injection/unauthorized access, мають synchronized time, correlation і alert/response path; user-facing errors generic, а server-side detail не містить secrets. | Credential/PII у логах, log injection, silent security failure, success masking або stack/internal detail у відповіді. | `v5.0.0-16.1.1`, `v5.0.0-16.2.1`, `v5.0.0-16.2.2`, `v5.0.0-16.2.5`, `v5.0.0-16.3.1`, `v5.0.0-16.3.2`, `v5.0.0-16.3.3`, `v5.0.0-16.3.4`, `v5.0.0-16.4.1`, `v5.0.0-16.4.2`, `v5.0.0-16.5.1`, `v5.0.0-16.5.2`, `v5.0.0-16.5.3` |
+| NFR-016 | Owner secret має бути високоентропійним, інтерфейс має приймати щонайменше 64 символи, а перевірка — бути exact без truncation і захищеною throttling; одноразовий unpredictable challenge, session rotation, idle/absolute expiry, logout invalidation, `Secure`/`HttpOnly`/`SameSite` cookie, origin/CSRF і anti-caching controls обов'язкові. | Missing/weak secret, guessing, fixation, replay, cross-origin request, tampered/expired token або cached authenticated response дає Settings access. | `v5.0.0-3.3.1`, `v5.0.0-3.3.2`, `v5.0.0-3.3.3`, `v5.0.0-3.3.4`, `v5.0.0-3.4.1`, `v5.0.0-3.4.3`, `v5.0.0-3.4.4`, `v5.0.0-3.4.5`, `v5.0.0-3.4.6`, `v5.0.0-3.5.1`, `v5.0.0-4.1.1`, `v5.0.0-6.1.1`, `v5.0.0-6.2.8`, `v5.0.0-6.2.9`, `v5.0.0-6.3.1`, `v5.0.0-6.3.3`, `v5.0.0-7.1.1`, `v5.0.0-7.2.1`, `v5.0.0-7.2.2`, `v5.0.0-7.2.3`, `v5.0.0-7.2.4`, `v5.0.0-7.3.1`, `v5.0.0-7.3.2`, `v5.0.0-7.4.1`, `v5.0.0-7.4.4`, `v5.0.0-7.4.5`, `v5.0.0-9.1.1`, `v5.0.0-9.1.2`, `v5.0.0-9.1.3`, `v5.0.0-9.2.1`, `v5.0.0-9.2.2`, `v5.0.0-9.2.3`, `v5.0.0-11.5.1`, `v5.0.0-14.2.2`, `v5.0.0-14.3.2`, `v5.0.0-14.3.3` |
+| NFR-017 | Settings write перевіряє authorization, current version і повний schema set та commit-ить один atomic state; failure лишає попередню версію без side effects. | Partial write, lost update, stale overwrite або inconsistent snapshot стає effective configuration. | `v5.0.0-2.3.3`, `v5.0.0-2.3.4`, `v5.0.0-15.3.3` |
+| NFR-019 | Production конфігурація fail closed за missing/unknown values, мінімізує exposed services/methods/headers, не довіряє `Host`/forwarded headers без allowlist і не дозволяє preview ділити stateful credentials/schema без окремого isolation proof. | Default/insecure config, unsupported capability, host-header injection, debug/admin surface або shared preview state запускає production session. | `v5.0.0-2.1.2`, `v5.0.0-2.2.3`, `v5.0.0-13.2.2`, `v5.0.0-13.2.4`, `v5.0.0-13.2.5`, `v5.0.0-15.3.3`, `v5.0.0-15.3.5` |
+
+Відомий Level 2 виняток: `v5.0.0-6.3.3` вимагає MFA або формально обґрунтоване послаблення з comprehensive mitigations. Підтверджена межа V1 допускає лише локальний owner password і прямо виключає OTP/external IdP; тому повне L2-покриття **заблоковане**, доки Власник окремо не прийме документований residual risk або не дозволить сумісний другий фактор. Високоентропійний secret, one-time challenge, throttling, same-origin/CSRF controls і короткоживуча підписана сесія є обов'язковими mitigations, але самі по собі не оголошуються MFA чи доказом відповідності.
 
 ## 8. Підтверджені продуктові обмеження реалізації
 
 - Користувацький канал V1 — Element із протоколом Matrix: одна приватна invite-only E2EE-кімната на публічному `matrix.org` із поточним безкоштовним планом.
 - У кімнаті є один Matrix-акаунт власника та один Matrix-акаунт бота; доступ обмежений allowlist-парою `room_id` і `owner_mxid`, а ролі агентів показуються всередині повідомлень бота.
-- Серверна частина розміщується на Cloudflare й не залежить у production від локального Mac; власний VPS або власний Matrix homeserver у V1 не використовуються.
+- Серверна частина розміщується в наявному GoDaddy Node.js app на стандартному GoDaddy hostname й не залежить у production від локального Mac; власний VPS або власний Matrix homeserver у V1 не використовуються. Settings state, session registry і зашифрований архів використовують GoDaddy/MySQL-еквіваленти, причому архівні дані зберігаються лише як шифротекст прикладного рівня.
 - Головний консультант і спеціалісти працюють як окремі реальні Codex agent sessions/threads через один захищений ChatGPT OAuth-стан платної підписки власника; клоновані `auth.json` або окремі OAuth-cache не є умовою їхньої окремості й не використовуються.
 - Критик працює як окремий Claude Code-процес через subscription OAuth/setup-token платної підписки власника.
 - У runtime відсутні `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` та інші API/PAYG credentials, здатні ввімкнути fallback. Вичерпана квота або недійсний OAuth зупиняє залежну роботу; повторна авторизація відбувається безпечно поза Matrix і без передавання credential material агентам.
 - Реальна міжагентна комунікація використовує протокол A2A.
 - V1 є одноосібною приватною не-SaaS системою з однією дозволеною Matrix-кімнатою й однією активною сесією; підписки власника не обслуговують працівників, клієнтів чи інших третіх осіб.
 - Повсякденний консультаційний досвід лишається в Element/Matrix; єдина дозволена web surface — вузькі responsive `Налаштування власника` без чату, архіву, live status або дашборду.
-- Settings access використовує лише Google identity точної allowlisted email-адреси Власника та fail-closed перевірку Access JWT. Password/OTP/magic-link/інший IdP/registration flows відсутні, а Google auth відокремлений від Codex/Claude subscription OAuth.
+- Settings access використовує лише окремий високоентропійний локальний пароль Власника з GoDaddy Publish Secrets, одноразовий same-origin challenge і підписану захищену локальну сесію з origin/CSRF checks. OTP/magic-link/external-IdP/registration/password-change/password-recovery flows відсутні, а локальна auth відокремлена від Codex/Claude subscription OAuth.
 - Settings schema має рівно три групи: окремі typed allowlisted Codex/Claude selectors, shared `low / medium / high / xhigh` reasoning depth і `швидко / збалансовано / ретельно` orchestration speed. Capability validation, no-silent-downgrade, atomic save, defaults/reset, effective-value display і immutable active-session snapshot є обов'язковими.
 - Жодний Settings path не може змінювати critic/A2A/E2EE/verbatim/safety/privacy/permission invariants або активувати Claude Fast Mode, API/PAYG чи usage credits.
 - Користувач обрав змістовий і UX-напрям Candidate B «Дослівний консиліум»: усі фактично надіслані агентські доручення, проміжні репліки, критика й виправлення видно наживо повністю; приховані міркування, системні промпти та журнали інструментів до цього переліку не належать.
 - Продукт не створює власного звуку повідомлень; сповіщення визначають штатні налаштування Element та операційної системи.
 - Команда `Витрати` розділяє налаштовані щомісячні платежі підписок, фактичну інфраструктуру та доступний статус usage/ліміту/reset; вона не приписує підписному використанню вигадану token-cost сесії.
-- Точні allowlisted моделі, capability-map source/version, provider-specific reasoning mapping, defaults, persistence/JWT mechanisms, версія A2A, захищене сховище OAuth-станів, lifecycle refresh/reauth, сховище даних, керування ключами, черги й повторні спроби є власністю `docs/architecture.md`, але не можуть змінити продуктові Settings/OAuth межі.
+- Точні allowlisted моделі, capability-map source/version, provider-specific reasoning mapping, defaults, persistence/session-signing mechanisms, версія A2A, захищене сховище OAuth-станів, lifecycle refresh/reauth, MySQL schema, керування ключами, черги й повторні спроби є власністю `docs/architecture.md`, але не можуть змінити продуктові Settings/OAuth межі.
+- Stateful preview дозволений лише після окремого доказу ізольованих schema, credentials і data boundary; без такого доказу preview лишається stateless. Ця міграція не дозволяє видаляти legacy Cloudflare/Google ресурси, секрети, бази чи rollback-артефакти без перевіреного recovery/restore evidence, точного переліку цілей і окремого підтвердження безпосередньо перед дією.
 - `DAS Forge 4` є лише pattern evidence для typed allowlists, validated atomic save, defaults/reset і effective-value display. Його ширший settings scope, сім груп, sound/motion, free-text model input і per-unit overrides не є scope `Personal Consultant`.
-- Наявний локальний live-chat доводить лише можливість зберігати дослівне тіло, приховувати технічні ID і перетворювати Markdown. Він не доводить готовність Matrix E2EE, `matrix.org`, Cloudflare, A2A, архіву або агентського циклу й не є цільовим UI.
+- Наявний локальний live-chat доводить лише можливість зберігати дослівне тіло, приховувати технічні ID і перетворювати Markdown. Він не доводить готовність Matrix E2EE, `matrix.org`, GoDaddy runtime, A2A, архіву або агентського циклу й не є цільовим UI.
 
 ## 9. Рішення щодо перевірки продукту
 
@@ -298,14 +322,14 @@ V1 є строго приватною одноосібною автоматиз�
 - Перевірка має відрізняти фактичне повідомлення агента від прихованих міркувань, технічних логів і синтетичних тестових даних.
 - Кожна перевірка незмінності має порівнювати відображений, експортований і заархівований порядок та повний текст підтверджених реплік.
 - Перевірка приватності має включати інший `owner_mxid`, інший `room_id`, неперевірений або відкликаний пристрій, підроблену й повторно доставлену Matrix-подію, секрет у повідомленні та чутливий документ без підтвердження.
-- Перевірка E2EE має підтвердити реальне шифрування подій між перевіреними Matrix-пристроями й окремо зафіксувати, що розшифрований зміст обробляють Cloudflare runtime, OpenAI та Anthropic через визначену довірчу межу.
+- Перевірка E2EE має підтвердити реальне шифрування подій між перевіреними Matrix-пристроями й окремо зафіксувати, що розшифрований зміст обробляють GoDaddy Node runtime, OpenAI та Anthropic через визначену довірчу межу.
 - Перевірка швидкості має вимірювати чотири окремі межі: 5 секунд, 30 секунд, 60 секунд і 10 хвилин.
 - Перевірка agent runtime має довести окремі реальні Codex sessions/threads через один керований ChatGPT OAuth-стан без клонів credential store, окремий Claude Code-процес через subscription OAuth/setup-token та відсутність `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` й інших PAYG fallback credentials.
 - Негативні auth/quota-сценарії мають довести fail-closed поведінку за expiry, revocation, quota exhaustion і невідомого auth mode: жодного модельного fallback, нової фактичної agent reply чи прихованої покупки usage credits; повторна авторизація відбувається out-of-band.
 - Перевірка приватної моделі має підтвердити, що тільки власник ініціює запити й отримує результати; доступ клієнта, працівника або іншої третьої особи не підтримується. Зміна правил провайдера, що забороняє цей сценарій, блокує запуск до перегляду.
 - Перевірка `Витрати` має зіставити налаштовані subscription fees і фактичні infrastructure invoices/usage з показаними значеннями, зберегти unavailable як невідоме та підтвердити відсутність вигаданої per-session token-cost.
-- Наскрізна перевірка Settings має використовувати реальну responsive web surface: exact allowlisted Google email проходить, а інша Google email, password, OTP, magic link, інший IdP і реєстрація не дають доступу. Daily consultation при цьому лишається в Element.
-- Негативна access suite має окремо перевірити missing JWT, invalid signature/format/expiry, wrong issuer, wrong audience та wrong email; кожний випадок fail closed не розкриває allowlist або секрети й не впливає на Codex/Claude OAuth state.
+- Наскрізна перевірка Settings має використовувати реальну responsive web surface: правильна відповідь на свіжий одноразовий same-origin challenge створює окрему локальну сесію, а неправильний пароль, OTP, magic link, external IdP і реєстрація не дають доступу. Daily consultation при цьому лишається в Element.
+- Негативна access suite має окремо перевірити missing/weak owner secret, неправильну відповідь, missing/reused/expired/cross-origin challenge, tampered/expired session, missing origin/CSRF proof і brute-force throttling; кожний випадок fail closed не розкриває owner secret або session material і не впливає на Codex/Claude OAuth state.
 - Contract tests Settings schema мають довести рівно три групи, два окремі typed model allowlists, відсутність free-text model input та відсутність extra/per-agent/per-unit overrides.
 - Capability-map tests мають охопити підтримувані й непідтримувані пари кожної дозволеної моделі з `low / medium / high / xhigh`, правильне provider-specific mapping, unknown/stale capability state і відсутність silent downgrade.
 - Speed tests мають довести детерміновану orchestration semantics пресетів `швидко / збалансовано / ретельно` та відсутність Claude Fast Mode, API/PAYG, usage-credit або іншого платного fallback у кожному пресеті.
@@ -383,11 +407,11 @@ V1 є строго приватною одноосібною автоматиз�
 **Коли:** головний консультант завершує сесію.
 **Тоді:** користувач отримує рішення, до трьох дій, ризик і умову перегляду короткими повідомленнями; технічна частина відокремлена, а зовнішня дія не виконується без окремого дозволу.
 
-### AC-012. Google-only доступ до Налаштувань власника
+### AC-012. Локальний owner-password доступ до Налаштувань власника
 
-**Дано:** URL `Налаштувань власника`, exact allowlisted Google email та спроби доступу з wrong email, без JWT, із invalid JWT, wrong issuer, wrong audience, password, OTP, magic link, іншим IdP або через реєстрацію.
+**Дано:** URL `Налаштувань власника`, окремий високоентропійний owner secret у GoDaddy Publish Secrets та спроби доступу з правильним, неправильним, відсутнім або слабким secret, missing/reused/expired/cross-origin challenge, tampered/expired session, missing origin/CSRF proof, OTP, magic link, external IdP або через реєстрацію.
 **Коли:** кожний запит намагається відкрити Settings.
-**Тоді:** доступ отримує лише Власник із exact email та повністю валідним Access JWT; решта випадків fail closed без розкриття allowlist чи секретів, Google session не відкриває й не змінює Codex/Claude subscription OAuth, а консультаційний UX лишається в Element.
+**Тоді:** доступ отримує лише Власник після правильної відповіді на свіжий одноразовий same-origin challenge і з чинною підписаною захищеною локальною сесією; решта випадків fail closed без розкриття secret/session material, brute-force throttling діє, локальна сесія не відкриває й не змінює Codex/Claude subscription OAuth, а консультаційний UX лишається в Element.
 
 ### AC-013. Три групи, атомарне збереження й повернення значень
 
@@ -418,7 +442,7 @@ V1 є строго приватною одноосібною автоматиз�
 - публічний чатбот, реєстрація інших користувачів, ролі команди або багатокористувацький SaaS;
 - використання підписок власника для клієнтів, працівників або інших третіх осіб, спільний доступ, перепродаж чи будь-яка SaaS/комерційна модель на цих credential;
 - будь-яка web surface, крім вузьких responsive `Налаштувань власника`; зокрема браузерний чат, live-preview, архів, live execution status або повсякденний дашборд;
-- password, OTP, magic link, інший IdP, публічна реєстрація або Settings access для Google email поза exact allowlist;
+- OTP, magic link, external IdP, публічна реєстрація, користувацька зміна чи відновлення owner password або Settings access без чинної локальної сесії;
 - free-text model input, settings group поза трьома підтвердженими, sound/motion settings, per-agent чи per-session-unit override;
 - WhatsApp, Meta WhatsApp Cloud API, Telegram, Slack, iMessage або сторонній конструктор чатботів;
 - власний VPS, самостійне адміністрування Matrix homeserver або локальний Mac як production-сервер;
@@ -441,7 +465,7 @@ V1 є строго приватною одноосібною автоматиз�
 
 - точні моделі Codex і Claude;
 - typed allowlist contents, capability-map source/version, provider-specific reasoning mapping і source-backed defaults для трьох Settings groups;
-- точний Google/Access JWT integration mechanism, storage schema та persistence protocol; вони не можуть додати інший login method, розширити exact-email allowlist або порушити atomic save/effective snapshot;
+- точний same-origin challenge, session signing/expiry, CSRF, throttling, storage schema та persistence protocol; вони не можуть додати інший login method, послабити owner-secret boundary або порушити atomic save/effective snapshot;
 - версію та конкретну реалізацію протоколу A2A;
 - захищене сховище одного ChatGPT OAuth-стану, Claude subscription setup-token і конкретний out-of-band flow повторної авторизації; ці рішення не можуть додати API/PAYG fallback або передавання токенів у Matrix/agent context;
 - сховище, формат архіву, керування ключами, черги, повторні спроби та відновлення після збою;
@@ -454,8 +478,10 @@ V1 є строго приватною одноосібною автоматиз�
 
 | Джерело | Що підтверджує | Використання в PRD |
 |---|---|---|
-| `docs/product-idea.md` | Актуальний намір, Element/Matrix, Candidate B, V1, subscription OAuth, private/non-SaaS boundary, дані, витрати, команди, а також Google-only `Налаштування власника`, рівно три групи, validation/save/reset/effective/snapshot semantics | Основне джерело всіх продуктових меж і acceptance-сценаріїв, включно з `US-024`–`US-029`, `FR-037`–`FR-046`, `NFR-016`–`NFR-019`, `AC-012`–`AC-016` |
-| Owner-вказівка invocation `81baa3f2-39b5-45d2-8c1c-238ebd66cdbb` | Bounded PRD update, exact Google/JWT negative tests, responsive/accessibility testing, stable traceability and DAS Forge 4 evidence boundary | `FR-038`, `NFR-018`, testing decisions and validation scope |
+| `docs/product-idea.md` | Актуальний намір, Element/Matrix, Candidate B, V1, GoDaddy Node hosting, локальний owner-password доступ, GoDaddy/MySQL equivalents, subscription OAuth, private/non-SaaS boundary, дані, витрати, команди, рівно три Settings groups і validation/save/reset/effective/snapshot semantics | Основне джерело всіх продуктових меж і acceptance-сценаріїв, включно з `US-024`–`US-029`, `FR-037`–`FR-046`, `NFR-016`–`NFR-019`, `AC-012`–`AC-016` |
+| Owner-вказівка invocation `4f5ce7bd-6f8a-47d3-be6a-6e2a422928e6` | Bounded PRD revalidation after the GoDaddy product-idea reconciliation, stable existing IDs, ASVS 5.0.0 Level 2 review and no test-completion claim | Hosting/auth/storage reconciliation, `Security Requirements`, validation scope |
+| Owner-вказівка invocation `29a3dde9-6a4a-4f28-87be-4aa558d73ec8` | Bounded product-idea reconciliation to GoDaddy Node, local owner password and GoDaddy/MySQL equivalents without destructive cleanup | Canonical upstream intent consumed by this PRD |
+| Owner-вказівка invocation `81baa3f2-39b5-45d2-8c1c-238ebd66cdbb` | Попередня bounded PRD update для Google/JWT access; hosting/access частина скасована новішою owner-вказівкою, responsive/accessibility і stable traceability збережені | Історичне джерело `NFR-018` і testing evidence boundary, не чинна auth вимога |
 | `AGENTS.md` | Роль консультанта й коуча, маршрутизацію простих/складних запитів, дисципліну правди, формат дій і межі дозволів | FR-008, FR-027–FR-030, FR-035–FR-036 |
 | `CONSILIUM.md` | Реальний мультиагентний склад, незалежний перший прохід, дискусію, реєстратора, незмінність і синтез | FR-009–FR-018, FR-023, FR-025, FR-029–FR-031 |
 | `WORKING_CONTEXT.md` | Підтверджену персональну модель, професійну українську та термін `лійка продажів` | FR-036 і термінологія |

@@ -9,6 +9,8 @@ const messageKey = (generation: number, sequence: number): string =>
   `registrar:message:${generation}:${sequence}`;
 const eventKey = (eventId: string): string => `registrar:event:${eventId}`;
 const criticReviewKey = (generation: number): string => `registrar:critic-review:${generation}`;
+const matrixOutboxKey = (generation: number, sequence: number): string =>
+  `registrar:matrix-outbox:${generation}:${sequence}`;
 
 export type SessionPhase = "active" | "stopped" | "closed";
 
@@ -35,6 +37,29 @@ export type ConfirmedAgentMessage = Readonly<{
   bodyHash: string;
   confirmedAt: string;
 }>;
+
+export type MatrixOutboxState = "pending" | "leased" | "accepted" | "device_delivered" | "read" | "blocked" | "cancelled";
+
+export type MatrixOutboxRecord = Readonly<{
+  generation: number;
+  sequence: number;
+  transactionId: string;
+  state: MatrixOutboxState;
+  kind: "message" | "control";
+  message: ConfirmedAgentMessage;
+  replyToEventId?: string;
+  createdAt: string;
+}>;
+
+export type ConfirmedMessageOutboxProjection = (
+  storage: RegistrarStorage,
+  record: MatrixOutboxRecord
+) => Promise<void>;
+
+export type RegistrarGenerationFence = (
+  storage: RegistrarStorage,
+  input: Readonly<{ generation: number; reason: "stopped" | "new_task"; fencedAt: string }>
+) => Promise<void>;
 
 type EventLedgerEntry = Readonly<{
   bodyHash: string;
@@ -65,7 +90,18 @@ export type RegistrarResult<T> =
 export type RegistrarOptions = Readonly<{
   storage: RegistrarStorage;
   now: () => Date;
+  projectConfirmedMessage?: ConfirmedMessageOutboxProjection;
+  fenceGeneration?: RegistrarGenerationFence;
 }>;
+
+export type StopSessionOptions = Readonly<{
+  /** Publish the product-defined Stop notice after fencing message rows. */
+  publishControl?: boolean;
+}>;
+
+export const matrixTransactionIdFor = (
+  message: Pick<ConfirmedAgentMessage, "generation" | "sequence" | "bodyHash">
+): string => `pc-${message.generation}-${message.sequence}-${message.bodyHash.slice(0, 24)}`;
 
 const formatVisibleTime = (date: Date): string =>
   new Intl.DateTimeFormat("uk-UA", {
@@ -83,6 +119,22 @@ async function hashValue(value: unknown): Promise<string> {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+export async function confirmedMessageFingerprint(input: Readonly<{
+  role: string;
+  body: string;
+  addressedTo?: string;
+  replyToEventId?: string;
+}>): Promise<string> {
+  return hashValue({
+    role: input.role,
+    body: input.body,
+    addressedTo: input.addressedTo ?? null,
+    replyToEventId: input.replyToEventId ?? null
+  });
+}
+
+const utf8Length = (value: string): number => new TextEncoder().encode(value).byteLength;
+
 function deepFreeze<T>(value: T): T {
   if (value !== null && typeof value === "object" && !Object.isFrozen(value)) {
     for (const key of Reflect.ownKeys(value)) deepFreeze(Reflect.get(value, key));
@@ -98,10 +150,16 @@ function immutableSnapshot(snapshot: EffectiveSessionSnapshot): EffectiveSession
 export class RegistrarDO {
   readonly #storage: RegistrarStorage;
   readonly #now: () => Date;
+  readonly #projectConfirmedMessage: ConfirmedMessageOutboxProjection;
+  readonly #fenceGeneration: RegistrarGenerationFence;
 
   constructor(options: RegistrarOptions) {
     this.#storage = options.storage;
     this.#now = options.now;
+    this.#projectConfirmedMessage = options.projectConfirmedMessage ?? (async (storage, record) => {
+      await storage.put(matrixOutboxKey(record.generation, record.sequence), record);
+    });
+    this.#fenceGeneration = options.fenceGeneration ?? (async () => undefined);
   }
 
   async startSession(input: Readonly<{ sessionId: string; settingsSnapshot: EffectiveSessionSnapshot }>): Promise<RegistrarResult<SessionGeneration>> {
@@ -126,6 +184,11 @@ export class RegistrarDO {
         return { ok: true, value: active, replayed: true };
       }
       if (active !== undefined) {
+        await this.#fenceGeneration(storage, {
+          generation: active.generation,
+          reason: "new_task",
+          fencedAt: this.#now().toISOString()
+        });
         const closed = Object.freeze({ ...active, phase: "closed" as const, closedAt: this.#now().toISOString() });
         await storage.put(sessionKey(active.generation), closed);
       }
@@ -139,13 +202,17 @@ export class RegistrarDO {
     role: string;
     body: string;
     addressedTo?: string;
+    replyToEventId?: string;
   }>): Promise<RegistrarResult<ConfirmedAgentMessage>> {
-    if (!isInternalEventId(input.eventId) || !isVisibleRole(input.role) || input.body.length === 0) {
+    if (
+      !isInternalEventId(input.eventId) || !isVisibleRole(input.role) || input.body.length === 0 ||
+      utf8Length(input.body) > 65_536
+    ) {
       return { ok: false, code: "invalid_event" };
     }
 
     const immutableBody = input.body;
-    const bodyHash = await hashValue({ role: input.role, body: immutableBody, addressedTo: input.addressedTo ?? null });
+    const bodyHash = await confirmedMessageFingerprint(input);
     return this.#storage.transaction(async (storage) => {
       const recordedEvent = await storage.get<EventLedgerEntry>(eventKey(input.eventId));
       if (recordedEvent !== undefined) {
@@ -172,15 +239,29 @@ export class RegistrarDO {
         confirmedAt: now.toISOString()
       });
       const updated = Object.freeze({ ...active, nextSequence: active.nextSequence + 1 });
+      const outboxRecord: MatrixOutboxRecord = deepFreeze({
+        generation: message.generation,
+        sequence: message.sequence,
+        transactionId: matrixTransactionIdFor(message),
+        state: "pending",
+        kind: "message",
+        message,
+        ...(input.replyToEventId === undefined ? {} : { replyToEventId: input.replyToEventId }),
+        createdAt: now.toISOString()
+      });
       await storage.put(messageKey(active.generation, message.sequence), message);
       await storage.put(eventKey(input.eventId), { bodyHash, message });
       await storage.put(sessionKey(active.generation), updated);
       await storage.put(ACTIVE_SESSION_KEY, updated);
+      await this.#projectConfirmedMessage(storage, outboxRecord);
       return { ok: true, value: message, replayed: false };
     });
   }
 
-  async stopSession(generation: number): Promise<RegistrarResult<SessionGeneration>> {
+  async stopSession(
+    generation: number,
+    options: StopSessionOptions = {}
+  ): Promise<RegistrarResult<SessionGeneration>> {
     return this.#storage.transaction(async (storage) => {
       const active = await storage.get<SessionGeneration>(ACTIVE_SESSION_KEY);
       if (active === undefined) return { ok: false, code: "no_active_session" };
@@ -188,7 +269,44 @@ export class RegistrarDO {
       if (active.phase === "stopped") return { ok: true, value: active, replayed: true };
       if (active.phase !== "active") return { ok: false, code: "session_not_active" };
 
-      const stopped = Object.freeze({ ...active, phase: "stopped" as const, stoppedAt: this.#now().toISOString() });
+      const now = this.#now();
+      await this.#fenceGeneration(storage, { generation, reason: "stopped", fencedAt: now.toISOString() });
+      const stopped = Object.freeze({
+        ...active,
+        phase: "stopped" as const,
+        stoppedAt: now.toISOString(),
+        nextSequence: active.nextSequence + (options.publishControl === true ? 1 : 0)
+      });
+      if (options.publishControl === true) {
+        const controlInput = {
+          role: "Система",
+          body: "Сесію зупинено. Нові відповіді для цієї сесії не публікуються."
+        } as const;
+        const bodyHash = await confirmedMessageFingerprint(controlInput);
+        const controlMessage: ConfirmedAgentMessage = deepFreeze({
+          generation,
+          sequence: active.nextSequence,
+          internalEventId: `control-stop-event-${generation}`,
+          role: controlInput.role,
+          visibleTime: formatVisibleTime(now),
+          body: controlInput.body,
+          bodyFormat: "markdown",
+          bodyHash,
+          confirmedAt: now.toISOString()
+        });
+        const controlRecord: MatrixOutboxRecord = deepFreeze({
+          generation,
+          sequence: controlMessage.sequence,
+          transactionId: matrixTransactionIdFor(controlMessage),
+          state: "pending",
+          kind: "control",
+          message: controlMessage,
+          createdAt: now.toISOString()
+        });
+        await storage.put(messageKey(generation, controlMessage.sequence), controlMessage);
+        await storage.put(eventKey(controlMessage.internalEventId), { bodyHash, message: controlMessage });
+        await this.#projectConfirmedMessage(storage, controlRecord);
+      }
       await storage.put(sessionKey(generation), stopped);
       await storage.put(ACTIVE_SESSION_KEY, stopped);
       return { ok: true, value: stopped, replayed: false };
@@ -242,6 +360,15 @@ export class RegistrarDO {
       )
     );
     return deepFreeze(messages.filter((message): message is ConfirmedAgentMessage => message !== undefined));
+  }
+
+  /**
+   * Local/domain-test inspection for the default RegistrarStorage projection.
+   * The GoDaddy runtime replaces that projection with the dedicated MySQL
+   * outbox table and consumes it only through runtime.matrixOutbox.
+   */
+  async getLocalMatrixOutboxRecordForTest(generation: number, sequence: number): Promise<MatrixOutboxRecord | undefined> {
+    return this.#storage.get<MatrixOutboxRecord>(matrixOutboxKey(generation, sequence));
   }
 
   async #createSession(

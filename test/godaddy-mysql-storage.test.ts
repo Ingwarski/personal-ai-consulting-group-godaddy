@@ -83,6 +83,7 @@ test("GoDaddy state storage is unavailable without an explicit published role", 
     code: "state_database_not_enabled"
   });
   assert.deepEqual(parseGodaddyDatabaseConfiguration({
+    RUNTIME_MODE: "production",
     GODADDY_STATE_DATABASE_ROLE: GODADDY_STATE_DATABASE_ROLE,
     DB_HOST: "db.internal",
     DB_PORT: "not-a-port",
@@ -94,6 +95,7 @@ test("GoDaddy state storage is unavailable without an explicit published role", 
     code: "invalid_state_database_configuration"
   });
   assert.deepEqual(parseGodaddyDatabaseConfiguration({
+    RUNTIME_MODE: "production",
     GODADDY_STATE_DATABASE_ROLE: GODADDY_STATE_DATABASE_ROLE,
     DB_HOST: "db.internal",
     DB_PORT: "3306",
@@ -109,6 +111,18 @@ test("GoDaddy state storage is unavailable without an explicit published role", 
       user: "application",
       password: "private"
     }
+  });
+  assert.deepEqual(parseGodaddyDatabaseConfiguration({
+    RUNTIME_MODE: "development",
+    GODADDY_STATE_DATABASE_ROLE: GODADDY_STATE_DATABASE_ROLE,
+    DB_HOST: "db.internal",
+    DB_PORT: "3306",
+    DB_NAME: "personal_consultant",
+    DB_USER: "application",
+    DB_PASSWORD: "private"
+  }), {
+    ok: false,
+    code: "state_database_not_enabled"
   });
 });
 

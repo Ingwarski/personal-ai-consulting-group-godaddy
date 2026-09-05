@@ -1,9 +1,12 @@
 # DoD And Evals
 
 - Продукт: `Personal Consultant`
-- Версія контракту: V1, implementation phase after approved visual baseline
-- Дата: 16.08.2026
-- owner_invocation_id: `e05a1a53-1bfe-4a6b-a6db-a3ba80de9266`
+- Версія контракту: V1, reconciled GoDaddy/Rust-sidecar target after approved visual baseline
+- Дата: 04.09.2026
+- owner_invocation_id: `2ed3d2cc-bad8-48f1-bf8e-c892d7bb9e6c`
+- Definition Status: `prepared`
+- Execution Status: `not_run`
+- Release Readiness: `not_evaluated`
 
 ## Source References
 
@@ -11,21 +14,21 @@
 
 | Джерело | SHA-256 / evidence | Спожиті фрагменти |
 |---|---|---|
-| `README.md` | `d1afdf92181df9e002f9f75678f8ca46083c90bec0a9a33e47535a0593fa1c9c` | Позиціонування; практичний результат; локальний browser-preview лише як обмежений evidence |
-| `docs/product-idea.md` | `263a5d15949e2ebf70f9fb4fa8ba67ff1e882cb5ae2774ecf218ccff16586ac5` | Element/Matrix V1; реальний Консиліум; Owner Settings; private single-owner subscription OAuth; дані, час, архів, команди й витрати |
-| `docs/prd.md` | `2d9546dd7b0f4cd25dea0f225ffa35c0819966e3edb9efaa72f781f3fb70d660` | `US-001`–`US-029`; `FR-001`–`FR-046`; `NFR-001`–`NFR-019`; `AC-001`–`AC-016`; Settings, OAuth-only і fail-closed contracts |
-| `docs/project-context.md` | `529ee8b70ec81b2a4734cb7580e5bfc84052a9f2552b039cd52bd42dfe4b2fee` | Outcomes; two surfaces; Google Access/JWT; atomic Settings; private/non-SaaS boundary; constraints; risks |
-| `docs/canonical-terms.md` | `75e8ab94a47faa0f89a51605543f2f643ce9b53c8513d26ee7d5bb54037f26fc` | Ролі; об'єкти; команди; Settings groups/states; OAuth; A2A; Реєстратор; Канонічний порядок; Облік витрат |
-| `docs/guardrails.md` | `54c7ccd20d612e908f1038499c2db101d47e587c141a2d5363e003b2a0dbb3bc` | Source order; Google Access/JWT; exact-three/atomic/snapshot rules; private-use and OAuth boundaries; stop rules; evidence; design authority |
-| `docs/user-journey.md` | `e4dfa9801ef0eab241c4b768719732628e37aebb068a8fd8067eeedbe1a6d7cd` | Element Stages 1–10; Settings S1–S5; decisions; auth/access recovery; failures; costs; success |
-| `docs/screen-map.md` | `5f138005cf9b6c9b347cc8d876bd74f6f9c977503ad6dc53436ccd35e75f0a5b` | `SUR-01`–`SUR-02`; `MG-01`–`MG-13`; `SG-01`–`SG-05`; `SS-01`–`SS-46`; transitions; edge paths |
-| `docs/wireframes.md` | `df7ca5c68e238416d16541e765b6a062bd29ab1328de06dc0f064f0600fb2edc` | Native Element patterns; authenticated responsive Settings structure; all state/group coverage; accessibility |
-| `docs/design-brief.md` | `fe448a96e48f78751c6e7f301515c5abf3856c3b69266d9dac4ec0321c017824` | Approved `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`; both surfaces; `P-01`–`P-15`; HappyPro palette for `SUR-02` |
-| `docs/architecture.md` | `f115117a92b1a158003aab579cb26abb804fa7cd340d55c1a9060b52b7c6d183` | Matrix/E2EE and OAuth runtime; Cloudflare Settings access/browser hardening; `OwnerSettingsDO`; capability catalogs; atomic save/reset; immutable session snapshot |
-| Поточний репозиторій | Read-only inspection, 16.08.2026 | `scripts/consilium-*.mjs`, `consilium/live/*` і `tests/consilium-chat.test.mjs` доводять лише локальне збереження body, форматування й preview; package manifest, CI, Cloudflare config і production runtime відсутні |
+| `README.md` | `540a76cb67521d9f3652ec15604f9dc7657f865af639baf13df506f07288c81b` | Позиціонування; практичний результат; локальний browser-preview лише як обмежений evidence |
+| `docs/product-idea.md` | `ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a` | Element/Matrix V1; GoDaddy Node/MySQL; Rust Matrix sidecar; реальний Консиліум; owner-password Settings; private single-owner subscription OAuth; дані, час, архів, команди й витрати |
+| `docs/prd.md` | `32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94` | `US-001`–`US-029`; `FR-001`–`FR-046`; `NFR-001`–`NFR-019`; `AC-001`–`AC-016`; Security Requirements з 11 IDs; Settings, OAuth-only і fail-closed contracts |
+| `docs/project-context.md` | `1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15` | Outcomes; two surfaces; GoDaddy Node/MySQL; owner-password/session; private/non-SaaS boundary; constraints; risks |
+| `docs/canonical-terms.md` | `e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da` | Ролі; об'єкти; команди; Settings groups/states; owner-password/session; OAuth; A2A; Реєстратор; Канонічний порядок; Облік витрат |
+| `docs/guardrails.md` | `4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48` | Source order; GoDaddy/MySQL; owner-password/session; exact-three/atomic/snapshot rules; private-use and OAuth boundaries; stop rules; evidence; design authority |
+| `docs/user-journey.md` | `dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77` | Element Stages 1–10; Settings S1–S5; local auth recovery; failures; costs; success |
+| `docs/screen-map.md` | `385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52` | `SUR-01`–`SUR-02`; `MG-01`–`MG-13`; `SG-01`–`SG-05`; `SS-01`–`SS-46`; GoDaddy owner-login transitions; edge paths |
+| `docs/wireframes.md` | `49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca` | Native Element patterns; owner-password challenge і authenticated responsive Settings structure; all state/group coverage; accessibility |
+| `docs/design-brief.md` | `719a32b4ea4fef9f9eaa0ee08864f00fa57f9637be530e67c404d58d1c2e5608` | Approved `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`; `DB-D17`; both surfaces; `P-01`–`P-15`; H1–H10; representative task plan; HappyPro palette for `SUR-02` |
+| `docs/architecture.md` | `96366beeb83c11336b6466618115af51cb8190a05afec03fe0ad697adc89929e` | GoDaddy Node 22 host/supervisor; Rust `matrix-sdk` 0.18.0 sidecar; bounded NDJSON/media spool; encrypted SQLite crypto store; MySQL state/outbox/archive; owner-password session; product-security mapping |
+| Поточний репозиторій | Read-only inspection, 04.09.2026: `rg --files`, `package.json`, `src/godaddy/*`, `test/godaddy-*` | Node 22 package/build/check surfaces, GoDaddy runtime/MySQL/owner-auth adapters і tests існують; production Rust workspace/lockfile/sidecar artifact ще відсутні; legacy Cloudflare modules/config/tests лишаються в checkout і не є production-target evidence |
 | Явне рішення Власника | 16.08.2026 | Candidate B v2 цілісно затверджено фразою «ОК. Закрий хром і продовжуй розробку»; тільки цей baseline є visual source для наступних user-visible units |
 
-Канонічне покриття цього контракту: `US=29`, `FR=46`, `NFR=19`, `AC=16`, `SUR=2`, `MG=13`, `SG=5`, `SS=46`. Відсутній або додатковий ID є `G-01` blocker, доки upstream source не змінено явно.
+Канонічне покриття цього контракту: `US=29`, `FR=46`, `NFR=19`, `AC=16`, `SUR=2`, `MG=13`, `SG=5`, `SS=46`, `SECURITY_REQUIREMENTS=11`. Відсутній або додатковий ID є `G-01` blocker, доки upstream source не змінено явно.
 
 ## Definition Of Done Model
 
@@ -33,7 +36,7 @@ Done — це підтверджений стан, а не самооцінка 
 
 Рівні Done:
 
-1. **Product V1 Done:** усі `AC-001`–`AC-016` пройдено в одному evidence lineage: реальна приватна E2EE Matrix-кімната з перевіреними пристроями; реальна protected responsive `SUR-02` через Cloudflare Access/Worker; один fenced authoritative Codex subscription-OAuth lineage; окремі реальні Codex threads/workspaces; окремий Claude Code subscription-OAuth process; фактичні provider/runtime integrations; усі застосовні hard gates пройдено.
+1. **Product V1 Done:** усі `AC-001`–`AC-016` пройдено в одному evidence lineage: реальна приватна E2EE Matrix-кімната з перевіреними пристроями; production Rust sidecar з encrypted SQLite crypto store; реальна protected responsive `SUR-02` у GoDaddy Node app через локальний owner-password challenge/session; MySQL state/outbox/encrypted archive; один fenced authoritative Codex subscription-OAuth lineage; окремі реальні Codex threads/workspaces; окремий Claude Code subscription-OAuth process; фактичні provider/runtime integrations; усі застосовні hard gates пройдено.
 2. **Feature unit Done:** усі пов'язані `FR`/`NFR` мають unit та integration evidence; user-visible scope також має потрібний Element/Matrix/design evidence; жодного blocking finding не залишилося.
 3. **Change Done:** зміна має визначений scope, трасування до вимог, свіжий evidence після останньої зміни й не порушує неохоплені інваріанти.
 4. **Evidence-limited result:** якщо runtime або provider evidence недоступний, результат може бути лише `blocked` або чесно частковим; він не підвищується до Done.
@@ -52,13 +55,15 @@ Scope є Done лише коли одночасно:
 - кожний застосовний hard gate має статус `passed` на поточній версії коду, конфігурації, runtime і design source;
 - unit evidence доводить локальні інваріанти, integration evidence — контракти між реальними модулями, а end-to-end evidence — фактичний користувацький результат;
 - немає відкритих P0, P1 або P2 із `Release Effect: blocking`;
-- статика, mockup, prototype, згенерований HTML чи локальний browser-preview не використані як доказ Element/Matrix, Cloudflare, A2A, реальних процесів, архіву, вартості або доставки;
+- статика, mockup, prototype, згенерований HTML чи локальний browser-preview не використані як доказ Element/Matrix, GoDaddy runtime, Rust sidecar, MySQL, A2A, реальних процесів, архіву, вартості або доставки;
 - твердження про успіх не перевищує evidence: provider acceptance не називається delivery, кілька labels не називаються реальним Консиліумом, а оцінка вартості не називається фактичною сумою;
 - user-visible content відповідає approved visual baseline `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`;
 - кожний user-visible implementation scope проходить активний `approved_visual_baseline_fidelity`;
+- кожний застосовний user-visible scope окремо проходить `heuristic_usability_review` і `representative_user_task_validation`; visual fidelity не підміняє usability або observed owner-task evidence;
+- усі 11 PRD Security Requirements проходять один обов'язковий активний `product_security_requirements`; mockup, document validation або advisory result не може його задовольнити;
 - evidence bundle містить owner, час, environment/config fingerprint, source revision, фактичний результат і незмінні посилання або hashes.
 - один-owner/non-SaaS eligibility, auth mode, quota, credential-writer fence і відсутність API/PAYG/cloud-provider fallback перевірені до кожного залежного model call; unknown або failure веде до `SS-29`, а не до часткового прихованого запуску.
-- `SUR-02` допускає лише exact-owner Google Access principal після незалежної Worker-перевірки JWT і request-security controls; Settings зберігаються all-or-nothing, а нова Сесія отримує повний immutable effective snapshot лише після свіжої capability/auth/quota validation.
+- `SUR-02` допускає лише correct high-entropy owner password через одноразовий same-origin challenge і чинну підписану bounded owner session після server-side verification у GoDaddy Node; Settings зберігаються all-or-nothing у MySQL, а нова Сесія отримує повний immutable effective snapshot лише після свіжої capability/auth/quota validation.
 
 ## Feature Unit Definition Of Done
 
@@ -98,6 +103,9 @@ Feature unit є Done, коли:
 | `G-18 owner_settings_access_security` | Кожний `SUR-02` request, protected asset/API access або Product V1 release |
 | `G-19 owner_settings_atomic_configuration` | Settings read/save/reset, capability/catalog change, session start або Product V1 release |
 | `G-20 owner_settings_runtime_ux` | Кожний user-visible `SUR-02` change і Product V1 release |
+| `G-21 heuristic_usability_review` | Кожний застосовний user-visible journey/state/route/viewport і Product V1 release |
+| `G-22 representative_user_task_validation` | Критичні, consequential, нові або змінені owner tasks і Product V1 release |
+| `G-23 product_security_requirements` | Усі 11 чинних PRD Security Requirements; кожний implementation/release scope, що їх зачіпає |
 
 ### Unit Checks
 
@@ -111,7 +119,7 @@ Unit evidence перевіряє детерміновані локальні і�
 - timer/deadline classification for 5/30/60 seconds and 10 minutes;
 - OAuth state-machine cases for writer fencing, checkpoint CAS, refresh, reauth and revocation; auth/quota/private-eligibility disposition before every dependent call;
 - forbidden-environment detection for API keys, PAYG, cloud-provider routes and automatic credits;
-- Access JWT cases for algorithm, signature/JWKS rotation, issuer, audience, `exp`/`nbf`/clock skew and exact normalized email; request-policy cases for method/content type/body size, same-origin, Fetch Metadata and CSRF binding;
+- owner-password cases for missing/wrong/weak/truncated secret, exact ≥64-character acceptance, constant-time verification and throttling; one-time challenge/session cases for unpredictability, replay/cross-origin/expiry/tampering, rotation, idle/absolute expiry, logout invalidation, cookie flags, method/content type/body size, Origin, Fetch Metadata, CSRF and no-store binding;
 - exact Settings schema/key validation; separate typed Codex/Claude allowlists; capability freshness/mapping and no-downgrade cases for every `low`/`medium`/`high`/`xhigh` value;
 - whole-object Settings validation, revision/CAS and idempotency-ledger cases for success, conflict, exact retry, reused-key/different-body, reset, offline and failed write;
 - deterministic speed-policy mapping for all three presets plus invariant checks that forbid Fast/priority/PAYG/extra usage and preserve critic/A2A/E2EE/verbatim/research/safety/privacy/permission rules;
@@ -120,32 +128,32 @@ Unit evidence перевіряє детерміновані локальні і�
 - archive manifest/hash verification, confirmed-delete state transition and failure classification;
 - content-contract validators that can inspect role/`HH:MM`, forbidden metadata and final-series structure.
 
-Поточний репозиторій не містить implementation package або test harness для цих production units. Automation status залишається `not available yet`, доки код не надасть фактичні команди.
+Поточний репозиторій містить Node 22 package, `npm run check`, GoDaddy runtime/MySQL/owner-auth adapters і локальні unit/integration-oriented tests. Вони є доступними deterministic verification surfaces, але не доводять production Rust sidecar, real `matrix.org` E2EE, deployed GoDaddy runtime або Product V1; gate execution у цьому definition pass не виконувалося.
 
 ### Integration Checks
 
 Integration evidence використовує реальні contract boundaries, а не лише mocks:
 
-- verified bot-device у `MatrixBridgeContainer` → room-invariant gate → named `RegistrarDO` з exact room/mxid і idempotency;
-- `RegistrarDO` → durable `MatrixOutboxIntent` → `MatrixBridgeContainer` → Matrix event receipt;
-- `RegistrarDO` → `AgentRuntimeAdapter` → окремий process lease/heartbeat/cancel/usage → registrar callback;
-- `RegistrarDO` → one fenced `CodexCredentialLease` → sealed checkpoint restore/managed refresh/CAS checkpoint → teardown or revocation, including concurrent-writer denial and crash recovery;
-- one `CodexAccountRuntime` → distinct head/specialist thread IDs and isolated workspaces without cloned `auth.json`/OAuth caches; separate `ClaudeCriticProcess` → subscription setup-token/auth-status path;
+- verified bot-device у Rust `matrix-sdk` sidecar → room/device invariant gate → bounded private NDJSON → Node registrar + MySQL exact room/mxid/idempotency transaction;
+- Node registrar → durable MySQL ordered outbox → Rust sidecar з deterministic transaction ID → Matrix event receipt;
+- Node registrar → agent process adapters → окремий process lease/heartbeat/cancel/usage → transactional registrar callback;
+- Node supervisor/runtime vault → one fenced Codex credential lineage → sealed checkpoint restore/managed refresh/CAS checkpoint → teardown or revocation, including concurrent-writer denial and crash recovery;
+- one fenced Codex subscription process/credential lineage → distinct head/specialist thread IDs and isolated workspaces without cloned `auth.json`/OAuth caches; separate Claude critic process → subscription setup-token/auth-status path;
 - scrubbed runtime environment and outbound handlers → OpenAI/Anthropic subscription endpoints only; negative proof that API/PAYG, automatic credits, Bedrock, Vertex, Foundry, custom endpoint and higher-precedence provider credentials cannot activate;
-- real Cloudflare Access application → Google-only exact-email policy → protected hostname/assets/API → independent Worker JWT validator, including wrong account, alternate/bypass/service-auth/default-IdP/OTP paths and malformed/forged/stale assertion cases;
-- deployed Settings Worker → same-origin/CSRF/CSP/no-store/header enforcement → `OwnerSettingsDO` full-object API; cross-origin, cache, content-type, body-size, method and clickjacking/XSS policy negatives;
-- `SettingsAPI` → fixed `OwnerSettingsDO` revision/CAS/idempotency/audit → `ModelCapabilityCatalogService` provider capability reconciliation → truthful current/default/effective response;
-- `OwnerSettingsDO` → `SessionSettingsResolver` → `RegistrarDO` session-start snapshot, including compatible, drift, concurrent-save, auth/quota failure and next-session-only cases;
+- GoDaddy Node Settings route → one-time same-origin challenge → constant-time owner-password verification → signed bounded owner session, including wrong/missing/weak/truncated password, replay/cross-origin/expired/tampered challenge/session, brute-force throttling, rotation/logout and direct asset/API bypass negatives;
+- deployed GoDaddy Node Settings routes → same-origin/CSRF/CSP/no-store/header enforcement → MySQL full-object Settings transaction; cross-origin, cache, content-type, body-size, method and clickjacking/XSS policy negatives;
+- Settings runtime → MySQL revision/CAS/idempotency/audit transaction → capability catalog/provider reconciliation → truthful current/default/effective response;
+- MySQL Settings version → session resolver → Node registrar session-start snapshot, including compatible, drift, concurrent-save, auth/quota failure and next-session-only cases;
 - A2A draft → atomic registration/order/hash → target route і visible outbox;
-- `RegistrarDO` → `ArchiveCryptoPort`/key provider → ciphertext R2 object → read-back/hash verification;
+- Node archive service → application-layer encryption/key boundary → MySQL ciphertext/nonce/authenticated manifest/tombstone → read-back/hash verification;
 - archive export і confirmed whole-session deletion з provider-retention disclosure;
-- failure injection для duplicate event, runtime loss, late callback, outbox retry, R2 mismatch, key-provider unavailability й incomplete usage.
+- failure injection для duplicate event, runtime loss, late callback, MySQL outbox retry/transaction rollback, ciphertext/manifest mismatch, key-provider unavailability й incomplete usage.
 
 Contract-test doubles можуть допомагати відтворюваності, але release evidence має включати фактичні configured integrations для claims, які залежать від них.
 
 ### System Checks
 
-System/end-to-end evidence запускає `AC-001`–`AC-016` через реальну приватну E2EE Matrix-кімнату та реальну protected `SUR-02`: точні room/mxid, перевірені Element/bot devices, Cloudflare Access Google-only application, незалежний Worker JWT/request-security gate, fixed `OwnerSettingsDO`, deployed Cloudflare server side, one named registrar, one fenced Codex OAuth lineage/writer, distinct real Codex threads/workspaces, real separate Claude Code subscription-OAuth critic, configured A2A v0.3.0 adapter, encrypted archive path and actual cost records.
+System/end-to-end evidence запускає `AC-001`–`AC-016` через реальну приватну E2EE Matrix-кімнату та реальну protected `SUR-02`: точні room/mxid, перевірені Element/bot devices, production Rust `matrix-sdk` sidecar з exact encrypted store/device binding, bounded private NDJSON, deployed GoDaddy Node 22 server side, local owner-password challenge/signed-session gate, MySQL registrar/outbox/settings/encrypted archive, one fenced Codex OAuth lineage/writer, distinct real Codex threads/workspaces, real separate Claude Code subscription-OAuth critic, configured A2A adapter and actual cost records.
 
 Окремо фіксуються:
 
@@ -154,9 +162,9 @@ System/end-to-end evidence запускає `AC-001`–`AC-016` через ре�
 - process lease identities та generation;
 - Codex credential lineage/checkpoint/writer-fence metadata, distinct thread/workspace identities, Claude process/auth-mode status and credential-free environment inspection without secret values;
 - positive `SS-28` preflight and injected unknown/expired/revoked/refresh-failed/invalid-setup-token/quota-exhausted/ineligible/forbidden-credential cases that reach `SS-29` before a dependent call and resume only after provider-managed out-of-band recovery plus fresh preflight;
-- positive exact-owner Google access plus wrong email, missing/malformed/unsigned/invalid/expired/not-yet-valid JWT, wrong algorithm/issuer/audience/email, unknown `kid`, expired JWKS cache, alternate IdP, password/OTP/magic-link/registration/bypass/service-auth and header/cookie-presence-only negatives, all without protected bytes;
+- positive correct owner-password/fresh-challenge/signed-session access plus wrong/missing/weak/truncated password, reused/cross-origin/expired/tampered challenge, missing/malformed/invalid/expired/replayed/forged session, direct protected asset/API bypass, brute-force, missing origin/CSRF, registration/recovery/reset/alternate identity/OTP/magic-link/IdP negatives, all without protected bytes or secret detail;
 - `SUR-02` current/default/effective load, exact-three schema, typed selector/capability evidence from both current subscription runtimes, supported/unsupported/unknown/stale effort mappings, all speed presets, atomic save/reset/CAS/idempotent retry/conflict/offline paths and immutable current-vs-active snapshot comparison;
-- content-free inspection of Access/Worker configuration, response headers/cache behavior, request rejection, Settings audit and secret scans; no raw email, JWT, cookie, CSRF, settings body or AI credential appears in evidence;
+- content-free inspection of GoDaddy Node route/auth/session configuration, response headers/cache behavior, request rejection, Settings audit and secret scans; no owner password/hash, session secret/cookie, CSRF token, settings body or AI credential appears in evidence;
 - canonical body/order comparison між registrar, Element/Matrix-visible stream, export і archive;
 - actual client/app/OS versions у device evidence matrix;
 - injected failure, partial status, recovery result and rerun.
@@ -168,6 +176,8 @@ System/end-to-end evidence запускає `AC-001`–`AC-016` через ре�
 - Реальні Element/Matrix clients перевіряються на Mac, iPhone, Samsung Flip7/Android і Windows PC щодо order, formatting, long body, role/`HH:MM`, text scaling/screen-reader path і disclosed variance.
 - Реальна deployed `SUR-02` перевіряється на representative mobile/desktop widths щодо keyboard-only navigation, programmatic labels/relationships, visible focus, 24×24 minimum targets і 44×44 primary touch target where applicable, error/status announcements, zoom/reflow, long model/mapping text, no horizontal loss of critical action and no color-only meaning.
 - `G-16 approved_visual_baseline_fidelity` застосовується з Baseline ID, immutable target hash, coverage, concrete QA check IDs and `VisualQAEvidence`.
+- `G-21 heuristic_usability_review` окремо охоплює всі застосовні H1–H10, primary journeys, error/recovery, accessible critical actions і supported desktop/mobile scope; `covered` у brief не є pass.
+- `G-22 representative_user_task_validation` окремо вимагає observed completion критичних/нових/змінених tasks єдиним representative user group — Власником; agent walkthrough або screenshot не є user research.
 
 ### Release Checks
 
@@ -177,16 +187,20 @@ Release-ready вимагає:
 - `G-15` пройдений у production-like або production environment, що використовує реальних providers/processes; середовище названо точно;
 - configured model/runtime/A2A/key/retry/export choices зафіксовано у evidence fingerprint;
 - `G-17` підтверджує актуальну private single-owner plan eligibility, subscription OAuth-only mode, один authoritative Codex writer/checkpoint lineage, окремі реальні agent contexts, Claude setup-token process, quota/fail-closed behavior і відсутність paid fallback;
-- `G-18` підтверджує deployed Google-only exact-email Access policy, незалежну криптографічну JWT/request-security перевірку й відсутність protected cache/bypass/credential leakage;
+- `G-18` підтверджує deployed local owner-password challenge/signed-session policy у GoDaddy Node, server-side fail-closed verification, throttling/origin/CSRF/cache controls і відсутність protected bypass/credential leakage;
 - `G-19` підтверджує live provider-backed capability catalog, exact-three contract, all-or-nothing persistence/reset/retry і immutable next-session snapshot без Fast/PAYG або weakened invariant;
 - `G-20` підтверджує, що deployed `SUR-02` реально usable й accessible на required responsive paths, а не лише відповідає статичному design source;
+- `G-21` і `G-22` мають окремі fresh passing results; visual fidelity, heuristic review та representative-user validation не підміняють одне одного;
+- `G-23` підтверджує implementation evidence для рівно 11 Security Requirements `NFR-005`, `NFR-006`, `NFR-007`, `NFR-008`, `NFR-009`, `NFR-010`, `NFR-011`, `NFR-012`, `NFR-016`, `NFR-017`, `NFR-019`; unresolved MFA/ASVS residual risk блокує security/release claim;
 - deployment and rollback evidence доводить dark auth health check, safe checkpoint restore, credential-writer fencing, out-of-band reauth/revocation and `SS-29` retention when safe restore is unproven;
 - жодного plaintext archive object, secret/body у telemetry або generic external-action connector;
 - немає P0, P1 чи blocking P2;
 - відомі client/provider limitations описані як limitations, а не приховані;
-- CI/deployment scripts не заявляються наявними до появи в коді.
+- Наявні `npm run check` і GoDaddy tests не подаються як production/deployed/real-Matrix evidence; Rust build/package/deployment automation не заявляється наявною до появи workspace, committed lockfile і artifact workflow.
 
 ## Gate Matrix
+
+Якщо окремий gate record нижче не каже інакше, його Definition Status — `prepared`, Execution Status — `not_run`; жодний gate у цьому authoring pass не виконувався. `G-13` є inactive historical-integrity definition і не може бути load-bearing для current implementation або release.
 
 | Gate | Primary evidence levels | Requirement coverage |
 |---|---|---|
@@ -203,13 +217,16 @@ Release-ready вимагає:
 | `G-11 confirmed_cost_accounting` | Unit, integration, E2E | `FR-033`; `NFR-009`, `NFR-012`; `AC-009` |
 | `G-12 native_element_matrix_client_behavior` | Integration, device E2E, manual | `FR-003`, `FR-015`, `FR-017`–`FR-019`, `FR-034`; `NFR-013`, `NFR-015`; `AC-003`, `AC-010` |
 | `G-13 proposed_design_contract_fidelity` | Static/design inspection, prototype/device evidence | `FR-017`–`FR-019`, `FR-026`, `FR-036`–`FR-046`; `NFR-013`–`NFR-019`; `AC-003`, `AC-010`–`AC-016` |
-| `G-14 matrix_e2ee_room_and_platform_isolation` | Static config, integration, deployed evidence | `FR-001`, `FR-004`, `FR-005`, `FR-031`; `NFR-005`–`NFR-008`; `AC-005`, `AC-006` |
+| `G-14 matrix_e2ee_room_and_platform_isolation` | Static config, Rust/Node/MySQL integration, deployed evidence | `FR-001`, `FR-004`, `FR-005`, `FR-031`; `NFR-005`–`NFR-008`, `NFR-019`; `AC-005`, `AC-006` |
 | `G-15 v1_real_matrix_e2e` | Real end-to-end across both product surfaces | `AC-001`–`AC-016` and all supporting `FR`/`NFR` |
 | `G-16 approved_visual_baseline_fidelity` | Post-approval visual/device evidence | Post-approval integrated `SUR-01` + `SUR-02` user-visible frontend/full-stack/integration scope |
 | `G-17 subscription_oauth_private_runtime` | Unit, integration, security, deployed E2E | `FR-009`, `FR-010`, `FR-030`, `FR-033`; `NFR-006`, `NFR-012`; `AC-002`, `AC-007`, `AC-009` |
-| `G-18 owner_settings_access_security` | Unit, Cloudflare config, security integration, deployed E2E | `FR-037`–`FR-039`; `NFR-006`, `NFR-016`; `AC-012` |
+| `G-18 owner_settings_access_security` | Unit, GoDaddy Node auth/session config, security integration, deployed E2E | `FR-037`–`FR-039`; `NFR-006`, `NFR-016`; `AC-012` |
 | `G-19 owner_settings_atomic_configuration` | Unit, integration, provider/runtime, deployed E2E | `FR-040`–`FR-046`; `NFR-017`, `NFR-019`; `AC-013`–`AC-015` |
 | `G-20 owner_settings_runtime_ux` | Deployed browser/device, accessibility, manual/hybrid | `FR-037`, `FR-040`–`FR-045`; `NFR-018`; `AC-016` |
+| `G-21 heuristic_usability_review` | Expert manual review with route/state/viewport evidence | Applicable H1–H10 across primary Element and Settings journeys, error/recovery and accessible critical actions |
+| `G-22 representative_user_task_validation` | Observed representative-owner task sessions | Critical, consequential, new or changed flows; `UV-01`–`UV-05`; applicable `AC-001`–`AC-016` |
+| `G-23 product_security_requirements` | Implementation, security, integration and deployed E2E | Exactly `NFR-005`, `NFR-006`, `NFR-007`, `NFR-008`, `NFR-009`, `NFR-010`, `NFR-011`, `NFR-012`, `NFR-016`, `NFR-017`, `NFR-019` |
 
 ### `G-01 source_contract_integrity`
 
@@ -217,8 +234,8 @@ Release-ready вимагає:
 - **Purpose:** не дозволити stale або суперечливому source chain визначати Done.
 - **Source References:** усі записи `Source References`; `docs/guardrails.md: Source Of Truth Order`.
 - **Applies To:** кожний change, feature unit, PR/completion і release claim.
-- **Required Evidence:** hashes актуальних source artifacts; diff/source review; exact coverage scan for `US=29`, `FR=46`, `NFR=19`, `AC=16`, `SUR=2`, `MG=13`, `SG=5`, `SS=46`; requirement-to-gate trace; explicit record of any superseded source.
-- **Pass Condition:** hashes відповідають фактично прочитаним files; усі вісім coverage counts/ID ranges точні й без прогалин; dependencies validated; конфліктів scope/term/authority немає або вони явно вирішені upstream.
+- **Required Evidence:** hashes актуальних source artifacts; diff/source review; exact coverage scan for `US=29`, `FR=46`, `NFR=19`, `AC=16`, `SUR=2`, `MG=13`, `SG=5`, `SS=46`, `SECURITY_REQUIREMENTS=11`; exact presence of the four mandatory gate headings; requirement-to-gate trace; explicit record of any superseded source.
+- **Pass Condition:** hashes відповідають фактично прочитаним files; усі дев'ять coverage counts/ID ranges точні й без прогалин; mandatory visual/heuristic/representative-user/security definitions active where applicable; dependencies validated; конфліктів scope/term/authority немає або вони явно вирішені upstream.
 - **Fail Or Block Condition:** source missing/stale, hash mismatch, silent conflict, untraced requirement або downstream rule змінює upstream scope.
 - **Rerun Rule:** після кожної зміни будь-якого source artifact, approval receipt або architecture/config contract.
 - **Automation Status:** `manual`; hash/coverage scan може бути automated після появи project tooling.
@@ -227,7 +244,7 @@ Release-ready вимагає:
 
 - **Gate:** `ingress_authorization`
 - **Purpose:** допустити protected processing лише для exact private room, exact owner mxid і verified/non-revoked devices після успішного E2EE decrypt.
-- **Source References:** PRD `FR-001`, `NFR-007`, `AC-006`; guardrails `When To Stop`; architecture §§5–6, `MatrixBridgeContainer`, room invariants and `AD-01`, `AD-14`.
+- **Source References:** PRD `FR-001`, `NFR-007`, `AC-006`; guardrails `When To Stop`; architecture §§4–7, Rust sidecar, Node registrar/MySQL ingress receipts, room invariants and `AD-01`, `AD-14`, `AD-16`–`AD-20`.
 - **Applies To:** кожний inbound Element/Matrix event та archive request.
 - **Required Evidence:** unit cases для room/mxid/device normalization; integration receipts for wrong room, other mxid, unverified/revoked device, missing key and failed room invariant; E2E proof that denied input launches no agent lease, returns no protected data and changes no Active Session.
 - **Pass Condition:** E2EE decrypt and all room/device invariants pass before protected processing; identity is rechecked at registrar; denied attempts produce no agent/runtime/archive effect.
@@ -239,7 +256,7 @@ Release-ready вимагає:
 
 - **Gate:** `consent_and_data_safety`
 - **Purpose:** enforce ordinary consent, independent permissions, safe input types, minimum context, secret rejection and conservative sensitive-document handling.
-- **Source References:** PRD `FR-002`–`FR-006`, `FR-024`, `FR-035`, `NFR-006`, `NFR-008`, `AC-005`; guardrails `When To Ask`, `When To Stop`; architecture §§3, 5–6, 14–16 and `RegistrarDO` policy/secret boundaries.
+- **Source References:** PRD `FR-002`–`FR-006`, `FR-024`, `FR-035`, `NFR-006`, `NFR-008`, `AC-005`; guardrails `When To Ask`, `When To Stop`; architecture §§3–7, 9, 13–16 and Node registrar policy/secret boundaries.
 - **Applies To:** text/image/PDF intake, sensitive document, >10-minute continuation, personal coaching boundary, external/high-risk action and deletion permission.
 - **Required Evidence:** unit policy/state cases; integration proof that Secret is stopped before immutable storage/dispatch and not echoed; context-diff evidence per lease; E2E ordinary consent, supported attachments, unsupported type, secret, sensitive/uncertain document and separate permissions.
 - **Pass Condition:** every permission is explicit and scope-bound; uncertain sensitive document waits for permission; Secret reaches no agent, canonical log, telemetry, archive or export; agents receive only bounded redacted context.
@@ -251,7 +268,7 @@ Release-ready вимагає:
 
 - **Gate:** `session_idempotency_and_generation`
 - **Purpose:** preserve one Active Session, dedupe provider events and isolate generations/contexts.
-- **Source References:** PRD `FR-007`, `FR-020`, `FR-022`, `NFR-009`, `AC-004`; architecture §§5–6, 13–14, 17, `RegistrarDO`, `ActiveSession` and `AD-09`–`AD-10`.
+- **Source References:** PRD `FR-007`, `FR-020`, `FR-022`, `NFR-009`, `AC-004`; architecture §§5–6, 9, 14–16, Node registrar, MySQL session/generation/outbox state and `AD-09`–`AD-10`, `AD-19`.
 - **Applies To:** session creation/resume, clarification, duplicate Matrix event, `Нова задача` and recovery.
 - **Required Evidence:** unit state-machine/dedupe cases; integration replay/concurrency evidence; E2E clarification remains in current Session and `Нова задача` creates a new generation without prior active context.
 - **Pass Condition:** at most one Active Session; same provider event creates no duplicate session/work/message/cost; new generation rejects stale leases and context.
@@ -263,7 +280,7 @@ Release-ready вимагає:
 
 - **Gate:** `real_consilium_runtime`
 - **Purpose:** distinguish a real separately executed Консиліум from role labels or one synthetic monologue.
-- **Source References:** PRD `FR-008`–`FR-012`, `FR-023`, `AC-001`, `AC-002`, `AC-007`; architecture §§5–6, `CodexAccountRuntime`, `ClaudeCriticRuntime`, `AgentRegistration` and `AD-10`–`AD-12`.
+- **Source References:** PRD `FR-008`–`FR-012`, `FR-023`, `AC-001`, `AC-002`, `AC-007`; architecture §§3–4, 9–10, Node registrar, isolated Codex/Claude processes and `AD-06`, `AD-10`–`AD-12`.
 - **Applies To:** routing between Пряма відповідь and Консиліум and every claimed participant.
 - **Required Evidence:** integration lease/start/heartbeat/end records for one head and 2–5 separate Codex thread/workspace identities inside one account runtime, plus one separate Claude Code process/workspace; bounded objectives; independent first-pass evidence; E2E visible concrete roles, critic contribution, addressed discussion and truthful unavailable/replacement path. OAuth values are excluded from evidence.
 - **Pass Condition:** simple request avoids needless roster; every visible Codex role maps to a distinct current thread/workspace/lease, critic maps to a distinct Claude process, and full Консиліум has the required roster and independent-first-pass behavior. A shared OAuth account does not collapse agent identity, and separate agents do not require cloned credential stores.
@@ -275,7 +292,7 @@ Release-ready вимагає:
 
 - **Gate:** `canonical_a2a_verbatim_order`
 - **Purpose:** prove registrar-mediated addressed A2A, exact immutable body, canonical order and dedupe.
-- **Source References:** PRD `FR-011`–`FR-019`, `NFR-009`–`NFR-011`, `AC-002`, `AC-003`; architecture §§5–6, 13–14, `RegistrarDO`, `ConfirmedMessage`, `AgentRegistration` and `AD-10`–`AD-11`.
+- **Source References:** PRD `FR-011`–`FR-019`, `NFR-009`–`NFR-011`, `AC-002`, `AC-003`; architecture §§5–6, 9, 14–16, Node registrar, MySQL confirmed-message/ordered-outbox state and `AD-10`–`AD-11`, `AD-19`.
 - **Applies To:** every agent envelope, target route, visible reply, correction, archive and export.
 - **Required Evidence:** unit envelope/sequence/hash/dedupe cases; integration proof that every draft passes registrar before target/outbox; bypass rejection; E2E byte- or canonical-text comparison of role/body/order across registered envelope, visible Element/Matrix content, archive and export, accounting for documented transport segmentation.
 - **Pass Condition:** unique current-lease draft is atomically confirmed, sequenced and integrity-linked before routing; body is unchanged; correction is new envelope; duplicates/bypass/stale generation are rejected.
@@ -299,7 +316,7 @@ Release-ready вимагає:
 
 - **Gate:** `cancellation_and_late_output_suppression`
 - **Purpose:** make `Стоп` authoritative for publication/cost control and `Нова задача` authoritative for generation isolation.
-- **Source References:** PRD `FR-020`–`FR-022`, `AC-004`; guardrails `When To Stop`; architecture §§5–6, 13, 17, `RegistrarDO`, generation fencing and reliability/recovery rules.
+- **Source References:** PRD `FR-020`–`FR-022`, `AC-004`; guardrails `When To Stop`; architecture §§5–6, 9, 12–13, Node registrar/MySQL generation fencing and recovery rules.
 - **Applies To:** active runtime leases, queued commands, callbacks, visible outbox and session generation.
 - **Required Evidence:** unit priority/state cases; integration cancel command, lease revocation, closed publication gate and injected late callback; E2E `Стоп` and `Нова задача` with no late visible tail or context mix.
 - **Pass Condition:** no new model call after accepted `Стоп`; supported cancellation attempted; all late outputs suppressed from canonical/visible log; new task has fresh generation/leases/context.
@@ -323,21 +340,21 @@ Release-ready вимагає:
 
 - **Gate:** `encrypted_archive_export_delete`
 - **Purpose:** prove encrypted immutable archive, verified full export and confirmed whole-session deletion without false provider-retention claims.
-- **Source References:** PRD `FR-031`, `FR-032`, `NFR-005`, `NFR-010`, `NFR-011`, `AC-003`, `AC-008`; architecture §§5, 14, 17, `ArchiveService`, `SessionArchive` and `AD-13`.
+- **Source References:** PRD `FR-031`, `FR-032`, `NFR-005`, `NFR-010`, `NFR-011`, `AC-003`, `AC-008`; architecture §§5.1, 9–10, 12–14 and `AD-11`–`AD-13`.
 - **Applies To:** input blobs, normal completion, archive/read/export/delete and recovery.
-- **Required Evidence:** unit manifest/hash/delete transitions; integration envelope encryption before R2, wrapped-key separation, ciphertext inspection, write/read hash verification, R2 mismatch/key outage, export and delete verification; E2E body/order comparison and double-confirmed whole-session deletion.
+- **Required Evidence:** unit manifest/hash/delete transitions; integration application-layer encryption before MySQL persistence, archive-key separation, ciphertext/nonce/authenticated-manifest inspection, transaction/read-back hash verification, tamper/wrong-key/key-outage, tombstone/export/delete verification; E2E body/order comparison and double-confirmed whole-session deletion.
 - **Pass Condition:** only verified archive transition marks Session completed; stored objects are ciphertext; sequence/count/integrity head recompute; export is complete/order-preserving; individual reply remains immutable; whole-session deletion occurs only after explicit confirmation and verified removal with honest retention disclosure.
 - **Fail Or Block Condition:** plaintext object/key, unverified success, missing/reordered body, editable reply, deletion without confirmation, unverifiable removal or claim that provider-held copies were deleted without evidence.
-- **Rerun Rule:** після crypto/key, R2, manifest, archive state, export, deletion or retention-policy changes.
+- **Rerun Rule:** після crypto/key, MySQL archive schema/transaction, manifest/tombstone, archive state, export, deletion or retention-policy changes.
 - **Automation Status:** `not available yet`; security claims require config inspection plus runtime evidence.
 
 ### `G-11 confirmed_cost_accounting`
 
 - **Gate:** `confirmed_cost_accounting`
 - **Purpose:** show truthful subscription, infrastructure and provider-limit status without inventing a per-session model charge.
-- **Source References:** PRD `FR-033`, `NFR-009`, `NFR-012`, `AC-009`; architecture §§14, 18–19 and `CostRecord`.
+- **Source References:** PRD `FR-033`, `NFR-009`, `NFR-012`, `AC-009`; guardrails `Scope Boundaries`, `Evidence Requirements`; architecture §§9, 13–14.
 - **Applies To:** configured subscription-fee records, infrastructure invoices/usage, provider-reported usage/limit/reset and every `Витрати` response (`MG-09`, `SS-14`).
-- **Required Evidence:** unit currency/period/dedupe/unavailable-state cases; integration reconciliation of configured ChatGPT/Codex and Claude monthly fees, actual hosted-Matrix/Cloudflare/R2 spend and exposed provider usage/limit/reset; E2E `Витрати` response for complete and unavailable/partial feeds.
+- **Required Evidence:** unit currency/period/dedupe/unavailable-state cases; integration reconciliation of configured ChatGPT/Codex and Claude monthly fees, actual `matrix.org`, GoDaddy Node/MySQL and other current infrastructure spend, plus exposed provider usage/limit/reset; E2E `Витрати` response for complete and unavailable/partial feeds.
 - **Pass Condition:** configured monthly subscription fees and actual infrastructure spend are separately labeled, deduplicated and period-correct; provider usage/limit/reset is shown only when exposed; session AI use is `входить у підписку; окремо не атрибутується`; missing data is `невідомо`.
 - **Fail Or Block Condition:** estimate shown as actual, invented per-session token charge, API/PAYG/credit amount, duplicate spend, missing currency/period, untraceable total, concealed incompleteness, invented reset or hard budget claim.
 - **Rerun Rule:** після subscription configuration, infrastructure billing feed, provider usage/limit/reset adapter, currency, period or aggregation changes.
@@ -370,14 +387,16 @@ Release-ready вимагає:
 ### `G-14 matrix_e2ee_room_and_platform_isolation`
 
 - **Gate:** `matrix_e2ee_room_and_platform_isolation`
-- **Purpose:** verify Matrix E2EE, exact room/device invariants, persistent bot crypto state and Cloudflare isolation without claiming an external audit or hiding the bot-decryption boundary.
-- **Source References:** PRD `FR-001`, `FR-004`, `FR-005`, `FR-031`, `NFR-005`–`NFR-008`, `AC-005`, `AC-006`; architecture §§3–6, 14, 16–20, `MatrixBridgeContainer`, `RegistrarDO`, `ArchiveService` and `AD-01`, `AD-10`, `AD-13`–`AD-14`.
-- **Applies To:** `matrix.org` room, Element and bot devices, bridge/DO/internal bindings, runtime workspaces, outbound handlers, telemetry, R2 and wrapping-key boundary.
-- **Required Evidence:** E2EE and ciphertext homeserver evidence; exact room/membership/invite/history/federation/guest/bridge/widget checks; encrypted crypto-store restart; verified/revoked-device tests; `enableInternet=false`, host allowlist and credential-injection inspection; workspace isolation denial; ciphertext R2 and content-free telemetry samples; secret scan covering Matrix/OAuth tokens, `auth.json`, setup-token, reauth URL/code, prompts, A2A, logs, archives, exports and repository artifacts.
-- **Pass Condition:** only exact verified devices decrypt; homeserver sees ciphertext; room invariants pass; bridge restores keys without plaintext fallback; agents have scoped leases and no Matrix/R2/archive/OAuth checkpoint credentials; egress is allowlisted; R2 is application-encrypted; telemetry is content-free; OAuth plaintext exists only inside its authorized runtime boundary.
-- **Fail Or Block Condition:** unknown member/invite, federation exception without approval, missing/revoked device accepted, lost keys bypassed, shared readable workspace, credential leakage, arbitrary egress, body in telemetry, plaintext R2, OAuth material in Matrix/agent context/evidence or unapproved external effect.
-- **Rerun Rule:** після homeserver/room/device, bridge/crypto store, deployment, binding, runtime image, permission, egress, telemetry, archive crypto or key changes.
-- **Automation Status:** `not available yet`; manual config review remains required.
+- **Purpose:** verify Matrix E2EE, exact room/device invariants, persistent bot crypto state and strict Rust-sidecar/Node/MySQL isolation without claiming an external audit or hiding the bot-decryption boundary.
+- **Source References:** PRD `FR-001`, `FR-004`, `FR-005`, `FR-031`, `NFR-005`–`NFR-008`, `NFR-019`, `AC-005`, `AC-006`; architecture §§3–7, 9–14, `AD-01`, `AD-10`, `AD-13`–`AD-21`.
+- **Applies To:** `matrix.org` room, Element and bot devices, Rust sidecar/bounded NDJSON/media spool, encrypted SQLite store, Node supervisor/registrar, MySQL ingress/outbox/archive state, agent workspaces, fixed outbound handlers, telemetry and archive-key boundary.
+- **Required Evidence:** real E2EE and ciphertext homeserver evidence; exact room/membership/invite/history/public-alias/guest/bridge/widget/device checks on ingress and immediately before send; production Rust binary checksum/protocol handshake/exclusive store lock; fresh-device+empty-store and exact device+encrypted-store restore cases; corrupt/wrong-passphrase/mismatch/quarantine negatives without automatic reset; private-path non-retrievability; bounded NDJSON/media spool size/hash/MIME/TTL/symlink cases; fixed HTTPS origin/no-downgrade/no-caller-discovery egress tests; Node durable ACK/MySQL replay and deterministic transaction-ID evidence; application-encrypted MySQL archive and content-free telemetry; secret scan covering Matrix/OAuth tokens, crypto-store passphrase, owner password/session material, `auth.json`, setup-token, reauth URL/code, prompts, A2A, logs, archives, exports and repository artifacts.
+- **Pass Condition:** only exact trusted cross-signed non-revoked devices decrypt; homeserver sees ciphertext; room invariants pass twice; exactly one sidecar process owns the matching encrypted store; lost/mismatched state blocks readiness without reset; private IPC/spool bounds and fixed egress hold; Node/MySQL receive only bounded authorized events and preserve durable order/idempotency; agents have scoped leases and no Matrix/archive/OAuth checkpoint credentials; MySQL archive is application-encrypted; telemetry is content-free; OAuth plaintext exists only inside its authorized process boundary.
+- **Fail Or Block Condition:** unknown member/invite, public alias/guest/bridge/widget, missing/revoked device accepted, lost keys bypassed, second store owner, token/device restored without exact store, public/retrievable private path, unbounded/malformed IPC or media, caller-controlled Matrix target/redirect, credential leakage, arbitrary egress, body in telemetry, plaintext MySQL archive, OAuth material in Matrix/agent context/evidence or unapproved external effect.
+- **Rerun Rule:** після homeserver/room/device, Rust SDK/binary/protocol/store/lock/spool, Node supervisor/registrar, MySQL receipt/outbox/archive, deployment/private path, permission, egress, telemetry, archive crypto/key, backup/restore or rollback changes.
+- **Automation Status:** `not available yet`; deterministic protocol/store/path/egress and MySQL cases may be automated after the Rust workspace exists, while real room/device/E2EE/restore evidence remains controlled manual or hybrid.
+- **Definition Status:** `prepared`.
+- **Execution Status:** `not_run`.
 
 ### `G-15 v1_real_matrix_e2e`
 
@@ -385,11 +404,13 @@ Release-ready вимагає:
 - **Purpose:** provide the highest accepted evidence that V1 works as the intended product.
 - **Source References:** PRD §9 and `AC-001`–`AC-016`; guardrails `Verification Rules/Evidence Requirements`; architecture full two-surface runtime topology.
 - **Applies To:** Product V1 release claim.
-- **Required Evidence:** one versioned E2E evidence bundle covering every `AC-001`–`AC-016`: real private E2EE Matrix room and native Element paths; real protected responsive `SUR-02`; exact owner/bot identities and verified devices; deployed Cloudflare Access/Worker/bridge/registrar/settings/runtime; one fenced Codex OAuth lineage with distinct real Codex threads/workspaces; separate Claude setup-token process; A2A v0.3.0; encrypted archive; truthful subscription/infrastructure/quota evidence; `G-18`–`G-20` results on the same deployment lineage.
+- **Required Evidence:** one versioned E2E evidence bundle covering every `AC-001`–`AC-016`: real private E2EE Matrix room and native Element paths; exact owner/bot identities and verified devices; production Rust sidecar with matching encrypted store and bounded private protocol; deployed GoDaddy Node 22 supervisor/registrar/settings runtime; real local owner-password challenge/signed-session `SUR-02`; MySQL settings/session/order/outbox/application-encrypted archive; one fenced Codex OAuth lineage with distinct real Codex threads/workspaces; separate Claude setup-token process; configured A2A adapter; truthful subscription/infrastructure/quota evidence; `G-18`–`G-23` results on the same deployment lineage.
 - **Pass Condition:** all sixteen scenarios pass; related lower-level hard gates pass on the same source/config lineage; no blocking finding remains; limitations are explicit.
-- **Fail Or Block Condition:** any AC missing/failed, mock-only homeserver/Access/Worker/provider/runtime, local/static Settings substituted for deployed protected `SUR-02`, browser-preview substituted for Element, missing room/device/access/provider evidence, stale lineage, hidden partial state or unsupported completion claim.
-- **Rerun Rule:** full rerun for release candidate after changes to shared registrar/state/security/outbox/runtime/archive contracts; otherwise rerun impacted AC plus regression set defined by future QA.
+- **Fail Or Block Condition:** any AC missing/failed; mock-only homeserver/sidecar/GoDaddy/MySQL/provider/runtime; local/static Settings substituted for deployed protected `SUR-02`; browser-preview substituted for Element; missing room/device/owner-auth/provider evidence; stale lineage; hidden partial state; unpassed mandatory visual/heuristic/representative-user/security gate; unsupported completion claim.
+- **Rerun Rule:** full rerun for release candidate after changes to shared Rust-sidecar protocol/store, Node registrar/state/security, MySQL outbox/archive, agent runtime or cross-surface contract; otherwise rerun impacted AC plus regression set defined by future QA.
 - **Automation Status:** `not available yet`; real providers/devices require controlled manual or hybrid execution.
+- **Definition Status:** `prepared`.
+- **Execution Status:** `not_run`.
 
 ### `G-16 approved_visual_baseline_fidelity`
 
@@ -397,24 +418,32 @@ Release-ready вимагає:
 - **Purpose:** bind post-approval user-visible frontend/full-stack/integration units across both product surfaces to the one immutable whole-design baseline.
 - **Source References:** guardrails `Design Authority Rules`; design brief `Approved Visual Baseline` (`PC-MATRIX-CANDIDATE-B-V2-20260816-R1`).
 - **Applies To:** active hard gate for every user-visible frontend, full-stack or integration unit that affects `SUR-01` or `SUR-02`.
-- **Required Evidence:** active Baseline ID; immutable visual target hash; affected routes/states/viewports; permitted variance and operator overrides; `QA-VIS-001`–`QA-VIS-003`; `forge/design/evidence/candidate-b/v2/visual-qa.json`; `PrototypePromotionReceipt` when approved prototype code is reused.
-- **Pass Condition:** baseline is current; all required coverage exists; every deviation is permitted or source-backed; no P0, P1 or blocking P2 fidelity finding remains.
-- **Fail Or Block Condition:** stale/superseded baseline, missing target/hash/coverage, unexplained material drift, missing required evidence or blocking finding.
+- **Required Evidence:** active Baseline ID; immutable visual target path/hash; frozen source root/tree hash/algorithm; approval receipt; affected routes/states/viewports; permitted variance and `DB-D17`; concrete QA IDs after QA authoring; fresh `VisualQAEvidence`; `PrototypePromotionReceipt` only when approved prototype code is reused.
+- **Pass Condition:** baseline and canonical hashes are current; all required coverage exists; every deviation is permitted or source-backed; `DB-D17` local owner-password states replace only the frozen historical auth-copy while preserving approved layout/hierarchy/palette/Matrix presentation; no P0, P1 or blocking P2 fidelity finding remains.
+- **Fail Or Block Condition:** stale/superseded baseline; missing target/tree hash, algorithm, receipt or coverage; unexplained material drift; production Google/Cloudflare/demo-email auth-copy; `DB-D17` used to alter the whole design; missing required evidence or blocking finding.
 - **Rerun Rule:** after every affected user-visible change, baseline supersession, approved override or client-variance change.
 - **Automation Status:** `not available yet`.
+- **Definition Status:** `prepared`.
+- **Execution Status:** `not_run`.
+- **Binding Status:** `baseline_bound`; concrete QA bindings `pending_qa`.
 - **Baseline ID:** `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`.
-- **Immutable Target Hash:** `96b91ba9622f8301809ed10ef661a313006e0c2743712912c624edc36a2ca8eb`.
+- **Immutable Visual Target:** `forge/design/candidates/candidate-b/v2/index.html`.
+- **Immutable Target SHA-256:** `07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6`.
+- **Frozen Prototype Source Root:** `forge/design/candidates/candidate-b/v2`.
+- **Tree Hash Algorithm:** `sdd-tree-sha256-v1`.
+- **Frozen Source Tree Hash:** `4c6f2d51be1baf5962035933deeec7095d31f1d3e6c473ec9e43cb0e3a360744`.
+- **Approval Receipt:** `forge/design/evidence/candidate-b/v2/approval-receipt.json`.
 - **Affected Routes States And Viewports:** `SUR-01`–`SUR-02`, `MG-01`–`MG-13`, `SG-01`–`SG-05`, `SS-01`–`SS-46` and 390/430/768/1280/1440 px.
-- **Permitted Variance And Operator Overrides:** native Element/Matrix/OS platform variance and source-backed responsive Settings reflow; `SUR-02` uses the HappyPro palette and has no product-authored sound.
-- **QA Check IDs:** `QA-VIS-001`–`QA-VIS-003` after checklist reconciliation.
-- **VisualQAEvidence References:** `forge/design/evidence/candidate-b/v2/visual-qa.json` and its four listed screenshots.
+- **Permitted Variance And Operator Overrides:** native Element/Matrix/OS platform variance and source-backed responsive Settings reflow; `SUR-02` uses the approved HappyPro-derived palette and has no product-authored sound. `DB-D17` replaces only frozen prototype's historical Google/Cloudflare auth-copy/state semantics in `SG-01`, `SS-30`–`SS-33` and access-related `SS-45` with local owner-password challenge/session states; layout, hierarchy, palette, Matrix presentation and original approval provenance remain binding.
+- **QA Check IDs:** `pending_qa`; no IDs invented during DoD authoring.
+- **Historical VisualQAEvidence References:** `forge/design/evidence/candidate-b/v2/visual-qa.json` and its four listed screenshots prove the approved frozen candidate only; because they retain superseded auth-copy, fresh implementation evidence must demonstrate `DB-D17`.
 - **PrototypePromotionReceipt:** not applicable until approved prototype code is reused.
 
 ### `G-17 subscription_oauth_private_runtime`
 
 - **Gate:** `subscription_oauth_private_runtime`
 - **Purpose:** prove that all Codex and Claude Code work uses only the Власник's eligible paid subscriptions through the authorized private single-owner runtime, with safe credential lifecycle and no API/PAYG/cloud-provider fallback.
-- **Source References:** PRD §3.1/§3.5, `FR-009`, `FR-010`, `FR-030`, `FR-033`, `NFR-006`, `NFR-012`, `AC-002`, `AC-007`, `AC-009`; guardrails `Forbidden Changes`, `When To Stop`, `Verification Rules`, `Evidence Requirements`; architecture §§3, 5–6, 13–14, 17–20, `CodexAccountRuntime`, `ClaudeCriticRuntime`, `CodexOAuthCheckpoint`, `ClaudeOAuthSecret` and `AD-10`–`AD-12`; wireframes `SS-28`, `SS-29`, `MG-09`, `MG-11`.
+- **Source References:** PRD §3.1/§3.5, `FR-009`, `FR-010`, `FR-030`, `FR-033`, `NFR-006`, `NFR-012`, `AC-002`, `AC-007`, `AC-009`; guardrails `Forbidden Changes`, `When To Stop`, `Verification Rules`, `Evidence Requirements`; architecture §§3–4, 9–10, 12–14, isolated Codex/Claude process boundaries and `AD-06`–`AD-08`, `AD-12`; wireframes `SS-28`, `SS-29`, `MG-09`, `MG-11`.
 - **Applies To:** bootstrap, deployment, rollback, every dependent model call/agent launch, OAuth refresh/checkpoint/reauth/revocation, quota/plan check, `Витрати`, and any Product V1 release claim.
 - **Required Evidence:** current plan/terms eligibility evidence for exact one-owner private non-SaaS use; one content-free Codex lineage ID with sealed checkpoint version/hash, exactly one fenced writer lease, managed refresh/CAS/checkpoint/restore lifecycle, concurrent-writer denial, crash recovery and revocation tests; distinct real head/specialist Codex thread IDs, workspaces and leases sharing that lineage without cloned `auth.json`/OAuth caches; separate Claude Code process/workspace with `claude auth status` confirming subscription OAuth from out-of-band setup-token; environment/config inspection and negative launch cases proving `OPENAI_API_KEY`, `CODEX_API_KEY`, `CODEX_ACCESS_TOKEN`, `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, Bedrock, Vertex, Foundry, custom endpoint, API/PAYG/credits and other higher-precedence provider auth are absent and blocked; positive `SS-28`; injected unknown auth mode, expiry, revocation, refresh/checkpoint failure, invalid setup-token, quota exhaustion and ineligible/third-party cases; content-free secret scan over Matrix, prompts, A2A, logs, telemetry, archive, export, repository, images and workspaces; safe out-of-band reauth and fresh-preflight recovery; cost evidence required by `G-11`. Evidence records metadata only, never credentials, codes or auth URLs.
 - **Pass Condition:** exactly one mutable Codex OAuth lineage and active credential writer exist; all Codex agents have distinct real contexts without credential-store clones; Claude critic is a separate subscription-OAuth process; exact one-owner private eligibility and quota pass immediately before each dependent call; forbidden auth variables/routes are absent and cannot activate; every negative case blocks before a new model call/reply, emits only safe `SS-29`, preserves confirmed messages and resumes only after provider-managed out-of-band recovery plus fresh `SS-28`; revocation makes old versions unusable; no credential material escapes its authorized runtime boundary; costs follow `G-11`.
@@ -425,40 +454,139 @@ Release-ready вимагає:
 ### `G-18 owner_settings_access_security`
 
 - **Gate:** `owner_settings_access_security`
-- **Purpose:** prove that every byte of `SUR-02`, including static assets and API, is available only to the exact Власник through Google-only Cloudflare Access plus independent cryptographic origin validation, with browser/request hardening and no credential-domain leak.
-- **Source References:** PRD `FR-037`–`FR-039`, `NFR-006`, `NFR-016`, `AC-012`; guardrails `Forbidden Changes`, `When To Stop`, `Verification Rules`, `Evidence Requirements`; architecture §§7–8, §15, `SettingsAccessGateway`, `AD-02`–`AD-04`; screen-map `SG-01`, `SS-30`–`SS-33`.
-- **Applies To:** Settings hostname, HTML/CSS/JS, every Settings API method, Access/Google configuration, JWT/JWKS validator, identity normalization, CSRF/origin policy, response security/cache controls, logs/audit and any release claim involving `SUR-02`.
-- **Required Evidence:** exported content-free Cloudflare Access application/policy fingerprint proving one self-hosted application, Google as sole login method, exact owner-email Allow policy, default deny and absence of password, OTP, magic link, default/other IdP, registration, bypass, service-auth and public asset/health exception; deployed positive exact-owner flow; negative request correlation for wrong email and every absent/alternate method; Worker-level cases for missing/malformed/unsigned/invalid/unexpected-algorithm JWT, signature/JWKS/`kid` rotation, wrong `iss`, missing/wrong `aud`, expired/not-yet-valid token, clock-skew boundary, wrong normalized email, header/cookie presence without a valid assertion, JWKS outage with valid bounded cache and expired/unknown-key denial; real response/request evidence for whole-host protection, generic `403`, exact Origin, same-origin Fetch Metadata, bound short-lived CSRF, allowed method/content type/body limit, CORS disabled, `Cache-Control: no-store` on assets/API/errors, CSP/frame/content-type/referrer/permissions/HSTS controls and no third-party resources; secret/leak scan over browser storage, network response, logs, metrics, audit, repo, Matrix and archive proving absence of raw email, JWT/cookie/CSRF, Google OAuth secret and all AI OAuth material. Evidence stores only opaque correlation IDs and result classes.
-- **Pass Condition:** exact-owner Google flow succeeds only after edge policy and independent Worker signature/issuer/audience/time/email validation; every negative path yields no protected byte or mutation; public/bypass/alternate login routes do not exist; state changes require all same-origin/CSRF/method/body controls; protected content is not cached or framed; Google/Access secrets and AI OAuth domains never enter Settings payload/storage/log/evidence; denial remains generic and content-free.
-- **Fail Or Block Condition:** any protected asset/API reachable without both gates; auth based only on header/cookie or decoded claims; wrong/alternate identity accepted; stale/unknown JWKS bypass; missing CSRF/origin/cache/CSP control required by architecture; sensitive response cached; allowlisted email/policy/token/credential leaked; Google session reads, changes or replaces Codex/Claude Subscription OAuth.
-- **Rerun Rule:** after any Access application/policy/IdP/hostname/DNS, Google OAuth config, Worker/JWT/JWKS/email normalization, route/static asset, CSRF/origin/CORS/cache/header, secret/log/audit, browser bundle or deployment/rollback change; rerun all positive/negative cases and affected `AC-012`, `G-15`, `G-20`.
-- **Automation Status:** `not available yet`; JWT/request-policy cases can become automated, but current Cloudflare configuration, live Google/Access flow, browser/network and deployed secret-leak evidence require controlled integration/manual execution.
+- **Purpose:** prove that every protected byte and mutation of `SUR-02` is available only after server-side verification of the local high-entropy owner password through a fresh same-origin challenge and a valid signed bounded owner session in the GoDaddy Node app, with browser/request hardening and no credential-domain leak.
+- **Source References:** PRD `FR-037`–`FR-039`, `NFR-006`, `NFR-016`, `AC-012`; guardrails `Forbidden Changes`, `When To Stop`, `Verification Rules`, `Evidence Requirements`; architecture §§3–4, 8, 10, 12–14, `AD-03`–`AD-05`, `AD-15`; screen-map `SG-01`, `SS-30`–`SS-33`, `SS-45`; design brief `DB-D17`, `P-11`.
+- **Applies To:** GoDaddy Settings hostname/routes, challenge/login/logout, HTML/CSS/JS after the permitted public login shell boundary, every Settings API method, owner-password verification, session signing/rotation/expiry/invalidation, throttling, CSRF/origin policy, response security/cache controls, logs/audit and every release claim involving `SUR-02`.
+- **Required Evidence:** content-free deployed configuration fingerprint for exact allowed origin/proxy mode and secret presence/strength class; positive correct ≥64-character owner-password + fresh one-time same-origin challenge + signed session; negative wrong/missing/weak/truncated password, reused/cross-origin/expired/tampered challenge, missing/malformed/invalid/expired/replayed/forged cookie/session, direct protected route/API access, brute-force/rate-limit, fixation, idle/absolute expiry, sensitive-change rotation and logout invalidation; proof that password comparison is exact/constant-time and password/hash/session-signing secret never reaches response, browser storage, logs, metrics, audit, MySQL Settings rows, Matrix or archive; real request evidence for exact Origin, Fetch Metadata, bound CSRF, allowed method/content type/body limit, CORS policy, `Cache-Control: no-store`, CSP/frame/content-type/referrer/permissions/HSTS controls and no third-party resources; proof that registration, recovery/reset, second identity, OTP, magic link and external IdP routes do not exist; separation proof that owner auth cannot read/change/replace Codex/Claude Subscription OAuth.
+- **Pass Condition:** only the correct owner secret through a fresh same-origin challenge can create one rotated signed bounded session; every protected route/API validates current server-side session state and request controls; every negative path yields no protected bytes or mutation; guessing/replay/fixation/cross-origin/cache/frame paths fail closed; no alternate identity/login/recovery exists; owner auth and AI OAuth remain isolated; denial is generic and content-free.
+- **Fail Or Block Condition:** any protected route/API reachable without the full challenge/password/session/request-control chain; weak/truncated/non-exact password acceptance; missing throttling/rotation/idle-or-absolute expiry/logout invalidation; header/cookie presence accepted without valid session; replay/cross-origin/fixation; missing CSRF/origin/cache/CSP control required by architecture; sensitive response cached; password/hash/session/AI credential leaked; owner session reads, changes or replaces Codex/Claude Subscription OAuth.
+- **Rerun Rule:** after any hostname/proxy/origin, challenge/password verifier, strength rule, throttle, session signer/cookie/rotation/expiry/logout, route/static asset, CSRF/CORS/cache/header, secret/log/audit, browser bundle, GoDaddy deployment or rollback change; rerun the complete positive/negative matrix and affected `AC-012`, `G-15`, `G-20`, `G-21`, `G-22`, `G-23`.
+- **Automation Status:** `not available yet`; deterministic verifier/challenge/session/request-policy cases can use current/future local tests, but deployed browser/network, provider secret configuration and end-to-end leak evidence require controlled integration/manual execution.
+- **Definition Status:** `prepared`.
+- **Execution Status:** `not_run`.
 
 ### `G-19 owner_settings_atomic_configuration`
 
 - **Gate:** `owner_settings_atomic_configuration`
 - **Purpose:** prove that Owner Settings exposes exactly three allowed groups, validates current provider capabilities without silent downgrade, persists/reset them all-or-nothing and binds only the next new Session to one immutable effective snapshot.
-- **Source References:** PRD `FR-040`–`FR-046`, `NFR-017`, `NFR-019`, `AC-013`–`AC-015`; guardrails `Forbidden Changes`, `When To Stop`, `Verification Rules`, `Evidence Requirements`; architecture §§9–13, `OwnerSettingsDO`, `ModelCapabilityCatalogService`, `SessionSettingsResolver`, `AD-05`–`AD-10`; screen-map `SG-02`–`SG-05`, `SS-34`–`SS-45`.
+- **Source References:** PRD `FR-040`–`FR-046`, `NFR-017`, `NFR-019`, `AC-013`–`AC-015`; guardrails `Forbidden Changes`, `When To Stop`, `Verification Rules`, `Evidence Requirements`; architecture §§5.1, 8–10, 12–14, MySQL Settings/session snapshot transaction and `AD-05`–`AD-10`, `AD-15`; screen-map `SG-02`–`SG-05`, `SS-34`–`SS-45`.
 - **Applies To:** Settings schema/defaults/read/save/reset/cancel, capability and speed-policy catalogs, provider/runtime reconciliation, revision/CAS/idempotency/audit, offline/retry/recovery, session creation and every model/depth/speed change.
-- **Required Evidence:** deployed GET schema/result showing only separate typed Codex and Claude selectors, one shared `low|medium|high|xhigh` depth, one `швидко|збалансовано|ретельно` preset and separately labeled current/default/effective/active-snapshot values; signed/versioned release catalog and live content-free Codex app-server plus Claude Code subscription-runtime capability receipts for each allowlisted model/effort mapping, availability/provenance/freshness and unsupported/unknown/deprecated/retired/drift cases; negative arbitrary slug, extra key/fourth group, shared selector, per-agent/per-unit override and every cross-field incompatibility; full-object validate-before-save/reset evidence for success and every invalid field, source-backed defaults, explicit reset, cancel/no-write, version conflict, failed storage, timeout-after-commit, offline, exact idempotent retry, reused key/different body and concurrent saves, with before/after revision/hash proving one whole revision or none; server audit proving actor `owner`, operation, before/after revision, catalog version, request hash and result without settings body/email/header/secret; all three speed-policy runtime fingerprints showing only source-backed orchestration changes and no Claude Fast Mode, OpenAI priority/Fast tier, API/PAYG, extra usage/credits or weakening of critic/A2A/E2EE/verbatim/research/safety/privacy/permission/timing guards; session-start evidence pairing one validated settings/catalog revision to a complete immutable snapshot, plus save/reset during active A, next-session B, incompatible C, concurrent save/start and catalog-drift cases.
+- **Required Evidence:** deployed GET schema/result showing only separate typed Codex and Claude selectors, one shared `low|medium|high|xhigh` depth, one `швидко|збалансовано|ретельно` preset and separately labeled current/default/effective/active-snapshot values; signed/versioned release catalog and live content-free Codex app-server plus Claude Code subscription-runtime capability receipts for each allowlisted model/effort mapping, availability/provenance/freshness and unsupported/unknown/deprecated/retired/drift cases; negative arbitrary slug, extra key/fourth group, shared selector, per-agent/per-unit override and every cross-field incompatibility; full-object validate-before-save/reset evidence for success and every invalid field, source-backed defaults, explicit reset, cancel/no-write, version conflict, failed MySQL transaction, timeout-after-commit, offline, exact idempotent retry, reused key/different body and concurrent saves, with before/after version/hash proving one MySQL commit or none; content-free server audit proving actor `owner`, operation, before/after version, catalog version, request hash and result without settings body/password/session/secret; all three speed-policy runtime fingerprints showing only source-backed orchestration changes and no Claude Fast Mode, OpenAI priority/Fast tier, API/PAYG, extra usage/credits or weakening of critic/A2A/E2EE/verbatim/research/safety/privacy/permission/timing guards; session-start evidence pairing one validated settings/catalog version to a complete immutable MySQL snapshot, plus save/reset during active A, next-session B, incompatible C, concurrent save/start and catalog-drift cases.
 - **Pass Condition:** response and server schema contain exactly three groups and typed values; both current subscription runtimes confirm the exact mappings at save and again at new-session preflight; unsupported/unknown/stale state blocks save/start with no downgrade; save/reset commits one new full revision or none; CAS and idempotency prevent lost/duplicate/partial writes; cancel/offline never mutate state; shown effective values match the committed revision; Active Session A never changes, the next valid Session receives exactly B, and C/drift starts no Session; every speed preset preserves all mandatory invariants and excluded paid modes remain technically blocked.
 - **Fail Or Block Condition:** arbitrary/provider-mismatched value; fourth/hidden/forbidden control; documentation-only capability claim without live provider/runtime evidence; silent effort fallback; stale catalog accepted; partial/per-key write; false success; lost update, duplicate revision or non-idempotent retry; reset bypasses validation; body/email/secret in audit; active snapshot mutation; session start without a complete validated snapshot; any Fast/priority/API/PAYG/extra-usage path or weakened mandatory invariant.
-- **Rerun Rule:** after Settings schema/default/catalog/provider mapping/speed policy, runtime/model/entitlement, API/DO storage/CAS/idempotency/audit, offline/client retry, session resolver/Registrar snapshot, invariant/preflight, deployment or rollback change; rerun impacted `AC-013`–`AC-015`, `G-05`–`G-09`, `G-15`, `G-17`, `G-20` as applicable.
+- **Rerun Rule:** after Settings schema/default/catalog/provider mapping/speed policy, runtime/model/entitlement, API/MySQL transaction/CAS/idempotency/audit, offline/client retry, session resolver/Node registrar snapshot, invariant/preflight, deployment or rollback change; rerun impacted `AC-013`–`AC-015`, `G-05`–`G-09`, `G-15`, `G-17`, `G-20`–`G-23` as applicable.
 - **Automation Status:** `not available yet`; schema/state/CAS/idempotency/snapshot invariants can become automated, but live subscription-runtime capability reconciliation, deployed atomicity/failure injection and cross-runtime invariant evidence require controlled integration/hybrid execution.
+- **Definition Status:** `prepared`.
+- **Execution Status:** `not_run`.
 
 ### `G-20 owner_settings_runtime_ux`
 
 - **Gate:** `owner_settings_runtime_ux`
 - **Purpose:** prove the deployed `SUR-02` is a usable responsive and accessible single-page Owner Settings surface without expanding product scope or treating a static design artifact as runtime evidence.
-- **Source References:** PRD `FR-037`, `FR-040`–`FR-045`, `NFR-018`, `AC-016`; wireframes `SUR-02`, `SG-01`–`SG-05`, `SS-30`–`SS-46`; design brief `P-11`–`P-15`, Accessibility Floor, Responsive And Platform Behavior; architecture §§7, 12, 15; guardrails `Verification Rules`, `Evidence Requirements`.
+- **Source References:** PRD `FR-037`, `FR-040`–`FR-045`, `NFR-018`, `AC-016`; wireframes `SUR-02`, `SG-01`–`SG-05`, `SS-30`–`SS-46`; design brief `DB-D17`, `P-11`–`P-15`, Accessibility Floor, Responsive And Platform Behavior; architecture §§2–4, 8, 12; guardrails `Verification Rules`, `Evidence Requirements`.
 - **Applies To:** every user-visible Settings route/control/status and each `SUR-02` release across 390/430/768/1280/1440 representative viewports, keyboard path and supported assistive-technology/browser combinations recorded by evidence.
-- **Required Evidence:** recordings/screenshots plus DOM/accessibility-tree and network/result correlation from the deployed protected hostname covering Access loading/granted/denied, Settings loading, loaded/empty-effective, dirty valid, inline incompatible, provider drift, save progress/success/failure, reset confirmation/result, immutable-active-snapshot notice, permission/auth expiry, offline/reconnect, long model/mapping/error content and mobile reflow; keyboard-only traversal and activation; programmatic names/labels/descriptions/error associations, logical focus and return after confirmation, visible focus ring, live status/error announcements, text zoom/reflow, no color/motion/sound-only meaning, ≥24×24 CSS px targets and 44×44 primary touch target/equivalent on 390/430; semantic order and no horizontal loss of critical action; exact visible inventory of three groups, primary Save, secondary Reset/cancel and current/default/effective values; `G-18`/`G-19` runtime receipts linked so visual success/denial is not inferred from appearance.
-- **Pass Condition:** the full `SS-30`–`SS-46` semantic contract is operable and understandable on representative mobile/desktop paths; every control/status has an accessible text/programmatic equivalent; long/zoomed content preserves group/value/error/action relationships; no required action is hover-, color-, motion- or sound-only; only one one-page Settings utility exists, with no sidebar/dashboard/chat/archive/admin surface or forbidden credential/free-text/Fast/PAYG/safety control; observed UI result matches the corresponding access/atomic/provider evidence.
-- **Fail Or Block Condition:** primary Settings path unusable by keyboard/assistive technology; unlabeled or unreachable control; invisible/lost focus; unannounced validation/save/denial; color-only status; clipped critical action/content; mobile omission; extra group/surface/navigation/forbidden control; product-owned alternative login UI; visual success without committed state or protected content visible after failed access.
-- **Rerun Rule:** after any Settings HTML/CSS/JS/content/control/validation/status/focus/responsive/accessibility, browser hardening that changes rendering, state-contract, viewport/browser support, design source, deployment or baseline change; rerun affected states/viewports, `G-13`, `G-18`, `G-19`, `G-15` and active `G-16` when applicable.
+- **Required Evidence:** recordings/screenshots plus DOM/accessibility-tree and network/result correlation from the deployed GoDaddy hostname covering owner-password entry, local verification, grant/deny/session-expiry, Settings loading, loaded/empty-effective, dirty valid, inline incompatible, provider drift, save progress/success/failure, reset confirmation/result, immutable-active-snapshot notice, offline/reconnect, long model/mapping/error content and mobile reflow; keyboard-only traversal and activation; programmatic names/labels/descriptions/error associations, logical focus and return after confirmation, visible focus ring, live status/error announcements, text zoom/reflow, no color/motion/sound-only meaning, ≥24×24 CSS px targets and 44×44 primary touch target/equivalent on 390/430; semantic order and no horizontal loss of critical action; exact visible inventory of three groups, primary Save, secondary Reset/cancel and current/default/effective values; `G-18`/`G-19` runtime receipts linked so visual success/denial is not inferred from appearance.
+- **Pass Condition:** the full `SS-30`–`SS-46` semantic contract is operable and understandable on representative mobile/desktop paths; every control/status has an accessible text/programmatic equivalent; long/zoomed content preserves group/value/error/action relationships; no required action is hover-, color-, motion- or sound-only; only one one-page Settings utility exists, with no sidebar/dashboard/chat/archive/admin surface, agent/provider credential field, alternate login, free-text/Fast/PAYG/safety control; observed UI result matches the corresponding access/atomic/provider evidence.
+- **Fail Or Block Condition:** primary Settings path unusable by keyboard/assistive technology; unlabeled or unreachable owner-password/control; invisible/lost focus; unannounced verification/validation/save/denial; color-only status; clipped critical action/content; mobile omission; extra group/surface/navigation/forbidden control; alternate login/registration/recovery/identity UI; password/session secret shown after submit; visual success without committed state or protected content visible after failed access.
+- **Rerun Rule:** after any Settings HTML/CSS/JS/auth-copy/content/control/validation/status/focus/responsive/accessibility, browser hardening that changes rendering, state-contract, viewport/browser support, design source, deployment or baseline change; rerun affected states/viewports, `G-18`, `G-19`, `G-15`, `G-16`, `G-21`, `G-22` and `G-23` when applicable.
 - **Automation Status:** `not available yet`; automated accessibility/browser checks may contribute later, but real deployed keyboard/assistive-tech/device evidence and manual semantic review remain required.
+- **Definition Status:** `prepared`.
+- **Execution Status:** `not_run`.
+
+### `G-21 heuristic_usability_review`
+
+- **Gate:** `heuristic_usability_review`
+- **Purpose:** require an expert, rule-based review of every applicable H1–H10 scope without treating visual fidelity, representative-user research, runtime behavior or accessibility conformance as equivalent evidence.
+- **Source References:** design brief `Heuristic Review`; user journey primary Element and Settings journeys; screen map `SUR-01`–`SUR-02`, `SS-01`–`SS-46`; wireframes `Error And Recovery Contract`; shared H1–H10 and verification contracts.
+- **Applies To:** every user-visible change and Product V1 release across `SUR-01`/`SUR-02`, primary journey/task, supported desktop/mobile scope, normal/loading/empty/error/success/permission/offline/long-content/recovery states and accessibility-critical actions.
+- **Required Evidence:** concrete QA IDs after QA authoring; actual named reviewer/time; implementation revision/environment; each applicable H1–H10; primary journey/task/user group; screen/route/state/viewport/device; expected behavior and applicability rationale; observed evidence; findings/recommendations with severity/release effect. Error scopes additionally record cause → preserved state → next action → retry/undo → successful-completion condition.
+- **Pass Condition:** every applicable H1–H10 and required scope has fresh readable review evidence; supported mobile/desktop and critical error/recovery/accessibility paths are covered; no unexplained omission/deferred critical review or blocking finding remains.
+- **Fail Or Block Condition:** applicable heuristic/scope omitted; design-plan `covered` treated as executed; visual screenshot substituted for behavior; error recovery lacks a required element without source-backed rationale; missing reviewer/time/evidence; P0/P1 or blocking P2 remains.
+- **Rerun Rule:** after affected journey, route, state, copy, control, error/recovery, accessibility behavior, supported client/viewport, design baseline or `DB-D17` change; rerun affected H1–H10 scopes and any combined-impact regression set.
+- **Automation Status:** `manual`; deterministic scanners may contribute evidence but cannot replace expert review.
+- **Definition Status:** `prepared`.
+- **Execution Status:** `not_run`.
+- **QA Check IDs:** `pending_qa`; no IDs invented during DoD authoring.
+
+### `G-22 representative_user_task_validation`
+
+- **Gate:** `representative_user_task_validation`
+- **Purpose:** require observed task completion by the representative V1 user group for critical, consequential, new or changed flows; do not infer usability from agent review, prototype playback or screenshots.
+- **Source References:** PRD `AC-001`–`AC-016`; design brief `Usability Validation Plan` (`UV-01`–`UV-05`); user journey Stages 1–10 and Settings S1–S5; shared verification contract.
+- **Applies To:** Product V1 release and every critical/consequential/new/changed owner task, including direct answer, real Consilium, permission/commands/costs, local owner-password access and negative paths, settings save/reset/snapshot, mobile/desktop keyboard and assistive-technology use.
+- **Required Evidence:** concrete QA IDs after QA authoring; representative group `Власник`; task/JOB or source-backed absence of a `UC-*` ID; success criterion; device/client/viewport; implementation revision and deployed environment; observed session record; actual facilitator/participant timing; outcome, errors/recovery, findings, severity and release effect. `DB-D17` owner-password tasks require post-implementation evidence; frozen Google/Cloudflare prototype playback is historical only.
+- **Pass Condition:** each applicable task has observed representative-owner completion against its source-backed success criterion on required device/viewport scope; critical failures are recovered as designed; no P0/P1 or blocking P2 remains; evidence is fresh for the evaluated revision.
+- **Fail Or Block Condition:** task unobserved, simulated solely by an agent, performed only on a stale prototype, missing representative group/device/success criterion, facilitator assistance hides a primary-flow failure, applicable critical validation deferred, or blocking finding remains.
+- **Rerun Rule:** after affected task flow, access/auth, state, copy, navigation, control, runtime result, supported device/viewport, baseline/override or fix; rerun the affected task and source-backed regression tasks.
+- **Automation Status:** `manual`; instrumentation may support observation but cannot replace representative-user completion.
+- **Definition Status:** `prepared`.
+- **Execution Status:** `not_run`.
+- **QA Check IDs:** `pending_qa`; no IDs invented during DoD authoring.
+
+### `G-23 product_security_requirements`
+
+- **Gate:** `product_security_requirements`
+- **Purpose:** require implementation-level security evidence for every current PRD Security Requirement; no applicable obligation may be advisory, silently excluded or satisfied by a mockup/document review.
+- **Source References:** PRD `Security Requirements` and OWASP ASVS 5.0.0 Level 2 target; guardrails product-security/evidence rules; architecture §14 `Product-security mapping`; shared security traceability and verification contracts.
+- **Applies To:** every implementation, integration, deployment, rollback or release scope that affects actors, data, privileges, inputs, integrations, storage, consequential actions or any listed security requirement; required and active for Product V1 release.
+- **Security Requirement IDs:** `NFR-005`, `NFR-006`, `NFR-007`, `NFR-008`, `NFR-009`, `NFR-010`, `NFR-011`, `NFR-012`, `NFR-016`, `NFR-017`, `NFR-019` — exactly 11.
+- **Required Evidence:** implementation-level QA checks with `phase: implementation | both`, evidence `kind: security`, concrete IDs bound after QA authoring, and fresh results for the exact revision/environment. Their `security_requirement_ids` union must equal the 11 IDs above; each result links the relevant lower gate(s), architecture mechanism, positive/negative/failure/recovery evidence, executor/time and findings. Mockup-only, static-design, unrun, failed, blocked, deferred or silently excluded evidence cannot pass.
+- **Pass Condition:** every one of the 11 IDs has complete source-clause coverage and fresh passing implementation/security evidence; all applicable supporting hard gates pass on the same lineage; dependency/config inventory is current; no P0/P1 or blocking P2 security/privacy/data-integrity finding remains; the `v5.0.0-6.3.3` MFA obligation is resolved by an explicit PRD/owner decision and the assurance claim matches that decision.
+- **Fail Or Block Condition:** any ID/clause/check missing; QA union differs from the exact set; applicable check inactive/advisory/not-run/deferred; evidence is mockup/static/stale; control weakened to match implementation; secret/plaintext/unauthorized access; unresolved MFA/ASVS residual risk; failed supporting security gate or blocking finding.
+- **Rerun Rule:** after any change to actor/data/privilege/input/integration/storage/action boundary, security requirement/ASVS mapping, Rust sidecar/store/protocol, Node auth/runtime, MySQL schema/transaction/archive, OAuth/secret/dependency, route/egress/log/telemetry, deployment/rollback or security fix; rerun affected checks, `G-23` aggregate and dependent release/E2E gates.
+- **Automation Status:** `not available yet`; current/future deterministic tests may contribute, but deployed configuration, real Matrix/provider boundaries, specialist review and MFA/residual-risk resolution need controlled evidence.
+- **Definition Status:** `prepared`.
+- **Execution Status:** `not_run`.
+- **QA Check IDs:** `pending_qa`; no IDs invented during DoD authoring.
+- **Known Release Blocker:** PRD records ASVS Level 2 `v5.0.0-6.3.3` as unresolved until the Власник explicitly accepts documented residual risk or separately permits a compatible second factor; this definition does not choose for the Власник.
+
+#### Security coverage NFR-005
+
+Gate consequence: `G-10`, `G-14`, `G-15` and `G-23` must prove Matrix E2EE with verified devices, TLS provider transport, vetted cryptography, separate key lifecycle and application-encrypted MySQL archive/restore without plaintext fallback.
+
+#### Security coverage NFR-006
+
+Gate consequence: `G-03`, `G-14`, `G-17` and `G-23` must prove secret-store/process isolation, bound OAuth flow, trusted pinned dependency inventory/remediation and technical absence of API/PAYG/provider-auth fallback or credential leakage.
+
+#### Security coverage NFR-007
+
+Gate consequence: `G-02`, `G-14` and `G-23` must prove server-side authorization of Matrix event, exact room/owner/device and record/action on ingress and immediately before outbound effects.
+
+#### Security coverage NFR-008
+
+Gate consequence: `G-03`, `G-14` and `G-23` must prove canonicalization/validation at trusted boundaries, parameterized SQL/process/network interfaces, bounded file/media handling, minimum context and instruction-as-data behavior.
+
+#### Security coverage NFR-009
+
+Gate consequence: `G-04`, `G-06`, `G-11`, `G-14` and `G-23` must prove idempotency, replay safety, rate/concurrency/body/file/time bounds, retry-storm resistance, resource cleanup and truthful cost effects.
+
+#### Security coverage NFR-010
+
+Gate consequence: `G-06`, `G-10`, `G-14` and `G-23` must prove one persisted canonical order and transactional confirm/outbox/archive transitions with crash/retry recovery.
+
+#### Security coverage NFR-011
+
+Gate consequence: `G-06`, `G-10` and `G-23` must prove collision-resistant closed-session integrity and rejection of tampered or mismatched archive/export evidence.
+
+#### Security coverage NFR-012
+
+Gate consequence: `G-09`, `G-11`, `G-17` and `G-23` must prove content-free correlated security events, synchronized time, protected logs/alerts, generic user errors, truthful auth/quota/cost/failure status and no secret/PII leakage.
+
+#### Security coverage NFR-016
+
+Gate consequence: `G-18` and `G-23` must prove exact strong owner-password handling, one-time same-origin challenge, constant-time verification, throttling, signed rotated bounded session, logout invalidation, cookie/origin/CSRF/no-store controls and fail-closed negatives; MFA/residual risk remains a named blocker.
+
+#### Security coverage NFR-017
+
+Gate consequence: `G-19` and `G-23` must prove authorized full-schema Settings validation and one atomic MySQL version/CAS/idempotency transaction with no partial write, lost update or active-snapshot mutation.
+
+#### Security coverage NFR-019
+
+Gate consequence: `G-14`, `G-19` and `G-23` must prove fail-closed configuration/capability state, minimal exposed methods/services/headers, fixed host/forwarded-header/egress allowlists and stateless Preview without shared stateful writes.
 
 ### Requirement Traceability
+
+Mandatory overlays are load-bearing: `G-16` applies to every affected user-visible implementation on `SUR-01`/`SUR-02`; `G-21` applies to every applicable user-visible journey/state/route/viewport; `G-22` applies to the critical/consequential/new-or-changed task scopes represented by `AC-001`–`AC-016` and `UV-01`–`UV-05`; `G-23` applies to exactly the 11 Security Requirements listed below. Historical `G-13` is not load-bearing for current implementation or release mappings.
 
 #### Functional requirements
 
@@ -480,16 +608,16 @@ Release-ready вимагає:
 | `FR-014` | `G-06` |
 | `FR-015` | `G-06`, `G-07`, `G-12` |
 | `FR-016` | `G-06` |
-| `FR-017` | `G-06`, `G-12`, `G-13` |
-| `FR-018` | `G-06`, `G-12`, `G-13` |
-| `FR-019` | `G-06`, `G-12`, `G-13` |
+| `FR-017` | `G-06`, `G-12`, `G-16`, `G-21` |
+| `FR-018` | `G-06`, `G-12`, `G-16`, `G-21` |
+| `FR-019` | `G-06`, `G-12`, `G-16`, `G-21` |
 | `FR-020` | `G-04`, `G-08` |
 | `FR-021` | `G-08` |
 | `FR-022` | `G-04`, `G-08` |
 | `FR-023` | `G-05`, `G-07`, `G-09` |
 | `FR-024` | `G-03`, `G-07` |
 | `FR-025` | `G-09` |
-| `FR-026` | `G-09`, `G-13` |
+| `FR-026` | `G-09`, `G-16`, `G-21`, `G-22` |
 | `FR-027` | `G-09` |
 | `FR-028` | `G-09` |
 | `FR-029` | `G-09` |
@@ -499,11 +627,11 @@ Release-ready вимагає:
 | `FR-033` | `G-11`, `G-17` |
 | `FR-034` | `G-12` |
 | `FR-035` | `G-03`, `G-09` |
-| `FR-036` | `G-09`, `G-13` |
-| `FR-037` | `G-13`, `G-18`, `G-20` |
+| `FR-036` | `G-09`, `G-16`, `G-21` |
+| `FR-037` | `G-16`, `G-18`, `G-20`, `G-21`, `G-22` |
 | `FR-038` | `G-18` |
 | `FR-039` | `G-17`, `G-18` |
-| `FR-040` | `G-13`, `G-19`, `G-20` |
+| `FR-040` | `G-16`, `G-19`, `G-20`, `G-21`, `G-22` |
 | `FR-041` | `G-19`, `G-20` |
 | `FR-042` | `G-19`, `G-20` |
 | `FR-043` | `G-17`, `G-19`, `G-20` |
@@ -519,21 +647,21 @@ Release-ready вимагає:
 | `NFR-002` | `G-07` |
 | `NFR-003` | `G-07` |
 | `NFR-004` | `G-07` |
-| `NFR-005` | `G-10`, `G-14` |
-| `NFR-006` | `G-03`, `G-14`, `G-17` |
-| `NFR-007` | `G-02`, `G-14` |
-| `NFR-008` | `G-03`, `G-14` |
-| `NFR-009` | `G-04`, `G-06`, `G-11` |
-| `NFR-010` | `G-06`, `G-10` |
-| `NFR-011` | `G-06`, `G-10` |
-| `NFR-012` | `G-09`, `G-11`, `G-17` |
-| `NFR-013` | `G-12`, `G-13` |
-| `NFR-014` | `G-09`, `G-13` |
-| `NFR-015` | `G-12`, `G-13` |
-| `NFR-016` | `G-18` |
-| `NFR-017` | `G-19` |
-| `NFR-018` | `G-13`, `G-20` |
-| `NFR-019` | `G-19` |
+| `NFR-005` | `G-10`, `G-14`, `G-23` |
+| `NFR-006` | `G-03`, `G-14`, `G-17`, `G-23` |
+| `NFR-007` | `G-02`, `G-14`, `G-23` |
+| `NFR-008` | `G-03`, `G-14`, `G-23` |
+| `NFR-009` | `G-04`, `G-06`, `G-11`, `G-23` |
+| `NFR-010` | `G-06`, `G-10`, `G-23` |
+| `NFR-011` | `G-06`, `G-10`, `G-23` |
+| `NFR-012` | `G-09`, `G-11`, `G-17`, `G-23` |
+| `NFR-013` | `G-12`, `G-16`, `G-21` |
+| `NFR-014` | `G-09`, `G-16`, `G-21` |
+| `NFR-015` | `G-12`, `G-16`, `G-21` |
+| `NFR-016` | `G-18`, `G-23` |
+| `NFR-017` | `G-19`, `G-23` |
+| `NFR-018` | `G-16`, `G-20`, `G-21`, `G-22` |
+| `NFR-019` | `G-14`, `G-19`, `G-23` |
 
 #### Acceptance scenarios
 
@@ -541,20 +669,20 @@ Release-ready вимагає:
 |---|---|
 | `AC-001` | `G-04`, `G-05`, `G-07`, `G-09`, `G-15` |
 | `AC-002` | `G-05`, `G-06`, `G-07`, `G-09`, `G-15`, `G-17` |
-| `AC-003` | `G-06`, `G-10`, `G-12`, `G-13`, `G-15` |
+| `AC-003` | `G-06`, `G-10`, `G-12`, `G-15`, `G-16`, `G-21`, `G-22` |
 | `AC-004` | `G-04`, `G-08`, `G-15` |
 | `AC-005` | `G-03`, `G-14`, `G-15` |
 | `AC-006` | `G-02`, `G-14`, `G-15` |
 | `AC-007` | `G-05`, `G-07`, `G-09`, `G-15`, `G-17` |
 | `AC-008` | `G-10`, `G-15` |
 | `AC-009` | `G-11`, `G-15`, `G-17` |
-| `AC-010` | `G-12`, `G-13`, `G-15` |
-| `AC-011` | `G-03`, `G-09`, `G-13`, `G-15` |
-| `AC-012` | `G-15`, `G-18` |
+| `AC-010` | `G-12`, `G-15`, `G-16`, `G-21`, `G-22` |
+| `AC-011` | `G-03`, `G-09`, `G-15`, `G-16`, `G-21`, `G-22` |
+| `AC-012` | `G-15`, `G-16`, `G-18`, `G-21`, `G-22` |
 | `AC-013` | `G-15`, `G-19`, `G-20` |
 | `AC-014` | `G-15`, `G-17`, `G-19` |
 | `AC-015` | `G-15`, `G-19` |
-| `AC-016` | `G-13`, `G-15`, `G-20` |
+| `AC-016` | `G-15`, `G-16`, `G-20`, `G-21`, `G-22` |
 
 ## Lane Or State Promotion Gates
 
@@ -567,10 +695,12 @@ Every persisted eval result records:
 | Field | Contract |
 |---|---|
 | `eval_id` | Stable unique result identifier |
-| `gate` | One named gate from `G-01`–`G-20` |
+| `gate` | One named gate from `G-01`–`G-23` |
 | `scope` | Product, feature unit, change, environment and affected requirement IDs |
 | `level` | `unit`, `integration`, `e2e`, `device`, `manual_review` or `static_source` |
-| `status` | `passed`, `failed`, `blocked` or `not_applicable` |
+| `definition_status` | `prepared` or `blocked`: whether the gate/check can be executed as specified |
+| `execution_status` | `not_run`, `passed`, `failed`, `blocked`, `deferred` or `not_applicable` |
+| `release_readiness` | `not_evaluated` during authoring; only an explicit release evaluation may record `passed` or `blocked` |
 | `source_references` | Exact source artifact/version/hash and relevant requirement IDs |
 | `environment_fingerprint` | Code revision plus deployed config/runtime/model/A2A/key/export/client identifiers relevant to the claim; no secrets |
 | `owner` | Person or agent responsible for executing and reading the evidence |
@@ -581,14 +711,21 @@ Every persisted eval result records:
 | `findings` | Zero or more findings with severity/release effect schema below |
 | `rerun_of` | Prior result identifier when the run verifies a fix or recovery |
 
-Status semantics:
+Definition semantics:
 
+- `prepared`: the gate has source, applicability, evidence, pass/block, rerun and automation contracts; it does not mean execution or pass.
+- `blocked`: a missing material definition/source prevents valid execution.
+
+Execution semantics:
+
+- `not_run`: prepared definition exists, but no execution result is claimed.
 - `passed`: every applicable pass condition is met with fresh readable evidence and no blocking finding.
 - `failed`: the eval executed and at least one pass condition was violated.
 - `blocked`: required source, environment, permission, integration, device, evidence or unresolved high-risk policy prevents a valid execution or conclusion.
+- `deferred`: applicable execution is postponed; it is not a pass and blocks when the gate is required for the claim.
 - `not_applicable`: the source-backed applicability condition is false for this scope; reason is mandatory. `G-16` is active for every affected user-visible unit; it may not be reported `passed` without baseline-bound evidence.
 
-Aggregate completion status is `passed` only when all applicable required child results are `passed`. A `failed` or `blocked` hard gate blocks Done. Advisory findings remain visible and do not change an otherwise valid `passed` result unless their recorded Release Effect is `blocking`.
+Aggregate completion status is `passed` only when all applicable required child results are `passed`. A `not_run`, required `deferred`, `failed` or `blocked` hard gate blocks Done. Advisory findings remain visible and do not change an otherwise valid `passed` result unless their recorded Release Effect is `blocking`. Цей authoring pass лишає всі execution statuses `not_run`, а release readiness — `not_evaluated`.
 
 ## Evidence Requirements
 
@@ -618,7 +755,7 @@ For each completion claim retain:
 
 Evidence must be fresh after the last relevant change. A cached result may support history but cannot pass the current gate. Sensitive evidence must be minimized and must not contain Secrets, Matrix access/recovery keys, OAuth tokens, `auth.json`, setup-token, reauth URL/code, raw document content or wrapping keys.
 
-For Settings claims, the bundle additionally links content-free Cloudflare Access/Worker configuration and request-result receipts, catalog/provider-runtime provenance, Settings revision/snapshot hashes and deployed accessibility evidence. It never retains raw owner email, JWT/cookie/CSRF, Google OAuth secret, Settings body or AI credential; an opaque actor/result correlation is sufficient.
+For Settings claims, the bundle additionally links content-free GoDaddy Node owner-password/challenge/session/request-control configuration and result receipts, catalog/provider-runtime provenance, MySQL Settings version/snapshot hashes and deployed accessibility evidence. It never retains owner password/hash, session-signing secret/cookie, CSRF token, Settings body or AI credential; an opaque actor/result correlation is sufficient.
 
 ## Evidence Limits
 
@@ -629,7 +766,7 @@ For Settings claims, the bundle additionally links content-free Cloudflare Acces
 - A visible role label proves no separate real agent context: Codex requires distinct current thread/workspace/lease evidence, while Claude requires a distinct current process/workspace/lease.
 - Distinct Codex role/thread labels do not prove credential isolation; evidence must show those distinct contexts under one fenced OAuth lineage and no cloned auth store.
 - `account/read`, `claude auth status` or a plan screenshot proves only the observed auth/plan state, not a universal legal right, future eligibility, quota sufficiency for later calls or absence of fallback elsewhere in configuration.
-- A Cloudflare Access login screen, valid-looking email, cookie/header presence or decoded-but-unverified JWT does not prove Google-only exact-email policy, signature/JWKS, `iss`/`aud`/time/email validation, whole-host protection or absence of bypass.
+- A visible owner-password form, successful client redirect, cookie/header presence or one happy-path login does not prove secret strength/exactness, constant-time verification, fresh one-time challenge, throttling, session signing/rotation/expiry/logout invalidation, request controls, protected-route coverage or absence of bypass.
 - A static Settings page, client-side validation or one successful save does not prove server-side exact-three schema, live provider capability truth, no silent downgrade, atomic rollback/CAS/idempotency, audit redaction or immutable session snapshot.
 - An accessibility scanner or viewport screenshot alone does not prove keyboard/assistive-technology operation, status announcements, focus recovery, long-content reflow or that the displayed result matches committed runtime state.
 - Passing unit/integration tests does not replace `G-15`.
@@ -662,7 +799,7 @@ Blocker classes:
 
 - `source_blocked` — missing/conflicting/stale authoritative source;
 - `implementation_blocked` — required mechanism or interface absent;
-- `environment_blocked` — provider, deploy, key, runtime, eligible subscription/quota, Cloudflare Access/JWKS/capability evidence or device unavailable;
+- `environment_blocked` — provider, GoDaddy deploy, Rust artifact/store, MySQL schema/state, key, runtime, eligible subscription/quota, owner-auth/session/capability evidence or device unavailable;
 - `permission_blocked` — required explicit owner authorization is absent;
 - `evidence_blocked` — required evidence cannot be produced or read;
 - `policy_blocked` — unresolved high-risk policy prevents a valid pass condition.
@@ -671,23 +808,24 @@ Blocker classes:
 
 1. A failed or blocked hard gate is never waived by prose; fix/restore the cause or reduce the claim/scope truthfully.
 2. After a fix, rerun the failed gate, its direct dependencies and every acceptance scenario affected by the changed shared contract.
-3. Changes to `RegistrarDO` state/order/generation, auth/data policy, Codex lineage/checkpoint/writer fencing, Claude setup-token runtime, forbidden environment/egress rules, outbox, runtime adapter, archive/crypto or shared formatter require broader regression because they affect multiple gates.
+3. Changes to Rust sidecar/protocol/store/room policy, Node registrar state/order/generation, MySQL ingress/outbox/archive, owner auth/data policy, Codex lineage/checkpoint/writer fencing, Claude setup-token runtime, forbidden environment/egress rules, runtime adapter, archive/crypto or shared formatter require broader regression because they affect multiple gates.
 4. Timing reruns use fresh monotonic measurements and representative load; prior latency does not pass changed deployment/config.
 5. Recovery evidence must show both the injected failure and the restored invariant: dedupe under retry, lease replacement, late-output rejection, outbox replay, archive mismatch halt or key-provider pause.
 6. A rerun result references the prior result via `rerun_of`; the old result remains immutable.
 7. If only advisory P2/P3 remains, aggregate may pass only when the finding, rationale, owner and follow-up are persisted.
-8. Post-approval baseline or approved override changes rerun `G-16` for all affected states/viewports/clients.
+8. Post-approval baseline or approved override changes rerun `G-16`, `G-21` and applicable `G-22` tasks for all affected states/viewports/clients.
 9. Auth expiry/revocation/quota or crash-recovery reruns must show the fail-closed event, absence of any dependent call/fallback, safe out-of-band recovery where applicable, a fresh `SS-28`, and affected `G-05`, `G-11`, `G-14`, `G-15`, `G-17` results.
-10. Access/Google/JWT/request-security changes rerun `G-18` across the complete positive/negative identity and browser-security matrix, plus affected `G-15`/`G-20`; a single happy-path login cannot substitute.
-11. Settings schema/catalog/provider/speed/persistence/snapshot changes rerun `G-19` including failure injection, live capability reconciliation and concurrent save/start, plus affected `G-15`/`G-17`/`G-20`.
-12. `SUR-02` presentation or interaction changes rerun affected deployed states/viewports/accessibility paths in `G-20` and active `G-16`; runtime result correlation remains required.
+10. Owner-password/challenge/session/request-security changes rerun `G-18` across the complete positive/negative auth and browser-security matrix, plus affected `G-15`, `G-20`–`G-23`; a single happy-path login cannot substitute.
+11. Settings schema/catalog/provider/speed/persistence/snapshot changes rerun `G-19` including failure injection, live capability reconciliation and concurrent save/start, plus affected `G-15`, `G-17`, `G-20`–`G-23`.
+12. `SUR-02` presentation or interaction changes rerun affected deployed states/viewports/accessibility paths in `G-20`, active `G-16`, `G-21` and applicable `G-22`; runtime result correlation remains required.
+13. Security-relevant changes rerun every affected implementation-level check, supporting hard gates and `G-23`; the QA `security_requirement_ids` union is rechecked against the exact 11-ID set before any release evaluation.
 
 ## PR Merge And Completion Rules
 
-The repository currently defines no package scripts, CI configuration, branch protection, PR template or deployment gate. This document does not invent them.
+The repository currently defines Node 22 package scripts including `npm run check`, but no inspected CI configuration, branch protection, PR template, Rust artifact workflow or production deployment gate. This document does not invent missing automation or treat the available script as executed evidence.
 
 - A change may be called `merge-ready` only when its requirement trace is complete, all applicable unit/integration/manual design gates pass on the current revision and no blocking finding remains.
-- A merge or local commit is not a release claim. Product V1 is `release-ready` only after all applicable hard gates, including `G-15`, active `G-16`, and `G-17`–`G-20`, pass.
+- A merge or local commit is not a release claim. Product V1 is `release-ready` only after all applicable hard gates, including `G-15`, active `G-16`, `G-17`–`G-20` and mandatory `G-21`–`G-23`, pass.
 - Absence of automation is not a waiver: required evidence may be manual/hybrid but must retain the same result schema.
 - Human approval is not a default completion gate. The one whole-design approval has been recorded in the active baseline; product-specific explicit permissions remain runtime safety boundaries, not PR approvals.
 - Any change that conflicts with current source truth returns to the upstream owner; it is not merged as an implicit requirement change.
@@ -707,7 +845,8 @@ The repository currently defines no package scripts, CI configuration, branch pr
 1. **Sensitive-document policy.** Which versioned classes define an Особливо чутливий документ? Until resolved, uncertain documents must request separate permission; production `G-03` is blocked if the implemented classifier has no versioned policy basis.
 2. **Stopped/replaced Session lifecycle.** What archive treatment applies after `Стоп` and to the prior Session after `Нова задача`? `G-08` can verify cancellation/isolation, but `G-10` cannot pass those archive paths until the policy is fixed.
 3. **Archive/export/deletion contract.** Which bundle/export encoding and content-free deletion receipt/tombstone policy preserve exact body/order while stating provider retention honestly? `G-10` requires the selected contract in its environment fingerprint before release.
-4. **Runtime configuration.** Exact pinned Codex app-server/SDK and Claude Code versions, A2A v0.3.0 serialization profile, runtime adapter start/heartbeat/cancel semantics, wrapping-key provider, crypto version and retry scheduler remain implementation-bound; related gates cannot pass until the deployed choices are named and evidenced.
+4. **Runtime configuration.** Exact pinned Rust workspace/lockfile and sidecar artifact, Codex app-server/SDK and Claude Code versions, A2A v0.3.0 serialization profile, private spool/store paths, MySQL outbox/lease schema, runtime adapter start/heartbeat/cancel semantics, wrapping-key provider, crypto version and retry scheduler remain implementation-bound; related gates cannot pass until the deployed choices are named and evidenced.
 5. **Subscription, infrastructure and provider-status feeds.** Which configured subscription-fee records, actual infrastructure billing/usage feeds and provider-supported usage/limit/reset signals are authoritative? `G-11` requires reconciliation where data exists and `невідомо` where it does not; missing provider status never becomes an invented monetary AI total, reset or per-session token charge.
 6. **Client variance.** Current Element/Matrix formatting and accessibility behavior on Mac, iPhone, Samsung Flip7/Android and Windows requires real-device evidence and honest reporting of material differences.
 7. **Matrix.org.** `matrix.org` is the selected V1 public homeserver on its current free plan. Production `G-02`, `G-14` and `G-15` remain blocked until the free-plan status, bot policy, reliability, private E2EE room invariants and verified device lifecycle have live evidence. `m.federate: false` is not a V1 gate because the owner does not control that server-level setting on the public homeserver.
+8. **Owner MFA disposition.** PRD Security Requirements still leave ASVS L2 `v5.0.0-6.3.3` unresolved: either add MFA to the owner access path or record an explicit owner residual-risk decision. `G-23` cannot pass for release while neither disposition exists.

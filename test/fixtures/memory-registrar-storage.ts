@@ -1,7 +1,7 @@
 import type { RegistrarStorage } from "../../src/session/storage.ts";
 
 export class MemoryRegistrarStorage implements RegistrarStorage {
-  readonly #values = new Map<string, unknown>();
+  #values = new Map<string, unknown>();
 
   async get<T>(key: string): Promise<T | undefined> {
     const value = this.#values.get(key);
@@ -13,6 +13,13 @@ export class MemoryRegistrarStorage implements RegistrarStorage {
   }
 
   async transaction<T>(operation: (storage: RegistrarStorage) => Promise<T>): Promise<T> {
-    return operation(this);
+    const prior = this.#values;
+    this.#values = new Map(prior);
+    try {
+      return await operation(this);
+    } catch (error) {
+      this.#values = prior;
+      throw error;
+    }
   }
 }

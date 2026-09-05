@@ -9,6 +9,8 @@ export type MySqlConnection = Readonly<{
   commit: () => Promise<void>;
   rollback: () => Promise<void>;
   release: () => void;
+  /** mysql2 exposes destroy(); it is required when a session lock cannot be released safely. */
+  destroy?: () => void;
 }>;
 
 export type MySqlPool = Readonly<{
@@ -130,7 +132,10 @@ export class MySqlKeyValueStorage implements RegistrarStorage, SettingsStorage {
 export function parseGodaddyDatabaseConfiguration(
   environment: Record<string, unknown>
 ): GodaddyDatabaseConfigurationResult {
-  if (environment.GODADDY_STATE_DATABASE_ROLE !== GODADDY_STATE_DATABASE_ROLE) {
+  if (
+    environment.RUNTIME_MODE !== "production" ||
+    environment.GODADDY_STATE_DATABASE_ROLE !== GODADDY_STATE_DATABASE_ROLE
+  ) {
     return { ok: false, code: "state_database_not_enabled" };
   }
 

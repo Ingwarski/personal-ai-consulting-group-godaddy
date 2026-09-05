@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  confirmedMessageFitsMatrixRuntimeLimits,
+  DurableMatrixIngress,
   formatConfirmedMessageForMatrix,
-  MatrixConfirmedMessagePublisher,
+  MatrixOrderedOutboxDrainer,
   validateMatrixIngress,
   type MatrixDeviceTrust,
   type MatrixDeviceTrustResolver
@@ -14,22 +16,30 @@ const binding: RoomBinding = {
   roomId: "!consultant:example.test",
   ownerMxid: "@owner:matrix.org",
   botMxid: "@bot:matrix.org",
-  homeserver: "matrix.org"
+  homeserver: "matrix.org",
+  botDeviceId: "BOT_DEVICE_1"
 };
 
 const secureRoom: MatrixRoomState = {
   roomId: binding.roomId,
+  homeserver: "matrix.org",
   encrypted: true,
   joinedMembers: [binding.ownerMxid, binding.botMxid],
   pendingInvites: 0,
+  joinRule: "invite",
   historyVisibility: "joined",
   publicAddressOrListing: false,
   guestsAllowed: false,
   widgetsEnabled: false,
   bridgesPresent: false,
   botDeviceVerified: true,
-  botDeviceRevoked: false
+  botDeviceRevoked: false,
+  botDeviceId: binding.botDeviceId
 };
+
+const roomResolver = (room: MatrixRoomState = secureRoom) => ({
+  resolveCurrentRoom: async () => room
+});
 
 const trustResolver = (trust: MatrixDeviceTrust = "verified", deliverySafe = true): MatrixDeviceTrustResolver => ({
   resolveOwnerDevice: async () => trust,
@@ -50,7 +60,10 @@ test("accepts only an encrypted event from a crypto-store-verified owner device 
   const result = await validateMatrixIngress(binding, secureRoom, ingress({ body: "Потрібен консиліум." }), trustResolver());
 
   assert.equal(result.ok, true);
-  if (result.ok) assert.equal(result.value.body, "Потрібен консиліум.");
+  if (result.ok) {
+    assert.equal(result.value.body, "Потрібен консиліум.");
+    assert.equal(result.value.senderDeviceId, "OWNER_DEVICE_1");
+  }
 });
 
 test("blocks room drift, wrong room/sender, unencrypted events and secret-like content", async () => {
@@ -84,6 +97,13 @@ test("fails closed for unverified, revoked, unknown or unavailable owner-device 
   }), { ok: false, code: "device_trust_unavailable" });
 });
 
+test("rejects an ingress body above 64 KiB by UTF-8 bytes before durable storage", async () => {
+  const exact = await validateMatrixIngress(binding, secureRoom, ingress({ body: "ї".repeat(32_768) }), trustResolver());
+  const oversized = await validateMatrixIngress(binding, secureRoom, ingress({ body: "ї".repeat(32_769) }), trustResolver());
+  assert.equal(exact.ok, true);
+  assert.deepEqual(oversized, { ok: false, code: "invalid_event" });
+});
+
 test("formats only a registrar-confirmed role, time and complete body for Matrix delivery", () => {
   const delivery = formatConfirmedMessageForMatrix(binding, {
     generation: 1,
@@ -102,6 +122,17 @@ test("formats only a registrar-confirmed role, time and complete body for Matrix
   assert.match(delivery.body, /Повна відповідь\nбез скорочення/);
   assert.equal(delivery.replyToEventId, "$owner-request");
   assert.doesNotMatch(delivery.formattedBody, /internal-event-0002|sequence|bodyHash/);
+});
+
+test("enforces the actual plaintext and formatted Matrix runtime byte envelopes without truncation", () => {
+  const base = {
+    generation: 1, sequence: 1, internalEventId: "internal-envelope-event", role: "R", visibleTime: "12:00",
+    bodyFormat: "markdown" as const, bodyHash: "a".repeat(64), confirmedAt: "2026-09-04T12:00:00.000Z"
+  };
+  const prefixBytes = new TextEncoder().encode("R · 12:00\n\n").byteLength;
+  assert.equal(confirmedMessageFitsMatrixRuntimeLimits({ ...base, body: "a".repeat(65_536 - prefixBytes) }), true);
+  assert.equal(confirmedMessageFitsMatrixRuntimeLimits({ ...base, body: "a".repeat(65_537 - prefixBytes) }), false);
+  assert.equal(confirmedMessageFitsMatrixRuntimeLimits({ ...base, body: "<".repeat(40_000) }), false);
 });
 
 test("renders the closed Markdown subset and keeps injected HTML inert", () => {
@@ -135,51 +166,257 @@ test("keeps the legacy HTML output byte-identical when the body contains no Mark
   assert.equal(delivery.formattedBody, "<strong>Роль · 16:20</strong><p>Перший рядок<br>другий.</p><p>Новий абзац.</p>");
 });
 
-test("stores one idempotent Matrix delivery receipt for a confirmed message and rejects a conflicting retry", async () => {
-  const values = new Map<string, unknown>();
-  let sends = 0;
-  const publisher = new MatrixConfirmedMessagePublisher({
+test("persists a durable work intent before ACK eligibility and never dispatches inline", async () => {
+  const rows = new Map<string, { hash: string; acked: boolean; processed: boolean }>();
+  const durable = new DurableMatrixIngress({
     binding,
-    client: {
-      send: async ({ transactionId }) => {
-        sends += 1;
-        assert.match(transactionId, /^pc-1-4-/);
-        return { eventId: "$matrix-delivery-0004" };
-      }
-    },
+    roomState: roomResolver(),
+    deviceTrust: trustResolver(),
+    now: () => new Date("2026-09-04T12:00:00.000Z"),
     receipts: {
-      get: async <T>(key: string) => values.get(key) as T | undefined,
-      put: async <T>(key: string, value: T) => { values.set(key, value); }
-    },
-    deviceTrust: trustResolver()
+      persistIntent: async (input) => {
+        const existing = rows.get(input.eventId);
+        if (existing !== undefined) {
+          if (existing.hash !== input.eventHash) return { ok: false, code: "event_conflict" as const };
+          return { ok: true, replayed: true, durableAck: true, processed: existing.processed };
+        }
+        assert.equal(input.workIntent.body, "Текст");
+        rows.set(input.eventId, { hash: input.eventHash, acked: false, processed: false });
+        return { ok: true, replayed: false, durableAck: true, processed: false };
+      },
+      acknowledge: async (eventId) => {
+        const row = rows.get(eventId);
+        if (row === undefined) return false;
+        row.acked = true;
+        return true;
+      },
+      markMediaConsumed: async () => false
+    }
   });
-  const message = {
-    generation: 1, sequence: 4, internalEventId: "internal-event-0004", role: "Критик", visibleTime: "16:23",
-    body: "Повна критика.", bodyFormat: "markdown" as const, bodyHash: "b".repeat(64), confirmedAt: "2026-08-16T13:23:00.000Z"
-  };
 
-  const first = await publisher.publish(message);
-  const second = await publisher.publish(message);
-  const conflict = await publisher.publish({ ...message, bodyHash: "c".repeat(64) });
-  assert.equal(first.ok, true);
-  assert.equal(second.ok, true);
-  assert.equal(second.ok && second.replayed, true);
-  assert.deepEqual(conflict, { ok: false, code: "receipt_conflict" });
-  assert.equal(sends, 1);
+  const first = await durable.accept(ingress());
+  assert.equal(first.ok && first.workQueued, true);
+  assert.equal(first.ok && first.durableAck, true);
+  if (!first.ok) return;
+  assert.equal(await durable.recordAckSent(first.event.eventId, first.eventHash), true);
+  const replay = await durable.accept(ingress());
+  assert.equal(replay.ok && replay.replayed, true);
+  assert.equal(replay.ok && replay.workQueued, false);
+  assert.equal(replay.ok && replay.durableAck, true);
 });
 
-test("does not send protected output when owner delivery trust is unsafe", async () => {
-  let sends = 0;
-  const publisher = new MatrixConfirmedMessagePublisher({
+test("durably rejects secret-like sidecar input without storing its plaintext", async () => {
+  let rejectedHash: string | undefined;
+  let intentWrites = 0;
+  const durable = new DurableMatrixIngress({
     binding,
-    client: { send: async () => { sends += 1; return { eventId: "$unexpected-delivery" }; } },
-    receipts: { get: async () => undefined, put: async () => {} },
-    deviceTrust: trustResolver("verified", false)
+    roomState: roomResolver(),
+    deviceTrust: trustResolver(),
+    now: () => new Date("2026-09-04T12:00:00.000Z"),
+    receipts: {
+      persistIntent: async () => {
+        intentWrites += 1;
+        return { ok: true, replayed: false, durableAck: true, processed: false };
+      },
+      persistRejection: async (input) => {
+        assert.equal(Object.hasOwn(input, "body"), false);
+        assert.doesNotMatch(JSON.stringify(input), /do-not-persist/u);
+        rejectedHash = input.eventHash;
+        return { ok: true, replayed: false, durableAck: true, processed: false };
+      },
+      acknowledge: async () => true,
+      markMediaConsumed: async () => false
+    }
   });
-  const result = await publisher.publish({
-    generation: 1, sequence: 5, internalEventId: "internal-event-0005", role: "Критик", visibleTime: "16:24",
-    body: "Не надсилати.", bodyFormat: "markdown", bodyHash: "f".repeat(64), confirmedAt: "2026-08-16T13:24:00.000Z"
+
+  const result = await durable.acceptSidecarValidated(ingress({
+    body: "OPENAI_API_KEY=do-not-persist"
+  }));
+  assert.equal(result.ok, false);
+  assert.equal(result.code, "secret_like_content");
+  assert.equal(result.durableRejection?.eventHash, rejectedHash);
+  assert.equal(result.durableRejection?.durableAck, true);
+  assert.equal(intentWrites, 0);
+});
+
+test("preserves nullable media intent and reply relation without persisting handles, and ACKs only after durable media consumption", async () => {
+  const rows = new Map<string, { hash: string; mediaManifestHash: string; mediaConsumed: boolean }>();
+  let persistedIntent: unknown;
+  const durable = new DurableMatrixIngress({
+    binding,
+    roomState: roomResolver(),
+    deviceTrust: trustResolver(),
+    now: () => new Date("2026-09-04T12:00:00.000Z"),
+    receipts: {
+      persistIntent: async (input) => {
+        persistedIntent = input.workIntent;
+        const existing = rows.get(input.eventId);
+        if (existing !== undefined) {
+          if (existing.hash !== input.eventHash) return { ok: false, code: "event_conflict" as const };
+          return { ok: true, replayed: true, durableAck: existing.mediaConsumed, processed: false };
+        }
+        rows.set(input.eventId, {
+          hash: input.eventHash,
+          mediaManifestHash: input.mediaManifestHash,
+          mediaConsumed: false
+        });
+        return { ok: true, replayed: false, durableAck: false, processed: false };
+      },
+      acknowledge: async (eventId, eventHash) => {
+        const row = rows.get(eventId);
+        return row?.hash === eventHash && row.mediaConsumed;
+      },
+      markMediaConsumed: async (input) => {
+        const row = rows.get(input.eventId);
+        if (row?.hash !== input.eventHash || row.mediaManifestHash !== input.mediaManifestHash) return false;
+        row.mediaConsumed = true;
+        return true;
+      }
+    }
   });
-  assert.deepEqual(result, { ok: false, code: "owner_delivery_not_trusted" });
-  assert.equal(sends, 0);
+  const rawMedia = {
+    handle: "boot-1-media-1",
+    declaredMime: "application/pdf" as const,
+    length: 4096,
+    sha256: "a".repeat(64)
+  };
+  const raw = ingress({
+    eventId: "$matrix-media-event-0001",
+    body: null,
+    relationEventId: "$matrix-parent-event-0001",
+    media: [rawMedia]
+  });
+  const first = await durable.accept(raw);
+  assert.equal(first.ok, true);
+  if (!first.ok) return;
+  assert.equal(first.event.body, null);
+  assert.equal(first.event.relationEventId, "$matrix-parent-event-0001");
+  assert.deepEqual(first.event.media, [{
+    declaredMime: "application/pdf", length: 4096, sha256: "a".repeat(64)
+  }]);
+  assert.deepEqual(first.ephemeralMedia, [{ handle: rawMedia.handle, sha256: rawMedia.sha256 }]);
+  assert.doesNotMatch(JSON.stringify(persistedIntent), /boot-1-media-1|handle|path/);
+  assert.equal(first.durableAck, false);
+  assert.equal(await durable.recordAckSent(first.event.eventId, first.eventHash), false);
+  assert.equal(await durable.recordMediaConsumed({
+    eventId: first.event.eventId,
+    eventHash: first.eventHash,
+    mediaManifestHash: first.mediaManifestHash,
+    consumptionReceiptHash: "b".repeat(64)
+  }), true);
+  assert.equal(await durable.recordAckSent(first.event.eventId, first.eventHash), true);
+
+  const replay = await durable.accept({ ...raw, media: [{ ...rawMedia, handle: "boot-1-media-replay" }] });
+  assert.equal(replay.ok, true);
+  if (!replay.ok) return;
+  assert.equal(replay.eventHash, first.eventHash);
+  assert.equal(replay.replayed, true);
+  assert.equal(replay.workQueued, false);
+  assert.equal(replay.durableAck, true);
+});
+
+test("rejects media paths and out-of-contract media before durable receipt creation", async () => {
+  let persisted = false;
+  const durable = new DurableMatrixIngress({
+    binding,
+    roomState: roomResolver(),
+    deviceTrust: trustResolver(),
+    now: () => new Date(),
+    receipts: {
+      persistIntent: async () => { persisted = true; return { ok: true, replayed: false, durableAck: false, processed: false }; },
+      acknowledge: async () => false,
+      markMediaConsumed: async () => false
+    }
+  });
+  const result = await durable.accept(ingress({
+    body: null,
+    media: [{ handle: "../private/file", declaredMime: "image/png", length: 8, sha256: "c".repeat(64) }]
+  }));
+  assert.deepEqual(result, { ok: false, code: "invalid_event" });
+  assert.equal(persisted, false);
+});
+
+test("drains one leased record with its stored transaction ID and records homeserver acceptance only", async () => {
+  const accepted: string[] = [];
+  const leased = {
+    generation: 1,
+    sequence: 7,
+    transactionId: "pc-1-7-777777777777777777777777",
+    message: {
+      generation: 1, sequence: 7, internalEventId: "internal-event-0007", role: "Стратег", visibleTime: "16:26",
+      body: "Канонічний текст.", bodyFormat: "markdown" as const, bodyHash: "7".repeat(64), confirmedAt: "2026-08-16T13:26:00.000Z"
+    },
+    replyToEventId: "$owner-request-0007",
+    leaseOwner: "node-worker-01",
+    leaseEpoch: 3,
+    attemptCount: 1
+  };
+  const drainer = new MatrixOrderedOutboxDrainer({
+    binding,
+    leaseOwner: "node-worker-01",
+    now: () => new Date("2026-09-04T12:00:00.000Z"),
+    roomState: roomResolver(),
+    deviceTrust: trustResolver(),
+    client: {
+      send: async (input) => {
+        assert.equal(input.transactionId, leased.transactionId);
+        assert.equal(input.delivery.replyToEventId, leased.replyToEventId);
+        return { eventId: "$homeserver-accepted-0007" };
+      }
+    },
+    outbox: {
+      leaseHead: async () => leased,
+      markAccepted: async (_lease, eventId) => { accepted.push(eventId); return { ok: true }; },
+      markBlocked: async () => ({ ok: true }),
+      releaseTransient: async () => ({ ok: true })
+    }
+  });
+  assert.deepEqual(await drainer.drainOne(), {
+    ok: true,
+    state: "accepted",
+    transactionId: leased.transactionId,
+    matrixEventId: "$homeserver-accepted-0007"
+  });
+  assert.deepEqual(accepted, ["$homeserver-accepted-0007"]);
+});
+
+test("retries transient room-state failure with bounded backoff but blocks confirmed drift for reconciliation", async () => {
+  const releases: number[] = [];
+  const blocked: string[] = [];
+  const reconciliations: string[] = [];
+  const leased = {
+    generation: 2, sequence: 1, transactionId: "pc-2-1-888888888888888888888888",
+    message: {
+      generation: 2, sequence: 1, internalEventId: "internal-event-0008", role: "Стратег", visibleTime: "16:27",
+      body: "Текст.", bodyFormat: "markdown" as const, bodyHash: "8".repeat(64), confirmedAt: "2026-08-16T13:27:00.000Z"
+    },
+    leaseOwner: "node-worker-01", leaseEpoch: 1, attemptCount: 2
+  };
+  const outbox = {
+    leaseHead: async () => leased,
+    markAccepted: async () => ({ ok: true } as const),
+    markBlocked: async (_lease: typeof leased, reason: string) => { blocked.push(reason); return { ok: true } as const; },
+    releaseTransient: async (_lease: typeof leased, _code: string, _now: Date, backoff: number) => {
+      releases.push(backoff);
+      return { ok: true } as const;
+    }
+  };
+  const unavailable = new MatrixOrderedOutboxDrainer({
+    binding, outbox, leaseOwner: "node-worker-01", now: () => new Date(), deviceTrust: trustResolver(),
+    roomState: { resolveCurrentRoom: async () => { throw new Error("temporary sync gap"); } },
+    client: { send: async () => ({ eventId: "$never-sent-0001" }) }
+  });
+  assert.deepEqual(await unavailable.drainOne(), { ok: false, code: "room_invariant_failed" });
+  assert.deepEqual(releases, [2_000]);
+  assert.deepEqual(blocked, []);
+
+  const drifted = new MatrixOrderedOutboxDrainer({
+    binding, outbox, leaseOwner: "node-worker-01", now: () => new Date(), deviceTrust: trustResolver(),
+    roomState: roomResolver({ ...secureRoom, joinedMembers: [...secureRoom.joinedMembers, "@other:matrix.org"] }),
+    client: { send: async () => ({ eventId: "$never-sent-0002" }) },
+    onReconciliationRequired: (input) => { reconciliations.push(input.reason); }
+  });
+  assert.deepEqual(await drifted.drainOne(), { ok: false, code: "room_invariant_failed" });
+  assert.deepEqual(blocked, ["room_invariant_failed"]);
+  assert.deepEqual(reconciliations, ["room_invariant_failed"]);
 });
