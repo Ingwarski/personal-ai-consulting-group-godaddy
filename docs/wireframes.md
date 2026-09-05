@@ -2,31 +2,31 @@
 
 - Продукт: `Personal Consultant`
 - Версія wireframes: V1
-- Дата актуалізації: 04.09.2026
+- Дата актуалізації: 05.09.2026
 - Робоча мова: `uk`
-- owner_invocation_id: `bb4649fb-123e-47b4-96e6-d76c05d8ff43`
+- owner_invocation_id: `f4799c94-b8c3-444c-b46f-deaf1363ee8e`
 
-V1 має рівно дві користувацькі поверхні: приватну invite-only E2EE Matrix-кімнату `SUR-01` у штатному Element для щоденної консультації та вузьку responsive web-поверхню `SUR-02` для `Налаштувань власника`. Цей артефакт визначає низькодеталізовану структуру, ієрархію, дії та структурні зміни станів обох поверхонь. Він не визначає кастомний Element chrome, фінальний текст, візуальний стиль або технічну реалізацію. Candidate B і чинний Approved Visual Baseline збережені; ця reconciliation не переосмислює їхню композицію чи presentation.
+V1 має рівно дві користувацькі поверхні: приватну invite-only E2EE Matrix-кімнату `SUR-01` у штатному Element для щоденної консультації та вузьку responsive web-поверхню `SUR-02` для `Налаштувань власника`. Цей артефакт визначає низькодеталізовану структуру, ієрархію, дії та структурні зміни станів обох поверхонь. Він не визначає кастомний Element chrome, фінальний текст, візуальний стиль або технічну реалізацію. Незмінені Matrix-структури Candidate B збережені; обмежене узгодження Google-входу й provider-груп не є новим затвердженням дизайну або доказом візуальної відповідності.
 
 ## Source References
 
-Порядок джерел відповідає `docs/guardrails.md`. Безпосередня залежність — валідований `docs/screen-map.md` із SHA-256 `385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52`.
+Порядок джерел відповідає `docs/guardrails.md`. Безпосередня залежність — валідований `docs/screen-map.md` із SHA-256 `fe25f595f954cb7b04e369aec65066ec31d7a66a3359953c968343713d41039d`. Визначення JOB/UC і станів не дублюються: `SUR-01` підтримує `JOB-001`, `JOB-002`, `JOB-004`, `JOB-005` через `UC-001`, `UC-002`, `UC-005`, `UC-006`; `SUR-02` — `JOB-003` через `UC-003`, `UC-004`.
 
 | Джерело | Спожиті фрагменти |
 |---|---|
-| `README.md` | Початкове позиціонування; принцип практичного результату; історичний browser-preview лише як нецільовий контекст |
-| `docs/product-idea.md` | Межі V1; дві поверхні; Element/Matrix Candidate B; GoDaddy Node/MySQL; локальний owner-password access; stateless Preview; destructive-cleanup gate; три settings groups; atomic save; immutable active-session snapshot |
-| `docs/prd.md` | §3.2–3.5; §4–5; `FR-001`–`FR-046`; `NFR-001`–`NFR-019`; `Security Requirements`; §8–12; `AC-001`–`AC-016` |
+| Успадковане посилання `README.md` | Початкове позиціонування з попередньої версії; не перечитано як нове джерело цього узгодження |
+| Успадковане посилання `docs/product-idea.md` | Незмінені продуктова межа й Matrix-контекст з попередньої версії; чинну auth/settings-поведінку визначають PRD, journey та screen map |
+| `docs/prd.md` | `UC-001`–`UC-006`; `FR-001`–`FR-046`; `NFR-001`–`NFR-019`, окремі `NFR-016.a`–`NFR-016.h`; `Security Requirements`; `AC-001`–`AC-016`; межа збереженої Console-конфігурації та неперевіреного живого входу |
 | `docs/project-context.md` | Бажані результати користувача; Цільові платформи; Основні сценарії; Межі V1; Поза межами V1; Обмеження; Припущення; Ризики; Відкриті питання |
 | `docs/canonical-terms.md` | Ролі; доменні об'єкти; дії; продуктові стани; назви потоків; затверджені/внутрішні терміни; нормалізація; відкриті словникові питання |
 | `docs/user-journey.md` | Consultation Journey Stages 1–10; Settings Journey S1–S5; Decision Points; Failure Paths; Entry And Exit Points; Success States; Confirmed Facts And Constraints; Open Questions |
-| `docs/screen-map.md` | `SUR-01`–`SUR-02`; `MG-01`–`MG-13`; `SG-01`–`SG-05`; локальний owner-password/session path; MySQL save; Surface Closure Matrix; Route Map; Navigation Model; Journey-To-Screen Trace; `SS-01`–`SS-46`; Transition Notes; Entry And Exit Points; Edge Paths; Out Of Scope Screens; Open Questions |
-| `docs/guardrails.md` | Source Of Truth Order; GoDaddy/MySQL і штатний hostname; локальна owner-password/session auth; HappyPro/cleanup gates; AI Autonomy Boundaries; Forbidden Changes; Scope Boundaries; Design Authority Rules; When To Ask; When To Stop; Artifact Separation Rules; Verification Rules; Evidence Requirements |
-| `DAS Forge 4` | Лише bounded pattern evidence для typed allowlists, validate-before-save, atomic save, default/reset та effective-value display; не product scope, не четверта група й не конкретний UI |
+| `docs/screen-map.md` | `SUR-01`, `SUR-02`; незмінені `MG-01`–`MG-13`; `SG-01`–`SG-05`; Google-вхід і окрема локальна сесія; `SS-01`–`SS-46`, їхня належність, входи, виходи, відновлення й підтримувані UC |
+| `docs/guardrails.md` | Межі джерел, GoDaddy/MySQL, Google-входу й незалежних Google/локальної/AI сесій; без власної MFA чи резервного пароля; каталог не блокує вхід; незмінені Matrix, HappyPro/cleanup, safety/privacy й permission-межі |
+| Успадковане `DAS Forge 4` | Історична згадка обмежених патернів із попередньої версії; не спожито як нове джерело, не продуктова вимога чи конкретний UI |
 
 Скорочення трасування: `PRD` — `docs/prd.md`; `PC` — `docs/project-context.md`; `CT` — `docs/canonical-terms.md`; `UJ` — `docs/user-journey.md`; `SM` — `docs/screen-map.md`; `GR` — `docs/guardrails.md`.
 
-Використані SHA-256: `docs/product-idea.md` — `ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a`; `docs/prd.md` — `32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94`; `docs/project-context.md` — `1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15`; `docs/canonical-terms.md` — `e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da`; `docs/guardrails.md` — `4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48`; `docs/user-journey.md` — `dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77`; `docs/screen-map.md` — `385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52`.
+Спожиті SHA-256: `docs/prd.md` — `a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc`; `docs/user-journey.md` — `ef058d468fde194ff38efe5d209edbdc3f061d90e4f9602671071c1cc28b2c39`; `docs/screen-map.md` — `fe25f595f954cb7b04e369aec65066ec31d7a66a3359953c968343713d41039d`; `docs/guardrails.md` — `6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b`; `docs/project-context.md` — `458da1092f8ac6b10fca6aadc33fab6b9b56aef650fff23e814fe84cb15735a4`; `docs/canonical-terms.md` — `dd4a7ef9ee403f941b649247b14eafff044af717d54fb8731b0d2d26665848d3`. Попередній `docs/wireframes.md` — `49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca`, invocation `bb4649fb-123e-47b4-96e6-d76c05d8ff43`.
 
 ## Wireframe Principles
 
@@ -40,8 +40,8 @@ V1 має рівно дві користувацькі поверхні: при�
 8. **Нативні межі не імітуються.** Invitation, recovery, verification, revocation, доставка, offline-стан, прокручування, Matrix replies, вкладення й сповіщення належать Element/Matrix або операційній системі. Продукт не додає власного звуку. `[SM: general state categories, Transition Notes]`
 9. **Candidate B показує фактичну роботу одразу й дослівно.** Кожне фактично надіслане агентське доручення, проміжна репліка, критика або виправлення з'являється після реєстрації повністю, без пакетування до фіналу, від одного Matrix-акаунта бота з конкретною роллю та `HH:MM`. `[SM: MG-07, SS-11; PRD: FR-014–FR-016, FR-034]`
 10. **Subscription preflight не є login UI.** `SS-28` передує кожному model call і залежному agent launch, але не показує credential fields. Успіх непомітно продовжує маршрут; `SS-29` додає лише безпечний `MG-11`, а повторний вхід відбувається поза Matrix. `[SM: SS-28–SS-29; GR: When To Stop]`
-11. **Локальний owner-вхід має окрему вузьку межу.** `SUR-02` на штатному GoDaddy hostname відкривається лише після server-side перевірки owner password і створення валідної захищеної owner session; він не є Codex/Claude Subscription OAuth і не показує password/session/provider credentials. `[SM: SG-01, SS-30–SS-33; GR: Scope Boundaries, Verification Rules]`
-12. **Налаштування не змінюють інваріанти консультації.** Три групи керують лише дозволеними моделями, спільною глибиною міркування та orchestration preset швидкості для нових сесій; critic, A2A, E2EE, дослівність, research, safety, privacy і permission guards не мають settings controls. `[SM: SG-02–SG-05, Transition Notes 18–21]`
+11. **Google-вхід і локальна сесія мають окрему межу.** `SUR-02` пропонує явну дію входу й повернення з Google у тій самій вкладці, а не парольну форму. Захищені значення доступні лише після належних перевірок і створення окремої локальної сесії; прихована чи недоступна дія не замінює серверної авторизації. Немає власної MFA застосунку, резервного пароля або змішування з AI Subscription OAuth. `[SM: SG-01, SS-30–SS-33; PRD: FR-038(a–d), FR-039(a–c), NFR-016.a–NFR-016.h, AC-012]`
+12. **Налаштування не змінюють інваріанти консультації.** `Codex-агенти` та `Claude Code-критик` мають незалежні модель і міркування; `Швидкість консиліуму` — окремий пресет для нових сесій. Спільної шкали немає; critic, A2A, E2EE, дослівність, research, safety, privacy й permission guards не мають controls вимкнення. `[SM: SG-02–SG-05; PRD: FR-040–FR-046]`
 
 ### Оборотні структурні рішення wireframe
 
@@ -147,15 +147,15 @@ V1 має рівно дві користувацькі поверхні: при�
 
 **Source Screen**
 
-`docs/screen-map.md`: `SUR-02`, `SG-01`–`SG-05`, `SS-30`–`SS-46`.
+`docs/screen-map.md`: `SUR-02`, `SG-01`–`SG-05`, `SS-30`–`SS-46`; `JOB-003`, `UC-003`, `UC-004`; `UJ: S1–S5`.
 
 **Purpose**
 
-Дати єдиному Власнику вузьку responsive web-поверхню на штатному GoDaddy hostname, де після локального owner-входу можна переглянути й однією MySQL-транзакцією атомарно зберегти три групи налаштувань для нових сесій. Поверхня не переносить консультацію з Element і не показує чат, архів, витрати, live agent status або admin controls. `[SM: Screen Inventory, Surface Closure Matrix; UJ: Settings Journey S1–S5]`
+Дати єдиному Власнику вузьку responsive web-поверхню на штатному GoDaddy hostname: явно пройти Google-вхід у тій самій вкладці, отримати окрему локальну сесію та за готових каталогів переглянути й атомарно зберегти три групи майбутніх параметрів. Вхід не залежить від готовності моделей або AI-підписок. Поверхня не переносить консультацію з Element і не показує чат, архів, витрати, live agent status або admin controls. `[SM: SUR-02, SS-30–SS-38; UJ: S1–S5]`
 
 **Primary User Intent**
 
-Безпечно вибрати сумісні моделі, одну спільну глибину міркування та пресет швидкості, зрозуміти current/default/effective значення й застосувати весь валідний набір однією дією лише до наступної Сесії. `[PRD: US-024–US-029; SM: SG-02–SG-05]`
+Безпечно вибрати незалежні модель і рівень міркування Codex та Claude Code, обрати швидкість, зрозуміти чинні, стандартні й фактично застосовані значення та зберегти весь валідний набір лише для наступної консультації. `[PRD: UC-004, FR-040–FR-045; SM: SG-02–SG-05]`
 
 **Layout Structure**
 
@@ -163,104 +163,91 @@ V1 має рівно дві користувацькі поверхні: при�
 
 | Порядок | Зона | Ієрархія | Пріоритет | Структурний контракт |
 |---:|---|---|---|---|
-| 0 | Локальна owner access boundary (`SG-01`) | `H1` | `P0` | Поле owner password і server-side verification; після успіху — захищена owner session; denied-state не розкриває settings, password/hash/session details і не пропонує іншу identity, registration або recovery/reset |
-| 1 | Identity/status header | `H1` | `P0` | Назва `Налаштування власника`; підтверджений owner access без display identity; статус свіжості/доступу; короткий вихід до штатного Element. Жодних password/session, Codex/Claude credential, token, setup-token або OAuth-state details |
+| 0 | Межа Google-входу (`SG-01`) | `H1` | `P0` | Назва поверхні → коротке пояснення зовнішнього входу → явна дія `Увійти через Google` → повернення в тій самій вкладці. Парольних полів, власної MFA, резервного входу й захищених значень немає; скасування, очікування або безпечна відмова мають власний текст і наступну дію |
+| 1 | Статус локального доступу (`SG-01`) | `H1` | `P0` | Назва налаштувань і безпечний статус без точної email-адреси чи credentials; окремі дії повернення до Element, локального виходу та захищеного припинення своїх активних сесій. Закриття вкладки не видається за вихід, локальний вихід — за Google logout |
 | 2 | Фактичні значення й межа сесії (`SG-05`) | `H2` | `P0` | Видимі current, default та, якщо є Активна сесія, її immutable effective snapshot; пояснення, що save/reset діє лише для нової Сесії |
-| 3 | `Моделі` (`SG-02`) | `H2` | `P1` | Два окремі typed allowlisted selectors: `Codex-агенти` і `Claude Code-критик`; current/default маркери біля кожного; free text та довільний slug відсутні |
-| 4 | Provider-specific міркування (`SG-03`) | `H2` | `P1` | Окремі select controls у блоках Codex і Claude Code: «За замовчуванням моделі» плюс тільки фактично підтверджені рівні; provider-specific несумісність пояснюється inline й блокує save без silent downgrade |
-| 5 | `Швидкість` (`SG-04`) | `H2` | `P1` | Один вибір `швидко` / `збалансовано` / `ретельно`; біля кожного стислий orchestration impact на pacing/budget, але без послаблення обов'язкових перевірок |
+| 3 | `Codex-агенти` (`SG-02`, `SG-03`) | `H2` | `P1` | В одному provider-блоці: точна підтверджена модель/версія → її незалежне міркування → чинні/стандартні значення → локальна помилка сумісності; довільного slug немає |
+| 4 | `Claude Code-критик` (`SG-02`, `SG-03`) | `H2` | `P1` | Власні модель і міркування в одному блоці; точні підтверджені версії, `Opus → Sonnet → Haiku`, новіші версії сімейства першими. `За замовчуванням моделі` не передає явного effort; жодної зміни Codex через цей блок |
+| 5 | `Швидкість консиліуму` (`SG-04`) | `H2` | `P1` | Один вибір `швидко` / `збалансовано` / `ретельно` зі стислим поясненням оркестрації; обов'язкові перевірки незмінні |
 | 6 | Validation summary (`SG-05`) | `H2` | `P0` за помилки, `P1` за valid | Показує валідність усього набору, capability freshness, offline/version conflict і точну групу з помилкою; не перетворюється на fourth settings group |
 | 7 | Action row (`SG-05`) | `H1` | `P0` | Primary `Зберегти` виконує одну atomic validated save; secondary `Повернути default` відкриває явне підтвердження; `Скасувати зміни` відкидає лише локальний dirty set |
 | 8 | Result/status region (`SG-05`) | `H1` | `P0/P1` | Loading, success або error оголошуються текстом; success підтверджує повний набір і наступну Сесію, error підтверджує незмінність попереднього current |
 
-Desktop low-fi blueprint; дві колонки дозволені лише всередині основного form-flow, коли ширина не послаблює порядок читання:
+Низькодеталізований каркас входу `SS-30` / `SS-31` (назви дій — змістові орієнтири, не фінальний текст):
 
 ```text
-┌─ Налаштування власника ─────────────────────────────────────────────┐
-│ Owner-доступ підтверджено          Статус: актуально    [Element] │
-│ Локальна owner session ≠ Codex/Claude Subscription OAuth          │
-├────────────────────────────────────────────────────────────────────┤
-│ Current для нових сесій │ Default │ Effective Активної сесії      │
-│ Effective snapshot незмінний; збережене діє з наступної Сесії.    │
-├───────────────────────────────┬────────────────────────────────────┤
-│ Моделі                       │ Глибина міркування                 │
-│ Codex-агенти       [select]  │ [low][medium][high][xhigh]        │
-│ Claude Code-критик [select]  │ Codex: effective mapping/status   │
-│ current/default позначені    │ Claude: effective mapping/status  │
-│                               │ inline incompatibility, якщо є    │
-├───────────────────────────────┴────────────────────────────────────┤
-│ Швидкість                                                         │
-│ ( ) швидко — коротший pacing/budget                               │
-│ ( ) збалансовано — базовий pacing/budget                          │
-│ ( ) ретельно — ширший pacing/budget                               │
-│ Mandatory critic/A2A/E2EE/verbatim/research/safety/privacy сталі. │
-├────────────────────────────────────────────────────────────────────┤
-│ Validation / save status                                           │
-│ [Повернути default] [Скасувати зміни]          [Зберегти]          │
-└────────────────────────────────────────────────────────────────────┘
+Налаштування власника
+Коротке пояснення: Google підтверджує особу; параметри ще закриті.
+[Увійти через Google]   [Відкрити Element]
+  → Google у тій самій вкладці → повернення й перевірка
+  → локальний доступ / скасування / безпечна відмова
 ```
 
-Mobile low-fi blueprint з тим самим DOM/read order і без sidebar:
+Desktop-каркас після входу: дві колонки можливі лише для двох незалежних provider-блоків, без зміни порядку читання.
 
 ```text
-┌─ Налаштування власника ──────┐
-│ Owner identity · status      │
-│ [Відкрити Element]           │
-├──────────────────────────────┤
-│ Current / Default            │
-│ Effective Активної сесії     │
-│ Snapshot notice              │
-├──────────────────────────────┤
-│ Моделі                       │
-│ Codex            [select]    │
-│ Claude critic    [select]    │
-├──────────────────────────────┤
-│ Глибина міркування [select]  │
-│ Codex mapping/status         │
-│ Claude mapping/status        │
-│ Inline validation            │
-├──────────────────────────────┤
-│ Швидкість                    │
-│ ( ) швидко + impact          │
-│ ( ) збалансовано + impact    │
-│ ( ) ретельно + impact        │
-├──────────────────────────────┤
-│ Validation / result          │
-│ [Зберегти]                   │
-│ [Повернути default]          │
-│ [Скасувати зміни]            │
-└──────────────────────────────┘
+Налаштування власника — локальний доступ підтверджено
+[Element]  [Локальний вихід]  [Припинити свої активні сесії]
+Локальна сесія ≠ Google-сесія ≠ AI Subscription OAuth
+Чинні / стандартні / фактично застосовані значення
+Зміни діють лише для наступної консультації.
+
+Codex-агенти                         Claude Code-критик
+Модель [підтверджена версія]          Модель [підтверджена версія]
+Міркування [лише цієї моделі]        Міркування [лише цієї моделі]
+Чинні / стандартні · помилка         Чинні / стандартні · помилка
+
+Швидкість консиліуму [швидко / збалансовано / ретельно]
+Перевірка сумісності / результат збереження
+[Повернути default] [Скасувати зміни] [Зберегти]
 ```
+
+На mobile порядок той самий в одній колонці: доступ і вихід → чинні/стандартні значення та межа активної консультації → весь блок Codex → весь блок Claude Code → швидкість → перевірка → дії й результат. Модель не відокремлюється від власного міркування та помилки. Назви конкретних доступних версій беруться з підтвердженого каталогу, а не вигадуються в каркасі.
 
 **Primary CTA**
 
-`Зберегти` доступне лише для dirty-набору, який пройшов свіжу capability validation для обох runtimes. Дія зберігає всі три групи як одну версію або не змінює жодної; під час `SS-39` повторне натискання не створює duplicate/partial write. `[SM: SS-36–SS-41; PRD: FR-043–FR-044]`
+До входу головна дія — явно `Увійти через Google` (`UC-003`, `SS-30`). Після входу `Зберегти` доступне лише для зміненого набору, який пройшов свіжу перевірку сумісності обох провайдерів. Дія зберігає всі три групи як одну версію або не змінює жодної; `SS-39` не показує успіху до підтвердженого результату. `[SM: SS-36–SS-41; PRD: UC-004, FR-042, FR-044, NFR-017, AC-013]`
 
 **Secondary Actions**
 
 - `Повернути default` → окреме підтвердження `SS-42` → атомарний результат `SS-43`.
 - `Скасувати зміни` повертає локальні значення до current без server write.
-- `Відкрити Element` або закрити сторінку повертає до щоденної консультації; це не глобальна web-навігація.
+- `Відкрити Element` або закрити сторінку повертає до консультації, але не означає локального виходу. Окремі видимі дії локального виходу й захищеного припинення своїх сесій завершують доступ за `UC-003`; вони не виходять із Google й не змінюють AI OAuth.
 
 **Inputs And Content**
 
-- Рівно три settings groups: `Моделі`, `Глибина міркування`, `Швидкість`. Identity/status, validation, actions і snapshot є службовими зонами `SG-01`/`SG-05`, а не додатковими групами.
-- Моделі обираються лише з окремих typed allowlists; поля довільного model slug немає.
-- Глибина має один shared value, але показує фактичне provider mapping/status для обох runtimes; невідома чи несумісна capability не замінюється мовчки.
+- Рівно три конфігуровані групи: `Codex-агенти`, `Claude Code-критик`, `Швидкість консиліуму`. Кожна provider-група містить власні модель і міркування (`SG-02`, `SG-03`); доступ, статус, перевірка, дії й snapshot — службові зони `SG-01`/`SG-05`, не додаткові групи.
+- Моделі обираються з незалежних підтверджених списків з точними назвами й версіями; Claude впорядковано `Opus → Sonnet → Haiku`, версії сімейства від новіших до старіших. Поля довільного slug немає.
+- Міркування незалежне для конкретної моделі кожного провайдера; спільної шкали, перенесення рівня чи мовчазної заміни немає. `За замовчуванням моделі` не передає явного effort.
 - Швидкість є лише orchestration preset. Вона не означає Claude Fast Mode, API/PAYG, usage credits або вимкнення критика, A2A, E2EE, visible verbatim, research, safety, privacy чи permissions.
-- Owner access/status не містить password value, hash або session secret; сторінка не показує й не приймає Codex/Claude OAuth credentials, `auth.json`, setup-token, API keys або reauth codes.
-- Інша identity, registration, password recovery/reset, dashboard, чат, архів, admin settings, звук і motion-control відсутні. Єдине password-поле існує лише на локальному owner-login entry й не є Settings value.
+- Статус доступу не містить точного email, Google/локальних секретів чи серверних credentials; Settings не показують і не приймають Codex/Claude OAuth credentials, `auth.json`, setup-token, API keys або reauth codes.
+- Інша ідентичність, інший IdP, реєстрація, парольна форма чи fallback, власна MFA застосунку, dashboard, чат, архів, admin settings, звук і motion-control відсутні. Пароль Google вводиться лише у провайдера, не в застосунку.
 
 **States**
 
 `SS-30`–`SS-46`. Entry/access: `SS-30`–`SS-33`; loading/read: `SS-34`–`SS-35`; edit/validation: `SS-36`–`SS-38`; atomic save: `SS-39`–`SS-41`; reset: `SS-42`–`SS-43`; active snapshot: `SS-44`; offline: `SS-45`; mobile/long content: `SS-46`. Точні структурні дельти наведено в `State Variants`.
 
+**Error And Recovery Contract**
+
+Це структурне покриття `SUR-02` / `JOB-003` / `UC-003`, `UC-004`, не результати виконаних перевірок. Причина й наступна дія стоять перед поясненнями; збережені дані називаються лише в межах чинного доступу. Для Google-входу, відмов і відновлення зберігаються окремі `NFR-016.a`, `NFR-016.b`, `NFR-016.c`, `NFR-016.d`, `NFR-016.e`, `NFR-016.f`, `NFR-016.g`, `NFR-016.h`, `FR-038(a–d)`, `FR-039(a–c)` і `AC-012`; видимість контролу не є авторизацією.
+
+| Стани / причина | Що збережено | Наступна дія | Повтор / скасування | Ознака завершення |
+|---|---|---|---|---|
+| `SS-30`, `SS-31`: Власник скасував Google-вхід | Налаштування, активна консультація й AI OAuth не змінені; новий локальний доступ не створено | Залишитися на вході або повернутися до Element | Явний новий вхід починає свіжу транзакцію; скасування не потребує undo | Видимий нейтральний результат скасування або перевірена нова локальна сесія |
+| `SS-31`, `SS-33`: збій Google, недійсний токен/ідентичність/транзакція, replay або обмеження спроб | Захищені значення не відкрито й не змінено; секрети не показано | Безпечна категорія причини → свіжа дозволена спроба або Element | Нова транзакція не обходить обмеження; немає пароля/fallback або скасування захисту | Належні перевірки створили локальну сесію; інакше доступ лишається закритим |
+| `SS-33`: expiry, відкликання чи відключення дозволеного Власника | Попередній збережений набір і активний snapshot незмінні; незбережені зміни не застосовано й не обіцяно відновити після входу | Повторний явний Google-вхід, якщо доступ дозволений; після нього перечитати чинний набір | Стару сесію не відновлювати через Google-сесію або рестарт; за потреби повторно ввести незастосовані зміни | Нова перевірена локальна сесія й свіжі значення; за відключення Власника доступ закритий |
+| `SS-30`, `SS-32`: явний локальний вихід або припинення своїх сесій | Збережені параметри, Google-сесія й AI OAuth не змінені | Показати завершення локального доступу; дати повернення до Element | Undo відкликання немає з міркувань авторизації; повернення лише через новий явний вхід | Відкликаний доступ не працює на сервері, включно після рестарту; це не Google logout |
+| `SS-37`: несумісні параметри | Чинний набір і активний snapshot незмінні; помилка пов'язана зі своїм полем | Змінити саме несумісну модель/міркування або скасувати незбережені зміни | Повторна перевірка лише підтверджених варіантів, без перенесення рівня між провайдерами | Повний набір валідний; збереження доступне або відновлено чинні значення |
+| `SS-38`: непідтверджений каталог, capability drift або недоступний провайдер | Чинні параметри й активний snapshot незмінні; локальний доступ не втрачається лише через каталог | Пояснити неготовність відповідного провайдера; повторити перевірку після відновлення або вийти | Без мовчазної заміни; неперевірений набір не зберігати й нову консультацію не запускати | Підтверджений каталог/сумісність і чинна локальна сесія; сам вхід можливий і до цього |
+| `SS-41`, помилка `SS-43`: атомарне збереження/reset не виконано | Попередній узгоджений набір й активний snapshot незмінні | Показати причину без секретів, перечитати дані та виправити/повторити дію | Повтор лише після свіжої перевірки; скасування повертає до чинного набору | Один підтверджений повний результат, без часткового успіху (`FR-044`, `NFR-017`) |
+| `SS-45`: мережа перервала доступ або підтвердження результату | Останні підтверджені значення не видаються за свіжі; активний snapshot незмінний; невідомий результат операції не вигадується | Відновити мережу, перевірити локальну сесію та перечитати узгоджений результат | Не повторювати запис наосліп; за expiry — новий явний вхід, за потреби — свіжа валідна спроба | Чинний доступ і підтверджені фактичні значення або чесна відмова без false success |
+
 **Notes For Design Brief**
 
 - Зберегти вузьку, спокійну single-page hierarchy; не додавати sidebar, tabs, app shell або fourth settings group.
-- На достатньо широкому desktop `Моделі` та `Глибина міркування` можуть стояти у двох колонках; порядок читання, inline errors і action/result region лишаються однозначними. На mobile всі зони стають в одну колонку.
+- На достатньо широкому desktop два незалежні provider-блоки можуть стояти поруч; модель, її міркування й помилка лишаються в одній групі. На mobile весь Codex-блок передує всьому Claude Code-блоку.
 - Current/default/effective не кодувати лише кольором. Label, help/error association, focus order, keyboard operation і live status мають бути доступними семантично.
-- Цей low-fi blueprint не замінює і не переглядає чинний Approved Visual Baseline; змінюється лише auth/runtime семантика `SUR-02`, не його затверджена композиція чи presentation.
+- Ця обмежена корекція узгоджує лише вхід, локальні сесії та незалежні параметри провайдерів із чинними джерелами; вона не є новим затвердженням дизайну або доказом відповідності живої реалізації. Незмінені Matrix-композиції збережені.
 
 ### Conversational sequence A — доступ, дані та прийняття
 
@@ -406,11 +393,11 @@ Claude Code-агент-критик · HH:MM                               MG-07
 
 **`SUR-02` — responsive web-settings**
 
-- Mobile використовує одну колонку в source order: identity/status → current/default/effective → `Моделі` → `Глибина міркування` → `Швидкість` → validation → actions/result.
-- Desktop лишається читабельно вузьким; дві колонки допустимі лише для `Моделі` + `Глибина міркування`. Status, snapshot, `Швидкість`, validation та atomic actions займають повну ширину потоку.
+- Mobile використовує одну колонку: доступ/статус і вихід → чинні/стандартні/фактичні значення → `Codex-агенти` з моделлю й міркуванням → `Claude Code-критик` з моделлю й міркуванням → `Швидкість консиліуму` → перевірка → дії/результат.
+- Desktop лишається читабельно вузьким; дві колонки допустимі для незалежних Codex і Claude Code груп. Статус, snapshot, швидкість, перевірка й атомарні дії займають повну ширину потоку.
 - На zoom/reflow значення, help, inline error й effective mapping не роз'єднуються з відповідним label/control. Довгі allowlisted model names і incompatibility explanations переносяться без обрізання або horizontal page scroll.
 - Primary/secondary порядок не змінюється між viewport: `Зберегти` є primary; `Повернути default` і `Скасувати зміни` — secondary. На mobile кнопки можуть стати full-width, але reset не набуває візуального пріоритету save.
-- Loading, save success/error, offline та denied status оголошуються текстом і семантично; ані колір, ані motion, ані звук не є єдиним носієм стану. `[SM: SS-34–SS-46; PRD: NFR-016, NFR-019]`
+- Стани входу, завантаження, збереження, offline й відмови повідомляються текстом та семантично; колір, рух або звук не є єдиним носієм змісту. `[SM: SS-30–SS-46; PRD: NFR-018]`
 
 ## Shared Patterns
 
@@ -436,10 +423,10 @@ Claude Code-агент-критик · HH:MM                               MG-07
 
 | ID | Послідовність змістових зон | Головна дія або перехід |
 |---|---|---|
-| `SG-01` | `H1/P0` owner password entry/status; `H2/P1` підтверджений owner access після grant без display identity; `H2/P0` safe denied reason category без protected values/password/hash/session details; чітке відокремлення від Subscription OAuth | Correct owner password + valid session → settings load; denied → повторити локальний owner-вхід або exit |
-| `SG-02` | `H1/P1` `Моделі`; `H2/P1` Codex typed allowlisted selector; `H2/P1` окремий Claude critic typed allowlisted selector; current/default markers | Валідний вибір → shared validation; unknown/arbitrary value недоступне |
+| `SG-01` | `H1/P0`: назва → пояснення Google-переходу → явна дія входу; після повернення — безпечний локальний статус або причина відмови й наступна дія. Після доступу — окремий локальний вихід/припинення своїх сесій; захищених значень до входу немає | Успіх → `SS-32`; скасування/локальний вихід → `SS-30`; відмова/expiry/відкликання → `SS-33`; новий вхід лише явно |
+| `SG-02` | `H1/P1`: модель усередині свого Codex або Claude Code блоку; точні підтверджені версії, чинне/стандартне значення; порядок Claude за `FR-041` | Незалежний вибір → перевірка сумісності; довільне або непідтверджене значення недоступне |
 | `SG-03` | `H1/P1` provider-specific міркування; окремий control у кожному provider block; `H2/P1` Codex capability/status; `H2/P1` Claude Code capability/status; `H1/P0` inline incompatibility | Обидва незалежні значення валідні → dirty valid; provider incompatibility/drift → save і нова сесія blocked |
-| `SG-04` | `H1/P1` `Швидкість`; три mutually exclusive presets; біля кожного короткий orchestration impact; `H2/P0` mandatory guards unchanged | Вибір змінює лише pacing/budget наступної сесії |
+| `SG-04` | `H1/P1`: `Швидкість консиліуму`; три взаємовиключні пресети з коротким поясненням; `H2/P0`: обов'язкові захисні правила незмінні | Зміна лише дозволеної оркестрації майбутньої консультації |
 | `SG-05` | `H1/P0` current/default/effective + snapshot notice; `H1/P0/P1` validation/result; primary atomic save; secondary reset confirmation і cancel | Save/reset → whole-version result; cancel → current; active snapshot лишається незмінним |
 
 ### Permission pattern
@@ -510,22 +497,22 @@ API/PAYG і автоматичні usage credits не використовуют
 | `SS-27` | Room invariants не підтверджено | Жоден робочий блок не додається, доки не підтверджено `matrix.org`, E2EE, invite-only, рівно Власник + бот, no pending invites, history `joined`, no public address/listing, no guests/bridges/widgets і verified devices | Після відновлення → `SS-01`; інакше exit |
 | `SS-28` | Передзапусковий subscription auth/quota/private preflight | Після `MG-04` і до кожного залежного model call/agent launch немає нового agent block або auth UI. Система перевіряє subscription OAuth mode, quota, private single-owner eligibility та відсутність API/PAYG credentials; для Codex — один managed-refresh OAuth state без клонів `auth.json`/cache, але окремі real sessions/threads; для critic — Claude subscription setup-token | Успіх → `SS-09` або `SS-10`; unknown/expired/revoked/refresh failure/invalid setup-token/quota exhausted/forbidden credential/third-party or ineligible path → `SS-29` |
 | `SS-29` | Fail-closed auth/quota/private boundary | Додано лише safe `MG-11`: категорія → залежну роботу зупинено → відомий reset або `невідомо` → reauth тільки поза Matrix → заборона надсилати token/setup-token/`auth.json`/URL/code → no API/PAYG/credits fallback. Немає agent reply, login form, button або success-state; уже підтверджені репліки незмінні | Provider reset або завершена Власником out-of-band reauth → свіжий `SS-28`; інакше exit/неповний результат |
-| `SS-30` | Вхід до `Налаштувань власника` | Базовий protected form ще відсутній; на штатному GoDaddy hostname показано лише назву вузької settings-поверхні, label + owner-password field і submit, без chat/dashboard/archive chrome | До `SS-31` |
-| `SS-31` | Локальна owner-перевірка триває | Password submit заблоковано від дублювання; показано нейтральний loading/access status. Settings values, password/hash/session details, інша identity, registration/recovery/reset або Subscription OAuth content відсутні | Grant → `SS-32`; denied → `SS-33` |
-| `SS-32` | Owner-доступ надано | Password field більше не рендериться; у status header з'являється safe owner-access status, а password/session/provider credentials відсутні | До `SS-34` |
-| `SS-33` | Доступ до settings відхилено | Protected form і current/default/effective values не рендеряться; одна permission boundary повідомляє про відмову без password/hash/session-policy details чи іншої identity/recovery fallback | Повторний локальний owner-вхід або exit |
+| `SS-30` | Початок входу або завершений локальний доступ | Захищеної форми немає: назва → коротке пояснення → `Увійти через Google` → повернення до Element. Після скасування чи локального виходу показується відповідний нейтральний результат без захищених значень; парольних полів немає | Явна свіжа спроба → `SS-31`; чинна сесія після серверної перевірки → `SS-32`; Element/закриття |
+| `SS-31` | Google-вхід і перевірка повернення | Дія відкриває Google у тій самій вкладці; після повернення нейтральний статус відділяє перевірку входу від завантаження каталогу. Нове натискання не подається як завершення попереднього входу; токени, credentials і захищені значення не показуються | Успіх → `SS-32`; скасування → `SS-30`; збій, чужа/прострочена транзакція чи replay → `SS-33` |
+| `SS-32` | Локальний доступ надано | Безпечний статус підтверджує окрему локальну сесію; видимі локальний вихід і захищене припинення своїх сесій. Неготові каталоги/AI-підписки не повертають до входу й не скасовують локального доступу | `SS-34`; локальний вихід → `SS-30`; expiry/відкликання/відключення Власника → `SS-33` |
+| `SS-33` | Захищений доступ відхилено або припинено | Захищена форма та її значення не показуються. Безпечна причина відрізняє невдалий вхід від завершення локального доступу; після expiry/відкликання збереження недоступне. Дії: новий явний Google-вхід або Element; жодної власної MFA застосунку, пароля чи іншого IdP | Свіжа дозволена спроба → `SS-31`; інакше Element/закриття; відмова й відкликання діють і після рестарту |
 | `SS-34` | Завантаження current/default/effective | Identity header лишається; form controls мають loading/read-only стан, а value placeholders не видаються за актуальні дані. Save/reset заблоковані до цілісного versioned load | Успіх → `SS-35`; offline/drift → `SS-45`/`SS-38` |
-| `SS-35` | Current/default/effective і три групи завантажені | Повний базовий `SUR-02`: рівно `SG-02`–`SG-04`, видимі current/default і окремий active effective snapshot; validation актуальна; save disabled, поки немає dirty set | Зміна → `SS-36`/`SS-37`; reset → `SS-42`; exit |
+| `SS-35` | Чинні й стандартні значення завантажені | Повний `SUR-02`: незалежні provider-блоки з моделлю (`SG-02`) та міркуванням (`SG-03`) кожного й швидкість (`SG-04`); точні підтверджені версії, порядок Claude й фактичні значення. Save недоступне без зміненого валідного набору | Зміна → `SS-36`/`SS-37`; reset → `SS-42`; локальний вихід → `SS-30`; Element |
 | `SS-36` | Dirty valid | Changed markers з'являються біля відповідних controls, current/default лишаються видимими, global validation каже, що обидва runtime mappings сумісні; `Зберегти` доступне | Save → `SS-39`; cancel → `SS-35`; нова несумісність → `SS-37` |
 | `SS-37` | Несумісний набір | Inline error стоїть безпосередньо біля problem selector/control; provider mapping/status пояснює несумісність. `Зберегти` недоступне, current та active effective snapshot не змінені; silent effort downgrade відсутній | Виправити → `SS-36`; cancel → `SS-35` |
-| `SS-38` | Capability drift або provider unavailable | Верхній validation status і відповідна група показують, що сумісність не підтверджена. Controls можуть лишатися readable, але save і запуск нової сесії з неперевіреним набором fail closed | Свіжа перевірка → `SS-35`/`SS-36`; інакше exit |
+| `SS-38` | Каталог, можливості моделі або провайдер не підтверджені | Загальний статус і відповідний provider-блок пояснюють неготовність без вигаданих варіантів. Збереження й нова консультація заблоковані, але чинна локальна сесія та її вихід доступні; попередні параметри й активний snapshot незмінні | Свіжа перевірка → `SS-35`/`SS-36`; локальний вихід → `SS-30`; Element |
 | `SS-39` | Atomic save in progress | У status region — `Зберігаємо весь набір`; actions захищені від повторного submit, але selected values лишаються видимими. Немає success до підтвердження whole-version MySQL transaction | Success → `SS-40`; failure/conflict/offline → `SS-41`/`SS-45` |
 | `SS-40` | Atomic save succeeded | Один success status підтверджує новий current для всіх трьох груп; changed markers очищені, default/effective visibility збережена; partial-success copy відсутній | До `SS-44`, далі `SS-35` або exit |
 | `SS-41` | Atomic save failed | Один error status підтверджує, що жодна група не змінена й попередня version лишається current; form не показує false success, active snapshot незмінний | Reload/fix/retry після свіжої validation або exit |
 | `SS-42` | Підтвердження reset to defaults | Inline/modal confirmation називає всі три групи й те, що default стане current лише для нових сесій; `Підтвердити повернення` і `Скасувати` мають однозначний focus order | Confirm → atomic reset/`SS-43`; cancel → попередній form-state |
 | `SS-43` | Reset result | Success показує default як новий current для всіх трьох груп; error використовує `SS-41` і зберігає попередню version. Часткового reset немає | Success → `SS-44`; failure → `SS-41` |
 | `SS-44` | Повідомлення про active-session snapshot | Біля effective values і в result region явно повторено: активна Сесія використовує незмінний snapshot, а current settings застосуються лише до нової | До `SS-35` або exit до Element |
-| `SS-45` | Settings offline | Persistent text status позначає values як несвіжі; save/reset не отримують success, pending operation не вважається завершеною. Після відновлення потрібні нові owner-session і config validation | Online → `SS-31`/`SS-34`; або exit |
+| `SS-45` | Settings offline | Стійкий текст позначає значення як несвіжі, а результат перерваної операції — непідтвердженим, не успішним. Збереження/reset недоступні до відновлення доступу й узгоджених даних; непідтверджений результат не видається за часткове збереження | Після мережі — серверна перевірка сесії: чинна → `SS-32`/`SS-34`, нечинна → `SS-33`; новий Google-вхід лише явно; або Element |
 | `SS-46` | Mobile або long-content settings | Усі зони переходять в одну колонку; довгі model names, mapping/status і incompatibility explanation переносяться повністю; labels/errors/actions зберігають association та порядок. Жодної групи чи effective detail не вилучено | Лишається в актуальному `SS-30`–`SS-45` або exit |
 
 ### Загальні structural variants
@@ -561,7 +548,7 @@ API/PAYG і автоматичні usage credits не використовуют
 ## Cross-Screen Notes For Design Brief
 
 - `SUR-01` і `SUR-02` не утворюють спільний app shell: чат лишається в нативному Element, settings — за окремим protected URL. Перехід може бути лише простим `Відкрити Element`/закриттям сторінки; bot-link не є передумовою.
-- Локальний owner password/session не замінює й не відображає Codex/Claude Subscription OAuth. Жодні password/session/provider credentials або reauth states не переносяться між поверхнями.
+- Google-сесія, локальна сесія й Codex/Claude Subscription OAuth незалежні. Вхід, відмова, локальний вихід і повторний вхід не змінюють AI OAuth; закриття сторінки не означає виходу, а локальний вихід — Google logout. Credentials не переносяться між поверхнями. Окремо дозволене захищене runtime-налаштування підписок не заборонене цією межею.
 - Збережений current у `SUR-02` стає immutable effective snapshot лише на старті нової Сесії в `SUR-01`. Уже Активна сесія не змінює model/effort/preset.
 - Candidate B, повні live verbatim agent messages, команди, дозволи, витрати, архів і нативні Element notifications існують тільки в `SUR-01`; settings не дублюють їх.
 - `SUR-02` використовує наявний GoDaddy Node.js application/MySQL на штатному hostname, не потребує перенесення домену й не створює UI для HappyPro або destructive legacy cleanup; такі зміни залишаються поза продуктом і за окремим JIT-гейтом.

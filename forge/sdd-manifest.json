@@ -1,9 +1,77 @@
 {
+  "dispatches": {
+    "user-journey": {
+      "invocation_id": "4aba9b4f-bd80-441a-8dc4-eaed02ddbbee",
+      "outputs": [
+        "docs/user-journey.md"
+      ],
+      "source_hashes": {
+        "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
+        "docs/project-context.md": "458da1092f8ac6b10fca6aadc33fab6b9b56aef650fff23e814fe84cb15735a4",
+        "docs/canonical-terms.md": "dd4a7ef9ee403f941b649247b14eafff044af717d54fb8731b0d2d26665848d3",
+        "docs/guardrails.md": "6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b"
+      },
+      "consumed_source_fragments": {},
+      "recorded_at": "2026-09-05T13:20:29.059Z"
+    },
+    "screen-map": {
+      "invocation_id": "30fd3c76-59d7-430a-b177-ea041a7aec67",
+      "outputs": [
+        "docs/screen-map.md"
+      ],
+      "source_hashes": {
+        "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
+        "docs/user-journey.md": "ef058d468fde194ff38efe5d209edbdc3f061d90e4f9602671071c1cc28b2c39",
+        "docs/guardrails.md": "6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b",
+        "docs/project-context.md": "458da1092f8ac6b10fca6aadc33fab6b9b56aef650fff23e814fe84cb15735a4",
+        "docs/canonical-terms.md": "dd4a7ef9ee403f941b649247b14eafff044af717d54fb8731b0d2d26665848d3"
+      },
+      "consumed_source_fragments": {},
+      "recorded_at": "2026-09-05T13:35:54.666Z"
+    },
+    "wireframes": {
+      "invocation_id": "f4799c94-b8c3-444c-b46f-deaf1363ee8e",
+      "outputs": [
+        "docs/wireframes.md"
+      ],
+      "source_hashes": {
+        "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
+        "docs/user-journey.md": "ef058d468fde194ff38efe5d209edbdc3f061d90e4f9602671071c1cc28b2c39",
+        "docs/screen-map.md": "fe25f595f954cb7b04e369aec65066ec31d7a66a3359953c968343713d41039d",
+        "docs/guardrails.md": "6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b",
+        "docs/project-context.md": "458da1092f8ac6b10fca6aadc33fab6b9b56aef650fff23e814fe84cb15735a4",
+        "docs/canonical-terms.md": "dd4a7ef9ee403f941b649247b14eafff044af717d54fb8731b0d2d26665848d3"
+      },
+      "consumed_source_fragments": {},
+      "recorded_at": "2026-09-05T13:57:35.262Z"
+    },
+    "design-brief": {
+      "invocation_id": "6551270b-0a92-42ab-957d-dde740932b90",
+      "outputs": [
+        "docs/design-brief.md"
+      ],
+      "source_hashes": {
+        "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
+        "docs/user-journey.md": "ef058d468fde194ff38efe5d209edbdc3f061d90e4f9602671071c1cc28b2c39",
+        "docs/screen-map.md": "fe25f595f954cb7b04e369aec65066ec31d7a66a3359953c968343713d41039d",
+        "docs/wireframes.md": "e065b36af6ba851cb79a2028227b4599129da9c3656dc4be1a913d08cba62ed5",
+        "docs/guardrails.md": "6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b",
+        "docs/project-context.md": "458da1092f8ac6b10fca6aadc33fab6b9b56aef650fff23e814fe84cb15735a4",
+        "docs/canonical-terms.md": "dd4a7ef9ee403f941b649247b14eafff044af717d54fb8731b0d2d26665848d3",
+        "forge/design/candidates/candidate-b/v2/index.html": "07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6",
+        "forge/design/candidates/candidate-b/v2/app.js": "5446f6a4a987b6d71cd6ddb4fa0a46c409d4c69c0a7083c31f043101ef9bcd95",
+        "forge/design/candidates/candidate-b/v2/styles.css": "e79543dfcc1cd297e4904caa2944a790d581499025353fffb913f30b4fed7cb8",
+        "forge/design/evidence/candidate-b/v2/approval-receipt.json": "1b39065b05a2c9b987ab8bf88c118f92e144190769c4ebb9e8a039f21540c300"
+      },
+      "consumed_source_fragments": {},
+      "recorded_at": "2026-09-05T14:07:41.678Z"
+    }
+  },
   "traceability_version": 1,
   "checker_contract_version": 1,
   "pipeline_version": "1.1.0",
-  "state": "reconciling",
-  "updated_at": "2026-09-05T13:16:19Z",
+  "state": "blocked",
+  "updated_at": "2026-09-05T14:35:31Z",
   "language": {
     "working_language": "uk",
     "selection_source": "recorded-preference",
@@ -1997,96 +2065,1144 @@
     "user-journey": {
       "path": "docs/user-journey.md",
       "owner_skill": "to-user-journey",
-      "owner_invocation_id": "6b63b10a-0d12-4280-9535-4aa115266fcb",
-      "declared_output_set": ["docs/user-journey.md"],
-      "status": "invalidated",
-      "mission_control_status": "Needs attention",
-      "dependencies": ["prd", "project-context", "canonical-terms", "guardrails"],
-      "dependency_status": {"prd": "validated", "project-context": "validated", "canonical-terms": "validated", "guardrails": "validated"},
+      "owner_invocation_id": "4aba9b4f-bd80-441a-8dc4-eaed02ddbbee",
+      "declared_output_set": [
+        "docs/user-journey.md"
+      ],
+      "status": "validated",
+      "mission_control_status": "Done",
+      "dependencies": [
+        "prd",
+        "project-context",
+        "canonical-terms",
+        "guardrails"
+      ],
+      "dependency_status": {
+        "prd": "validated",
+        "project-context": "validated",
+        "canonical-terms": "validated",
+        "guardrails": "validated"
+      },
       "source_hashes": {
-        "docs/prd.md": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
-        "docs/project-context.md": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
-        "docs/canonical-terms.md": "e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da",
-        "docs/guardrails.md": "4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48"
+        "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
+        "docs/project-context.md": "458da1092f8ac6b10fca6aadc33fab6b9b56aef650fff23e814fe84cb15735a4",
+        "docs/canonical-terms.md": "dd4a7ef9ee403f941b649247b14eafff044af717d54fb8731b0d2d26665848d3",
+        "docs/guardrails.md": "6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b"
       },
       "consumed_source_fragments": {},
-      "content_hash": "dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77",
-      "validation": {"result": "passed", "working_language": "uk"},
+      "content_hash": "ef058d468fde194ff38efe5d209edbdc3f061d90e4f9602671071c1cc28b2c39",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "validated_at": "2026-09-05T13:32:11Z",
+        "scope": "Owner document validation: Google-only same-tab flow, independent session lifecycles and catalog-independent login, JOB/UC coverage and preserved unrelated journey stages. No live login or product-test success claimed."
+      },
       "open_questions": [],
       "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
-      "revalidation_reason": "Current Google-only owner-login and independent provider settings require source-grounded owner reconciliation. PRD now has validated JOB/UC coverage. The no-application-MFA decision is settled; dependencies, not a repeated MFA question, govern dispatch. Prior hashes/invocation retained until each owner returns."
+      "supersedes": {
+        "owner_invocation_id": "6b63b10a-0d12-4280-9535-4aa115266fcb",
+        "content_hash": "dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77",
+        "source_hashes": {
+          "docs/prd.md": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
+          "docs/project-context.md": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
+          "docs/canonical-terms.md": "e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da",
+          "docs/guardrails.md": "4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48"
+        },
+        "validation": {
+          "result": "passed",
+          "working_language": "uk"
+        }
+      }
     },
     "screen-map": {
       "path": "docs/screen-map.md",
       "owner_skill": "to-screen-map",
-      "owner_invocation_id": "65e75be6-bf2f-414d-92cf-03eb717e7445",
-      "declared_output_set": ["docs/screen-map.md"],
-      "status": "invalidated",
-      "mission_control_status": "Needs attention",
-      "dependencies": ["prd", "project-context", "canonical-terms", "guardrails", "user-journey"],
-      "dependency_status": {"prd": "validated", "project-context": "validated", "canonical-terms": "validated", "guardrails": "validated", "user-journey": "validated"},
+      "owner_invocation_id": "30fd3c76-59d7-430a-b177-ea041a7aec67",
+      "declared_output_set": [
+        "docs/screen-map.md"
+      ],
+      "status": "validated",
+      "mission_control_status": "Done",
+      "dependencies": [
+        "prd",
+        "project-context",
+        "canonical-terms",
+        "guardrails",
+        "user-journey"
+      ],
+      "dependency_status": {
+        "prd": "validated",
+        "project-context": "validated",
+        "canonical-terms": "validated",
+        "guardrails": "validated",
+        "user-journey": "validated"
+      },
       "source_hashes": {
-        "docs/prd.md": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
-        "docs/project-context.md": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
-        "docs/canonical-terms.md": "e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da",
-        "docs/guardrails.md": "4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48",
-        "docs/user-journey.md": "dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77"
+        "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
+        "docs/user-journey.md": "ef058d468fde194ff38efe5d209edbdc3f061d90e4f9602671071c1cc28b2c39",
+        "docs/guardrails.md": "6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b",
+        "docs/project-context.md": "458da1092f8ac6b10fca6aadc33fab6b9b56aef650fff23e814fe84cb15735a4",
+        "docs/canonical-terms.md": "dd4a7ef9ee403f941b649247b14eafff044af717d54fb8731b0d2d26665848d3"
       },
       "consumed_source_fragments": {},
-      "content_hash": "385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52",
-      "validation": {"result": "passed", "working_language": "uk"},
+      "content_hash": "fe25f595f954cb7b04e369aec65066ec31d7a66a3359953c968343713d41039d",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "validated_at": "2026-09-05T13:55:05Z",
+        "scope": "Owner-reviewed affected auth/provider states and references; all 48 canonical definitions and 52 relationships resolved; unrelated Matrix states/groups unchanged. Document validation only."
+      },
       "open_questions": [],
       "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
-      "revalidation_reason": "Current Google-only owner-login and independent provider settings require source-grounded owner reconciliation. PRD now has validated JOB/UC coverage. The no-application-MFA decision is settled; dependencies, not a repeated MFA question, govern dispatch. Prior hashes/invocation retained until each owner returns."
+      "traceability": {
+        "definitions": [
+          {
+            "id": "SUR-01",
+            "kind": "surface",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Поверхні V1"
+            }
+          },
+          {
+            "id": "SUR-02",
+            "kind": "surface",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Поверхні V1"
+            }
+          },
+          {
+            "id": "SS-01",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-02",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-03",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-04",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-05",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-06",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-07",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-08",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-09",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-10",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-11",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-12",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-13",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-14",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-15",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-16",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-17",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-18",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-19",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-20",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-21",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-22",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-23",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-24",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-25",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-26",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-27",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-28",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-29",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "id": "SS-30",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "id": "SS-31",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "id": "SS-32",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "id": "SS-33",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "id": "SS-34",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "id": "SS-35",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "id": "SS-36",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "id": "SS-37",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "id": "SS-38",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "id": "SS-39",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "id": "SS-40",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "id": "SS-41",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "id": "SS-42",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "id": "SS-43",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "id": "SS-44",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "id": "SS-45",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "id": "SS-46",
+            "kind": "state",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          }
+        ],
+        "links": [
+          {
+            "from": "SS-01",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-02",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-03",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-04",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-05",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-06",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-07",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-08",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-09",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-10",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-11",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-12",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-13",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-14",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-15",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-16",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-17",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-18",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-19",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-20",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-21",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-22",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-23",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-24",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-25",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-26",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-27",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-28",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-29",
+            "to": "SUR-01",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-01"
+            }
+          },
+          {
+            "from": "SS-30",
+            "to": "SUR-02",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "from": "SS-31",
+            "to": "SUR-02",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "from": "SS-32",
+            "to": "SUR-02",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "from": "SS-33",
+            "to": "SUR-02",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "from": "SS-34",
+            "to": "SUR-02",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "from": "SS-35",
+            "to": "SUR-02",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "from": "SS-36",
+            "to": "SUR-02",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "from": "SS-37",
+            "to": "SUR-02",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "from": "SS-38",
+            "to": "SUR-02",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "from": "SS-39",
+            "to": "SUR-02",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "from": "SS-40",
+            "to": "SUR-02",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "from": "SS-41",
+            "to": "SUR-02",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "from": "SS-42",
+            "to": "SUR-02",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "from": "SS-43",
+            "to": "SUR-02",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "from": "SS-44",
+            "to": "SUR-02",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "from": "SS-45",
+            "to": "SUR-02",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "from": "SS-46",
+            "to": "SUR-02",
+            "relation": "state_of",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Стани SUR-02"
+            }
+          },
+          {
+            "from": "SUR-01",
+            "to": "UC-001",
+            "relation": "supports",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Трасування поверхонь"
+            }
+          },
+          {
+            "from": "SUR-01",
+            "to": "UC-002",
+            "relation": "supports",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Трасування поверхонь"
+            }
+          },
+          {
+            "from": "SUR-01",
+            "to": "UC-005",
+            "relation": "supports",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Трасування поверхонь"
+            }
+          },
+          {
+            "from": "SUR-01",
+            "to": "UC-006",
+            "relation": "supports",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Трасування поверхонь"
+            }
+          },
+          {
+            "from": "SUR-02",
+            "to": "UC-003",
+            "relation": "supports",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Трасування поверхонь"
+            }
+          },
+          {
+            "from": "SUR-02",
+            "to": "UC-004",
+            "relation": "supports",
+            "definition_ref": {
+              "path": "docs/screen-map.md",
+              "heading": "### Трасування поверхонь"
+            }
+          }
+        ]
+      },
+      "supersedes": {
+        "owner_invocation_id": "65e75be6-bf2f-414d-92cf-03eb717e7445",
+        "content_hash": "385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52",
+        "source_hashes": {
+          "docs/prd.md": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
+          "docs/project-context.md": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
+          "docs/canonical-terms.md": "e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da",
+          "docs/guardrails.md": "4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48",
+          "docs/user-journey.md": "dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77"
+        },
+        "validation": {
+          "result": "passed",
+          "working_language": "uk"
+        }
+      }
     },
     "wireframes": {
       "path": "docs/wireframes.md",
       "owner_skill": "to-wireframes",
-      "owner_invocation_id": "bb4649fb-123e-47b4-96e6-d76c05d8ff43",
-      "declared_output_set": ["docs/wireframes.md"],
-      "status": "invalidated",
-      "mission_control_status": "Needs attention",
-      "dependencies": ["prd", "project-context", "canonical-terms", "guardrails", "user-journey", "screen-map"],
-      "dependency_status": {"prd": "validated", "project-context": "validated", "canonical-terms": "validated", "guardrails": "validated", "user-journey": "validated", "screen-map": "validated"},
+      "owner_invocation_id": "f4799c94-b8c3-444c-b46f-deaf1363ee8e",
+      "declared_output_set": [
+        "docs/wireframes.md"
+      ],
+      "status": "validated",
+      "mission_control_status": "Done",
+      "dependencies": [
+        "prd",
+        "project-context",
+        "canonical-terms",
+        "guardrails",
+        "user-journey",
+        "screen-map"
+      ],
+      "dependency_status": {
+        "prd": "validated",
+        "project-context": "validated",
+        "canonical-terms": "validated",
+        "guardrails": "validated",
+        "user-journey": "validated",
+        "screen-map": "validated"
+      },
       "source_hashes": {
-        "docs/prd.md": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
-        "docs/project-context.md": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
-        "docs/canonical-terms.md": "e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da",
-        "docs/guardrails.md": "4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48",
-        "docs/user-journey.md": "dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77",
-        "docs/screen-map.md": "385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52"
+        "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
+        "docs/user-journey.md": "ef058d468fde194ff38efe5d209edbdc3f061d90e4f9602671071c1cc28b2c39",
+        "docs/screen-map.md": "fe25f595f954cb7b04e369aec65066ec31d7a66a3359953c968343713d41039d",
+        "docs/guardrails.md": "6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b",
+        "docs/project-context.md": "458da1092f8ac6b10fca6aadc33fab6b9b56aef650fff23e814fe84cb15735a4",
+        "docs/canonical-terms.md": "dd4a7ef9ee403f941b649247b14eafff044af717d54fb8731b0d2d26665848d3"
       },
       "consumed_source_fragments": {},
-      "content_hash": "49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca",
-      "validation": {"result": "passed", "working_language": "uk"},
+      "content_hash": "e065b36af6ba851cb79a2028227b4599129da9c3656dc4be1a913d08cba62ed5",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "validated_at": "2026-09-05T14:05:12Z",
+        "scope": "Owner reviewed Google/provider structures and eight explicit recovery rows; 46 state IDs preserved and unrelated Matrix blueprints unchanged. No implementation or live verification."
+      },
       "open_questions": [],
       "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
-      "revalidation_reason": "Current Google-only owner-login and independent provider settings require source-grounded owner reconciliation. PRD now has validated JOB/UC coverage. The no-application-MFA decision is settled; dependencies, not a repeated MFA question, govern dispatch. Prior hashes/invocation retained until each owner returns."
+      "supersedes": {
+        "owner_invocation_id": "bb4649fb-123e-47b4-96e6-d76c05d8ff43",
+        "content_hash": "49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca",
+        "source_hashes": {
+          "docs/prd.md": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
+          "docs/project-context.md": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
+          "docs/canonical-terms.md": "e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da",
+          "docs/guardrails.md": "4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48",
+          "docs/user-journey.md": "dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77",
+          "docs/screen-map.md": "385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52"
+        },
+        "validation": {
+          "result": "passed",
+          "working_language": "uk"
+        }
+      }
     },
     "design-brief": {
       "path": "docs/design-brief.md",
       "owner_skill": "to-design-brief",
-      "owner_invocation_id": "06b76b50-f5b1-45e6-94c8-8bfaee8e5781",
-      "declared_output_set": ["docs/design-brief.md"],
-      "status": "invalidated",
-      "mission_control_status": "Needs attention",
-      "dependencies": ["prd", "project-context", "canonical-terms", "guardrails", "user-journey", "screen-map", "wireframes"],
-      "dependency_status": {"prd": "validated", "project-context": "validated", "canonical-terms": "validated", "guardrails": "validated", "user-journey": "validated", "screen-map": "validated", "wireframes": "validated"},
+      "owner_invocation_id": "6551270b-0a92-42ab-957d-dde740932b90",
+      "declared_output_set": [
+        "docs/design-brief.md"
+      ],
+      "status": "validated",
+      "mission_control_status": "Done",
+      "dependencies": [
+        "prd",
+        "project-context",
+        "canonical-terms",
+        "guardrails",
+        "user-journey",
+        "screen-map",
+        "wireframes"
+      ],
+      "dependency_status": {
+        "prd": "validated",
+        "project-context": "validated",
+        "canonical-terms": "validated",
+        "guardrails": "validated",
+        "user-journey": "validated",
+        "screen-map": "validated",
+        "wireframes": "validated"
+      },
       "source_hashes": {
-        "docs/prd.md": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
-        "docs/project-context.md": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
-        "docs/canonical-terms.md": "e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da",
-        "docs/guardrails.md": "4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48",
-        "docs/user-journey.md": "dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77",
-        "docs/screen-map.md": "385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52",
-        "docs/wireframes.md": "49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca"
+        "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
+        "docs/user-journey.md": "ef058d468fde194ff38efe5d209edbdc3f061d90e4f9602671071c1cc28b2c39",
+        "docs/screen-map.md": "fe25f595f954cb7b04e369aec65066ec31d7a66a3359953c968343713d41039d",
+        "docs/wireframes.md": "e065b36af6ba851cb79a2028227b4599129da9c3656dc4be1a913d08cba62ed5",
+        "docs/guardrails.md": "6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b",
+        "docs/project-context.md": "458da1092f8ac6b10fca6aadc33fab6b9b56aef650fff23e814fe84cb15735a4",
+        "docs/canonical-terms.md": "dd4a7ef9ee403f941b649247b14eafff044af717d54fb8731b0d2d26665848d3",
+        "forge/design/candidates/candidate-b/v2/index.html": "07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6",
+        "forge/design/candidates/candidate-b/v2/app.js": "5446f6a4a987b6d71cd6ddb4fa0a46c409d4c69c0a7083c31f043101ef9bcd95",
+        "forge/design/candidates/candidate-b/v2/styles.css": "e79543dfcc1cd297e4904caa2944a790d581499025353fffb913f30b4fed7cb8",
+        "forge/design/evidence/candidate-b/v2/approval-receipt.json": "1b39065b05a2c9b987ab8bf88c118f92e144190769c4ebb9e8a039f21540c300"
       },
       "consumed_source_fragments": {},
-      "content_hash": "719a32b4ea4fef9f9eaa0ee08864f00fa57f9637be530e67c404d58d1c2e5608",
-      "validation": {"result": "passed", "working_language": "uk"},
+      "content_hash": "dd4f41754bf02ca40ef72142a64d8b446876801a5185383b280dfee3dfc4183e",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "validated_at": "2026-09-05T14:25:18Z",
+        "scope": "Affected Google-only owner access and independent provider model/effort presentation; frozen prototype unchanged; product reviews remain not_run."
+      },
       "open_questions": [],
       "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
-      "revalidation_reason": "Current Google-only owner-login and independent provider settings require source-grounded owner reconciliation. PRD now has validated JOB/UC coverage. The no-application-MFA decision is settled; dependencies, not a repeated MFA question, govern dispatch. Prior hashes/invocation retained until each owner returns."
+      "supersedes": {
+        "owner_invocation_id": "06b76b50-f5b1-45e6-94c8-8bfaee8e5781",
+        "content_hash": "719a32b4ea4fef9f9eaa0ee08864f00fa57f9637be530e67c404d58d1c2e5608",
+        "source_hashes": {
+          "docs/prd.md": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
+          "docs/project-context.md": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
+          "docs/canonical-terms.md": "e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da",
+          "docs/guardrails.md": "4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48",
+          "docs/user-journey.md": "dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77",
+          "docs/screen-map.md": "385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52",
+          "docs/wireframes.md": "49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca"
+        },
+        "validation": {
+          "result": "passed",
+          "working_language": "uk"
+        }
+      }
     },
     "architecture": {
       "path": "docs/architecture.md",
@@ -2301,11 +3417,38 @@
       "status": "verified",
       "recorded_hash": "4c6f2d51be1baf5962035933deeec7095d31f1d3e6c473ec9e43cb0e3a360744",
       "observed_hash": "4c6f2d51be1baf5962035933deeec7095d31f1d3e6c473ec9e43cb0e3a360744",
-      "checked_at": "2026-09-04T22:55:31+03:00"
+      "checked_at": "2026-09-05T13:39:09Z",
+      "scope": "Original v1 root bytes only; complete render-dependency closure is blocked by sdd-render-precheck-20260905, not verified."
     },
-    "operator_overrides": [
+    "prior_operator_overrides": [
       "SUR-02 uses the approved HappyPro Academy palette; no product-authored notification sound.",
       "DB-D17 replaces only historical Google/Cloudflare auth copy and states with local owner-password challenge/session semantics."
+    ],
+    "operator_overrides": [
+      {
+        "id": "DB-D18",
+        "supersedes": [
+          "DB-D17"
+        ],
+        "scope": "SUR-02 Google-only same-tab entry, separate local-session lifecycle, cancellation/retry/denial/expiry/revocation, no app MFA/password fallback; Google branding only P-11 button",
+        "source_basis": "PI-AUTH-20260905; UC-003; FR-038(a–d); FR-039(a–c); NFR-016.a–h; current journey/screen-map/wireframes",
+        "definition_ref": {
+          "path": "docs/design-brief.md",
+          "heading": "## Decision Log"
+        }
+      },
+      {
+        "id": "DB-D19",
+        "refines": [
+          "DB-D14"
+        ],
+        "scope": "SUR-02 independent provider model/effort groups, confirmed exact versions/Claude ordering, catalog-independent login; replaces frozen shared-effort/model-fixture semantics",
+        "source_basis": "UC-004; FR-040–046; current journey/screen-map/wireframes",
+        "definition_ref": {
+          "path": "docs/design-brief.md",
+          "heading": "## Decision Log"
+        }
+      }
     ],
     "supersedes": "whatsapp-consultant/v1"
   },
@@ -2482,14 +3625,43 @@
     },
     {
       "id": "google-owner-account-binding",
-      "status": "awaiting_answer",
+      "status": "answered",
       "question": "Confirm whether the Google project's current administrator account is also the sole app-owner sign-in account.",
+      "answer": "yes",
+      "answer_timestamp": null,
+      "recorded_at": "2026-09-05T13:20:29.059Z",
+      "resolution": "The user confirmed the sole account named in the immediately preceding direct question. The exact email stays out of repository metadata and will be supplied only through protected deployment configuration. This confirmation does not waive token/issuer/sub/email verification or prove a live login.",
       "blocking_node": "google-owner-login-credential-provisioning",
       "scope": "Deployment identity only. Does not block source-grounded SDD reconciliation or authorize an unconfirmed owner account. The exact account remains outside this manifest."
     }
   ],
-  "next_ready_nodes": ["user-journey"],
-  "pause_reason": "Checkpoint: source reconciliation through guardrails passed the current checker on Python 3.12.14. Five JOBs, six complete use cases and owner-returned typed links are recorded; context, terminology and access/provider rules now match Google-only owner login with no application MFA or password fallback. Journey, screens, design, architecture, verification and development-plan reconciliation remain unfinished and invalidated. Exact owner-account binding is pending user input before live access, not a blocker to document reconciliation. Credentials, production login code and live round-trip verification remain unfinished; the implementation gate is not released. No live-login or release success is claimed.",
+  "next_ready_nodes": [],
+  "pause_reason": "Owner confirmation recorded without account value in repository metadata. Journey, screen map, wireframes and design-brief document postchecks passed. Required architecture-approved precheck failed baseline_integrity: shared checker misclassifies node:crypto in unchanged frozen Node validation script as a mutable browser resource. Separately, old v1 baseline omits two actual shared render dependencies. No architecture dispatch or implementation followed the failure. Checker repair requires authority for separate SDD Pipeline Skills repository; legacy dependency migration needs owner-reviewed provenance, not fabricated approval. Google credentials, implementation and live verification remain unfinished.",
+  "current_reconciliation_blockers": [
+    {
+      "id": "sdd-render-precheck-20260905",
+      "observed_at": "2026-09-05T14:31:52Z",
+      "node": "architecture-approved",
+      "command": "python3 /resolved/to-sdd-pipeline/scripts/sdd_check.py --project . --before architecture-approved",
+      "exit_code": 1,
+      "issue_code": "baseline_integrity",
+      "issue_detail": "vendor mutable render dependency before freezing: node:crypto",
+      "checker_repository": "SDD Pipeline Skills",
+      "checker_commit": "77c32e5",
+      "checker_path": "skills/to-sdd-pipeline/scripts/sdd_check.py",
+      "checker_hash": "9182031c08852cc21aecb69e639415c33b0539a6243875489090cb22372b6eba",
+      "findings": [
+        "The checker scans every .mjs in the frozen root, including validate.mjs which index.html does not load, and rejects Node builtin imports as remote resource URLs.",
+        "index.html separately loads both shared scenario fixtures outside the v1 hashed root. Current hashes below are present-day observations, not historical approval proof."
+      ],
+      "current_dependency_hashes": {
+        "forge/design/candidate-sets/whatsapp-consultant/v1/shared/scenario-fixture.js": "96732f738a41bf1f838736de77a748ef65704d68010553bbf43638f83ddd1af6",
+        "forge/design/candidate-sets/matrix-consultant/v2/shared/scenario-fixture.js": "0f3959792187148a2e1ae842c738644da7ed60ddc01776948f86914b8fb207e6"
+      },
+      "resolution_required": "Obtain authority to repair the shared checker in its separate repository; then have the design owner review legacy dependency evidence and migrate bindings without changing frozen bytes or inventing past approval. Rerun required precheck before architecture dispatch.",
+      "bypassed": false
+    }
+  ],
   "resume_history": [{
     "type": "audit_remediation_request",
     "timestamp": null,

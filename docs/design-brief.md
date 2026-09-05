@@ -1,10 +1,10 @@
 # Design Brief
 
 - Продукт: `Personal Consultant`
-- Версія brief: V1, approved baseline зі scoped auth override
+- Версія brief: V1, незмінний approved baseline зі scoped Google/provider overrides
 - Статус: approved
-- Дата: 04.09.2026
-- owner_invocation_id: `06b76b50-f5b1-45e6-94c8-8bfaee8e5781`
+- Дата: 05.09.2026
+- owner_invocation_id: `6551270b-0a92-42ab-957d-dde740932b90`
 
 ## Source References
 
@@ -12,21 +12,47 @@
 
 | Джерело | SHA-256 / статус | Спожиті фрагменти |
 |---|---|---|
-| `README.md` | `540a76cb67521d9f3652ec15604f9dc7657f865af639baf13df506f07288c81b` | Позиціонування; принцип практичного результату; історичний browser-preview лише як нецільовий контекст |
-| `docs/product-idea.md` | `ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a` | Дві поверхні V1; Element/Matrix; Candidate B; GoDaddy Node.js/MySQL; локальний owner-password challenge/session; три групи; atomic save; immutable active-session snapshot; historical superseded Cloudflare/Google decisions |
-| `docs/prd.md` | `32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94` | §3.2–3.6; §4–5; `FR-001`–`FR-046`; `NFR-001`–`NFR-019`; §8–12; `AC-001`–`AC-016`; GoDaddy/local-owner-password reconciliation |
-| `docs/project-context.md` | `1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15` | Platform Targets; Core Scenarios; GoDaddy Node.js/MySQL; owner-password challenge/session; три settings-групи; responsive web; Subscription OAuth boundary; Risks |
-| `docs/canonical-terms.md` | `e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da` | `Налаштування власника`; `Subscription OAuth`; `Моделі`; `Глибина міркування`; `Пресет швидкості`; `Фактичні налаштування сесії`; historical `Google-вхід`; Terms to Avoid |
-| `docs/guardrails.md` | `4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48` | Source order; two-surface boundary; GoDaddy/MySQL; local owner-password/session access; exact three groups; atomic save; immutable snapshot; HappyPro/cleanup gates; Design Authority Rules |
-| `docs/user-journey.md` | `dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77` | Element Journey Stages 1–10; Settings Journey S1–S5 через owner-password/session; failure paths; exits; success states |
-| `docs/screen-map.md` | `385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52` | `SUR-01`–`SUR-02`; `MG-01`–`MG-13`; `SG-01`–`SG-05`; `SS-01`–`SS-46`; GoDaddy settings route; owner-password/session states; transition, entry/exit and edge contracts |
-| `docs/wireframes.md` | `49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca` | `SUR-01` native chat structure; `SUR-02` owner-password challenge та authenticated settings structure; message, settings and state blueprints; responsive notes; content priorities |
+| Успадкований `README.md` | Історичний hash `540a76cb67521d9f3652ec15604f9dc7657f865af639baf13df506f07288c81b`; не перечитано | Початкове позиціонування, не нове джерело поточного узгодження |
+| Успадкований `docs/product-idea.md` | Історичний hash `ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a`; не перечитано | Незмінений контекст попереднього brief; чинні Google/provider-рішення — у валідованих джерелах нижче |
+| `docs/prd.md` | `a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc` | JOB/UC; FR/NFR/AC та окремі NFR-016.a–h; Google/session/provider-контракти |
+| `docs/project-context.md` | `458da1092f8ac6b10fca6aadc33fab6b9b56aef650fff23e814fe84cb15735a4` | Чинні платформи, дві поверхні, Google/локальна/AI ізоляція, незалежні provider-групи |
+| `docs/canonical-terms.md` | `dd4a7ef9ee403f941b649247b14eafff044af717d54fb8731b0d2d26665848d3` | Google-вхід Власника, дозволена ідентичність, локальна сесія, незалежні параметри |
+| `docs/guardrails.md` | `6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b` | Source/scope/permission межі, Google без own-MFA/password fallback; каталог не блокує вхід |
+| `docs/user-journey.md` | `ef058d468fde194ff38efe5d209edbdc3f061d90e4f9602671071c1cc28b2c39` | П'ять JOB, шість UC; UJ 1–10/S1–S5, відмови/виходи/recovery |
+| `docs/screen-map.md` | `fe25f595f954cb7b04e369aec65066ec31d7a66a3359953c968343713d41039d` | SUR-01/02, MG/SG, SS-01–46; Google/session/provider-переходи |
+| `docs/wireframes.md` | `e065b36af6ba851cb79a2028227b4599129da9c3656dc4be1a913d08cba62ed5` | Незмінені Matrix-структури; Google/local-session і незалежні provider-блоки; Error And Recovery Contract |
 
 ## Design Source Material Inventory
 
+### Поточні матеріали
+
+Для DBM-01–DBM-11: `required_for_generation: true`, `access_status: resolved`, дозволено лише локальне читання; це залежність design-handoff, не дозвіл його запускати. Семантично спожиті лише перелічені в Source References фрагменти. Файли та hashes наведено точно; source-документи й frozen bundle не змінювалися.
+
+| material_id | kind | Шлях | Призначення / source basis | Hash |
+|---|---|---|---|---|
+| `DBM-01` | canonical_document | `docs/prd.md` | Вимоги/структура відповідного owner за Source References | `a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc` |
+| `DBM-02` | canonical_document | `docs/project-context.md` | Вимоги/структура відповідного owner за Source References | `458da1092f8ac6b10fca6aadc33fab6b9b56aef650fff23e814fe84cb15735a4` |
+| `DBM-03` | canonical_document | `docs/canonical-terms.md` | Вимоги/структура відповідного owner за Source References | `dd4a7ef9ee403f941b649247b14eafff044af717d54fb8731b0d2d26665848d3` |
+| `DBM-04` | canonical_document | `docs/guardrails.md` | Вимоги/структура відповідного owner за Source References | `6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b` |
+| `DBM-05` | canonical_document | `docs/user-journey.md` | Вимоги/структура відповідного owner за Source References | `ef058d468fde194ff38efe5d209edbdc3f061d90e4f9602671071c1cc28b2c39` |
+| `DBM-06` | canonical_document | `docs/screen-map.md` | Вимоги/структура відповідного owner за Source References | `fe25f595f954cb7b04e369aec65066ec31d7a66a3359953c968343713d41039d` |
+| `DBM-07` | canonical_document | `docs/wireframes.md` | Вимоги/структура відповідного owner за Source References | `e065b36af6ba851cb79a2028227b4599129da9c3656dc4be1a913d08cba62ed5` |
+| `DBM-08` | frozen_html | `forge/design/candidates/candidate-b/v2/index.html` | Незмінний target | `07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6` |
+| `DBM-09` | frozen_script | `forge/design/candidates/candidate-b/v2/app.js` | Demo/provenance, не auth чи model authority | `5446f6a4a987b6d71cd6ddb4fa0a46c409d4c69c0a7083c31f043101ef9bcd95` |
+| `DBM-10` | frozen_style | `forge/design/candidates/candidate-b/v2/styles.css` | Незмінна палітра/appearance | `e79543dfcc1cd297e4904caa2944a790d581499025353fffb913f30b4fed7cb8` |
+| `DBM-11` | approval_receipt | `forge/design/evidence/candidate-b/v2/approval-receipt.json` | Original approval/normalization | `1b39065b05a2c9b987ab8bf88c118f92e144190769c4ebb9e8a039f21540c300` |
+
+- `DBM-12`: official_guidance, https://developers.google.com/identity/branding-guidelines, required_for_generation true, access_status resolved; дозволений режим — публічне read-only відкриття 05.09.2026. Спожито Render HTML Button Element / Download Pre-Approved Brand Icons / Create a custom Sign in with Google Button; сторінка оновлена 07.07.2026. Підстава — P-11/DB-D18, не розширення app-стилю; asset не завантажено.
+- `DBM-13`: prior_owned_document, попередній `docs/design-brief.md`, required_for_generation false, access_status resolved; локально спожита історія й незмінені правила; hash `719a32b4ea4fef9f9eaa0ee08864f00fa57f9637be530e67c404d58d1c2e5608`.
+- `DBM-14`: frozen_tree_member, `forge/design/candidates/candidate-b/v2/validate.mjs`, required_for_generation false, access_status not_required для семантики; лише включений до read-only tree hash, не прочитаний як нова вимога й не виконаний; hash `baeafb315ee1891885e00ef81561620b35b29ca27d55646b07012c9820920440`.
+
+### Успадкована історія
+
+Нижченаведені HappyPro, Element/Matrix, accessibility, preview, old-candidate/capture/evidence згадки — успадковані source references original approval, `required_for_generation: false` у цьому узгодженні, `access_status: not_required`; нових читань або перевірок цих зовнішніх матеріалів не виконували. Вони не підмінюють поточні DBM-джерела.
+
 | Source / version | Спожиті факти | Design inference | Exclusions |
 |---|---|---|---|
-| Approved Candidate B v2; baseline `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`; receipt `forge/design/evidence/candidate-b/v2/approval-receipt.json` SHA-256 `1b39065b05a2c9b987ab8bf88c118f92e144190769c4ebb9e8a039f21540c300` | Matrix-native `SUR-01`; one-page `SUR-02`; role/`HH:MM`; три settings-групи; current/default/effective; responsive order; keyboard/focus | Зберегти approved layout, hierarchy, palette й native Matrix presentation; auth-copy/state semantics застосовувати через `DB-D17` | Google/Cloudflare auth-copy у frozen prototype є historical superseded content, а не активна вимога; bytes прототипу не переписуються |
+| Approved Candidate B v2; baseline `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`; original receipt `forge/design/evidence/candidate-b/v2/approval-receipt.json` | Незмінні Matrix-подача, one-page utility, палітра й original approval | `DB-D18`/`DB-D19` замінюють лише відповідні auth/provider наслідки; DB-D17 — історія | Frozen Cloudflare/demo identity, спільний effort і модельні fixtures не доводять поточного auth/model availability; bytes незмінні |
 | HappyPro Academy CSS, snapshot перевірки 16.08.2026 | `#071a33`, `#dceeff`, `#2e6fdc`, `#c0265b`, `#f79e1b` для `SUR-02` | Семантична палітра approved Candidate B v2 лишається без зміни design direction | Репозиторій, deployment, credentials і дані HappyPro не є залежністю та не торкаються |
 | Element support + Matrix Client-Server API v1.19, approval-pass 15–16.08.2026 | Native message/composer/reply/attachment affordances; `body`/`formatted_body`; client rendering variance | `SUR-01` успадковує Element/Matrix; продукт володіє лише content choreography і state meaning | Custom Element chrome, browser chat, власні bubble/composer/theme |
 | WCAG 2.2 + Apple/Android accessibility guidance, approval-pass 15–16.08.2026 | Text alternatives, focus, semantics, scaling, screen-reader and target-size considerations | WCAG 2.2 AA є floor для product-authored `SUR-02`; platform behavior потребує окремого evidence | Неперевірена заява про conformance нативного Element chrome |
@@ -40,13 +66,13 @@
 - [WCAG 2.2](https://www.w3.org/TR/WCAG22/) — базова accessibility-ціль для змісту й майбутніх design-evidence артефактів.
 - [Apple Human Interface Guidelines: Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility/) і [Android Developers: Make apps more accessible](https://developer.android.com/guide/topics/ui/accessibility/apps) — системне масштабування тексту, screen-reader use, контраст і нативні елементи керування мають перевірятися на відповідних клієнтах.
 
-`consilium/live/styles.css` оглянуто лише для перевірки inheritance. Його кастомні браузерні кольори, бульбашки, шрифти, анімації й controls не спожиті: upstream-джерела прямо визначають browser-preview як нецільовий evidence-інструмент.
+`consilium/live/styles.css` було оглянуто в історичному pass, не цього разу. Його кастомні браузерні стилі не є джерелом V1; запис зберігає попередню scope-межу.
 
 ## Design Brief
 
 `Personal Consultant` має відчуватися як приватна, спокійна й доказова ділова розмова в нативній E2EE Element/Matrix-кімнаті та як стримана безпечна utility-поверхня, коли Власник відкриває `Налаштування власника`. Спільний принцип — deliberate restraint: виразність витрачається на рішення, критичну межу, owner access/session status, сумісність, фактичний статус і наступну дію, а не на декоративний бренд-шар.
 
-`SUR-01` успадковує Element і володіє лише content choreography. `SUR-02` є єдиним web-винятком: одна responsive сторінка з рівно трьома групами, ясним owner access/session status, current/default/effective значеннями, compatibility/status патернами, атомарним Save/Reset і повідомленням про незмінний snapshot Активної сесії. Продукт володіє вузьким локальним owner-password challenge, перевіркою доступу, захищеною owner session і безпечними denied/status станами; password value/hash, session secret, provider credentials, registration, recovery/reset та інша identity не входять до UI.
+`SUR-01` успадковує Element і володіє лише content choreography. `SUR-02` — одна utility-сторінка з явною Google-дією, поверненням у тій самій вкладці, окремим локальним доступом і незалежними provider-параметрами за wireframes. Парольної форми, власної MFA застосунку, fallback, іншого IdP або display email немає. Вхід/відмова/локальний вихід/повторний вхід не змінюють AI OAuth; локальний вихід не означає Google logout. Каталог та AI-підписки не блокують сам Google-вхід.
 
 - порядку повідомлень і змістових зон, уже визначених `docs/wireframes.md`;
 - читабельного нативного форматування Element/Matrix і нативних Matrix replies;
@@ -76,7 +102,9 @@
 | `DB-D14` | Settings мають рівно три групи та одну atomic action hierarchy; active-session snapshot не мутує | Confirmed: `SG-02`–`SG-05`, `SS-35`–`SS-44` |
 | `DB-D15` | Cloudflare Access володіє Google sign-in presentation; product-owned design починається після grant і обмежується safe status result за deny | Historical superseded: рішення від 16.08.2026 збережене для provenance, але спосіб access скасовано рішенням Власника від 04.09.2026 |
 | `DB-D16` | `SUR-02` бере семантичну палітру з HappyPro Academy: navy, blue, pale blue, berry та amber focus | Confirmed: явне доручення Власника; значення з актуального CSS `happypro.academy` від 16.08.2026. `SUR-01` лишається нативною Element-поверхнею |
-| `DB-D17` | `SUR-02` використовує product-owned локальний owner-password challenge і захищену owner session на штатному GoDaddy hostname; `SG-01`, `SS-30`–`SS-33` і access-частина `SS-45` замінюють Google/Cloudflare copy/state semantics без зміни approved layout | Confirmed scoped operator override від 04.09.2026: `docs/product-idea.md`, `docs/guardrails.md`, `docs/user-journey.md`, `docs/screen-map.md`, `docs/wireframes.md`; не є новим whole-design direction і не змінює Candidate B v2 provenance |
+| `DB-D17` | `SUR-02` використовує product-owned локальний owner-password challenge і захищену owner session на штатному GoDaddy hostname; `SG-01`, `SS-30`–`SS-33` і access-частина `SS-45` замінюють Google/Cloudflare copy/state semantics без зміни approved layout | Historical superseded — замінено DB-D18 05.09.2026; початковий scoped override від 04.09.2026: `docs/product-idea.md`, `docs/guardrails.md`, `docs/user-journey.md`, `docs/screen-map.md`, `docs/wireframes.md`; не є новим whole-design direction і не змінює Candidate B v2 provenance |
+| `DB-D18` | Google-only вхід у тій самій вкладці; окрема локальна сесія, cancel/retry/denial, видимий локальний вихід, expiry/revocation; без власної MFA застосунку й резервного пароля; Google-brand оформлення лише кнопки P-11 | Підтверджене `PI-AUTH-20260905`, `UC-003`, `FR-038(a–d)`, `FR-039(a–c)`, `NFR-016.a`–`NFR-016.h`, UJ S1/S5, SM SS-30–33/SS-45 і wireframes; scoped override замість DB-D17, не нове whole-design approval |
+| `DB-D19` | Незалежні модель/міркування в групах Codex-агенти й Claude Code-критик; окрема Швидкість консиліуму; точні підтверджені версії й порядок Claude; каталог не блокує Google-вхід | Підтверджені `UC-004`, `FR-040`–`FR-046`, UJ S2–S5, SM SG-02–05/SS-34–46 та wireframes; уточнює DB-D14 і замінює shared-effort demo, не палітру/Matrix/original approval |
 
 ## Audience And Context
 
@@ -112,7 +140,7 @@
 | Input modalities | Текст, зображення й PDF через штатний composer; команди вводяться текстом | Voice, video та custom controls поза V1 |
 | Same-chat delivery | Нова репліка з'являється в тій самій приватній розмові | Окремої продуктової поверхні немає |
 | Settings security utility | Одна сторінка, явний owner access/session status, три групи, validation і atomic actions | Не чат, dashboard, sidebar, cards-in-cards чи admin console |
-| Settings access | Product-owned owner-password challenge → neutral verification → safe owner access/session status або safe denial у тому самому approved settings layout | Password value/hash і session secret не повертаються після submit; без OTP, magic link, іншого IdP/identity, registration, recovery/reset чи Subscription OAuth fields |
+| Settings access | Явна Google-дія → провайдер у тій самій вкладці → безпечний результат і окрема локальна сесія | Скасування, повтор, локальний вихід/expiry/revocation зрозумілі; немає парольної форми, own-MFA/fallback, display email чи AI credentials |
 | Settings reversibility | Current/default/effective розрізнені текстом; save/reset атомарні; active snapshot незмінний | Без partial success, silent downgrade, arbitrary model text або live mutation |
 | Subscription access | Успішний `SS-28` невидимий; `SS-29` — короткий same-room status із безпечною категорією причини та позачатовою наступною дією | У Matrix немає OAuth token, `auth.json`, setup-token, reauth URL/code, credential field, login screen або API/PAYG fallback |
 | Cost transparency | `Витрати` відділяють налаштовані щомісячні AI-підписки, фактичну інфраструктуру та доступний status квоти/reset | Usage сесії позначається як включене в підписку; недоступне — `невідомо`; не вигадувати per-session charge |
@@ -160,7 +188,7 @@ Boldness свідомо не витрачається на декоративн�
 
 Ручні відступи пробілами, центрування, горизонтальні колонки, ASCII-діаграми й decorative separators не використовуються. Довжина рядка, ширина бульбашки, зовнішні відступи та scroll належать Element.
 
-`SUR-02` завжди зберігає односторінкову ієрархію: owner-password challenge або owner access/session status → current/default/effective → рівно три групи → compatibility/status → atomic actions → active-session notice. Групи розділяються `space.settings-section`, а не cards-in-cards, sidebar чи dashboard grid.
+`SUR-02` зберігає односторінкову utility-ієрархію wireframes: Google-дія або локальний статус/вихід → значення → незалежні Codex/Claude Code блоки → швидкість → перевірка → атомарні дії. Модель, її міркування й помилка лишаються поруч; `space.settings-section` зберігає ритм без nested cards/sidebar/dashboard.
 
 ### Elevation And Depth
 
@@ -186,11 +214,15 @@ Boldness свідомо не витрачається на декоративн�
 | `P-08` | Native attachment and composer | Повністю нативні preview й composer; product-owned overlay, field, selector або button відсутні |
 | `P-09` | Same-chat delivery | Нова репліка з'являється в `SUR-01`; окремий продуктовий інтерфейс не створюється |
 | `P-10` | Session / archive control result | `P-01` з фактичним результатом, наслідком для Сесії або Архіву сесій і наступною допустимою дією |
-| `P-11` | Settings owner-access strip | `surface.section` + `type.meta`; до grant — label/password/submit і neutral verification, після grant — safe owner access/session status без password/hash/session details чи provider credentials |
-| `P-12` | Settings group | Один заголовок, коротке пояснення, label/control/status у `surface.settings`; рівно три такі групи без nested cards |
+| `P-11` | Google-дія й локальний доступ | Зона використовує `surface.section` / `type.meta`; Google-кнопка — локальний branded виняток нижче. Після входу — безпечний локальний статус, вихід/припинення своїх сесій, без email або credentials |
+| `P-12` | Settings group | Рівно Codex-агенти, Claude Code-критик і Швидкість консиліуму; модель/міркування кожного провайдера разом із label/status. Один заголовок на групу, чинна палітра, без nested cards |
 | `P-13` | Current/default/effective distinction | Три текстово підписані трактування з різною вагою, але без color-only meaning |
 | `P-14` | Compatibility / operation status | `type.label` + явний status text; inline error біля джерела і один page-level atomic result |
 | `P-15` | Atomic action area | Одна головна Save-дія, окрема Reset-дія з підтвердженням і помітне `focus.ring`; success/failure належить усьому набору |
+
+#### Google-кнопка в P-11
+
+[Офіційні правила Google](https://developers.google.com/identity/branding-guidelines) дозволяють HTML/custom-кнопку з актуальним стандартним кольоровим `G` та локалізованою дією `Увійти через Google`. Asset береться лише з офіційного Google-набору, не малюється заново. Розмір/пропорції, текст, колір, Google Sans Medium та відступи виконують поточні правила саме кнопки; asset/font provenance фіксується перед дозволеним включенням у майбутній frozen bundle. Ця документна перевірка не означає завантаженого asset. Google-шрифт і палітра не поширюються на весь застосунок; правило не додає SDK, нового протоколу або реального auth до frozen demo.
 
 ### Visual Do's And Don'ts
 
@@ -215,9 +247,9 @@ Don't:
 - передавати critical meaning лише червоним/зеленим, emoji або анімацією;
 - використовувати декоративні gradients, blobs, cards, ASCII-art або ручне вирівнювання пробілами.
 - перетворювати settings на dashboard/sidebar, cards-in-cards або advanced/admin console;
-- додавати agent/provider credential fields або інші login fields поза єдиним owner-password challenge, free-text model slug, Claude Fast Mode, API/PAYG/credits, sound/motion чи per-agent/per-unit controls;
-- переносити historical Google/Cloudflare access-copy або approved demo email до активного owner-password flow;
-- розширювати вузький owner-password challenge до registration, recovery/reset, іншої identity, OTP, magic link або identity-provider UI.
+- додавати password/OTP, резервний вхід, інший IdP, AI credential fields, free-text model slug, спільну шкалу міркування, Fast/PAYG/credits, sound/motion чи per-agent/per-unit controls;
+- переносити Cloudflare-посередництво, demo email або непідтверджені моделі/рівні frozen prototype до чинної поведінки;
+- розширювати Google-дію до реєстрації, іншої ідентичності, власної MFA чи відновлення пароля застосунку.
 
 ### Design Tokens
 
@@ -276,8 +308,8 @@ Don't:
 - `Стоп`, `Нова задача` й `Витрати` читаються як точні команди, а не як navigation labels.
 - Нативна історія може бути довгою; поточний стан знаходиться за останнім однозначним signal-first block, а не через custom sticky header.
 - `SUR-02` не має спільного app-shell з Element, sidebar або dashboard IA; це одна послідовна settings-сторінка.
-- Ієрархія `SUR-02` стабільна: owner-password challenge або owner access/session status → values → три групи → validation/status → Save/Reset → active-session notice.
-- `SUR-02` має вузький product-owned owner-password challenge і safe grant/deny/session states; після grant password field зникає, а локальний access status не імітує й не замінює Codex/Claude `Subscription OAuth`.
+- Ієрархія `SUR-02` відповідає wireframes та `DB-D18`/`DB-D19`; локальний вихід не змішується з поверненням до Element.
+- Google-сесія, локальний доступ та AI Subscription OAuth незалежні. Події входу не змінюють AI credentials; окремо дозволене захищене runtime-налаштування підписок не заборонене цією ізоляцією.
 
 ### Voice And Tone
 
@@ -303,8 +335,8 @@ Don't:
 | `P-08` | Native attachment and composer | Приймає лише підтверджені V1 inputs; unsupported input переходить у `P-03`/`P-04` без custom control |
 | `P-09` | Same-chat delivery | Додає нову видиму репліку до `SUR-01` без створення іншої продуктової поверхні |
 | `P-10` | Session / archive control result | Показує фактичний наслідок команди чи архівної дії; для `Витрати` розділяє налаштовані місячні AI-підписки, фактичну інфраструктуру й доступний usage/limit/reset без per-session token charge; не створює окремий dashboard, archive-browser або editable transcript |
-| `P-11` | Settings owner-access strip | До grant приймає лише owner password через одноразовий same-origin challenge; після grant показує safe owner access/session status без display identity, password/hash/session details чи provider credentials і не подає локальний owner-вхід як Subscription OAuth |
-| `P-12` | Settings group | Зберігає рівно три границі; labels пов'язані з controls програмно, довгі значення переносяться, довільний model input відсутній |
+| `P-11` | Google-дія й локальний доступ | Явна свіжа транзакція і same-tab повернення за `NFR-016.a`–`NFR-016.c`; кожний захищений запит перевіряється сервером. Видимий вихід/припинення своїх сесій, expiry та відкликання діють і після рестарту; local logout не є Google logout, відновлення не обходить `NFR-016.d`–`NFR-016.h` |
+| `P-12` | Settings group | Незалежні підтверджені модель/міркування; точні версії, Claude `Opus → Sonnet → Haiku`, новіші версії сімейства першими. `За замовчуванням моделі` не передає явного effort; зміна одного провайдера не змінює іншого (`FR-040`–`FR-043`) |
 | `P-13` | Current/default/effective distinction | Оновлює current лише після atomic success; default не мутується; active effective snapshot залишається незмінним |
 | `P-14` | Compatibility / operation status | Inline error пов'язаний з полем, page-level status оголошується screen reader; unknown/drift/offline fail closed без silent downgrade |
 | `P-15` | Atomic action area | Save доступний лише для dirty valid set; Reset потребує підтвердження; клавіатурний focus помітний; repeated submit не створює partial write |
@@ -364,22 +396,22 @@ Don't:
 | `SS-27` Room invariants не підтверджено | Захищені `P-01`–`P-10` не з'являються; безпечний `P-04` можливий лише без protected details | Після відновлення інваріантів — `SS-01`; security exception для federation gate потребує явного рішення Власника |
 | `SS-28` Передзапусковий subscription auth/quota/private preflight | За успіху невидимий: немає нового `P-01`, spinner, typing, login або credential prompt | Перед кожним model call і запуском залежного агента підтверджує subscription OAuth mode, квоту, відсутність API/PAYG credentials і single-owner eligibility: один захищений Codex OAuth-стан обслуговує окремі реальні sessions/threads, Claude Code-критик проходить subscription setup-token preflight; успіх веде до `SS-09`/`SS-10`, будь-яка невідповідність — до `SS-29` |
 | `SS-29` Fail-closed auth/quota/private boundary | Critical `P-04` у `SUR-01`: безпечна категорія причини, відомий provider reset і позачатова наступна дія; без token, `auth.json`, setup-token, reauth URL/code, link або credential field | Жодного model call чи agent launch і жодного API/PAYG/credits fallback; після provider reset або provider-managed reauth поза Matrix — новий `SS-28`, інакше exit/неповний результат |
-| `SS-30` Settings entry | Нейтральний `P-11` без chat/dashboard chrome: назва settings, persistent label, owner-password field і submit; protected values відсутні | Submit передає password лише через одноразовий same-origin challenge до server-side перевірки; без іншої identity, registration або recovery/reset |
-| `SS-31` Local owner verification | `P-11` neutral loading/access status без protected values; repeated submit недоступний | Correct password і цілісна session → grant; wrong/missing password або invalid/replayed/cross-origin/expired challenge/session → safe deny; keyboard/screen-reader status оголошено без animation-only meaning |
-| `SS-32` Owner access granted | Password field більше не рендериться; `P-11` показує safe owner access/session status без display identity, password/hash/session details чи provider credentials | Завантажити versioned settings; локальна owner session не видається за Subscription OAuth |
-| `SS-33` Access denied | Одна safe permission boundary без settings values, password/hash/session details або policy secrets | Лише повторний локальний owner-вхід або exit; без іншої identity, registration, recovery/reset чи fallback |
+| `SS-30` Початок входу / локальний доступ завершено | P-11: пояснення та явна Google-кнопка, без пароля/захищених значень; скасування й вихід мають нейтральний результат | Свіжа явна спроба → SS-31; чинна перевірена сесія → SS-32; Element/закриття |
+| `SS-31` Google-вхід і повернення | Google у тій самій вкладці; після повернення нейтральна перевірка входу, не loading каталогу; focus/status доступні без motion-only meaning | Успіх → SS-32; скасування → SS-30; недійсні токен/ідентичність/транзакція, replay або збій → SS-33; нова спроба не обходить обмеження |
+| `SS-32` Локальний доступ надано | Безпечний статус, видимі локальний вихід і захищене припинення своїх сесій; email/credentials відсутні | SS-34 незалежно від каталогів/AI; локальний вихід → SS-30; expiry/revocation/відключення Власника → SS-33 |
+| `SS-33` Доступ відхилено або припинено | Значення закриті; безпечна причина відрізняє невдалий вхід від завершення сесії; незбережене не застосовано | Свіжий явний Google-вхід, якщо доступ дозволений, або Element; без own-MFA/password fallback; відкликання не скасовується рестартом |
 | `SS-34` Settings loading | `P-11`–`P-14` у loading/read-only state; placeholders не видаються за current | Save/reset unavailable до цілісного load і validation |
-| `SS-35` Loaded | `P-12`–`P-15`: рівно три групи, current/default/effective і status | Change, reset або exit; Save unavailable без dirty valid set |
+| `SS-35` Значення завантажені | P-12–15: незалежні provider-групи й швидкість, підтверджені версії та порядок Claude, чинні/стандартні/фактичні значення | Зміна/reset/локальний вихід/Element; Save недоступне без зміненого валідного набору |
 | `SS-36` Dirty valid | Changed status біля джерела й позитивний `P-14` текст | `P-15` Save доступний; cancel повертає loaded state |
 | `SS-37` Incompatible | Inline error біля несумісного control і page status; не color-only | Save і нова сесія fail closed; без silent downgrade |
-| `SS-38` Drift/provider unavailable | Persistent `P-14` warning/error з чітким наслідком | Свіжа validation або exit; current і active effective не мутують |
+| `SS-38` Каталог/можливості/провайдер не підтверджені | Стійкий P-14 називає неготову групу й наслідок; неперевірені варіанти не видаються за доступні | Свіжа перевірка або вихід; параметри й active snapshot незмінні; блокуються save/нова консультація, не Google-вхід або чинна локальна сесія |
 | `SS-39` Atomic save in progress | `P-15` і status region показують збереження всього набору | Repeated submit unavailable; selected values видимі; результат лише whole-success або whole-failure |
 | `SS-40` Save success | `P-14` success текст для всього набору; changed markers очищені | Current оновлено для нових сесій; active snapshot незмінний |
 | `SS-41` Save failure | `P-14` error явно каже, що жодну групу не змінено | Reload/fix/retry після свіжої validation; без partial write чи false success |
 | `SS-42` Reset confirmation | Фокусована permission boundary називає всі три групи і наслідок | Confirm/cancel мають однозначний keyboard focus order |
 | `SS-43` Reset result | Whole-set success або `SS-41` failure; без partial status | Default стає current лише після atomic success і лише для нових сесій |
 | `SS-44` Active snapshot notice | `P-13`/`P-14` помітно розрізняють current і active effective | Не пропонує live apply; exit до Element або повернення до loaded state |
-| `SS-45` Offline | Persistent text status; stale values позначені, Save/Reset не мають success styling | Після online — свіжі owner-session/config checks; без partial write |
+| `SS-45` Offline | Позначено несвіжі дані й непідтверджений результат без success styling | Мережа → серверна перевірка сесії й перечитування результату; expiry → SS-33; не повторювати запис наосліп |
 | `SS-46` Mobile/long content | Один стовпець; повні labels, model names, mappings, errors і actions без horizontal dependency | Той самий контракт на 390/430/768/1280/1440; нічого не вилучається |
 
 Загальні стани:
@@ -399,14 +431,14 @@ Don't:
 - Дати явну текстову згоду чи відмову щодо одного `P-03`; quick replies або buttons не припускаються.
 - Прокручувати нативну хронологію та відкривати нативний preview вкладення.
 - Запросити архівну дію текстом; точний intent-словник лишається відкритим.
-- Відкрити protected settings URL на штатному GoDaddy hostname, ввести owner password у вузькому challenge-state і після server-side grant продовжити в захищеній owner session.
-- Вибрати окремі allowlisted Codex і Claude моделі, спільну глибину міркування й orchestration preset швидкості.
+- Відкрити GoDaddy settings URL, явно почати Google-вхід і повернутися в тій самій вкладці; локальний доступ — лише після перевірок.
+- Незалежно вибрати підтверджені модель/міркування Codex та Claude Code й окремо швидкість; не переносити рівні між провайдерами.
 - Атомарно зберегти dirty valid set, скасувати локальні зміни або після підтвердження повернути весь набір до default.
-- Відкрити Element або закрити settings; bot-link не є передумовою.
+- Відкрити Element або закрити settings; це не локальний вихід. Окремий вихід/припинення своїх сесій не означає Google logout і не змінює AI OAuth.
 
 ### Accessibility Floor
 
-1. Product-authored content відповідає WCAG 2.2 AA за принципами, які продукт контролює: змістовий порядок, зрозумілі labels, відсутність color-only meaning, читабельний plain-text fallback, meaningful link text і однозначні errors/permissions.
+1. WCAG 2.2 AA — ціль для product-authored content у межах його контролю, не твердження про перевірену відповідність: порядок, labels, читабельний fallback, errors/permissions і відсутність color-only meaning.
 2. Нативний шрифт і його масштабування не перевизначаються. Prototype evidence має перевірити збереження змістової ієрархії зі збільшеним текстом, VoiceOver на iPhone/Mac і TalkBack на Samsung Flip7/Android; Windows desktop flow перевіряється з keyboard navigation і доступним screen reader.
 3. Роль, час, статус, ризик і потрібна дія мають бути вимовними як звичайний текст. Emoji, punctuation art або typographic emphasis не є єдиним label.
 4. У повідомленні з довгим body використовуються короткі абзаци й справжня послідовність списку. Ручні колонки та таблиці не є preferred authoring pattern, бо нестабільно переносяться й читаються screen reader; уже підтверджене тіло не змінюється.
@@ -416,7 +448,7 @@ Don't:
 8. Не використовувати images of text для product-authored відповідей. Якщо input image або PDF недоступний для аналізу, стан пояснюється текстом, не вгадується з thumbnail.
 9. `SUR-02` має WCAG 2.2 AA як floor: семантичні заголовки й labels, повна keyboard navigation, видимий `focus.ring`, програмне пов'язання errors з controls, status region для async result і відсутність color-only meaning.
 10. Interactive targets у `SUR-02` мають не менше 24×24 CSS px за WCAG 2.2 AA; для primary touch actions на 390/430px ціль — 44×44 CSS px або еквівалентна доступна зона.
-11. Під час 200% text zoom не зникають identity, три settings-групи, current/default/effective, validation, Save/Reset або active-session notice; horizontal scrolling не потрібен для основного content.
+11. Окремо плануються 320 CSS px reflow (або 400% zoom від 1280px) та 200% text resize без втрати Google-дії/локального виходу, параметрів і помилок. AA-межа 24×24 CSS px допускає застосовний виняток; 44×44 — house touch-орієнтир, не визначення AA. Provider-brand оформлення не скасовує keyboard/focus/semantics вимог.
 
 ### Key Flow Implications
 
@@ -428,7 +460,7 @@ Don't:
 | Stage 7, втручання Власника | `SS-13`/`SS-14` повертають до контексту; `SS-15`/`SS-16` дають контрольований exit/restart | Пізні репліки після `Стоп` не публікуються; контексти після `Нова задача` не змішуються |
 | Stages 8–9, збій, час і Фінальна рекомендація | `SS-20` через `P-06`/`P-07` | `SS-17`–`SS-19` і `SS-29` через `P-03`/`P-04`; OAuth reauth відбувається лише поза Matrix, зовнішня дія не виконується з самої рекомендації |
 | Stage 10, Архів, експорт і видалення | `SS-21`, `SS-22`, `SS-24` через `P-10` | `SS-23` потребує повторного дозволу; окрема репліка не редагується й не видаляється |
-| Settings S1–S2, access і load | `SS-30`–`SS-35` через `P-11`–`P-14`; owner-password challenge, safe owner access/session status та повний current/default/effective set | `SS-33`, `SS-38`, `SS-45`: без protected values, password/hash/session details, іншого login fallback чи stale-as-current |
+| Settings S1–S2, JOB-003 / UC-003 / UC-004 | SS-30–35: Google-дія, same-tab повернення, окрема локальна сесія та завантаження | Cancel → SS-30; deny/expiry/revocation → SS-33; каталог → SS-38; offline → SS-45; без витоку/fallback |
 | Settings S3, change/validation | `SS-36` через `P-12`–`P-15`; dirty valid набір явний | `SS-37`–`SS-38` fail closed, error пов'язаний з джерелом, silent downgrade відсутній |
 | Settings S4–S5, save/reset/return | `SS-39`–`SS-44` через `P-13`–`P-15`; whole-set result і active snapshot notice | `SS-41`/`SS-45`: без partial write або false success; `SS-42` reset потребує явного підтвердження |
 
@@ -454,32 +486,34 @@ Don't:
 
 ## Heuristic Review
 
+Спільне трасування: Matrix — JOB-001/JOB-002/JOB-004/JOB-005, UC-001/UC-002/UC-005/UC-006, UJ 1–10; Settings — JOB-003, UC-003/UC-004, UJ S1–S5, SUR-02/SS-30–46. Поточна корекція охоплює лише Settings; незмінене Matrix planned coverage успадковано. Для кожного рядка застосовність підтверджена його primary scope та взаємодією; QA binding pending до створення актуальних IDs. 390/430/768/1280/1440px збережені; 320px reflow та text resize перевіряються окремо.
+
 Це design-stage coverage за canonical H1–H10, а не виконаний user test, runtime proof, visual-fidelity verdict або accessibility conformance. Для всіх рядків coverage — `covered`, execution status — `not_run`; фактичний reviewer, час, evidence і findings мають бути записані під час окремого authorized walkthrough/QA.
 
 | ID | Primary scope | Intended behavior | Planned evidence |
 |---|---|---|---|
 | `H1` Visibility of system status | `SUR-01` progress/failure/delivery; `SS-31`, `SS-34`, `SS-39`–`SS-45` | Кожна async, save, reset, permission і offline зміна має distinct text status; false success відсутній | State/transition walkthrough на 390/430/768/1280/1440px і runtime evidence там, де заявлено behavior |
 | `H2` Match the real world | Обидві поверхні; українська мова Власника | Канонічні `Власник`, `Сесія`, `Консиліум`, `Стоп`, `Нова задача`, `Витрати`, current/default/effective та буквальна owner-access copy | Реалістичні українські fixtures, звірка з canonical terms і primary journey order |
-| `H3` User control and freedom | `Стоп`, `Нова задача`, дозволи, settings cancel/exit/reset | Лише названа дія зупиняється; cancel/exit зберігає попередній current set; reset має підтвердження; active snapshot не мутує | Task walkthrough із відмовою, cancel, exit, reset і перевіркою preserved state |
-| `H4` Consistency and standards | Element на Mac/iPhone/Android/Windows; responsive `SUR-02` | `SUR-01` успадковує native conventions; `SUR-02` має сталий порядок, labels, focus, status і semantics на всіх viewport | Cross-platform/cross-viewport capture, keyboard/touch order, screen-reader reading order |
-| `H5` Error prevention | Room/auth/data gates; settings auth/validation/save/delete | Fail-closed gates, allowlists, inline compatibility errors, atomic MySQL save/reset і підтвердження цілої Session deletion запобігають небезпечній дії | Invalid-input, wrong/missing password, forged/expired session, incompatible set, repeat-submit і destructive-confirmation paths |
+| `H3` User control and freedom | Matrix-команди/дозволи; JOB-003, UC-003/004, S1–S5 | Google cancel/retry, локальний вихід окремо від Element/Google; параметри й active snapshot незмінні, незбережене не застосовується | Запланований cancel/expiry/revocation/relogin/reset walkthrough із preserved-data contract; runtime proof окремо |
+| `H4` Consistency and standards | Element-клієнти; SUR-02/P-11–15 | Нативні Matrix conventions збережені; офіційні Google-brand правила тільки кнопки; сталі labels/focus/provider-групи | Cross-viewport keyboard/touch/screen-reader та asset-provenance review, planned/not_run |
+| `H5` Error prevention | Room/data gates; UC-003/004 auth/validation/save/delete | Кожний NFR-016.a–h має allowed/denied/recovery наслідок; disabled/hidden control не авторизує; allowlists/атомарність незмінні | Заплановані токен/ідентичність/транзакція/replay/expiry/revocation/підроблений запит/обмеження, incompatible-set і destructive-confirmation paths; без password/own-MFA fallback |
 | `H6` Recognition rather than recall | `SUR-01` signal-first messages; `SUR-02` form | Роль/час, поточний статус, потрібна дія, current/default/effective, mappings і changed state видимі в point of action | Long-content walkthrough без опори на пам'ять попередніх екранів/повідомлень |
-| `H7` Flexibility and efficiency | Frequent Matrix flow і рідкісний settings flow | Простий шлях — native composer; exact commands прискорюють контроль; settings не отримують advanced/bulk/per-agent controls без джерела | Повторний direct/consilium task, keyboard/touch alternatives; перевірка, що shortcuts не приховують novice path |
-| `H8` Aesthetic and minimalist design | Candidate B v2, обидві поверхні | Deliberate restraint, одна chronology, один settings column/utility hierarchy, без dashboard/cards-in-cards/decorative chrome | Approved baseline captures і representative dense/mobile/error states після застосування `DB-D17` |
-| `H9` Recognize, diagnose and recover from errors | `P-03`, `P-04`, `SS-19`, `SS-29`, `SS-33`, `SS-37`–`SS-45` | Кожен error називає безпечну cause category → preserved state → next action → retry/exit → observable completion; секрети не розкриваються | Permission, timeout, provider, auth, validation, conflict і offline recovery walkthroughs |
-| `H10` Help and documentation | Нові/ризикові permission, recovery та settings моменти | Коротка contextual instruction з'являється біля межі; generic help center, onboarding і documentation dump не додаються | Перевірка permission/auth/error copy на task-oriented next action без нової screen або route |
+| `H7` Flexibility and efficiency | Частий Matrix flow, рідкісний JOB-003 | Composer/exact commands незмінні; чинна локальна сесія не потребує зайвого входу; каталог не блокує Google; немає нових advanced/bulk/per-agent controls | Повторний task і keyboard/touch walkthrough зі збереженням простого початкового шляху; planned/not_run |
+| `H8` Aesthetic and minimalist design | Candidate B v2, обидві поверхні | Deliberate restraint, chronology, utility-палітра; Google-brand стиль обмежено кнопкою | Майбутні captures з DB-D18/DB-D19; frozen bytes не видаються за чинний auth/model proof |
+| `H9` Recognize, diagnose and recover from errors | P-03/P-04, SS-19/29; UC-003/004, SS-30–45 | Наслідує Error And Recovery Contract wireframes: причина → збережене → наступна дія → retry/undo → завершення; секрети й невідомий результат не вигадуються | Заплановані cancel/auth/expiry/revocation/catalog/validation/write/conflict/offline walkthroughs; runtime/user execution окремо |
+| `H10` Help and documentation | Permission/recovery; JOB-003, S1–S5 | Коротка допомога біля Google-переходу, локального виходу, незалежного міркування й каталогу; без help-center/onboarding | Task-oriented next action, preserved data і completion за wireframes; planned/not_run, без нової поверхні |
 
 ## Usability Validation Plan
 
-Primary participant — єдиний Власник V1; representative-user claims не робляться. Working language — природна українська з exact English identifiers лише там, де вони канонічні. Усі tasks мають status `planned / not_run`.
+Учасник плану — єдиний Власник, без точної email-ідентичності в документі. Усі UV-* — task definitions, planned/not_run; поточних representative-user claims немає. Відповідальний за майбутнє спостереження — авторизований reviewer; timing змінених auth/provider-потоків — до прийняття їхнього design-handoff за можливості та після реалізації для runtime-поведінки. Original approval не повторюється. Неспостережений ризик — нерозуміння локального виходу/повтору чи незалежних параметрів; його закриває спостереження відповідного task, не document validation. QA bindings pending.
 
 | Task | Context and viewport | Success signal | Evidence target |
 |---|---|---|---|
 | `UV-01` Надіслати простий Запит, а потім складний Запит для Консиліуму | Реальний Element на Mac і одному mobile client | Пряма відповідь не імітує консиліум; складний flow показує фактичні role/`HH:MM`, повні репліки й фінальний synthesis у тій самій кімнаті | Screen capture + registered-message/runtime trace; content integrity comparison |
 | `UV-02` Відмовити в дозволі, дати уточнення, виконати `Витрати`, `Стоп` і `Нова задача` | `SUR-01`, long chronology | Відмова не переноситься; уточнення не створює паралельну Session; exact commands мають буквальний наслідок; пізня репліка після `Стоп` не публікується | State/transition log + visible same-room result |
-| `UV-03` Відкрити `SUR-02`, пройти correct owner-password path і негативні access paths | 390px і 1280px на штатному GoDaddy hostname | Correct challenge/session відкриває settings; wrong/missing password, invalid/expired/replayed/forged session і direct route/API bypass fail closed; password field зникає після grant | Responsive captures + server/runtime access evidence; жодних password/hash/session/provider secrets у UI/storage/log evidence |
-| `UV-04` Змінити сумісний set, виправити несумісний, save, reset і повернутися до Element | 430/768/1440px; keyboard і touch | Три групи й current/default/effective завжди видимі; incompatible set не зберігається; whole-set MySQL result правдивий; active snapshot незмінний | UI capture + versioned persistence/result evidence + snapshot comparison |
-| `UV-05` Пройти owner access, save error і long-content flow із keyboard та screen reader | Desktop keyboard/screen reader; VoiceOver/TalkBack; 200% text zoom | Focus order, labels, errors/status regions і next action доступні; primary content не потребує horizontal scroll і не залежить лише від кольору | Accessibility walkthrough record; viewport captures; issue log із severity/release effect |
+| `UV-03` Google-вхід, cancel/retry/deny, локальний вихід/expiry/revocation (JOB-003, UC-003, S1/S5, SS-30–33/45) | Власник; 390/1280px і 320px reflow | Зрозумілий same-tab перехід, безпечний результат, local exit/retry; каталог не блокує вхід. Кожний auth-clause й durable revocation потребує окремого runtime evidence | План: спостереження й captures без email/секретів; runtime/security evidence окремо, не frozen demo; not_run |
+| `UV-04` Незалежні параметри, помилка, save/reset/Element (JOB-003, UC-004, S2–S5, SS-34–46) | Власник; 430/768/1440px, keyboard/touch | Точні підтверджені версії й порядок Claude; provider changes незалежні; default без explicit effort; каталог/помилка зрозумілі, active snapshot незмінний | План: task спостереження; persistence/snapshot evidence після реалізації; not_run |
+| `UV-05` Google-дія, local exit, помилка й long content (JOB-003, UC-003/004) | Власник; keyboard/screen reader, VoiceOver/TalkBack; 320px reflow та окремо 200% text resize | Логічний focus, names/errors/status, збережений зміст і зрозумілий recovery; Google-кнопка не скасовує доступність | План: accessibility walkthrough, captures і висновки; not_run, не conformance claim |
 
 ## Design Handoff Prompt
 
@@ -491,14 +525,16 @@ Primary participant — єдиний Власник V1; representative-user clai
 - показати representative narrow і desktop viewports, long verbatim agent reply, role/time identity, permission, progress, `SS-29` safe same-room failure і final series; успішний `SS-28` лишити невидимим;
 - використати лише перевірені нативні text-formatting і Matrix reply affordances Element/Matrix та current-client chrome як контекст, не як нову product-owned system;
 - не створювати browser chat/dashboard, custom Element bubbles/composer або shared app-shell; `SUR-02` лишати one-page secure utility без sidebar, cards-in-cards чи advanced controls;
-- показати в `SUR-02` вузький owner-password challenge, neutral verification, safe grant/deny/session states, current/default/effective, три групи, inline/global compatibility, atomic Save/Reset і active-session snapshot notice на всіх п'яти viewports;
-- не переносити historical Cloudflare/Google auth-copy, approved demo email або display identity до активного flow; не показувати password після submit, password/hash/session details чи agent/provider credentials і не додавати інші login methods, arbitrary model text, Fast/PAYG/credits, sound/motion або per-unit controls;
-- не створювати login/reauth screen, credential/link/code field або API/PAYG/credits fallback; `SS-29` містить тільки safe category, відомий reset і текстову інструкцію завершити provider-managed reauth поза Matrix;
+- застосувати в SUR-02 тільки DB-D18/DB-D19: Google/same-tab і local-session стани, незалежні provider-групи, каталог/сумісність, атомарність і recovery за wireframes;
+- не переносити Cloudflare-посередництво, demo email, спільний effort чи непідтверджені модельні fixtures; не додавати password/own-MFA/fallback, іншого IdP або AI credentials;
+- не створювати login/reauth screen для AI-підписок чи credential/link/code field у Matrix; це не забороняє підтверджену Google-дію P-11; SS-29 лишається безпечним повідомленням;
 - показати `Витрати` як місячні платежі AI-підписок, фактичну інфраструктуру й доступний usage/limit/reset; usage сесії — `входить у підписку`, недоступне — `невідомо`, без per-session token charge;
 - не скорочувати й не перефразовувати representative registered agent body;
-- зберегти затверджений baseline нижче; кожна user-visible production реалізація має перевірятися проти нього, а не проти старих v1-кандидатів.
+- зберегти frozen baseline з DB-D18/DB-D19; mockup/approval не є runtime/security/user/accessibility evidence й не дозволяє production без окремого пізнішого prompt.
 
 ## Approved Visual Baseline
+
+Read-only спостереження 05.09.2026: SHA-256 target/receipt і незалежний UTF-8 path-sorted hash усіх чотирьох regular files за sdd-tree-sha256-v1 підтвердили незмінні значення нижче. Links, newline paths і виключення не застосовані. Prototype/validator не запускалися; visual/heuristic/user/accessibility/runtime/security execution цього invocation — not_run.
 
 - Status: approved
 - Baseline ID: `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`
@@ -511,35 +547,35 @@ Primary participant — єдиний Власник V1; representative-user clai
 - Approval Receipt: `forge/design/evidence/candidate-b/v2/approval-receipt.json`; явне повідомлення Власника 16.08.2026: «ОК. Закрий хром і продовжуй розробку» після перегляду Candidate B v2
 - Approved At: `2026-08-16T02:22:48+03:00`
 - Approval Provenance: original whole-design approval лишається чинним; normalization `2026-09-04T21:43:42+03:00` лише записала canonical target/tree metadata без зміни candidate bytes або approval scope
-- Permitted Variance: нативні відмінності Element/ОС допускаються лише як platform variance; product behavior, повнота body, порядок, роль, Matrix reply semantics і state meaning не змінюються, крім явно названого scoped auth override нижче
-- Operator Overrides: палітра `SUR-02` походить з історично спожитого `happypro.academy`; браузерні спеціальні звуки не дозволені. Рішення Власника від 04.09.2026 замінює лише historical Google/Cloudflare auth-copy та state semantics у `SG-01`, `SS-30`–`SS-33` і access-частині `SS-45` на product-owned owner-password challenge/session states за `DB-D17`; approved settings layout, hierarchy, palette, Matrix presentation і original approval provenance не змінюються, нового whole-design approval не потрібно
+- Permitted Variance: нативні Element/ОС відмінності допустимі як platform variance; body/order/role/Matrix replies і незмінена поведінка збережені. Лише DB-D18/DB-D19 замінюють відповідні access/provider наслідки frozen demo; довільна зміна палітри або цілісного напряму не дозволена.
+- Operator Overrides: історичні палітра HappyPro й заборона спеціальних звуків збережені. Чинні DB-D18 (Google/local-session presentation замість DB-D17) і DB-D19 (незалежні provider model/effort, точні версії/порядок, каталог) спираються на підтверджені upstream-рішення. Scope: SUR-02, P-11–15, SG-01–05, SS-30–46 лише в названих access/provider/recovery наслідках. Збережені one-page utility, палітра, Matrix-подача, Baseline ID, frozen bytes та original receipt. Це не новий whole-design approval і не live-login доказ.
 - Supersedes: попередні WhatsApp `A/B/C v1` як поточний design target; їхні source/evidence артефакти лишаються незмінними історичними записами
 - Superseded By: none
-- Downstream Invalidation: architecture, DoD/evals, QA checklist і development plan мають послатися на цей Baseline ID, visual target hash, tree hash і `DB-D17` перед виконанням user-visible implementation units; frozen prototype лишається provenance evidence, але його historical Google/Cloudflare copy не є implementation target
+- Downstream Invalidation: архітектура → DoD/evals → QA → development plan мають звірити лише наслідки DB-D18/DB-D19 із тим самим Baseline ID/target/tree. Попередня implementation authorization не переноситься автоматично; потрібен окремий пізніший implementation prompt. Frozen demo — provenance, не буквальний auth/shared-effort/model target; цей owner не змінює runtime або manifest.
 
 ## Validation Report
 
 ### Pass 1 — Mechanical coverage
 
-`0 findings`.
+`0 findings` у зміненій auth/provider/provenance області. Незмінені результати попереднього document-review нижче успадковані, не є новим широким аудитом.
 
-- Key-flow coverage: 6/6 journey groups мають success і failure/permission pattern із названим джерелом.
+- Key-flow coverage: незмінені Matrix-групи успадковано; JOB-003/UC-003/UC-004 покрито Google/session/provider success, denial і recovery, H1–H10 та запланованими UV-03–05.
 - Token resolution: кожен token reference у brief визначено один раз у `Design Tokens`; unresolved token references — 0.
 - Pattern closure: `P-01`–`P-15` мають appearance і behavior principles — 15/15.
 - Screen/state coverage: `SUR-01`–`SUR-02` — 2/2; `MG-01`–`MG-13` — 13/13; settings-групи `SG-01`, `SG-02`, `SG-03`, `SG-04`, `SG-05` — 5/5; `SS-01`–`SS-46` — 46/46 через state-pattern contract.
 - Direction inventory: активний approved baseline — один, Candidate B v2; historical superseded набір містить рівно три candidates `A/B/C v1`. Нові A/C не вигадані після явного вибору Власника.
-- Source inventory: кожне спожите візуальне джерело має version/provenance, facts, inference й exclusions; approved baseline metadata збігається з normalization receipt.
+- Source inventory: поточні DBM-джерела відокремлені від успадкованої історії; сім upstream-хешів, target, original receipt і чотирифайлове frozen tree перевірено. Це byte-evidence, не browser/runtime validation.
 
 ### Pass 2 — Judgment
 
-`0 blocking findings; 1 tracked non-blocking evidence mismatch`.
+У зміненій області: `0 Critical/High findings; 1 Medium non-blocking evidence mismatch`. Це document-review, не release/evidence gate execution.
 
 - Bloat: custom pixel specs, decorative palette, parallel design system, re-stated wireframe layouts і implementation tasks відсутні.
 - Inheritance: нативна система Element/Matrix явно успадкована; `consilium/live/styles.css` явно відхилено як product design source.
 - Shape: Design Spine визначає presentation, Experience Spine — behavior; product scope і state inventory не переозначені.
 - Generic-AI critique: обраний Candidate B має продуктово специфічний signature rhythm — фактична адресована репліка, роль, `HH:MM`, native Matrix reply і канонічний порядок — а не випадкову палітру чи decorative styling.
-- Scoped-override review: `DB-D17` змінює лише access copy/state semantics і не створює нової surface, layout direction, token system або Matrix presentation.
-- Evidence mismatch: frozen approved prototype і його validator зберігають historical Google/Cloudflare copy/assertions. Це коректний immutable provenance record, але не literal copy-level target для `SG-01`, `SS-30`–`SS-33` та access-частини `SS-45`; downstream implementation/QA має доказово застосувати `DB-D17` без переписування receipt або candidate bytes.
+- Scoped-override review: DB-D18/DB-D19 змінюють тільки Google/session/provider контракти; нових поверхонь, Matrix-подачі або глобальної token-системи немає. Google-brand виняток стосується лише кнопки.
+- Evidence mismatch (Medium, неблокувальний для авторства): frozen prototype зберігає історичні Cloudflare/demo identity, shared effort і непідтверджені model fixtures. DB-D18/DB-D19 замінюють ці наслідки без переписування bytes/receipt. Живий вхід, user/heuristic/accessibility execution не перевірялися.
 - Unresolved-content marker scan: 0 markers; approved-baseline поля мають повні canonical metadata та provenance.
 
 ## Confirmed Design Decisions
@@ -552,7 +588,7 @@ Primary participant — єдиний Власник V1; representative-user clai
 - Critical meaning завжди явний у тексті й не залежить лише від appearance або motion.
 - Candidate B «Дослівний консиліум v2» є Approved Visual Baseline для інтегрованих `SUR-01` + `SUR-02`.
 - `SUR-02` — стримана system-like one-page utility з трьома групами, current/default/effective, compatibility status, atomic Save/Reset і active-session snapshot notice.
-- Вузький product-owned owner-password challenge/session flow є scoped operator override до Candidate B v2: він замінює лише historical Google/Cloudflare auth-copy й не змінює approved settings layout або native Matrix presentation.
+- DB-D18/DB-D19 є чинними scoped overrides; DB-D17 — скасована історія. Google/local-session та незалежні provider-параметри не змінюють original approval, frozen bytes, палітру або Matrix-подачу.
 - Успішний `SS-28` невидимий; `SS-29` fail closed і показує лише safe category, відомий reset та provider-managed reauth поза Matrix, без credential/link/code fields і без API/PAYG fallback.
 - `Витрати` показують налаштовані місячні платежі за ChatGPT/Codex і Claude, фактичну інфраструктуру та доступний usage/limit/reset; usage сесії входить у підписку, а недоступне позначається `невідомо`.
 
@@ -563,17 +599,17 @@ Primary participant — єдиний Власник V1; representative-user clai
 - Успадкування browser-specific styles із `consilium/live/styles.css`.
 - Product-added transcript summary, accordion, collapse або reader-screen замість повного body.
 - Custom spinner або typing animation.
-- Будь-який Settings login поза єдиним вузьким owner-password challenge: Google/Cloudflare Access, OTP, magic link, інший IdP/identity, registration або recovery/reset; також agent-provider login/reauth screen, OAuth/setup-token/`auth.json` input, reauth link/code у Matrix чи API/PAYG/credits upsell/fallback.
+- Будь-який Settings login поза Google: password/fallback, власна MFA/OTP, magic link, інший IdP/ідентичність, реєстрація чи password recovery/reset застосунку; AI credential/login surface, code у Matrix та PAYG/credits заборонені.
 - Вигадана per-session token charge, budget-limit visualization або автоматичні usage credits для subscription usage.
-- Будь-яку нову візуальну revision без нового цілісного approval receipt; чинний Baseline ID не змінюється мовчки.
+- Довільну нову цілісну візуальну revision без потрібного рішення; підтверджені scoped DB-D18/DB-D19 не створюють повторного whole-design approval.
 - Попередні WhatsApp `A/B/C v1` як актуальний visual target; вони лишаються лише immutable superseded historical evidence.
 
 ## Out Of Scope
 
 - Нові функції, ролі, screens, routes, message groups, states, input types або паралельні Сесії.
 - Точний final copy для кожного сценарію та intent-словник непідтверджених команд.
-- Архітектура `matrix.org`, GoDaddy Node.js/MySQL, A2A, agent execution, archive, keys, queues, retries, delivery і cost accounting; legacy Cloudflare/Google лишаються лише historical cleanup boundary за окремим JIT-дозволом.
-- QA steps, implementation tasks, code, browser chat або browser evidence UI; custom frontend дозволений лише в межах authenticated `SUR-02`.
+- Архітектура Matrix, GoDaddy/MySQL, Google-входу, локальних сесій, A2A, archive/keys/retries/delivery й витрат належить відповідним власникам; Cloudflare cleanup — історична JIT-межа.
+- QA-кроки, implementation tasks, code, browser chat або evidence UI; custom frontend лише в SUR-02, включно з підтвердженою Google-дією до доступу.
 - Зміна нативних налаштувань Element чи операційної системи від імені Власника; власний звук повідомлень.
 
 ## Open Questions
