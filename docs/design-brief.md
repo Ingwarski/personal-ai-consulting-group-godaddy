@@ -3,10 +3,12 @@
 - Продукт: `Personal Consultant`
 - Версія brief: V1, незмінний approved baseline зі scoped Google/provider overrides
 - Статус: approved
-- Дата: 05.09.2026
-- owner_invocation_id: `b2a38573-47e4-4726-b220-85eab3644647`
+- Дата: 06.09.2026
+- owner_invocation_id: `design-brief-critic-router-20260906`
 
 ## Source References
+
+Поточне узгодження 06.09.2026 стосується лише PI-CRITIC-20260906; його межі визначено в розділі «Маршрутизатор Критика — узгодження 06.09.2026», поточні спожиті фрагменти та hashes — у manifest. Збережені нижче таблиці джерел і датовані спостереження попередніх переглядів є історією, а не новим full-source, runtime або test evidence.
 
 Порядок джерел відповідає `docs/guardrails.md`. Цей brief не змінює продуктову поведінку, перелік станів або структуру wireframes; він визначає presentation- і interaction-контракт для рівно двох підтверджених поверхонь: `SUR-01` і `SUR-02`.
 
@@ -111,6 +113,8 @@
 | `DB-D18` | Google-only вхід у тій самій вкладці; окрема локальна сесія, cancel/retry/denial, видимий локальний вихід, expiry/revocation; без власної MFA застосунку й резервного пароля; Google-brand оформлення лише кнопки P-11 | Підтверджене `PI-AUTH-20260905`, `UC-003`, `FR-038(a–d)`, `FR-039(a–c)`, `NFR-016.a`–`NFR-016.h`, UJ S1/S5, SM SS-30–33/SS-45 і wireframes; scoped override замість DB-D17, не нове whole-design approval |
 | `DB-D19` | Незалежні модель/міркування в групах Codex-агенти й Claude Code-критик; окрема Швидкість консиліуму; точні підтверджені версії й порядок Claude; каталог не блокує Google-вхід | Підтверджені `UC-004`, `FR-040`–`FR-046`, UJ S2–S5, SM SG-02–05/SS-34–46 та wireframes; уточнює DB-D14 і замінює shared-effort demo, не палітру/Matrix/original approval |
 
+| `DB-D20` | У групі Критик явний Claude Code/Codex selector, окремі model/effort і доступне відновлення без неактивного Claude; Codex-агенти незмінні | Прямий `PI-CRITIC-20260906`, `UC-001/UC-004`, `FR-010/040–046`, Journey S2–S5, screen-map/wireframes; scoped refinement DB-D19, не новий дизайн або deployment |
+
 ## Audience And Context
 
 Єдиний користувач V1 — Власник. Він працює з практичними бізнесовими, фінансовими, управлінськими, продуктовими, маркетинговими й продажними задачами та переходить між Mac, iPhone, Samsung Flip7/Android і Windows PC. Повсякденний досвід залишається в Element; responsive browser потрібен лише для рідкісної зміни налаштувань і не вимагає розуміння внутрішньої оркестрації.
@@ -193,7 +197,7 @@ Boldness свідомо не витрачається на декоративн�
 
 Ручні відступи пробілами, центрування, горизонтальні колонки, ASCII-діаграми й decorative separators не використовуються. Довжина рядка, ширина бульбашки, зовнішні відступи та scroll належать Element.
 
-`SUR-02` зберігає односторінкову utility-ієрархію wireframes: Google-дія або локальний статус/вихід → значення → незалежні Codex/Claude Code блоки → швидкість → перевірка → атомарні дії. Модель, її міркування й помилка лишаються поруч; `space.settings-section` зберігає ритм без nested cards/sidebar/dashboard.
+`SUR-02` зберігає односторінкову utility-ієрархію wireframes: Google-дія або локальний статус/вихід → значення → незалежні блоки Codex-агентів і Критика → швидкість → перевірка → атомарні дії. Модель, її міркування й помилка лишаються поруч; `space.settings-section` зберігає ритм без nested cards/sidebar/dashboard.
 
 ### Elevation And Depth
 
@@ -220,7 +224,7 @@ Boldness свідомо не витрачається на декоративн�
 | `P-09` | Same-chat delivery | Нова репліка з'являється в `SUR-01`; окремий продуктовий інтерфейс не створюється |
 | `P-10` | Session / archive control result | `P-01` з фактичним результатом, наслідком для Сесії або Архіву сесій і наступною допустимою дією |
 | `P-11` | Google-дія й локальний доступ | Зона використовує `surface.section` / `type.meta`; Google-кнопка — локальний branded виняток нижче. Після входу — безпечний локальний статус, вихід/припинення своїх сесій, без email або credentials |
-| `P-12` | Settings group | Рівно Codex-агенти, Claude Code-критик і Швидкість консиліуму; модель/міркування кожного провайдера разом із label/status. Один заголовок на групу, чинна палітра, без nested cards |
+| `P-12` | Settings group | Рівно Codex-агенти, Критик і Швидкість консиліуму; у Критика selector провайдера перед незалежними model/effort вибраної гілки разом із label/status. Один заголовок на групу, чинна палітра, без nested cards |
 | `P-13` | Current/default/effective distinction | Три текстово підписані трактування з різною вагою, але без color-only meaning |
 | `P-14` | Compatibility / operation status | `type.label` + явний status text; inline error біля джерела і один page-level atomic result |
 | `P-15` | Atomic action area | Одна головна Save-дія, окрема Reset-дія з підтвердженням і помітне `focus.ring`; success/failure належить усьому набору |
@@ -399,7 +403,7 @@ Don't:
 | `SS-25` Нативне recovery і verification потрібні | Product-authored protected content відсутній; Element володіє recovery і device-verification presentation | Успіх повертає до `SS-01`; невдача завершує шлях без розшифрування й обробки робочих повідомлень |
 | `SS-26` Відкликання пристрою потрібне | Product-authored flow не починається; Element/Matrix володіє revocation presentation | Після відкликання й перевірки іншого пристрою — `SS-01`; інакше exit |
 | `SS-27` Room invariants не підтверджено | Захищені `P-01`–`P-10` не з'являються; безпечний `P-04` можливий лише без protected details | Після відновлення інваріантів — `SS-01`; security exception для federation gate потребує явного рішення Власника |
-| `SS-28` Передзапусковий subscription auth/quota/private preflight | За успіху невидимий: немає нового `P-01`, spinner, typing, login або credential prompt | Перед кожним model call і запуском залежного агента підтверджує subscription OAuth mode, квоту, відсутність API/PAYG credentials і single-owner eligibility: один захищений Codex OAuth-стан обслуговує окремі реальні sessions/threads, Claude Code-критик проходить subscription setup-token preflight; успіх веде до `SS-09`/`SS-10`, будь-яка невідповідність — до `SS-29` |
+| `SS-28` Передзапусковий subscription auth/quota/private preflight | За успіху невидимий: немає нового `P-01`, spinner, typing, login або credential prompt | Перед кожним model call і запуском залежного агента підтверджує subscription OAuth mode, квоту, відсутність API/PAYG credentials і single-owner eligibility: один захищений Codex OAuth-стан обслуговує окремі реальні sessions/threads, Критик проходить preflight вибраного subscription-провайдера; успіх веде до `SS-09`/`SS-10`, будь-яка невідповідність — до `SS-29` |
 | `SS-29` Fail-closed auth/quota/private boundary | Critical `P-04` у `SUR-01`: безпечна категорія причини, відомий provider reset і позачатова наступна дія; без token, `auth.json`, setup-token, reauth URL/code, link або credential field | Жодного model call чи agent launch і жодного API/PAYG/credits fallback; після provider reset або provider-managed reauth поза Matrix — новий `SS-28`, інакше exit/неповний результат |
 | `SS-30` Початок входу / локальний доступ завершено | P-11: пояснення та явна Google-кнопка, без пароля/захищених значень; скасування й вихід мають нейтральний результат | Свіжа явна спроба → SS-31; чинна перевірена сесія → SS-32; Element/закриття |
 | `SS-31` Google-вхід і повернення | Google у тій самій вкладці; після повернення нейтральна перевірка входу, не loading каталогу; focus/status доступні без motion-only meaning | Успіх → SS-32; скасування → SS-30; недійсні токен/ідентичність/транзакція, replay або збій → SS-33; нова спроба не обходить обмеження |
@@ -556,11 +560,12 @@ Don't:
 - Approved At: `2026-08-16T02:22:48+03:00`
 - Approval Provenance: original whole-design approval та його час збережені. Нормалізація `2026-09-04T21:43:42+03:00` записала поточні target/root metadata; міграція 05.09.2026 додала до hash-домену лише дві залежності з hashes, що збігаються з історичними fixture-доказами. Це поточна owner-reviewed прив'язка без зміни frozen bytes, не нове visual approval і не ретроспективний доказ точного rendering bundle від 16.08.2026.
 - Historical Evidence Limitation: початковий legacy hash `96b91ba9622f8301809ed10ef661a313006e0c2743712912c624edc36a2ca8eb` залишається невідтвореним; безперервна тотожність точних bytes кореня від 16.08.2026 не доведена. Це обмеження не є доказом несанкціонованої зміни після approval; історичні QA-результати не приписуються нинішньому bundle як щойно виконані перевірки.
-- Permitted Variance: нативні Element/ОС відмінності допустимі як platform variance; body/order/role/Matrix replies і незмінена поведінка збережені. Лише DB-D18/DB-D19 замінюють відповідні access/provider наслідки frozen demo; довільна зміна палітри або цілісного напряму не дозволена.
+- Permitted Variance: нативні Element/ОС відмінності допустимі як platform variance; body/order/role/Matrix replies і незмінена поведінка збережені. Лише DB-D18/DB-D19 і scoped refinement DB-D20 замінюють відповідні access/provider наслідки frozen demo; довільна зміна палітри або цілісного напряму не дозволена.
+- Current Critic Override: `DB-D20` уточнює `DB-D19`: `SUR-02`, `P-12`–`P-15`, `SG-02`–`SG-05`, `SS-35`–`SS-44`; selector Claude Code/Codex і його незалежні поля, no-Claude recovery, без зміни палітри, загальної ієрархії або заморожених файлів. Прийнята scoped-корекція — пряме повідомлення Власника «I need a router switch for Critic - both Claude and Codex»; зафіксовано 06.09.2026, точний час отримання невідомий. Original approval/receipt не змінено.
 - Operator Overrides: історичні палітра HappyPro й заборона спеціальних звуків збережені. Чинні DB-D18 (Google/local-session presentation замість DB-D17) і DB-D19 (незалежні provider model/effort, точні версії/порядок, каталог) спираються на підтверджені upstream-рішення. Scope: SUR-02, P-11–15, SG-01–05, SS-30–46 лише в названих access/provider/recovery наслідках. Збережені one-page utility, палітра, Matrix-подача, Baseline ID, frozen bytes та original receipt. Це не новий whole-design approval і не live-login доказ.
 - Supersedes: попередні WhatsApp `A/B/C v1` як поточний design target; їхні source/evidence артефакти лишаються незмінними історичними записами
 - Superseded By: none
-- Downstream Invalidation: архітектура → DoD/evals → QA → development plan мають звірити лише наслідки DB-D18/DB-D19 із тим самим Baseline ID/target та поточною v2-прив'язкою кореня і залежностей, зберігаючи історичне обмеження. Попередня implementation authorization не переноситься автоматично; потрібен окремий пізніший implementation prompt. Frozen demo — provenance, не буквальний auth/shared-effort/model target; цей owner не змінює runtime або manifest.
+- Downstream Invalidation: архітектура → DoD/evals → QA → development plan мають звірити лише наслідки DB-D18/DB-D19/DB-D20 із тим самим Baseline ID/target та поточною v2-прив'язкою кореня і залежностей, зберігаючи історичне обмеження. Попередня implementation authorization не переноситься автоматично; потрібен окремий пізніший implementation prompt. Frozen demo — provenance, не буквальний auth/shared-effort/model target; цей owner не змінює runtime або manifest.
 
 ## Validation Report
 
@@ -636,3 +641,13 @@ Don't:
 7. Які current-client відмінності в native formatting, long-message presentation, text scaling і screen-reader reading order виявить prototype/evidence pass на чотирьох цільових клієнтах?
 
 Ці питання не блокують approved design contract, не дозволяють додати третю поверхню або custom Element chrome і не є pre-prototype approval gate.
+
+## Маршрутизатор Критика — узгодження 06.09.2026
+
+`DB-D20` — вузька прийнята корекція від Власника, після перегляду upstream security consequences у PRD. Вона зберігає три групи й наявні semantic tokens; Критик має один доступний selector провайдера та fields тільки вибраної гілки. Focus після перемикання залишається на selector; зміна статусу оголошується без автозбереження. Неактивний Claude не приховує елементи керування Codex; недоступні вибрані model/effort позначаються явно без підміни. Claude зберігає порядок версій; параметри Codex-агентів не змінюються.
+
+H1/H2/H6: видно конкретну роль, маршрут і чинні/збережені значення; H3/H5/H9: cancel/retry/preservation і недоступний маршрут; H4: labels/focus/keyboard/AT; H7: одне явне перемикання без повторної Google-авторизації чи реконфігурації агентів; H8: лише активна гілка без нової панелі; H10: коротко пояснено, як відновити саме обраний маршрут. Coverage — covered, execution — not_run. Scope: `JOB-003`, `UC-004`, S2–S5, `SUR-02/SS-35–44`, 390/430/768/1280/1440px плюс 320px reflow і 200% text zoom.
+
+`UV-04` доповнено задачею вибрати Codex → підтверджені Astra/Extra High за недоступного Claude, зберегти, повернутися на Claude й побачити його попередні значення без зміни Codex-агентів або активної сесії. Учасник — Власник; success — самостійно розуміє маршрут і межу наступної сесії. Pre-approval спостереження для цієї scoped-корекції відкладене: немає реалізованого selector; ризик плутанини ролі/провайдера, відповідальний — authorized reviewer, строк — після реалізації перед прийняттям зміненого UI. Це не пройдений user test.
+
+Механічна та змістова перевірки документа: нових поверхонь, token system або прихованого fallback немає; upstream state/recovery/рольові межі узгоджені. Заморожений target/render bundle повторно хешовано без змін: aggregate `57d103c5ed17bcc9a9d95a58718f83c33b8257229fc825b756367321eaa33199`. Історичне обмеження baseline збережене. Нових browser/visual/heuristic/user/accessibility або runtime доказів немає.

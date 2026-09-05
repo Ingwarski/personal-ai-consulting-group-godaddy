@@ -4,14 +4,16 @@
 - `definition_status`: `prepared`
 - `execution_status`: `not_run`
 - `release_readiness`: `not_evaluated`
-- `updated_at`: `2026-09-05`
-- `owner_invocation_id`: `6e95790f-e5cd-428e-93fe-49b35bfa417b`
+- `updated_at`: `2026-09-06`
+- `owner_invocation_id`: `development-plan-critic-router-20260906`
 - `working_language`: `uk`
 - Approved Visual Baseline: `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`
 
 Цей артефакт визначає послідовність і межі реалізації. Він не стверджує, що описані QA-перевірки, security review, representative-user sessions, real Matrix integration або release evaluation уже виконані.
 
 ## Source References
+
+Таблиця нижче — збережений історичний inventory попереднього узгодження 05.09.2026, а не перелік нинішніх hashes чи твердження про повторне повне читання. Поточний scoped dispatch споживає розділ «Маршрутизатор Критика — узгодження 06.09.2026» кожного прямого upstream, канонічний Approved Visual Baseline, DoD Evidence Requirements та QA Checklist Field Contract/Shared Verification Scope. Точні поточні section bindings містяться в manifest. QA execution results не використано як джерело вимог.
 
 | Джерело | SHA-256 / binding | Спожите рішення |
 |---|---|---|
@@ -42,7 +44,7 @@ Context/terms застосовано вибірково до платформ, �
 6. Treat the 04.09.2026 Published Rust probe only as host feasibility, not proof of final sidecar, final paths, real Matrix integration or release readiness.
 7. Keep destructive legacy code/secret/database cleanup behind `G-00`: exact inventory, backup, isolated restore/reconciliation, rollback and action-time confirmation.
 
-8. Завершити Google-only виправлення U-04 з необхідними seams U-01/U-03/U-07 після нового окремого дозволу. Не перескакувати до наступної unit через зелений SDD checker; зберегти вже зроблені частини U-01–U-09 і повторно перевірити affected acceptance.
+8. Наступна локальна реалізація після окремого prompt — цілісний маршрутизатор Критика за AD-24/DB-D20: settings/storage/UI разом із provider preflight, окремим runtime і критичним гейтом. Підтверджену раніше Google-автентифікацію зберегти й перевірити регресіями; не переписувати її. Зелений SDD checker не означає виконання чи приймання unit.
 
 ## Codebase Map
 
@@ -52,7 +54,7 @@ Context/terms застосовано вибірково до платформ, �
 | `src/godaddy/mysql-storage.ts` | transactional MySQL key/value adapter | reuse for registrar/outbox atomicity; no second state authority |
 | `src/session/registrar-do.ts` | registrar domain | add transaction-local publication projection without binding domain logic to Matrix |
 | `src/matrix/*` | policy/formatting reference | revalidate ingress/send policy; consume durable outbox instead of direct publish |
-| `src/godaddy/settings-runtime.ts`, `src/godaddy/owner-password-auth.ts` | Наявний парольний/session/MySQL runtime, що не відповідає новому Google-only контракту | U-04 замінює identity/transaction boundary, зберігає перевірені session/CAS/restart safeguards; не видаляє live secrets чи таблиці |
+| `src/godaddy/settings-runtime.ts`, `src/settings/ui/*` | Наявний Google/session runtime та Settings; неготовий каталог зараз може закрити selector через 503 | U-04 зберігає auth/grants і відкриває protected recovery/critic selector незалежно від неактивного Claude; не видаляє secrets чи таблиці |
 | `src/cloudflare/*`, `src/worker.ts`, `wrangler.*` | legacy reference/rollback | never import from GoDaddy production entrypoint; cleanup only through `G-00` |
 | `native/matrix-sidecar/**` | Наявні workspace, Cargo.toml/lock і реалізація | Продовжити bounded integration/verification U-06; не створювати наново і не вважати host build deployable |
 | `.github/workflows/matrix-sidecar.yml` | Наявний non-deployable verification workflow | Зберегти локальні/Linux checks; U-09 має окремо забезпечити immutable release-builder provenance до promotion |
@@ -76,6 +78,7 @@ Context/terms застосовано вибірково до платформ, �
 - **Purpose:** provide the deterministic production host and supervisor contract.
 - **Depends On:** approved baseline and current plan.
 - **Work Items:** maintain Node 22 build/start/`PORT`; validate required configuration fail-closed; enforce trusted host/forwarded-header policy, minimal routes/methods/headers, timeouts and graceful shutdown; keep Preview stateless.
+- **Critic Router Work (06.09.2026):** Перевірити сумісність pinned Codex CLI з Astra: checkout має 0.152.1; офіційний 0.153.1 є перевіреним кандидатом, не автоматично прийнятим upgrade. Після дозволу оновити package/lock узгоджено й перевірити Node 22/app-server protocol/read-only запуск; не змінювати Claude pin без потреби.
 - **Acceptance Checks:** build, typecheck, liveness and host-policy tests pass; missing/unknown production configuration prevents dependent work; production entrypoint imports no legacy Cloudflare runtime.
 - **Verification:** `npm run check`, forbidden-env scan, server tests, `git diff --check`.
 - **Delivery Layer:** infrastructure.
@@ -86,6 +89,7 @@ Context/terms застосовано вибірково до платформ, �
 - **Purpose:** retain typed complete settings, separate provider catalogs, compatibility validation, defaults and immutable session snapshot.
 - **Depends On:** U-01.
 - **Work Items:** preserve exact Codex/Claude model-effort contracts; reject arbitrary/stale/incompatible choices; keep speed limited to orchestration; prohibit API/PAYG/credits/Fast Mode fallback.
+- **Critic Router Work (06.09.2026):** Реалізувати AD-24 OwnerSettings v3: незалежні Codex-агенти та critic.provider/critic.codex/critic.claude; versioned provider receipts, exact model/effort, active-only validation. Codex refresh не викликає Claude; default validity не блокує інший чинний owner choice. Перевірити pagination/includeHidden і явно запитаний Astra без довільного відкриття всіх hidden models.
 - **Acceptance Checks:** full-object validation is deterministic; provider defaults transmit no explicit effort; session snapshot cannot mutate.
 - **Verification:** settings/catalog/snapshot and capability-drift tests.
 - **Delivery Layer:** backend.
@@ -96,6 +100,7 @@ Context/terms застосовано вибірково до платформ, �
 - **Purpose:** persist the complete settings document atomically on GoDaddy.
 - **Depends On:** U-01, U-02.
 - **Work Items:** use MySQL transactions for version/ETag, `If-Match`, idempotency-body hash, full-object save and confirmed reset; keep audit records content-free.
+- **Critic Router Work (06.09.2026):** Реалізувати атомарну, ідемпотентну v1/v2→v3 міграцію документа й idempotency-record compatibility без DDL/wipe: попередній вибір Claude зберігається, неактивні prefs не втрачаються, старі active snapshots не переписуються. CAS/restart/audit/rollback compatibility перевіряються до приймання.
 - **Acceptance Checks:** one successful mutation creates one complete revision; stale/concurrent/changed-body retries fail without partial write; restart reads the same revision.
 - **Verification:** MySQL/Settings tests for CAS, idempotency, reset, restart and failure injection.
 - **Delivery Layer:** backend.
@@ -113,13 +118,14 @@ Context/terms застосовано вибірково до платформ, �
   4. Same-tab повернення веде до `/operations/runtime`, якщо каталог не готовий, інакше `/settings`. Auth-ready, Matrix readiness і consultation-ready незалежні; Google-вхід/logout/relogin не змінюють AI OAuth. Секрети Google/session не передаються AI children.
   5. У protected namespace зберігати лише визначені hash/AEAD transaction/grant/binding records; не друкувати raw tokens, code, nonce/verifier або exact identity. Не робити DDL wipe/міграцію інших застосунків.
   6. Відобразити Google entry/cancel/retry/denied/session expiry/видимі logout/revoke і рівно три незалежні групи; current/default/effective, atomic save/reset і незмінний active snapshot.
+- **Critic Router Work (06.09.2026):** DB-D20: Critic provider selector Claude Code/Codex + окремі model/effort гілки; зберігати три групи й не змінювати head/specialists controls. Selector/recovery доступні в protected Settings за absent/expired/error/hung Claude; неготовий неактивний catalog не спричиняє 503/login loop. Keyboard/focus/live status/reflow/text resize — за QA.
 - **Acceptance Checks:** кожний QA-AUTH-001–QA-AUTH-008 має окремі allowed/denied/failure/recovery результати. Зберегти старі коректні rotation/logout/restart/concurrency/CAS regressions; відкинути лише парольні очікування. Wrong owner/token, replay/claim race/crash, stale grant/CSRF/cache/config не відкривають protected bytes. Same-tab Google return працює без вимоги готового AI каталогу.
 - **Verification:** QA-PA-012–QA-PA-016, QA-AUTH-001–QA-AUTH-008, QA-JRN-005–QA-JRN-006, QA-INT-013–QA-INT-018, QA-INT-022, QA-EVD-006, QA-REG-008–QA-REG-009; UI/HEU/USER bindings у Visual And UX Verification. Локальні mocked-provider tests не замінюють separately authorized real Google/browser proof.
 - **Delivery Layer:** full-stack.
 - **Approved Baseline / Target:** `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`; `07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6`.
 - **Prototype Root / Tree / Algorithm:** `forge/design/candidates/candidate-b/v2`; `57d103c5ed17bcc9a9d95a58718f83c33b8257229fc825b756367321eaa33199`; `sdd-render-sha256-v2`, залежності з Baseline Binding нижче.
 - **Scope:** SUR-02, SG-01–SG-05, SS-30–SS-46; JOB-003 → UC-003/UC-004 → Settings S1–S5; browser viewports та accessibility з QA.
-- **Permitted Variance:** тільки source-backed responsive reflow і DB-D18/DB-D19; схвалена палітра/ієрархія та native Matrix незмінні.
+- **Permitted Variance:** тільки source-backed responsive reflow і DB-D18/DB-D19/DB-D20; схвалена палітра/ієрархія та native Matrix незмінні.
 - **Security Decision:** виняток власної MFA вже визначений PRD. Усі компенсувальні вимоги обов'язкові; це не нове питання до Власника й не full-ASVS claim.
 - **Interfaces:** U-04 володіє Google transaction/owner grant/CSRF; U-03 надає durable transaction storage; U-01 маршрутизацію; U-07 окремий content-free AI readiness. Точні method/path/config contracts — architecture §8, без нового alternate login.
 
@@ -128,6 +134,7 @@ Context/terms застосовано вибірково до платформ, �
 - **Purpose:** make one durable authority for session generation, canonical order, confirmed bodies and Matrix publication intent.
 - **Depends On:** U-01, U-02, U-03.
 - **Work Items:** preserve append-only registrar state; create `ConfirmedAgentMessage` and ordered `MatrixOutboxRecord` in the same MySQL transaction; define deterministic transaction ID, lease/fencing, retry and status transitions; make `afterConfirmed` wake the consumer only.
+- **Critic Router Work (06.09.2026):** Замінити provider-name-as-critic check на призначену критичну identity: session/generation/agentId/provider/runtimeSessionRef і підтверджений A2A event. Role-only legacy receipt, head, specialist, інший runtime або replay не закривають критичний гейт; не вигадувати missing historical identity.
 - **Acceptance Checks:** no confirmed message lacks an outbox record; concurrent appends keep order; duplicate/retry/crash cannot duplicate visible work; `Стоп`/new generation fences late output.
 - **Verification:** registrar/MySQL/outbox concurrency, rollback, restart, crash-window, duplicate and stale-lease tests.
 - **Delivery Layer:** backend.
@@ -164,18 +171,20 @@ Context/terms застосовано вибірково до платформ, �
 
 ### U-07 — Subscription OAuth fencing and provider preflight
 
-- **Purpose:** verify one Codex subscription OAuth lineage and separate Claude Code subscription session without API/PAYG fallback.
+- **Purpose:** verify one Codex subscription OAuth lineage and the selected critic route; require a separate Claude subscription session only for the Claude route, without API/PAYG fallback.
 - **Depends On:** U-01, U-02, U-05.
 - **Work Items:** retain credential-writer fencing, content-free preflight and per-provider receipts; isolate Settings auth; reject forbidden env, API keys, PAYG, credits, unavailable models and failed/private auth before launch.
+- **Critic Router Work (06.09.2026):** Preflight/readiness/refresh торкаються Codex-агентів і тільки вибраного Критика. Для Codex Claude dependency не викликається навіть за 403/exception/hang; для Claude readiness обов'язкова. Один OAuth writer, без credential-store clones, Google secrets або передавання даних неактивному провайдеру.
 - **Acceptance Checks:** failure makes no dependent call; credentials/auth URLs/codes never reach Matrix, prompts, logs or archive; немає залежності provider-preflight від Google grant; Google auth використовує власний flow, а не legacy Cloudflare Access.
 - **Verification:** provider/process negative tests; real OAuth only after separate authorization.
 - **Delivery Layer:** integration.
 
 ### U-08 — Consilium runtime, A2A and critical path
 
-- **Purpose:** run the head, 2–5 separate Codex contexts and one separate Claude critic, then publish only registrar-confirmed bodies.
+- **Purpose:** run the head, 2–5 separate Codex contexts and one separate selected-provider critic, then publish only registrar-confirmed bodies.
 - **Depends On:** U-05, U-06, U-07.
 - **Work Items:** route direct/consilium mode; register agents before route; preserve independent first passes, addressed critique/revision and head synthesis; enforce cancellation/generation fences; wake U-06 after U-05 confirmation.
+- **Critic Router Work (06.09.2026):** Додати реальну critic runtime factory: Claude adapter або новий Codex thread/start з окремими workspace/lease/read-only policy, critic model/effort, без fork/head context. Під'єднати production caller, не лише тестовий launcher; route snapshot→preflight→fresh critic→повна адресована критика→revision→final. Partial prepare/cancel/failure звільняють leases і не лишають orphan agents; final gate перевіряє designated identity.
 - **Acceptance Checks:** labels cannot substitute for contexts; critic is never silently removed; final series contains one decision, at most three actions, risk/assumption and review condition; no hidden reasoning/tool log/technical ID publishes.
 - **Verification:** deterministic adapter tests and `QA-JRN-001`–`QA-JRN-004`; controlled provider/Matrix E2E remains `not_run`.
 - **Delivery Layer:** full-stack.
@@ -187,6 +196,7 @@ Context/terms застосовано вибірково до платформ, �
 - **Purpose:** complete encrypted archive/export/delete, truthful costs and release evidence on actual GoDaddy Published lineage.
 - **Depends On:** U-03 through U-08; JIT authorization for production credentials/deploy, real Matrix/device tests and destructive archive/delete tests.
 - **Work Items:** store only application-encrypted archive ciphertext in MySQL with external key lifecycle and integrity manifest; implement full export and double-confirmed whole-session deletion; reconcile subscription fees with actual GoDaddy/MySQL/Matrix data and provider status; verify Google identity/transaction and local-session bypass/throttle/expiry/rotation/logout/revoke, host/origin/headers and Preview isolation; collect deployment/binary/path/readiness and device evidence.
+- **Critic Router Work (06.09.2026):** Зібрати окремі route verdicts: deterministic обидві гілки, а live Astra/xhigh і no-Claude-call — лише після окремого дозволу на GoDaddy/provider execution. Прострочена Claude-підписка не блокує Codex, але live Claude-route лишається not_run/blocked з причиною, не passed. Усі Google/Matrix/data/permission regressions зберігаються.
 - **Acceptance Checks:** no plaintext archive or individual reply mutation/deletion; unavailable cost is `невідомо`; release evidence binds exact commit, Published app, DB, binary checksum, paths, Matrix room/devices and all gates.
 - **Verification:** `G-10`–`G-23`, `QA-RR-001`, archive restore/tamper/export/delete, GoDaddy security and real-device tests after authorization.
 - **Delivery Layer:** integration.
@@ -213,15 +223,15 @@ Context/terms застосовано вибірково до платформ, �
 
 | Unit | Concrete QA IDs / primary та supporting gates |
 |---|---|
-| U-01 | QA-SS-008, QA-INT-022, QA-SEC-001, QA-EVD-001–QA-EVD-002, QA-LIM-001, QA-LIM-004; G-01/G-14/G-23 |
-| U-02 | QA-PA-013–QA-PA-016, QA-SS-012, QA-INT-016, QA-INT-018, QA-REG-009; G-19/G-20 |
-| U-03 | QA-PA-015, QA-SS-013, QA-INT-017, QA-REG-009, QA-SEC-001; G-19/G-23 |
-| U-04 | QA-PA-012–QA-PA-016, QA-AUTH-001–QA-AUTH-008, QA-JRN-005–QA-JRN-006, QA-SS-011–QA-SS-014, QA-WF-005, QA-UX-006, QA-A11Y-006–QA-A11Y-007, QA-INT-009, QA-INT-013–QA-INT-018, QA-INT-022, QA-DEV-007, QA-EVD-006, QA-REG-008–QA-REG-009; G-18/G-19/G-20/G-23 плюс UI |
-| U-05 | QA-PA-003–QA-PA-004, QA-INT-003–QA-INT-006, QA-EVD-003, QA-REG-002, QA-REG-004, QA-SEC-001; G-04/G-06/G-08/G-23 |
+| U-01 | QA-CRT-001, QA-SS-008, QA-INT-022, QA-SEC-001, QA-EVD-001–QA-EVD-002, QA-LIM-001, QA-LIM-004; G-01/G-14/G-23 |
+| U-02 | QA-CRT-001, QA-CRT-004, QA-PA-013–QA-PA-016, QA-SS-012, QA-INT-016, QA-INT-018, QA-REG-009; G-19/G-20 |
+| U-03 | QA-CRT-004, QA-PA-015, QA-SS-013, QA-INT-017, QA-REG-009, QA-SEC-001; G-19/G-23 |
+| U-04 | QA-CRT-001, QA-CRT-004, QA-PA-012–QA-PA-016, QA-AUTH-001–QA-AUTH-008, QA-JRN-005–QA-JRN-006, QA-SS-011–QA-SS-014, QA-WF-005, QA-UX-006, QA-A11Y-006–QA-A11Y-007, QA-INT-009, QA-INT-013–QA-INT-018, QA-INT-022, QA-DEV-007, QA-EVD-006, QA-REG-008–QA-REG-009; G-18/G-19/G-20/G-23 плюс UI |
+| U-05 | QA-CRT-003, QA-PA-003–QA-PA-004, QA-INT-003–QA-INT-006, QA-EVD-003, QA-REG-002, QA-REG-004, QA-SEC-001; G-04/G-06/G-08/G-23 |
 | U-06 | QA-PA-006, QA-PA-010, QA-SS-009, QA-INT-001, QA-INT-019–QA-INT-024, QA-DEV-001–QA-DEV-006, QA-LIM-002, QA-REG-010, QA-SEC-001; G-02/G-07/G-12/G-14/G-23 плюс UI |
-| U-07 | QA-PA-007, QA-SS-010, QA-INT-009–QA-INT-012, QA-REG-007, QA-SEC-001; G-05/G-17/G-23 |
-| U-08 | QA-PA-001–QA-PA-007, QA-PA-011, QA-JRN-001–QA-JRN-004, QA-SS-001–QA-SS-005, QA-WF-001–QA-WF-004, QA-UX-001–QA-UX-005, QA-INT-002–QA-INT-006, QA-REG-001–QA-REG-004; G-03–G-09/G-15 плюс UI |
-| U-09 | QA-PA-008–QA-PA-010, QA-SS-006, QA-INT-007–QA-INT-008, QA-REG-005, QA-EVD-001–QA-EVD-006, QA-LIM-001–QA-LIM-004, QA-RR-001; G-10/G-11/G-15/G-23 та агрегування **всіх 134** застосовних QA IDs з current QA Primary Gate Membership, без G-13 |
+| U-07 | QA-CRT-001, QA-CRT-003, QA-PA-007, QA-SS-010, QA-INT-009–QA-INT-012, QA-REG-007, QA-SEC-001; G-05/G-17/G-23 |
+| U-08 | QA-CRT-002, QA-CRT-003, QA-PA-001–QA-PA-007, QA-PA-011, QA-JRN-001–QA-JRN-004, QA-SS-001–QA-SS-005, QA-WF-001–QA-WF-004, QA-UX-001–QA-UX-005, QA-INT-002–QA-INT-006, QA-REG-001–QA-REG-004; G-03–G-09/G-15 плюс UI |
+| U-09 | QA-CRT-001, QA-CRT-002, QA-CRT-003, QA-CRT-004, QA-PA-008–QA-PA-010, QA-SS-006, QA-INT-007–QA-INT-008, QA-REG-005, QA-EVD-001–QA-EVD-006, QA-LIM-001–QA-LIM-004, QA-RR-001; G-10/G-11/G-15/G-23 та агрегування **всіх 138** застосовних QA IDs з current QA Primary Gate Membership, без G-13 |
 
 ### Cross-Layer Interface Ownership
 
@@ -233,7 +243,7 @@ Context/terms застосовано вибірково до платформ, �
 | U-04 Google transaction/grant + CSRF | U-01 routing, U-03 protected API, U-07 operations UI | architecture §8 methods/paths, hashed references, separate generation; старий password/audience не accepted fallback | QA-AUTH-001–QA-AUTH-008, QA-JRN-005–QA-JRN-006 |
 | U-05 canonical registrar/outbox | U-06 transport, U-08 orchestrator, U-09 archive | confirmed body/order + outbox одна transaction; generation/fence/deterministic txn ID, wake не другий write | QA-INT-003–QA-INT-007, QA-REG-002 |
 | U-06 Rust SDK/store + Node supervisor | U-05 ingress/ACK, U-08 invocation flow | versioned private NDJSON, bounded media handles, Matrix receipt != device delivery/read; malformed/unknown version blocked | QA-INT-019–QA-INT-024 |
-| U-07 subscription runtime/credential owner | U-02 catalog, U-08 agent runner, U-04 readiness only | one Codex fenced lineage, separate Claude process, no Google secrets/implicit OAuth mutation | QA-INT-009–QA-INT-012, QA-INT-022 |
+| U-07 subscription runtime/credential owner | U-02 catalog, U-08 agent runner, U-04 readiness only | one Codex fenced lineage, separate selected-critic context with Claude process only for Claude selection, no Google secrets/implicit OAuth mutation | QA-INT-009–QA-INT-012, QA-INT-022 |
 | U-08 orchestration/policy | U-05 registration, U-06 publication, U-09 result/archive | A2A schema, independent first pass, cancel generation and confirmed body only; no synthetic fallback | QA-JRN-001–QA-JRN-004, QA-INT-002–QA-INT-006 |
 
 ### Lifecycle Responsibilities
@@ -252,7 +262,7 @@ Context/terms застосовано вибірково до платформ, �
 
 - Settings: U-01 → U-02 → U-03 → U-04.
 - Consultation: U-01/U-02/U-03 → U-05; далі U-06 (Matrix) та U-07 (provider preflight) незалежні на цьому seam; U-08 потребує U-05/U-06/U-07; U-09 агрегує U-03–U-08.
-- Перший змістовний repair після **нового окремого implementation prompt** — U-04 Google-only разом із необхідними readiness/storage seams U-01/U-03/U-07. Не переходити до іншої unit, доки affected локальні acceptance й явно названі інтеграційні обмеження не перевірені.
+- Перший змістовний repair після **нового окремого implementation prompt** — маршрутизатор Критика через U-01/U-02/U-03/U-04/U-05/U-07/U-08/U-09. Це один завершуваний обсяг, а не дев'ять нових units або повторна реалізація Google/Rust. Не зупинятися на dropdown: settings → snapshot → preflight → runtime → A2A → final gate перевіряються разом.
 - G-00 — окрема підготовка recovery/destructive дій. Наявні code/tests зберігаються; цей план не дає дозволу на credentials, Matrix device/room, OAuth mutation, deploy, DB/legacy cleanup.
 
 ## Verification Plan
@@ -295,7 +305,7 @@ Negative/adversarial verification uses `QA-SEC-001`; no security item is advisor
 - Target: `forge/design/candidates/candidate-b/v2/index.html`, SHA-256 `07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6`.
 - Frozen render bundle: `forge/design/candidates/candidate-b/v2`, `sdd-render-sha256-v2`, `57d103c5ed17bcc9a9d95a58718f83c33b8257229fc825b756367321eaa33199`; обидві залежності й історичне обмеження — Baseline Binding нижче.
 - `SUR-01` inherits native Element; no browser chat is built.
-- `SUR-02` зберігає схвалену палітру/ієрархію; DB-D18 замінює парольний flow на Google, DB-D19 розділяє provider model/effort. DB-D17 лише історичний, не чинна вимога.
+- `SUR-02` зберігає схвалену палітру/ієрархію; DB-D18 замінює парольний flow на Google, DB-D19 розділяє provider model/effort, а DB-D20 додає явний Critic router і незалежні рольові налаштування. DB-D17 лише історичний, не чинна вимога.
 - `QA-VIS-001`–`003`, `QA-HEU-001`–`010`, `QA-USER-001`–`003` remain prepared/not_run.
 
 ### Baseline Binding
@@ -307,7 +317,7 @@ Negative/adversarial verification uses `QA-SEC-001`; no security item is advisor
 
 ### Unit Journey And UI Bindings
 
-Кожна unit цього рядка використовує **той самий baseline/target/DB-D18/DB-D19** вище й QA Shared Verification Scope. Неавтентифіковані Google states також належать SUR-02. Backend units лише вмикають user states/data/actions; вони не створюють третій UI.
+Кожна unit цього рядка використовує **той самий baseline/target/DB-D18/DB-D19/DB-D20** вище й QA Shared Verification Scope. Неавтентифіковані Google states також належать SUR-02. Backend units лише вмикають user states/data/actions; вони не створюють третій UI.
 
 | Unit | JOB → UC → journey/scope | Visual / H1–H10 / representative task |
 |---|---|---|
@@ -334,7 +344,7 @@ Only U-04 has bounded presentation reuse:
 | `forge/design/candidates/candidate-b/v2/validate.mjs` | `test/settings-ui.test.ts` | `reimplement` |
 
 - Production base commit: `7d2e944f9500a6c38745ce39b414ffc3b946a37c`.
-- Allowed adaptations: прибрати review/scenario fixtures; під'єднати Google/local grant/MySQL; зберегти схвалену presentation основу й DB-D18/DB-D19. Мапа не дозволяє переносити prototype auth або fixtures як production truth.
+- Allowed adaptations: прибрати review/scenario fixtures; під'єднати Google/local grant/MySQL; зберегти схвалену presentation основу й DB-D18/DB-D19/DB-D20. Мапа не дозволяє переносити prototype auth або fixtures як production truth.
 - Prototype не постачає production auth/session/API/MySQL/CAS/idempotency/capability/CSRF/headers. Частина цих можливостей уже є в production destinations; U-04 доповнює/перевіряє їх, а не вважає prototype їх доказом. Google-only і актуальні deployment/browser докази ще потрібні.
 - На 05.09.2026 усі чотири declared destinations уже існують. Остання їх зміна в Git: `31fdf9e51e18174c892265c5f6792c241a0f3aaa` (03.09.2026). `forge/runs` та matching historical promotion receipt відсутні. Це **не доказ виконаної promotion**; G-16 provenance для такого claim не підтверджена. План не реконструює receipt або started_at.
 - Старий base commit вище збережений як historical planning reference, не початок нового run. Для наступної явно дозволеної адаптації runner фіксує фактичні current base/start перед будь-якою зміною, actual diff/head/strategies/destination hashes і актуальний plan hash; якщо справжню provenance не встановити, fidelity claim залишається blocked.
@@ -354,7 +364,7 @@ Only U-04 has bounded presentation reuse:
 
 - Third surface, browser chat/dashboard/archive browser, custom Element chrome or product-authored sound.
 - API key, PAYG, credits, Fast Mode, automatic paid fallback or arbitrary model input.
-- Multi-owner SaaS, public onboarding, parallel active sessions or per-agent Settings.
+- Multi-owner SaaS, public onboarding, parallel active sessions or arbitrary per-agent Settings beyond the explicitly approved head/specialists-versus-Critic split.
 - Runtime sidecar download/compile, caller-controlled Matrix discovery/URLs/proxy or automatic crypto-store reset.
 - Production credentials, Matrix room/device setup, OAuth mutation, deployment, legacy code/secret deletion or DB cleanup under current local permission.
 
@@ -368,6 +378,29 @@ Only U-04 has bounded presentation reuse:
 
 ## Handoff
 
-SDD узгоджено з поточним skillset; **awaiting-implementation-prompt**. Наступна реалізація після окремого явного prompt — U-04 Google-only і мінімальні залежні storage/readiness/credential seams. Потім повернутися до незавершених перевірок Rust/Matrix та решти існуючих units за dependency graph, не оголошуючи їх готовими за локальними або статичними доказами.
+SDD узгоджено для явного Critic router Claude Code/Codex; **awaiting-implementation-prompt**. Після окремого пізнішого prompt реалізувати весь пов'язаний обсяг нижче, зокрема GPT-6 Astra/Extra High, без залежності Codex-маршруту від Claude. Наявну Google-автентифікацію зберегти. Незавершені широкі Matrix/release перевірки залишаються окремими непідтвердженими результатами, не приводом назвати маршрутизатор готовим після одного UI тесту.
 
 Потрібний новий prompt прив'язується до поточного development-plan hash і approved baseline; історичний U-06 receipt не придатний. Live Google/Matrix/credentials/deploy та destructive дії мають власні дозволи. Цей запуск не виконував production code, promotion, тести, user sessions чи release.
+
+## Маршрутизатор Критика — узгодження 06.09.2026
+
+Джерела: PI-CRITIC-20260906, PRD FR-010/FR-040/FR-041/FR-042/FR-044/FR-045/FR-046, AD-24, DB-D20. Це зміна обов'язкового провайдера, не скасування ролі Критика. Нових units не створено. U-06 Rust/SQLite crypto contract незмінний; його наявний transport використовується в U-08 integration без нового crypto експерименту.
+
+### Пов'язаний обсяг і докази Critic router
+
+| Unit owner | Результат після implementation prompt | Concrete checks і зупинка |
+|---|---|---|
+| U-01/U-02/U-07 | Перевірений Astra runtime, повний paginated capability list і active-provider-only readiness. `gpt-6-astra` / `xhigh` передаються точно; `Extra High` — лише UI label | QA-CRT-001, QA-INT-009, QA-INT-010, QA-INT-016, QA-INT-018, QA-REG-007; G-17/G-19. Немає runtime support — залежний запуск blocked, без alias/fallback/downgrade |
+| U-02/U-03/U-04 | OwnerSettings v3, явний selector, незалежні branch prefs, atomic migration/save/reset, current/default/effective, доступне recovery без Claude | QA-CRT-001, QA-CRT-004, QA-PA-013, QA-PA-014, QA-PA-015, QA-PA-016, QA-REG-009; G-19/G-20. Жодних silent resets/active snapshot rewrites |
+| U-05/U-07/U-08 | Окремий реальний critic runtime і production route; designated-identity receipt замість `provider === claude_code`; критика повністю через A2A | QA-CRT-002, QA-CRT-003, QA-JRN-001, QA-JRN-002, QA-JRN-003, QA-JRN-004, QA-INT-002, QA-INT-003, QA-INT-004, QA-INT-005, QA-INT-006; G-05/G-06/G-09/G-17/G-23. Без підтвердженого критичного event фінал blocked |
+| U-04/U-09 | Зрозумілий switch без змішування head settings, lifecycle/auth regressions та чесні route-specific verdicts | QA-CRT-001, QA-CRT-002, QA-CRT-003, QA-CRT-004; QA-AUTH-001–QA-AUTH-008; QA-VIS-001–QA-VIS-003; QA-HEU-001–QA-HEU-010; QA-USER-003 (UV-04), QA-A11Y-006–QA-A11Y-007; G-15/G-16/G-18/G-19/G-20/G-21/G-22/G-23. Без спостереження користувача не ставити USER passed |
+
+Точні security обов'язки для QA-CRT-003: NFR-006, NFR-007, NFR-008, NFR-009, NFR-010, NFR-017, NFR-019. G-23 та QA-SEC-001 залишаються агрегувальними, без нового security exclusion. Рольові налаштування й immutable receipt producer/consumer реалізуються разом; збіг провайдера не означає однаковий контекст або незалежний зовнішній доказ.
+
+### Спостереження коду та межі перевірки 06.09.2026
+
+Read-only checkout basis: `ea207ab6ee661f9d325c7321186273b300d07481`. Поточні seams: `src/runtime/capability-catalog.ts` та `src/godaddy/runtime-bootstrap.ts` вимагають обидва каталоги; `src/godaddy/settings-runtime.ts` може повернути 503 до selector; `src/runtime/codex-app-server.ts` запитує `includeHidden:false` і відкидає hidden entries. `src/consilium/session-launcher.ts`, `roster.ts`, `a2a.ts` та `src/runtime/codex-head-synthesizer.ts` прив'язують критика до Claude. `rg` для `ConsiliumSessionLauncher|executePreparedConsilium` у src знайшов definitions, але не production caller; це integration gap, який не закриває unit test. Стара codebase observation 05.09 вище не є поточним твердженням про Google-код.
+
+[Офіційний Codex 0.153.1 release](https://github.com/openai/codex/releases/tag/rust-v0.153.1) підтверджує Astra support без показу в normal picker; [app-server contract](https://learn.chatgpt.com/docs/app-server) визначає model/list, supportedReasoningEfforts, fresh thread/start і turn/start model/effort. Це не підтвердження entitlement або виконання на GoDaddy. Реалізація мусить отримати scoped runtime evidence, а не вписати неперевірену модель в UI.
+
+Definition status prepared; нові QA-CRT-001–QA-CRT-004 execution not_run; release readiness not_evaluated. Наступний авторизований runner фіксує фактичні base/start/plan hash, реалізує весь цей scope без зупинки після dropdown, запускає Node 22 check та інтеграційні/браузерні регресії. Live credentials/provider calls/GoDaddy publish не дозволені самим цим документом. Ні README, ні fixture, ні previous green suite не є live evidence.

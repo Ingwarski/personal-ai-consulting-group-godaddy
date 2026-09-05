@@ -4,17 +4,19 @@
 
 - `status`: reconciled all-GoDaddy target; implementation and destructive cleanup remain separately gated
 - `architecture_owner`: `to-architecture`
-- `owner_invocation_id`: `4222ec69-7773-48e7-80d4-068903a61683`
-- `updated_at`: `2026-09-05`
+- `owner_invocation_id`: `architecture-approved-critic-router-20260906`
+- `updated_at`: `2026-09-06`
 - `runtime_host`: existing GoDaddy Node 22 application
 - `matrix_sdk`: `0.18.0`
-- `approved_baseline`: `PC-MATRIX-CANDIDATE-B-V2-20260816-R1` з чинними `DB-D18`/`DB-D19` та v2-прив'язкою залежностей
+- `approved_baseline`: `PC-MATRIX-CANDIDATE-B-V2-20260816-R1` з чинними `DB-D18`/`DB-D19`/`DB-D20` та v2-прив'язкою залежностей
 
 Цей документ задає цільову production-архітектуру, а не твердження про завершене розгортання. Нативні Element/Matrix UX та ізольовані subscription-OAuth контури Codex і Claude збережено. Cloudflare Workers, Durable Objects, R2 і Cloudflare Access не є цільовими production-компонентами; прямий Google OIDC повертається тільки як перевірка особи Власника, не як AI-авторизація.
 
 ## 1. Джерела правди (Source References)
 
-Хеші зафіксовано на момент цієї owner-інвокації; пізніші зміни джерел вимагають reconciliation, а не тихого наслідування.
+Поточне узгодження 06.09.2026 стосується лише PI-CRITIC-20260906; його межі визначено в розділі «Маршрутизатор Критика — узгодження 06.09.2026», поточні спожиті фрагменти та hashes — у manifest. Збережені нижче таблиці джерел і датовані спостереження попередніх переглядів є історією, а не новим full-source, runtime або test evidence.
+
+Хеші історичної таблиці зафіксовано попередньою owner-інвокацією; вони не підміняють поточні section bindings у manifest.
 
 | Джерело | SHA-256 |
 |---|---|
@@ -63,7 +65,7 @@ flowchart LR
     R <-->|private bounded NDJSON| N[GoDaddy Node 22 app]
     N <-->|transactions and outbox| D[(GoDaddy MySQL)]
     N --> C[Codex subscription OAuth process]
-    N --> A[Claude subscription OAuth process]
+    N -->|лише Claude-Критик| A[Claude subscription OAuth process]
     N --> S[Owner Settings]
     S -->|явний вхід| G[Google OIDC]
     G -->|code + state| N
@@ -89,8 +91,8 @@ GoDaddy Node є єдиним HTTP/runtime host і supervisor. Rust sidecar є є
 | GoDaddy Node app | HTTP, Settings auth/UI, orchestration, MySQL transactions, sidecar supervision | decrypt Matrix E2EE store; підміняти Matrix readiness liveness-статусом |
 | Rust sidecar | Matrix SDK, E2EE, sync, room/device validation, media spool, Matrix transaction IDs | слухати TCP/HTTP; звертатися до MySQL; запускати agent OAuth |
 | MySQL | settings versions/snapshots, session/registrar state, ingress receipts, archive ciphertext/tombstones, durable outbox | зберігати Matrix crypto state або archive plaintext |
-| Codex process | primary agent under subscription OAuth | бачити Claude credential чи Matrix store secrets |
-| Claude process | critic under subscription OAuth | бачити Codex credential чи Matrix store secrets |
+| Codex process | head/specialists і, за вибором, окремий critic thread under subscription OAuth | бачити Claude credential чи Matrix store secrets |
+| Claude process | лише явно вибраний Claude critic under subscription OAuth | бачити Codex credential чи Matrix store secrets |
 
 ### 4.1. Rust workspace
 
@@ -206,9 +208,11 @@ Composition root розрізняє auth-ready, Matrix transport-ready та cons
 
 `FR-040`, `FR-041`, `FR-042`, `FR-043`: окремі typed model/effort catalogs Codex і Claude, рівно три підтверджені групи. Codex models походять із поточного authenticated app-server runtime; не hardcoded allowlist, що приховує підтверджений Sol. Claude — точні успішно перевірені version IDs, family order Opus→Sonnet→Haiku, новіші підтверджені версії першими; жодна згадка нової версії не створює entitlement. Model-default не передає explicit effort. Зміна одного провайдера не змінює інший; unsupported/stale/unknown combination блокує save/new session без silent downgrade. `FR-044`, `FR-045`, `FR-046`, `NFR-017`, обидві частини `NFR-019`: current/default/effective відокремлені; full-object schema/CAS/idempotency commit або жодного write; active snapshot незмінний, versioned capability mapping відтворюваний. Speed змінює лише дозволену оркестрацію, не billing tier чи safety.
 
+Уточнення `AD-24` нижче є чинним для role settings, catalog readiness і migration: невиконуваний Claude не є глобальною передумовою, параметри Критика незалежні від Codex-агентів навіть за одного провайдера.
+
 ## 9. Integration Map: orchestration і archive
 
-Node створює immutable effective settings snapshot перед стартом. Preflight перевіряє Matrix readiness, MySQL, capability catalog та обидва subscription-OAuth процеси без витоку credentials. Видимими є лише дозволені ролі, джерела і фактичні статуси. Source-backed твердження мають пройти source gate до публікації.
+Node створює immutable effective settings snapshot перед стартом. Preflight перевіряє Matrix readiness, MySQL, capability catalog, Codex-агентів та явно вибраний subscription-OAuth маршрут Критика без витоку credentials. Видимими є лише дозволені ролі, джерела і фактичні статуси. Source-backed твердження мають пройти source gate до публікації.
 
 Archive формується тільки після закриття сесії, шифрується application-layer key поза MySQL і записується як ciphertext + IV/nonce + authenticated manifest. Export/delete/restore є окремими audited flows. Tombstone і видалення ciphertext атомарні. Preview не читає і не пише state/archive.
 
@@ -303,7 +307,8 @@ Backup вважається придатним лише після isolated rest
 | AD-20 | IPC/network | bounded private NDJSON/media spool і fixed outbound allowlist |
 | AD-21 | operations | liveness окремо від readiness; no automatic store reset |
 | AD-22 | Прямий Google OIDC + окрема durable owner session (§8) | PI-AUTH-20260905/DB-D18; відхилені password fallback, новий Google client та AI-auth coupling; no app MFA за винятком PRD |
-| AD-23 | Незалежні provider catalogs і readiness (§8.3–8.4) | DB-D19; спільна effort шкала, приховані confirmed models і catalog-gated login відхилені |
+| AD-23 | Незалежні provider catalogs і readiness (§8.3–8.4) | DB-D19; уточнено AD-24 для явного вибору провайдера Критика, без скасування окремих capabilities |
+| AD-24 | Явний Claude/Codex Critic router, незалежні role settings і designated-identity review receipt | PI-CRITIC-20260906/DB-D20; no fallback, inactive-provider isolation, сумісне читання старих станів; деталі нижче |
 
 ## 16. Ризики та пом'якшення (Risks And Mitigations)
 
@@ -330,3 +335,43 @@ Backup вважається придатним лише після isolated rest
 ## Перевірка узгодження — 05.09.2026
 
 Механічне та змістове review: джерела, шість UC, auth-пункти NFR-016.a–h, 11 security parent IDs, конкретні config/route/session boundaries і DB-D18/DB-D19 узгоджені; решта scope збережена. Документ визначає цільовий контракт. Product/security/browser тести не виконувалися; deployment і live Google login не підтверджені.
+
+## Маршрутизатор Критика — узгодження 06.09.2026
+
+Джерела: `PI-CRITIC-20260906`, `UC-001/UC-004`, `FR-010/040–046`, цільова security-оцінка PRD та `DB-D20`. Незмінні baseline ID/target/render aggregate повторно перевірені design owner; original receipt, frozen bytes, Matrix/Rust/MySQL boundary, Google auth та попередні live receipts збережено. Нижче — цільові рішення `AD-24`, не реалізація.
+
+### AD-24.1 — Налаштування, каталог і сумісність
+
+- Versioned Settings document v3: `codex: ProviderSettings` — тільки head/specialists; `critic: { provider: "claude_code" | "codex", claude: ProviderSettings | null, codex: ProviderSettings | null }`; `speedPreset`. Null дозволено тільки для ще не налаштованої неактивної гілки; виконувана гілка мусить бути заповнена й поточно підтверджена. Власник не вводить довільний slug. Попередній вибір іншої гілки не видаляється.
+- Каталог має незалежні versioned/trusted/expiring результати Codex і Claude: доступний список або безпечний статус недоступності. Готовність Codex-каталогу не потребує Claude-процесу, probe чи валідного Claude-default. Current/default settings і capability evidence — окремі сутності; недоступні defaults можна показати, але не застосувати. Поточний валідний Codex-маршрут не блокується через недоступний Claude-default.
+- `/settings` показує захищений read model і selector навіть за недоступного Claude; не робить безумовний 503 до selector. Якщо всі виконувані capabilities не готові, save/start заблоковані з причиною, але локальний доступ і перегляд збереженого набору зберігаються. Google login незалежний як раніше.
+- Codex refresh не запускає Claude. Claude discovery/preflight запускаються лише за явною дією для Claude-гілки; її помилка/403/timeout не стирає Codex receipt. Перед виконанням перевіряються Codex-агенти та selected critic model/effort. Збережені неактивні значення проходять strict structural validation, але не потребують активної підписки й не є доказом її чинності.
+- Міграція v1/v2 → v3 читає попередній `claude` як `critic.provider=claude_code`, переносить його model/effort без підміни, зберігає Codex/speed; Codex-critic preference початково null. Legacy shared-depth ambiguity не дозволяє мовчазно понизити effort: відображається несумісність і потрібне явне виправлення. Уже завершені й активні snapshots не переписуються; compatibility reader надає історичну Claude-семантику.
+- Document migration виконується однією чинною Settings transaction/CAS з audit `migrate`, без DDL/очищення DB. Зберігаються revision/ETag, idempotency-ledger з історичними документами, request-body identity та попередні audit events. Restart/repeat migration не створює другого перенесення. Старий binary не читає v3 як v2: rollback потребує сумісного reader або exact pre-change state recovery; за невідомої версії відмова, не reset.
+- Reset показує source-backed default provider/model/effort перед commit; недоступний default не підмінюється. Початкове налаштування нової інсталяції потребує явного валідного маршруту. Для Codex-гілки пропонується запитаний Astra/xhigh лише після підтвердження; це не автоматична зміна current/head model.
+
+### AD-24.2 — Astra, окремий контекст і маршрутизація
+
+Поточний checkout `ea207ab` містить `@openai/codex=0.152.1`. Офіційний [release 0.153.1](https://github.com/openai/codex/releases/tag/rust-v0.153.1) додає Astra catalog support, але не робить його звичайним picker default. Це мінімальний перевірений кандидат upgrade для окремої implementation-перевірки; тут package/lockfile не змінено.
+
+[Codex app-server](https://learn.chatgpt.com/docs/app-server) визначає `model/list`, `includeHidden`, окремі `thread/start` і `turn/start` з model/effort. [GPT-6 Astra](https://developers.openai.com/api/docs/models/gpt-6-astra) документує `gpt-6-astra` та `xhigh`; API-документація не доводить entitlement цього GoDaddy subscription runtime.
+
+Поточний `codex-app-server.ts` робить `includeHidden:false` і пропускає `item.hidden===true`; це окремий потенційний blocker запитаного Astra. Ціль: отримати поточний paginated model catalog із hidden metadata; звичайні hidden entries не виставляти автоматично. Тільки явно запитаний Astra може бути показаний після перевірки повернутого runtime ID/capabilities і реального дозволеного subscription-виклику. Без цього показати точну недоступність; не вставляти вигаданий available record. Розрізняти `productId` і `runtimeModelId`.
+
+Router створює `ClaudeCodeCriticRuntime` або новий `CodexCriticRuntime`. Codex-критик отримує fresh `thread/start`, власні lease/workspace/context, критичне завдання й повні первинні позиції як дані. Не використовує head thread або `thread/fork` з успадкованою розмовою. Єдиний fenced Codex OAuth writer/credential lineage збережено; auth stores не копіюються. `turn/start` передає саме critic runtime model і `effort=xhigh`, коли це вибрано; model-default опускає effort. Head/specialists використовують власні settings. Явний analysis/read-only policy і відсутність дозволу на побічні зовнішні дії задаються за схемою pinned API, не успадковуються випадково з локального CLI config.
+
+Критик приймає лише відповідну critique-фазу, повертає повну business reply головному через registrar/A2A, а не приховані reasoning/tool logs. Runtime errors/timeouts/cancellation зберігають чинну generation і fail closed, не спричиняють provider/model/effort fallback. Уже розпочаті leases і listeners прибираються на частковій помилці prepare; не лишають фонових модельних викликів.
+
+### AD-24.3 — Доказ критики й production seam
+
+Registrar зберігає versioned designated critic binding: session/generation, agentId, provider, runtimeSessionRef. Review receipt додатково зв'язує ці поля з confirmed eventId та canonical message. A2A перевіряє binding до зарахування критики; рольовий текст або сам `sender.provider=codex` не є authority. Head synthesizer/finalizer перевіряють той самий receipt, актуальну generation і фактичне критичне повідомлення. Інший Codex-specialist/head, неправильний runtime, звичайна reply або old-generation receipt не відкривають фінал.
+
+Legacy review receipts без identity binding не отримують нової довіри через міграцію: immutable archive читається історично, а продовження активного фінального етапу без достатнього binding потребує нової перевіреної критики або чесної зупинки. Не фальсифікувати historical identity fields. Існуючий Cloudflare registrar interface, якщо лишається compatibility/export surface, узгоджується за типами без відновлення Cloudflare deployment.
+
+Read-only огляд 06.09.2026: `settings/types.ts`, `settings/owner-settings-do.ts`, `runtime/capability-catalog.ts`, `runtime/codex-app-server.ts`, `runtime/codex-thread-client.ts`, `consilium/session-launcher.ts`, `consilium/a2a.ts`; `rg` для launcher у `src` знаходить лише визначення. Це означає, що наявний launcher не підключений production caller у поточному source tree; тести не доводять живого запуску з Matrix. Цільовий composition root має явно зв'язати owner settings → immutable snapshot → selected-route preflight/launcher → registrar/outbox/Matrix → critic-gated finalizer. Цей зв'язок не можна назвати готовим на підставі dropdown або fixture.
+
+### AD-24.4 — Покриття й ризики
+
+`NFR-006`: OAuth single writer, optional Claude secret, pinned dependency; `NFR-007/008`: designated identity/authority, strict inputs і read-only isolation; `NFR-009`: bounded calls/timeouts/lease cleanup та жодного inactive Claude probe; `NFR-010`: canonical registration/generation; `NFR-017/019`: strict v3 schema, atomic migration/CAS, independent catalog/readiness і no fallback. `NFR-005/011/012/016` зберігають попередній enforcement, без нових виключень.
+
+Основні ризики — host Astra entitlement ще не доведений; backward reader/idempotency drift; correlated blind spots у same-provider консиліумі; unconnected production seam. Відповідальні — implementation owner для wiring/migration і authorized reviewer для живого доказу; перевірка до прийняття зміни. Дані/секрети/домени/HappyPro не змінювалися. Обидва маршрути потребують окремих доказів; expired Claude не заважає реалізувати й перевірити Codex, але не дозволяє оголосити Claude live-pass.
