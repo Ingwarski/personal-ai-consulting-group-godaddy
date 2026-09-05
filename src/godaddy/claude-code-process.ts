@@ -36,6 +36,7 @@ export type CommandResult = Readonly<{
   exitCode: number | null;
   stdout: string;
   stderr: string;
+  termination?: "spawn_failed" | "timeout" | "output_limit" | "signal";
 }>;
 
 export type ClaudeDiscoveryFailureCode = "claude_auth_rejected" | "claude_quota_blocked" |
@@ -45,7 +46,46 @@ export type ClaudeDiscoveryFailureCode = "claude_auth_rejected" | "claude_quota_
 // raw CLI error as message/cause: it can contain credentials or response data.
 export class ClaudeDiscoveryFailure extends Error {
   readonly code: ClaudeDiscoveryFailureCode;
-  constructor(code: ClaudeDiscoveryFailureCode) { super(code); this.name = "ClaudeDiscoveryFailure"; this.code = code; }
+  readonly diagnostic: ReturnType<typeof commandDiagnostic> | undefined;
+  constructor(code: ClaudeDiscoveryFailureCode, result?: CommandResult) {
+    super(code); this.name = "ClaudeDiscoveryFailure"; this.code = code;
+    this.diagnostic = result === undefined ? undefined : commandDiagnostic(result);
+  }
+}
+
+// Numeric fields and a closed vocabulary only. No provider text, identity,
+// session IDs, paths, prompts, headers or credentials can enter the server log.
+function commandDiagnostic(result: CommandResult) {
+  let record: Record<string, unknown> = {};
+  let jsonObject = false;
+  try {
+    const value: unknown = JSON.parse(result.stdout.length <= MAX_OUTPUT_BYTES ? result.stdout : "null");
+    if (typeof value === "object" && value !== null && !Array.isArray(value)) { record = value as Record<string, unknown>; jsonObject = true; }
+  } catch { /* Non-JSON CLI failures are represented by booleans only. */ }
+  const message = jsonObject ? (typeof record.result === "string" ? record.result : "") : result.stdout;
+  const text = `${message}\n${result.stderr}`.slice(0, MAX_OUTPUT_BYTES * 2);
+  const hints = [
+    ["oauth_scope", /(?:oauth|token).{0,100}(?:scope|permission)|insufficient_scope/iu],
+    ["billing", /credit balance|billing|payment required|extra usage|spending limit/iu],
+    ["region", /unsupported country|country.{0,60}not supported|region.{0,60}not supported/iu],
+    ["tls", /certificate|CERT_|TLS|SSL/iu],
+    ["network", /ENOTFOUND|ECONN|ETIMEDOUT|network error|connection error|fetch failed/iu],
+    ["filesystem", /EACCES|EPERM|EROFS|read-only file system|permission denied/iu],
+    ["model", /model/iu],
+    ["access_denied", /forbidden|access denied|not authorized|not allowed/iu]
+  ] as const;
+  const apiStatus = record.api_error_status;
+  const terminalReason = ["api_error", "completed", "max_turns", "max_budget_usd", "stop_sequence"].find(value => value === record.terminal_reason) ?? "other_or_absent";
+  return Object.freeze({
+    exit_code: Number.isInteger(result.exitCode) && result.exitCode! >= 0 && result.exitCode! <= 255 ? result.exitCode : null,
+    termination: ["spawn_failed", "timeout", "output_limit", "signal"].find(value => value === result.termination) ?? "exited",
+    api_status: typeof apiStatus === "number" && Number.isInteger(apiStatus) && apiStatus >= 100 && apiStatus <= 599 ? apiStatus : null,
+    json_object: jsonObject,
+    stdout_present: result.stdout.length > 0,
+    stderr_present: result.stderr.length > 0,
+    terminal_reason: terminalReason,
+    failure_hint: hints.find(([, pattern]) => pattern.test(text))?.[0] ?? "unclassified"
+  });
 }
 
 function subscriptionAuthenticated(status: CommandResult): boolean {
@@ -173,6 +213,7 @@ export const runClaudeCommand: CommandRunner = async (input) => new Promise((res
   let stderr = "";
   let settled = false;
   let exceededOutputLimit = false;
+  let timedOut = false;
   const child = spawn(input.executable, [...input.arguments], {
     cwd: input.cwd,
     env: input.environment,
@@ -195,13 +236,15 @@ export const runClaudeCommand: CommandRunner = async (input) => new Promise((res
   };
   child.stdout.on("data", (chunk: Buffer) => { stdout = append(stdout, chunk); });
   child.stderr.on("data", (chunk: Buffer) => { stderr = append(stderr, chunk); });
-  child.once("error", () => settle({ exitCode: null, stdout: "", stderr: "" }));
-  child.once("close", (exitCode) => settle({
+  child.once("error", () => settle({ exitCode: null, stdout: "", stderr: "", termination: "spawn_failed" }));
+  child.once("close", (exitCode, signal) => settle({
     exitCode: exceededOutputLimit ? null : exitCode,
     stdout,
-    stderr
+    stderr,
+    ...(exceededOutputLimit ? { termination: "output_limit" as const } : timedOut ? { termination: "timeout" as const } : signal !== null ? { termination: "signal" as const } : {})
   }));
   timeout = setTimeout(() => {
+    timedOut = true;
     child.kill("SIGTERM");
     setTimeout(() => child.kill("SIGKILL"), 1_000).unref();
   }, input.timeoutMilliseconds);
@@ -293,9 +336,10 @@ export function createGoDaddyClaudeCodeProcess(options: GoDaddyClaudeCodeProcess
     },
     async discoverModels(): Promise<readonly ProviderModelCapability[]> {
       const status = await execute(["auth", "status", "--json"]);
-      if (!subscriptionAuthenticated(status)) throw new ClaudeDiscoveryFailure("claude_auth_rejected");
+      if (!subscriptionAuthenticated(status)) throw new ClaudeDiscoveryFailure("claude_auth_rejected", status);
       const models: ProviderModelCapability[] = [];
       let failure: ClaudeDiscoveryFailureCode = "claude_models_unavailable";
+      let failedResult: CommandResult | undefined;
       for (const candidate of candidates) {
         const baseline = await execute([
           "--print",
@@ -311,8 +355,9 @@ export function createGoDaddyClaudeCodeProcess(options: GoDaddyClaudeCodeProcess
         ]);
         if (baseline.exitCode !== 0 || parseCompletion(baseline.stdout) === undefined) {
           failure = discoveryFailure(baseline);
+          failedResult = baseline;
           if (failure === "claude_auth_rejected" || failure === "claude_quota_blocked" || failure === "claude_cli_incompatible") {
-            throw new ClaudeDiscoveryFailure(failure);
+            throw new ClaudeDiscoveryFailure(failure, baseline);
           }
           continue;
         }
@@ -334,7 +379,7 @@ export function createGoDaddyClaudeCodeProcess(options: GoDaddyClaudeCodeProcess
           if (probe.exitCode === 0 && parseCompletion(probe.stdout) !== undefined) supportedReasoningEfforts.push(effort);
           else {
             const code = discoveryFailure(probe);
-            if (code === "claude_auth_rejected" || code === "claude_quota_blocked" || code === "claude_cli_incompatible") throw new ClaudeDiscoveryFailure(code);
+            if (code === "claude_auth_rejected" || code === "claude_quota_blocked" || code === "claude_cli_incompatible") throw new ClaudeDiscoveryFailure(code, probe);
           }
         }
         const reasoningMappings: Record<ProviderReasoningEffort, string> = {};
@@ -348,7 +393,7 @@ export function createGoDaddyClaudeCodeProcess(options: GoDaddyClaudeCodeProcess
           reasoningMappings: Object.freeze(reasoningMappings)
         }));
       }
-      if (models.length === 0) throw new ClaudeDiscoveryFailure(failure);
+      if (models.length === 0) throw new ClaudeDiscoveryFailure(failure, failedResult);
       return Object.freeze(models);
     }
   });

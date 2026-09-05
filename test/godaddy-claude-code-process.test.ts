@@ -205,3 +205,18 @@ test("Claude error envelopes are not successful model completions even with exit
   await assert.rejects(runtime.discoverModels(), (error: unknown) => error instanceof ClaudeDiscoveryFailure && error.code === 'claude_invalid_response');
   await assert.rejects(runtime.runCritique({ modelId: 'claude-opus-5', runtimeModelId: 'claude-opus-5', reasoningEffort: null, prompt: 'Test.' }), /claude_invalid_completion/);
 });
+
+test("Claude failure diagnostics retain only bounded numeric fields and fixed categories", () => {
+  const failure = new ClaudeDiscoveryFailure('claude_process_failed', { exitCode: 1,
+    stdout: JSON.stringify({ api_error_status: 403, terminal_reason: 'api_error', result: 'SECRET-MARKER insufficient_scope', session_id: 'PRIVATE-ID' }),
+    stderr: '/private/SECRET-PATH' });
+  assert.deepEqual(failure.diagnostic, { exit_code: 1, termination: 'exited', api_status: 403, json_object: true,
+    stdout_present: true, stderr_present: true, terminal_reason: 'api_error', failure_hint: 'oauth_scope' });
+  assert.doesNotMatch(JSON.stringify(failure), /SECRET|PRIVATE/);
+  const untrusted = new ClaudeDiscoveryFailure('claude_process_failed', { exitCode: 100000,
+    stdout: JSON.stringify({ api_error_status: 'SECRET', terminal_reason: 'SECRET' }), stderr: '' });
+  assert.equal(untrusted.diagnostic?.exit_code, null);
+  assert.equal(untrusted.diagnostic?.api_status, null);
+  assert.equal(untrusted.diagnostic?.terminal_reason, 'other_or_absent');
+  assert.doesNotMatch(JSON.stringify(untrusted), /SECRET/);
+});
