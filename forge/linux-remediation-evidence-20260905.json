@@ -1,0 +1,24 @@
+{
+  "kind": "non_deployable_ci_execution",
+  "recorded_at": "2026-09-05T02:00:44Z",
+  "repository": "Ingwarski/personal-ai-consulting-group-godaddy",
+  "branch": "codex/audit-remediation-20260905",
+  "revision": "6ec608a1ff9617cf9fd5e6f49c2d4f12f66d7b77",
+  "run_id": 33937722871,
+  "url": "https://github.com/Ingwarski/personal-ai-consulting-group-godaddy/actions/runs/33937722871",
+  "node": {
+    "job_id": 101228803861,
+    "runtime": "Node.js 22.16.0 on ubuntu-24.04",
+    "result": "passed",
+    "tests": {"total": 360, "passed": 360, "failed": 0, "skipped": 0},
+    "additional_checks": ["TypeScript", "build", "environment policy"],
+    "evidence": "Completed-job GitHub log retrieved directly; 360/360 and environment policy passed at 2026-09-05T01:58:55Z through 01:58:56Z"
+  },
+  "rust": {"job_id": 101228804013, "result": "in_progress", "last_observed_at": "2026-09-05T02:04:57Z", "current_step": "Verify formatting, lints, and credential-free tests"},
+  "deployment": "not_run",
+  "limits": [
+    "Credential-free GitHub-hosted Linux verification, not GoDaddy deployment evidence",
+    "No real Matrix homeserver, real MySQL, or final-path non-retrievability acceptance",
+    "Any artifact produced by this workflow is explicitly NON-DEPLOYABLE"
+  ]
+}

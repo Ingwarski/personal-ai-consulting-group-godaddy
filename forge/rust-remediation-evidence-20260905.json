@@ -1,0 +1,65 @@
+{
+  "kind": "local_rust_regression_execution",
+  "revision": "6ec608a1ff9617cf9fd5e6f49c2d4f12f66d7b77",
+  "executor": "audit_rust_release",
+  "toolchain": "Rust 1.93.0",
+  "commands": [
+    {
+      "command": "cargo fmt --all -- --check",
+      "result": "passed",
+      "seconds": 0.094
+    },
+    {
+      "command": "cargo test --locked --lib --bins",
+      "result": "passed",
+      "seconds": 23.574,
+      "tests": "83/83 (78 lib + 5 bin)"
+    },
+    {
+      "command": "cargo clippy --locked --all-targets -- -D warnings",
+      "result": "passed",
+      "seconds": 2.336
+    },
+    {
+      "command": "cargo build --release --locked",
+      "result": "passed",
+      "seconds": 244.428
+    }
+  ],
+  "host_release": {
+    "platform": "Mach-O arm64",
+    "sha256": "269be606a9909e32aab753c4100b30e5e09569f3b9d5922d7561041bcbbc757f",
+    "deployable_on_godaddy": false
+  },
+  "bounded_followup_review": {
+    "executor": "audit_node_u05_u06",
+    "finding": "SDK cache/send mismatch",
+    "result": "No unresolved regression found in the bounded final review",
+    "scope": "All application SDK state mutation serialized against exact cached encryption/member/history validation and actual encrypted send; cancellation and deadline paths inspected in pinned SDK"
+  },
+  "evaluated_source_hashes": {
+    "native/matrix-sidecar/Cargo.lock": "4a0469995afd74cd03b3095a180cef059ae0feb57008bb7cf6d000e007d55db7",
+    "native/matrix-sidecar/Cargo.toml": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1",
+    "native/matrix-sidecar/src/client.rs": "643cf6360c51d342d83e01d81bf2d8eead70274661e3c9155adaac95300f4dbb",
+    "native/matrix-sidecar/src/client_sdk_tests.rs": "61967420e14b92ab30573ed075813c9ef0f4d7818d29914dcb4a839aafbbe131",
+    "native/matrix-sidecar/src/config.rs": "43ca2202daffcf5fbc1ebe948149a54cacef8c911800a6468f11160b684257ac",
+    "native/matrix-sidecar/src/egress.rs": "3df710cc25ce774475c0bd9ddc99af61780103514d35b53ae82f0c4c190f43d5",
+    "native/matrix-sidecar/src/ingress.rs": "152be5698943f9c9e5272a64d1478dbcfd09f1667fc75a1de660cf44f9991e67",
+    "native/matrix-sidecar/src/lib.rs": "b9d35f879841896ffda2f1c64febe6b5aa91fdbc8a717fa5cf35549bfb359203",
+    "native/matrix-sidecar/src/live_policy.rs": "10a2c7a00777afb118ab07ff33b1c3ffeb5ef3d84bbbebb152c5684ba73f5c7e",
+    "native/matrix-sidecar/src/lock.rs": "45ea88c0796bb456f79f46f1248a53c0d527a825a38f4f4c4fe6af65b3e44c06",
+    "native/matrix-sidecar/src/main.rs": "01be7a477291704fa6f6538f274922c3e006db0556aa5ba3e93772eda7524546",
+    "native/matrix-sidecar/src/media_spool.rs": "2238f061f76c24effd5d999c031e0f7ff7120b3e044905d8c5f3f4353402a932",
+    "native/matrix-sidecar/src/protocol.rs": "02926cb646761d2a3bdc28a66a434bfd9c82f1c0e87a634c6529c1aa44c93060",
+    "native/matrix-sidecar/src/room_policy.rs": "9c67c3e35c67effda9c26f1a7627841b4ea5890764fb0d1b7a5516c72f844dd9",
+    "native/matrix-sidecar/src/state.rs": "f6c5d49ec07b22aa76760cf93a759771c18be2312911454969c952ec4b4ce9bf",
+    "native/matrix-sidecar/src/store.rs": "2b0bdb53b6b0618e8c195709ec941f0f87874a8d4f5058404b4c792bf28bcea5",
+    "native/matrix-sidecar/src/sync_checkpoint.rs": "c6aaf10c4211f01e99d9499185ccfd9921f99719691212d8a5c25cc62ffbfa0b",
+    "native/matrix-sidecar/src/telemetry.rs": "a44e013177d94dcfde5ab4794d6f9109981ff193c3668f46e82b7441113f1fa3"
+  },
+  "limits": [
+    "Mock HTTP tests exercise actual pinned SDK cache/send behavior but deliberately stub identity authorization",
+    "Not live cross-signing or end-to-end Matrix acceptance",
+    "No GoDaddy, production credential, live DB or deployment actions"
+  ]
+}

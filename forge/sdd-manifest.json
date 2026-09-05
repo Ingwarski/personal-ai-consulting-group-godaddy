@@ -2,7 +2,7 @@
   "checker_contract_version": 1,
   "pipeline_version": "1.1.0",
   "state": "awaiting_input",
-  "updated_at": "2026-09-05T01:50:09Z",
+  "updated_at": "2026-09-05T02:04:57Z",
   "language": {
     "working_language": "uk",
     "selection_source": "recorded-preference",
@@ -300,8 +300,8 @@
       "owner_skill": "to-project-context",
       "owner_invocation_id": "44c97281-e1d8-47ec-a1ea-d2a4659d20d4",
       "declared_output_set": ["docs/project-context.md", "docs/canonical-terms.md"],
-      "status": "validated",
-      "mission_control_status": "Done",
+      "status": "invalidated",
+      "mission_control_status": "Needs attention",
       "dependencies": ["product-idea", "prd"],
       "dependency_status": {"product-idea": "validated", "prd": "validated"},
       "source_hashes": {
@@ -311,15 +311,16 @@
       "consumed_source_fragments": {},
       "content_hash": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
       "validation": {"result": "passed", "working_language": "uk"},
-      "open_questions": []
+      "open_questions": [],
+      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
     },
     "canonical-terms": {
       "path": "docs/canonical-terms.md",
       "owner_skill": "to-project-context",
       "owner_invocation_id": "44c97281-e1d8-47ec-a1ea-d2a4659d20d4",
       "declared_output_set": ["docs/project-context.md", "docs/canonical-terms.md"],
-      "status": "validated",
-      "mission_control_status": "Done",
+      "status": "invalidated",
+      "mission_control_status": "Needs attention",
       "dependencies": ["product-idea", "prd"],
       "dependency_status": {"product-idea": "validated", "prd": "validated"},
       "source_hashes": {
@@ -329,15 +330,16 @@
       "consumed_source_fragments": {},
       "content_hash": "e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da",
       "validation": {"result": "passed", "working_language": "uk"},
-      "open_questions": []
+      "open_questions": [],
+      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
     },
     "guardrails": {
       "path": "docs/guardrails.md",
       "owner_skill": "to-guardrails",
       "owner_invocation_id": "642f1125-ddd5-4f2e-9395-8c8179cc6c72",
       "declared_output_set": ["docs/guardrails.md"],
-      "status": "validated",
-      "mission_control_status": "Done",
+      "status": "invalidated",
+      "mission_control_status": "Needs attention",
       "dependencies": ["prd", "project-context", "canonical-terms"],
       "dependency_status": {"prd": "validated", "project-context": "validated", "canonical-terms": "validated"},
       "source_hashes": {
@@ -348,15 +350,16 @@
       "consumed_source_fragments": {},
       "content_hash": "4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48",
       "validation": {"result": "passed", "working_language": "uk"},
-      "open_questions": []
+      "open_questions": [],
+      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
     },
     "user-journey": {
       "path": "docs/user-journey.md",
       "owner_skill": "to-user-journey",
       "owner_invocation_id": "6b63b10a-0d12-4280-9535-4aa115266fcb",
       "declared_output_set": ["docs/user-journey.md"],
-      "status": "validated",
-      "mission_control_status": "Done",
+      "status": "invalidated",
+      "mission_control_status": "Needs attention",
       "dependencies": ["prd", "project-context", "canonical-terms", "guardrails"],
       "dependency_status": {"prd": "validated", "project-context": "validated", "canonical-terms": "validated", "guardrails": "validated"},
       "source_hashes": {
@@ -368,15 +371,16 @@
       "consumed_source_fragments": {},
       "content_hash": "dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77",
       "validation": {"result": "passed", "working_language": "uk"},
-      "open_questions": []
+      "open_questions": [],
+      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
     },
     "screen-map": {
       "path": "docs/screen-map.md",
       "owner_skill": "to-screen-map",
       "owner_invocation_id": "65e75be6-bf2f-414d-92cf-03eb717e7445",
       "declared_output_set": ["docs/screen-map.md"],
-      "status": "validated",
-      "mission_control_status": "Done",
+      "status": "invalidated",
+      "mission_control_status": "Needs attention",
       "dependencies": ["prd", "project-context", "canonical-terms", "guardrails", "user-journey"],
       "dependency_status": {"prd": "validated", "project-context": "validated", "canonical-terms": "validated", "guardrails": "validated", "user-journey": "validated"},
       "source_hashes": {
@@ -389,15 +393,16 @@
       "consumed_source_fragments": {},
       "content_hash": "385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52",
       "validation": {"result": "passed", "working_language": "uk"},
-      "open_questions": []
+      "open_questions": [],
+      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
     },
     "wireframes": {
       "path": "docs/wireframes.md",
       "owner_skill": "to-wireframes",
       "owner_invocation_id": "bb4649fb-123e-47b4-96e6-d76c05d8ff43",
       "declared_output_set": ["docs/wireframes.md"],
-      "status": "validated",
-      "mission_control_status": "Done",
+      "status": "invalidated",
+      "mission_control_status": "Needs attention",
       "dependencies": ["prd", "project-context", "canonical-terms", "guardrails", "user-journey", "screen-map"],
       "dependency_status": {"prd": "validated", "project-context": "validated", "canonical-terms": "validated", "guardrails": "validated", "user-journey": "validated", "screen-map": "validated"},
       "source_hashes": {
@@ -411,15 +416,16 @@
       "consumed_source_fragments": {},
       "content_hash": "49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca",
       "validation": {"result": "passed", "working_language": "uk"},
-      "open_questions": []
+      "open_questions": [],
+      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
     },
     "design-brief": {
       "path": "docs/design-brief.md",
       "owner_skill": "to-design-brief",
       "owner_invocation_id": "06b76b50-f5b1-45e6-94c8-8bfaee8e5781",
       "declared_output_set": ["docs/design-brief.md"],
-      "status": "validated",
-      "mission_control_status": "Approved design",
+      "status": "invalidated",
+      "mission_control_status": "Needs attention",
       "dependencies": ["prd", "project-context", "canonical-terms", "guardrails", "user-journey", "screen-map", "wireframes"],
       "dependency_status": {"prd": "validated", "project-context": "validated", "canonical-terms": "validated", "guardrails": "validated", "user-journey": "validated", "screen-map": "validated", "wireframes": "validated"},
       "source_hashes": {
@@ -434,15 +440,16 @@
       "consumed_source_fragments": {},
       "content_hash": "719a32b4ea4fef9f9eaa0ee08864f00fa57f9637be530e67c404d58d1c2e5608",
       "validation": {"result": "passed", "working_language": "uk"},
-      "open_questions": []
+      "open_questions": [],
+      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
     },
     "architecture": {
       "path": "docs/architecture.md",
       "owner_skill": "to-architecture",
       "owner_invocation_id": "3a6b70d5-d73f-414f-8f06-3a004cc1c66e",
       "declared_output_set": ["docs/architecture.md"],
-      "status": "validated",
-      "mission_control_status": "Done",
+      "status": "invalidated",
+      "mission_control_status": "Needs attention",
       "validated_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
       "dependencies": ["prd", "project-context", "canonical-terms", "guardrails", "user-journey", "screen-map", "wireframes", "design-brief"],
       "dependency_status": {"prd": "validated", "project-context": "validated", "canonical-terms": "validated", "guardrails": "validated", "user-journey": "validated", "screen-map": "validated", "wireframes": "validated", "design-brief": "validated"},
@@ -472,15 +479,16 @@
         "NFR-017": {"path": "docs/architecture.md", "heading": "## 14. Product-security mapping"},
         "NFR-019": {"path": "docs/architecture.md", "heading": "## 14. Product-security mapping"}
       },
-      "open_questions": []
+      "open_questions": [],
+      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
     },
     "dod-evals": {
       "path": "docs/dod-evals.md",
       "owner_skill": "to-dod-evals",
       "owner_invocation_id": "2ed3d2cc-bad8-48f1-bf8e-c892d7bb9e6c",
       "declared_output_set": ["docs/dod-evals.md"],
-      "status": "validated",
-      "mission_control_status": "Done",
+      "status": "invalidated",
+      "mission_control_status": "Needs attention",
       "validated_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
       "dependencies": ["prd", "project-context", "canonical-terms", "guardrails", "user-journey", "screen-map", "wireframes", "design-brief", "architecture"],
       "dependency_status": {"prd": "validated", "project-context": "validated", "canonical-terms": "validated", "guardrails": "validated", "user-journey": "validated", "screen-map": "validated", "wireframes": "validated", "design-brief": "validated", "architecture": "validated"},
@@ -511,15 +519,16 @@
         "NFR-017": {"path": "docs/dod-evals.md", "heading": "#### Security coverage NFR-017"},
         "NFR-019": {"path": "docs/dod-evals.md", "heading": "#### Security coverage NFR-019"}
       },
-      "open_questions": []
+      "open_questions": [],
+      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
     },
     "qa-checklist": {
       "path": "docs/qa-checklist.md",
       "owner_skill": "to-qa-checklist",
       "owner_invocation_id": "32159a6f-82a2-4c3b-b7cb-a2d21ee5076b",
       "declared_output_set": ["docs/qa-checklist.md"],
-      "status": "validated",
-      "mission_control_status": "Done",
+      "status": "invalidated",
+      "mission_control_status": "Needs attention",
       "validated_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
       "dependencies": ["prd", "project-context", "canonical-terms", "guardrails", "user-journey", "screen-map", "wireframes", "design-brief", "architecture", "dod-evals"],
       "dependency_status": {"prd": "validated", "project-context": "validated", "canonical-terms": "validated", "guardrails": "validated", "user-journey": "validated", "screen-map": "validated", "wireframes": "validated", "design-brief": "validated", "architecture": "validated", "dod-evals": "validated"},
@@ -552,15 +561,16 @@
         "NFR-017": {"path": "docs/qa-checklist.md", "heading": "### `QA-SEC-001` — Complete PRD security obligation coverage"},
         "NFR-019": {"path": "docs/qa-checklist.md", "heading": "### `QA-SEC-001` — Complete PRD security obligation coverage"}
       },
-      "open_questions": []
+      "open_questions": [],
+      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
     },
     "development-plan": {
       "path": "docs/development-plan.md",
       "owner_skill": "to-development-plan",
       "owner_invocation_id": "990d3f67-1e4a-460d-8722-0292ddf2570b",
       "declared_output_set": ["docs/development-plan.md"],
-      "status": "validated",
-      "mission_control_status": "Done",
+      "status": "invalidated",
+      "mission_control_status": "Needs attention",
       "validated_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
       "dependencies": ["prd", "project-context", "canonical-terms", "guardrails", "user-journey", "screen-map", "wireframes", "design-brief", "architecture", "dod-evals", "qa-checklist"],
       "dependency_status": {"prd": "validated", "project-context": "validated", "canonical-terms": "validated", "guardrails": "validated", "user-journey": "validated", "screen-map": "validated", "wireframes": "validated", "design-brief": "validated", "architecture": "validated", "dod-evals": "validated", "qa-checklist": "validated"},
@@ -593,7 +603,8 @@
         "NFR-017": {"path": "docs/development-plan.md", "heading": "## Security Coverage"},
         "NFR-019": {"path": "docs/development-plan.md", "heading": "## Security Coverage"}
       },
-      "open_questions": ["Production Matrix identities/room/device policy, final paths and JIT credentials remain external gates."]
+      "open_questions": ["Production Matrix identities/room/device policy, final paths and JIT credentials remain external gates."],
+      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
     }
   },
   "prototype_candidate_set": {
@@ -742,7 +753,7 @@
     }
   ],
   "implementation": {
-    "status": "remediation_in_progress",
+    "status": "code_verified_remediation_pending",
     "owner_invocation_id": "990d3f67-1e4a-460d-8722-0292ddf2570b",
     "completed_local_contracts": [],
     "partial_local_contracts": ["U-01", "U-02", "U-03", "U-04", "U-05", "U-06", "U-07", "U-08", "U-09"],
@@ -764,15 +775,15 @@
           "cargo clippy --locked --all-targets -- -D warnings",
           "cargo build --release --locked"
         ],
-        "result": "in_progress",
+        "result": "passed",
         "tests": "83/83 (78 lib + 5 bin); final SDK state-barrier and trusted-device patches included",
         "format": "passed",
         "clippy": "passed_all_targets_warnings_denied",
-        "host_release_build": "in_progress_non_deployable",
+        "host_release_build": "passed_non_deployable",
         "host_release_platform": "Mach-O arm64",
-        "host_release_binary_sha256": null
+        "host_release_binary_sha256": "269be606a9909e32aab753c4100b30e5e09569f3b9d5922d7561041bcbbc757f"
       },
-      "artifact_ci": "not_run; locked x86_64-unknown-linux-musl checksum/SBOM/license workflow prepared",
+      "artifact_ci": "in_progress; GitHub run 33937722871 on isolated remediation branch. Linux Node 22 job passed 360/360; Rust/musl packaging remains pending. See forge/linux-remediation-evidence-20260905.json",
       "real_mysql": "not_run",
       "matrix_product_integration": "not_run",
       "godaddy_deployment": "not_run",
@@ -788,7 +799,7 @@
       "stateful_preview": "forbidden"
     }
   },
-  "affected_feature_units": ["U-05", "U-06", "U-09"],
+  "affected_feature_units": ["U-01", "U-02", "U-03", "U-04", "U-05", "U-06", "U-07", "U-09"],
   "input_requests": [{"id": "owner-auth-mfa-exception", "status": "awaiting_answer", "question": "Retain password-only with explicit MFA residual-risk acceptance, or authorize a second factor?", "blocking_node": "prd"}],
   "next_ready_nodes": [],
   "pause_reason": "PRD owner returned blocked security review for the existing MFA/password-only conflict. SDD downstream reconciliation and next-unit advancement pause; explicitly authorized audit remediation continues.",
