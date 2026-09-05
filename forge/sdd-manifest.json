@@ -2,7 +2,7 @@
   "checker_contract_version": 1,
   "pipeline_version": "1.1.0",
   "state": "awaiting_input",
-  "updated_at": "2026-09-05T02:04:57Z",
+  "updated_at": "2026-09-05T02:26:38Z",
   "language": {
     "working_language": "uk",
     "selection_source": "recorded-preference",
@@ -15,14 +15,15 @@
     "intake_id": "godaddy-matrix-reconciliation-20260904",
     "source_mode": "existing-file",
     "handoff_receipt_path": null,
-    "product_idea_hash": "74e9727a63cf4e5648671d0467265b27e098fc819601b0833ee53b17a3acb320",
-    "current_request_id": "u06-rust-matrix-sidecar-20260904"
+    "product_idea_hash": "c7e0dec20e60f5eae35a16192a3b21a74e43faffb8853f8c15accf457f1eefee",
+    "current_request_id": "google-owner-login-20260905",
+    "previous_request_id": "u06-rust-matrix-sidecar-20260904"
   },
   "artifacts": {
     "product-idea": {
       "path": "docs/product-idea.md",
       "owner_skill": "to-product-idea",
-      "owner_invocation_id": "e116a6de-4e8c-4b0e-b93c-ea77002a4144",
+      "owner_invocation_id": "6c04877e-6bb8-48ce-aa78-92be9b8e4fdd",
       "declared_output_set": [
         "docs/product-idea.md"
       ],
@@ -32,17 +33,24 @@
       "dependency_status": {},
       "source_hashes": {},
       "consumed_source_fragments": {},
-      "content_hash": "74e9727a63cf4e5648671d0467265b27e098fc819601b0833ee53b17a3acb320",
+      "content_hash": "c7e0dec20e60f5eae35a16192a3b21a74e43faffb8853f8c15accf457f1eefee",
       "validation": {
         "result": "passed",
         "working_language": "uk",
-        "evidence_scope": "current scoped owner reconciliation; not product execution"
+        "evidence_scope": "Google owner-login and no application MFA intent correction only; not implemented or deployed login evidence",
+        "submitted_at": "2026-09-05T02:26:37Z",
+        "decision_ids": ["PI-AUTH-20260905"]
       },
       "open_questions": [],
       "supersedes": {
-        "owner_invocation_id": "29a3dde9-6a4a-4f28-87be-4aa558d73ec8",
-        "content_hash": "ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a",
-        "git_revision": "7f3cedde79e4f3d6a0556ca897fe9ea3b55bb541"
+        "owner_invocation_id": "e116a6de-4e8c-4b0e-b93c-ea77002a4144",
+        "content_hash": "74e9727a63cf4e5648671d0467265b27e098fc819601b0833ee53b17a3acb320",
+        "git_revision": "8032a3630ca8399319615eaef056b306ca274e2a",
+        "previous_supersedes": {
+          "owner_invocation_id": "29a3dde9-6a4a-4f28-87be-4aa558d73ec8",
+          "content_hash": "ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a",
+          "git_revision": "7f3cedde79e4f3d6a0556ca897fe9ea3b55bb541"
+        }
       }
     },
     "prd": {
@@ -52,8 +60,8 @@
       "declared_output_set": [
         "docs/prd.md"
       ],
-      "status": "input_needed",
-      "mission_control_status": "Input needed",
+      "status": "invalidated",
+      "mission_control_status": "Needs attention",
       "dependencies": [
         "product-idea"
       ],
@@ -800,15 +808,42 @@
     }
   },
   "affected_feature_units": ["U-01", "U-02", "U-03", "U-04", "U-05", "U-06", "U-07", "U-09"],
-  "input_requests": [{"id": "owner-auth-mfa-exception", "status": "awaiting_answer", "question": "Retain password-only with explicit MFA residual-risk acceptance, or authorize a second factor?", "blocking_node": "prd"}],
+  "input_requests": [
+    {
+      "id": "owner-auth-mfa-exception",
+      "status": "answered",
+      "question": "Retain password-only with explicit MFA residual-risk acceptance, or authorize a second factor?",
+      "blocking_node": "prd",
+      "answer": "I would rather fix the google auth login. Check history of what went wrong and find a solution.\nNo MFA for this mvp.",
+      "answer_timestamp": null,
+      "recorded_at": "2026-09-05T02:24:01.669Z",
+      "resolution": "Owner selected Google owner login and no application-enforced MFA for the MVP. This supersedes password-only scope; it does not establish Google-account MFA assurance or full ASVS Level 2 compliance. Do not repeat the same product-choice question.",
+      "decision_id": "PI-AUTH-20260905"
+    },
+    {
+      "id": "google-oauth-client-inspection",
+      "status": "awaiting_user_action",
+      "question": "Unlock the Mac so the existing Google OAuth client and its registered callback can be inspected.",
+      "blocking_node": "google-owner-login-provider-verification",
+      "evidence_ref": "forge/google-owner-login-investigation-20260905.md"
+    }
+  ],
   "next_ready_nodes": [],
-  "pause_reason": "PRD owner returned blocked security review for the existing MFA/password-only conflict. SDD downstream reconciliation and next-unit advancement pause; explicitly authorized audit remediation continues.",
-  "last_resume_event": {
+  "pause_reason": "The Owner answered the auth decision: Google owner login, no application MFA in the MVP. Current Google client inspection awaits browser access after the locked-Mac interruption. PRD/security and downstream reconciliation remain pending; old source bindings and the invalid implementation gate are preserved. Investigation is not live-login or release evidence.",
+  "resume_history": [{
     "type": "audit_remediation_request",
     "timestamp": null,
     "recorded_at": "2026-09-05T01:50:09Z",
     "source": "current_user_message",
     "message": "OK. Fix the found problems, please and report on each fix.",
     "scope_ref": "forge/authorization-correction-20260905.json"
+  }],
+  "last_resume_event": {
+    "type": "google_owner_login_investigation_and_intent_change",
+    "timestamp": null,
+    "recorded_at": "2026-09-05T02:24:01.669Z",
+    "source": "current_user_message",
+    "message": "I would rather fix the google auth login. Check history of what went wrong and find a solution.\nNo MFA for this mvp.",
+    "scope_ref": "forge/google-owner-login-investigation-20260905.md"
   }
 }

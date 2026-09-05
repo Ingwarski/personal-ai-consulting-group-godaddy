@@ -2,6 +2,8 @@
 
 Status: seven code defects repaired and locally verified; SDD reconciliation awaits the Owner's authentication decision. Linux Node 22 verification passed; Linux Rust/musl verification is still running as of 2026-09-05T02:04:57Z. This is not a release approval or a replacement development plan.
 
+Subsequent authentication update: the Owner has now chosen Google login with no application-enforced MFA for this MVP. The decision wait described in this checkpoint is superseded; see `google-owner-login-investigation-20260905.md`. PRD/security and downstream reconciliation are still pending. This follow-up does not refresh the CI status above or claim a deployed Google fix.
+
 Scope: repair the audited implementation and provenance defects. No U08 work, production deployment, credential change, live Matrix/database mutation, destructive cleanup, or HappyPro change is authorized by this remediation.
 
 ## Fix-by-fix record
