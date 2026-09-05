@@ -15068,6 +15068,16 @@
       "published_code_revision": "d4ba9f0a515db0edc1a98d2150b46d47591c9531",
       "unit_completion": "not_completed",
       "remaining_runtime_status": "Codex unavailable; Claude Code ready; capability catalog not created. AI credentials and setup unchanged."
+    },
+    "catalog_verification": {
+      "run_id": "u04-catalog-diagnostic-20260906",
+      "path": "forge/runs/U-04/u04-catalog-diagnostic-20260906/verification.json",
+      "content_hash": "1621b8066e9a9c692667075f57ef49e0a46afb9ea0ad1fef17cb4bfe74c63ede",
+      "recorded_at": "2026-09-05T22:39:17Z",
+      "result": "app_checks_fixed_published_catalog_blocked_by_claude_api_403",
+      "published_code_revision": "4aaac29547cf83b90a9d76eb4c4f2e01773ac539",
+      "unit_completion": "not_completed",
+      "runtime_status": "Google session retained; Codex ready pro; Claude API 403 with organization-category hint; catalog not created. No credentials changed."
     }
   },
   "affected_feature_units": ["U-01", "U-02", "U-03", "U-04", "U-05", "U-06", "U-07", "U-09"],

@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "run_id": "u04-catalog-diagnostic-20260906",
+  "unit_id": "U-04",
+  "observed_at": "2026-09-05T22:38:00Z",
+  "executor": "Codex direct runner; Node 22 local checks, HTTP and real Chrome through CUA",
+  "code_revision": "4aaac29547cf83b90a9d76eb4c4f2e01773ac539",
+  "development_plan_hash": "f17072dc044dc12ee20039a78f856801df5121aef19922966fece2eebf17d15a",
+  "baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+  "authorization": {
+    "source": "current conversation",
+    "request": "May I fix these checks, publish the correction to this GoDaddy app, and retry catalog creation without changing your credentials?",
+    "response": "yes",
+    "message_id": "not_available_in_tool_visible_context"
+  },
+  "result": "app_checks_fixed_published_catalog_blocked_by_claude_api_403",
+  "unit_completion": "not_completed",
+  "release_readiness": "not_evaluated",
+  "fixes": [
+    "Claude readiness requires parsed loggedIn=true, OAuth-token authentication and first-party API status; exit zero alone is insufficient.",
+    "Claude error envelopes cannot count as successful model calls or critiques.",
+    "Catalog failures reach the owner page as fixed safe categories instead of a generic request to check both subscriptions.",
+    "Authentication, quota and incompatible-CLI failures stop redundant probes; a model-specific 403 does not exclude later candidates.",
+    "Unexpected exceptions and database persistence failures remain private, preserve a previous valid catalog and do not reset credentials.",
+    "Fixed-category, bounded numeric diagnostics distinguish process launch failures from Claude API rejection without raw provider responses.",
+    "Claude HTTP 403 has a distinct error and marks Claude unavailable on the failed action response; Google and Codex sessions are unchanged."
+  ],
+  "checks": {
+    "npm_run_check": {
+      "node_version": "22.23.2",
+      "tests": 539,
+      "passed": 539,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "build": "passed",
+      "typecheck": "passed",
+      "environment_policy": "passed"
+    },
+    "sdd": ["before implementation passed", "before architecture passed", "after architecture passed", "after implementation passed"],
+    "git_diff_check": "passed",
+    "dummy_token_command_check": {
+      "real_credentials_used": false,
+      "cli_version": "2.1.258",
+      "auth_status": "Reports OAuth token presence, not remote validity: a dummy token still yields loggedIn=true.",
+      "generation": "The same isolated print flags execute and return API 401 for the dummy token on macOS.",
+      "limit": "This is a CLI argument/schema check, not evidence of a working real subscription or GoDaddy network access."
+    }
+  },
+  "deployment": {
+    "project_id": "wy2v0putg6",
+    "origin": "https://wy2v0putg6.c35.airoapp.ai",
+    "previous_published_revision": "d4ba9f0a515db0edc1a98d2150b46d47591c9531",
+    "published_revision": "4aaac29547cf83b90a9d76eb4c4f2e01773ac539",
+    "published_revision_confirmed_in_dashboard": true,
+    "infrastructure": "OK",
+    "website": "OK",
+    "preview_stateful": false,
+    "preview_boundary": "No Preview configuration changed. Existing production-plus-published-role gate remains intact.",
+    "secrets_values_read": false,
+    "secrets_changed": false,
+    "database_schema_or_cleanup": false,
+    "model_candidates_or_order_changed": false,
+    "domain_changes": false,
+    "happypro_changes": false
+  },
+  "live_attempts": [
+    { "revision": "5d2d1afc9d6769eb4d3c2f1e47bcbee23e9065cb", "catalog_attempts": 1, "result": "claude_process_failed", "purpose": "Expose the previously discarded catalog failure category." },
+    { "revision": "3f2cce481aec3dc5908f9c6108f59baba58c0978", "catalog_attempts": 1, "result": "claude_process_failed", "api_status": 403, "purpose": "Distinguish a native/launch failure from a provider API rejection using private-data-free diagnostics." },
+    { "revision": "4aaac29547cf83b90a9d76eb4c4f2e01773ac539", "catalog_attempts": 1, "result": "claude_access_denied", "api_status": 403, "purpose": "Verify the explicit HTTP 403 result and classified error-array hint." }
+  ],
+  "final_safe_diagnostic": {
+    "code": "claude_access_denied",
+    "exit_code": 1,
+    "termination": "exited",
+    "api_status": 403,
+    "json_object": true,
+    "stdout_present": true,
+    "stderr_present": false,
+    "terminal_reason": "api_error",
+    "failure_hint": "organization"
+  },
+  "final_live_state": {
+    "healthz_http_status": 200,
+    "healthz_body": { "status": "alive", "runtime": "godaddy-node22" },
+    "owner_session_survived_each_deployment": true,
+    "codex": "ready",
+    "codex_plan": "pro",
+    "claude_after_catalog_action": "unavailable",
+    "capability_catalog": "not_created",
+    "google_or_codex_reset": false
+  },
+  "interpretation": "The deployed Claude executable runs and reports an API 403 with an organization/account-related text category. It is not a native-module startup failure. The exact organization, token-scope, membership or network cause is not proven; no raw response or identity was retained.",
+  "remaining_action": "Verify Claude account/organization access and, if authorized, reconnect only its subscription token. Current authorization explicitly excludes credential changes.",
+  "source_hashes": {
+    "src/godaddy/claude-code-process.ts": "dcf304da50cb4f6ab2b79545672ae732b28f46b93dfabb32df9e7ff722a1e60a",
+    "src/godaddy/runtime-bootstrap.ts": "b75bb4df41eeb522400d053ffe733e77d61f1f2c0bcf5d416a9095a01475e066",
+    "src/godaddy/settings-runtime.ts": "4d7808a83fea04a09f727b4c97020ee976d9deb8b173899a77fb1fd62a4c79df",
+    "src/runtime/capability-catalog.ts": "6cf849654b213589761f439813c65ea27615a891881053deed7bb4972dba2bf0"
+  },
+  "sources": [
+    "https://code.claude.com/docs/en/cli-reference",
+    "https://code.claude.com/docs/en/troubleshoot-install#403-forbidden-after-login"
+  ],
+  "limitations": [
+    "Catalog creation has not succeeded; this is not a complete application-readiness receipt.",
+    "A token-presence status check does not prove model access and can show ready again on a later GET. The failed catalog action carries the actual model-access result.",
+    "No application consultation, critique, Matrix product integration, full MySQL concurrency/restart or full U-04 UX checks were performed.",
+    "Existing baseline, canonical product documents and unit-completion claims were not changed."
+  ],
+  "evidence_handling": "Only fixed categories, boolean/numeric results, code revisions and public documentation URLs are retained. No tokens, cookies, OAuth query, identity claims, raw CLI response or database content."
+}
