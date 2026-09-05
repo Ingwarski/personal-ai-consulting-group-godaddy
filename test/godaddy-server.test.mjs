@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
+import { connect } from "node:net";
 import test from "node:test";
 
 import { FORBIDDEN_RUNTIME_ENVIRONMENT_NAMES as workerForbiddenEnvironmentNames } from "../src/runtime/environment.ts";
@@ -33,6 +34,70 @@ test("GoDaddy health reports Node liveness without claiming dependency readiness
     assert.deepEqual(await response.json(), { status: "alive", runtime: "godaddy-node22" });
     assert.equal(response.headers.get("cache-control"), "no-store");
   });
+});
+
+test("malformed and non-origin HTTP targets return 400 without terminating the server", async (t) => {
+  await withServer(t, { environment: supportedEnvironment, nodeVersion: "v22.16.0" }, async (origin) => {
+    for (const target of ["http://[", "http://other.test/healthz", "//other.test/healthz", "/\\other.test/healthz", "/healthz#fragment"]) {
+      const raw = await new Promise((resolveRaw, rejectRaw) => {
+        const socket = connect({ host: "127.0.0.1", port: Number(new URL(origin).port) });
+        let received = "";
+        socket.setEncoding("utf8");
+        socket.setTimeout(2_000, () => socket.destroy(new Error("HTTP test timeout")));
+        socket.once("error", rejectRaw);
+        socket.on("data", (chunk) => { received += chunk; });
+        socket.once("end", () => resolveRaw(received));
+        socket.once("connect", () => socket.write(`GET ${target} HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n`));
+      });
+      assert.match(raw, /^HTTP\/1\.1 400 /u, target);
+      assert.equal((await fetch(`${origin}/healthz`)).status, 200);
+    }
+  });
+});
+
+test("a rejected Settings response body becomes 500 while HTTP remains alive", async (t) => {
+  await withServer(t, {
+    environment: supportedEnvironment, nodeVersion: "v22.16.0",
+    settingsRuntime: { handle: async () => new Response(new ReadableStream({
+      start(controller) { controller.error(new Error("private upstream failure")); }
+    })) }
+  }, async (origin) => {
+    const response = await fetch(`${origin}/settings`);
+    assert.equal(response.status, 500);
+    assert.doesNotMatch(await response.text(), /private upstream failure/u);
+    assert.equal((await fetch(`${origin}/healthz`)).status, 200);
+  });
+});
+
+test("HTTP idle waits for the Settings response body, not just its headers", async () => {
+  let releaseBody;
+  let bodyStarted;
+  const started = new Promise((resolveStarted) => { bodyStarted = resolveStarted; });
+  const server = createGodaddyServer({
+    environment: supportedEnvironment, nodeVersion: "v22.16.0",
+    settingsRuntime: { handle: async () => new Response(new ReadableStream({
+      start(controller) {
+        releaseBody = () => { controller.enqueue(new TextEncoder().encode("done")); controller.close(); };
+        bodyStarted();
+      }
+    })) }
+  });
+  await new Promise((resolveListen) => server.listen(0, "127.0.0.1", resolveListen));
+  try {
+    const request = fetch(`http://127.0.0.1:${server.address().port}/settings`);
+    await started;
+    let idle = false;
+    const drained = server.godaddyWaitForIdle().then(() => { idle = true; });
+    await new Promise((resolveTurn) => setImmediate(resolveTurn));
+    assert.equal(idle, false);
+    releaseBody();
+    releaseBody = undefined;
+    assert.equal(await (await request).text(), "done");
+    await drained;
+  } finally {
+    releaseBody?.();
+    await new Promise((resolveClose) => server.close(resolveClose));
+  }
 });
 
 test("GoDaddy health stays live while invalid configuration blocks dependent routes", async (t) => {

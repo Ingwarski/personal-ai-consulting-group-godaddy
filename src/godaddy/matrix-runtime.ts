@@ -76,7 +76,7 @@ export type ValidatedMatrixIngressRejection = Readonly<{
   bodyHash: string;
   mediaManifestHash: string;
   eventHash: string;
-  reason: "media_expired";
+  reason: "media_expired" | "invalid_media";
 }>;
 
 export type MatrixSendInput = Readonly<{
@@ -370,7 +370,7 @@ function parseIngressRejection(
     || typeof value.body_hash !== "string" || !SHA256.test(value.body_hash)
     || typeof value.media_manifest_hash !== "string" || !SHA256.test(value.media_manifest_hash)
     || typeof value.event_hash !== "string" || !SHA256.test(value.event_hash)
-    || value.reason !== "media_expired"
+    || (value.reason !== "media_expired" && value.reason !== "invalid_media")
   ) return undefined;
   return Object.freeze({
     receiptId: sidecarRejection.receiptId,
@@ -381,7 +381,7 @@ function parseIngressRejection(
     bodyHash: value.body_hash,
     mediaManifestHash: value.media_manifest_hash,
     eventHash: value.event_hash,
-    reason: "media_expired"
+    reason: value.reason
   });
 }
 

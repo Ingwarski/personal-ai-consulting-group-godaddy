@@ -265,9 +265,10 @@ export function createGoDaddySettingsRuntime(
     });
   }
 
-  const owner = createOwnerPasswordService({ configuration: ownerPassword.value, now });
   const ownsPool = dependencies.pool === undefined;
   const pool = dependencies.pool ?? (dependencies.createPool ?? defaultPool)(database.value);
+  const owner = createOwnerPasswordService({ configuration: ownerPassword.value, now,
+    storage: new MySqlKeyValueStorage({ executor: pool, namespace: "owner-access-v2" }) });
   const storage = new MySqlKeyValueStorage({
     executor: pool,
     namespace: "owner-settings-v1"
@@ -357,7 +358,7 @@ export function createGoDaddySettingsRuntime(
         if (ownerOrigin === undefined || !isOwnerNavigation(request, ownerOrigin)) {
           return plain("Access denied.", 403);
         }
-        return redirect("/auth/sign-in", [owner.signOutCookie()]);
+        return redirect("/auth/sign-in", [await owner.signOutCookie(request.headers.get("cookie"))]);
       }
 
       if (!isManagedPath(url.pathname)) return undefined;

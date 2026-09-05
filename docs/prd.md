@@ -2,10 +2,10 @@
 
 - Статус: базова версія V1
 - Основне джерело продуктового наміру: `docs/product-idea.md`
-- Джерельний SHA-256: `ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a`
+- Джерельний SHA-256: `74e9727a63cf4e5648671d0467265b27e098fc819601b0833ee53b17a3acb320`
 - Дата формування: 16.08.2026
-- Дата повторної валідації: 04.09.2026
-- `owner_invocation_id`: `4f5ce7bd-6f8a-47d3-be6a-6e2a422928e6`
+- Дата повторної валідації: 05.09.2026
+- `owner_invocation_id`: `676b12e7-1d7a-4e5c-831a-bb88c1493e50`
 - Покриття ID: `US-001`–`US-029`; `FR-001`–`FR-046`; `NFR-001`–`NFR-019`; `AC-001`–`AC-016`
 
 ## 1. Проблема
@@ -75,10 +75,11 @@ V1 є строго приватною одноосібною автоматиз�
 - `Налаштування власника` — єдина вузька responsive web surface V1. Вона змінює лише параметри майбутніх консультацій і не містить чату, консиліуму, архіву, execution status або іншого дашборду.
 - Доступ має лише Власник через окремий високоентропійний локальний пароль із GoDaddy Publish Secrets, одноразовий same-origin challenge і чинну підписану захищену локальну сесію. OTP, magic link, зовнішній IdP, публічна реєстрація, користувацька зміна чи відновлення пароля не підтримуються.
 - Локальна Settings-автентифікація відокремлена від subscription OAuth Codex і Claude Code: вона не замінює їх, не об'єднує credential state і не надає доступу до AI OAuth-секретів.
-- Поверхня містить рівно три групи: `Моделі`, `Глибина міркування`, `Швидкість`. Інших груп або per-agent/per-session-unit overrides у V1 немає.
-- `Моделі` містять окремі typed allowlisted selectors для Codex-агентів і Claude Code-критика; довільної назви моделі немає.
-- Codex і Claude Code мають незалежні model-specific settings міркування. Підтримка перевіряється за capability map відповідної обраної моделі без спільної шкали та без мовчазного downgrade.
-- `Швидкість` має лише `швидко / збалансовано / ретельно` і керує оркестрацією. Це не Claude Fast Mode, не API/PAYG fallback і не купівля usage credits.
+- Поверхня містить рівно три групи: `Codex-агенти`, `Claude Code-критик`, `Швидкість консиліуму`. Інших груп або per-agent/per-session-unit overrides у V1 немає.
+- `Codex-агенти` містять власні typed allowlisted selectors моделі та її рівня міркування; `Claude Code-критик` — окремі selectors моделі та її provider-specific effort. Зміна значень одного провайдера не змінює значення другого; довільного вводу моделі немає.
+- Підтримка окремо перевіряється за capability map відповідної обраної моделі без спільної шкали та без мовчазного downgrade. Однакові назви рівнів не означають однакової інтенсивності між провайдерами.
+- Моделі показуються з точними підтвердженими назвами та версіями. Claude впорядковується `Opus → Sonnet → Haiku`, а підтверджені версії всередині сімейства — від новіших до старіших; сімейний alias не замінює доступні конкретні версії. Згадка моделі власником сама по собі не є доказом її доступності в поточному runtime.
+- `Швидкість консиліуму` має лише `швидко / збалансовано / ретельно` і керує оркестрацією. Це не Claude Fast Mode, не API/PAYG fallback і не купівля usage credits.
 - Увесь набір зберігається атомарно лише після повної валідації. Власник може повернути стандартні значення, скинути незбережені зміни та бачить фактично застосовані значення.
 - Несумісна конфігурація fail-closed блокує нову сесію з конкретним поясненням. Активна сесія зберігає незмінний effective snapshot; нове збереження стосується лише наступних сесій.
 - Налаштування не можуть вимкнути або послабити Claude Code-критика, реальну A2A-взаємодію, Matrix E2EE, дослівну видимість фактичних реплік, правила безпеки, приватності чи зовнішніх дозволів.
@@ -163,7 +164,7 @@ V1 є строго приватною одноосібною автоматиз�
 
 **US-025.** Як власник, я хочу окремо вибирати моделі Codex-агентів і Claude Code-критика з типізованих дозволених списків, щоб не вводити непідтримувану або непогоджену модель.
 
-**US-026.** Як власник, я хочу задавати спільну глибину `low / medium / high / xhigh` із перевіркою підтримки обраними моделями, щоб система не знижувала якість мовчки.
+**US-026.** Як власник, я хочу незалежно задавати рівень міркування Codex і provider-specific effort Claude Code лише зі значень, підтверджених для відповідної обраної моделі, щоб налаштування одного провайдера не змінювали іншого й система не знижувала якість мовчки.
 
 **US-027.** Як власник, я хочу вибирати оркестраційний пресет `швидко / збалансовано / ретельно`, щоб керувати складом, перевірками й темпом консиліуму без платного Fast Mode або PAYG fallback.
 
@@ -214,10 +215,10 @@ V1 є строго приватною одноосібною автоматиз�
 | FR-037 | V1 має мати рівно одну вузьку responsive web surface `Налаштування власника` лише для параметрів майбутніх консультацій. Вона не містить чату, живого консиліуму, архіву, execution status або іншого дашборду; повсякденна консультація лишається в Element/Matrix. | US-001, US-022, US-024 | PI |
 | FR-038 | `Налаштування власника` мають відкриватися лише після успішної перевірки окремого високоентропійного локального пароля Власника з GoDaddy Publish Secrets через одноразовий same-origin challenge. Відсутній, неправильний, повторно використаний, cross-origin або прострочений challenge/response не створює сесію; state-changing запит без чинної підписаної захищеної локальної сесії та перевірки origin/CSRF fail closed. | US-024 | PI, OI |
 | FR-039 | Локальна Settings-автентифікація має бути логічно й секретно відокремлена від subscription OAuth Codex і Claude Code: локальна сесія не замінює AI auth, не об'єднує credential state і не відкриває AI OAuth tokens, setup-token або owner password клієнту чи агентському контексту. | US-024 | PI |
-| FR-040 | `Налаштування власника` мають містити рівно три групи: `Моделі`, `Глибина міркування`, `Швидкість`; інші групи та per-agent/per-session-unit overrides у V1 відсутні. | US-024–US-028 | PI |
-| FR-041 | Група `Моделі` має надавати окремі typed allowlisted selectors для моделі Codex-агентів і моделі Claude Code-критика без довільного текстового вводу. | US-025 | PI |
-| FR-042 | Codex і Claude Code мають окремі provider-specific controls міркування. Codex показує тільки значення з актуального app-server `model/list`; Claude Code показує тільки значення, які успішно підтвердив subscription probe конкретної моделі. `За замовчуванням моделі` не передає explicit effort. Непідтримуване значення не може бути мовчки знижене або замінене. | US-026 | PI |
-| FR-043 | Група `Швидкість` має надавати лише `швидко / збалансовано / ретельно` як orchestration presets для складу й паралельності консиліуму, глибини перевірок та очікуваного темпу. Жоден preset не вмикає Claude Fast Mode, API/PAYG, usage credits або інший платний fallback. | US-027 | PI |
+| FR-040 | `Налаштування власника` мають містити рівно три групи: `Codex-агенти` з власними моделлю й міркуванням, `Claude Code-критик` з власними моделлю й provider-specific effort, `Швидкість консиліуму`; інші групи та per-agent/per-session-unit overrides у V1 відсутні. | US-024–US-028 | PI |
+| FR-041 | Кожна provider group має надавати власний typed allowlisted selector моделі без довільного текстового вводу, з точними підтвердженими назвами й версіями. Claude впорядковується `Opus → Sonnet → Haiku`, підтверджені версії сімейства — від новіших до старіших; alias не підміняє конкретні доступні версії. Неперевірена модель не додається як доступна. | US-025 | PI |
+| FR-042 | Codex і Claude Code мають окремі provider-specific controls міркування всередині своєї групи; зміна одного не змінює іншого. Codex показує тільки значення з актуального app-server `model/list`; Claude Code показує тільки значення, які успішно підтвердив subscription probe конкретної моделі. Спільної шкали або припущення про однакову інтенсивність однойменних рівнів немає. `За замовчуванням моделі` не передає explicit effort. Непідтримуване значення не може бути мовчки знижене або замінене. | US-026 | PI |
+| FR-043 | Група `Швидкість консиліуму` має надавати лише `швидко / збалансовано / ретельно` як orchestration presets для складу й паралельності консиліуму, глибини перевірок та очікуваного темпу. Жоден preset не вмикає Claude Fast Mode, API/PAYG, usage credits або інший платний fallback. | US-027 | PI |
 | FR-044 | Save має валідовувати й атомарно зберігати весь набір трьох груп: за помилки жодне поле не змінюється. Surface має підтримувати source-backed defaults, повернення до них, скасування незбережених змін і явний показ фактично застосованих effective values. | US-028 | PI |
 | FR-045 | Перед стартом нової сесії система має повторно перевірити сумісність повного набору й fail-closed заблокувати старт із конкретним поясненням, якщо набір несумісний. Нова сесія отримує immutable effective snapshot; зміни, збережені під час активної сесії, застосовуються лише до наступної. | US-029 | PI |
 | FR-046 | Жодне Settings value, default, reset або speed preset не може вимкнути чи послабити обов'язкового Claude Code-критика, реальну A2A-взаємодію, Matrix E2EE, повну дослівну видимість фактичних реплік, safety/privacy rules або окремі дозволи на зовнішні дії. | US-029 | PI |
@@ -304,7 +305,7 @@ V1 є строго приватною одноосібною автоматиз�
 - V1 є одноосібною приватною не-SaaS системою з однією дозволеною Matrix-кімнатою й однією активною сесією; підписки власника не обслуговують працівників, клієнтів чи інших третіх осіб.
 - Повсякденний консультаційний досвід лишається в Element/Matrix; єдина дозволена web surface — вузькі responsive `Налаштування власника` без чату, архіву, live status або дашборду.
 - Settings access використовує лише окремий високоентропійний локальний пароль Власника з GoDaddy Publish Secrets, одноразовий same-origin challenge і підписану захищену локальну сесію з origin/CSRF checks. OTP/magic-link/external-IdP/registration/password-change/password-recovery flows відсутні, а локальна auth відокремлена від Codex/Claude subscription OAuth.
-- Settings schema має рівно три групи: окремі typed allowlisted Codex/Claude selectors, shared `low / medium / high / xhigh` reasoning depth і `швидко / збалансовано / ретельно` orchestration speed. Capability validation, no-silent-downgrade, atomic save, defaults/reset, effective-value display і immutable active-session snapshot є обов'язковими.
+- Settings schema має рівно три групи: `Codex-агенти` з власними typed allowlisted моделлю й рівнем міркування; `Claude Code-критик` з власними typed allowlisted моделлю й provider-specific effort; `Швидкість консиліуму` з `швидко / збалансовано / ретельно`. Шкали провайдерів незалежні, а підтримка перевіряється для конкретної моделі. Capability validation, точні підтверджені версії й порядок моделей, no-silent-downgrade, atomic save, defaults/reset, effective-value display і immutable active-session snapshot є обов'язковими.
 - Жодний Settings path не може змінювати critic/A2A/E2EE/verbatim/safety/privacy/permission invariants або активувати Claude Fast Mode, API/PAYG чи usage credits.
 - Користувач обрав змістовий і UX-напрям Candidate B «Дослівний консиліум»: усі фактично надіслані агентські доручення, проміжні репліки, критика й виправлення видно наживо повністю; приховані міркування, системні промпти та журнали інструментів до цього переліку не належать.
 - Продукт не створює власного звуку повідомлень; сповіщення визначають штатні налаштування Element та операційної системи.
@@ -330,8 +331,8 @@ V1 є строго приватною одноосібною автоматиз�
 - Перевірка `Витрати` має зіставити налаштовані subscription fees і фактичні infrastructure invoices/usage з показаними значеннями, зберегти unavailable як невідоме та підтвердити відсутність вигаданої per-session token-cost.
 - Наскрізна перевірка Settings має використовувати реальну responsive web surface: правильна відповідь на свіжий одноразовий same-origin challenge створює окрему локальну сесію, а неправильний пароль, OTP, magic link, external IdP і реєстрація не дають доступу. Daily consultation при цьому лишається в Element.
 - Негативна access suite має окремо перевірити missing/weak owner secret, неправильну відповідь, missing/reused/expired/cross-origin challenge, tampered/expired session, missing origin/CSRF proof і brute-force throttling; кожний випадок fail closed не розкриває owner secret або session material і не впливає на Codex/Claude OAuth state.
-- Contract tests Settings schema мають довести рівно три групи, два окремі typed model allowlists, відсутність free-text model input та відсутність extra/per-agent/per-unit overrides.
-- Capability-map tests мають охопити підтримувані й непідтримувані пари кожної дозволеної моделі з `low / medium / high / xhigh`, правильне provider-specific mapping, unknown/stale capability state і відсутність silent downgrade.
+- Contract tests Settings schema мають довести рівно три групи `Codex-агенти`, `Claude Code-критик`, `Швидкість консиліуму`, незалежні model/effort controls усередині кожної provider group, точні підтверджені версії й порядок Claude `Opus → Sonnet → Haiku` з новішими версіями першими, відсутність free-text model input та extra/per-agent/per-unit overrides.
+- Capability-map tests мають охопити підтримувані й непідтримувані пари кожної дозволеної моделі з її власним provider-specific набором рівнів, семантику `За замовчуванням моделі` без explicit effort, unknown/stale capability state і відсутність silent downgrade. Зміна моделі чи рівня Codex не змінює Claude Code, і навпаки; спільна шкала або універсальний mapping між ними не допускаються.
 - Speed tests мають довести детерміновану orchestration semantics пресетів `швидко / збалансовано / ретельно` та відсутність Claude Fast Mode, API/PAYG, usage-credit або іншого платного fallback у кожному пресеті.
 - Save/reset tests мають довести атомарність: валідний повний set зберігається, будь-яке невалідне поле не змінює жодного persisted value, reset/defaults відновлюють source-backed set, cancel лишає persisted set незмінним, а surface показує фактичні effective values.
 - Session tests мають довести, що нова сесія отримує одну validated immutable effective snapshot, активна сесія не змінюється після нового save/reset, а incompatible або unknown config блокує лише старт нової сесії з конкретною причиною.
@@ -417,13 +418,13 @@ V1 є строго приватною одноосібною автоматиз�
 
 **Дано:** чинний Settings set, source-backed defaults, дозволені моделі та одна невалідна зміна.
 **Коли:** Власник переглядає effective values, зберігає валідний повний set, пробує невалідний set, скасовує незбережені зміни та повертає defaults.
-**Тоді:** surface містить рівно `Моделі`, `Глибина міркування`, `Швидкість`; валідний set зберігається атомарно, невалідна спроба не змінює жодного persisted value, cancel не записує зміни, defaults відновлюються як один set, а показані effective values відповідають фактично застосованим.
+**Тоді:** surface містить рівно `Codex-агенти`, `Claude Code-критик`, `Швидкість консиліуму`; перші дві групи мають незалежні модель і рівень міркування відповідного провайдера. Валідний set зберігається атомарно, невалідна спроба не змінює жодного persisted value, cancel не записує зміни, defaults відновлюються як один set, а показані effective values відповідають фактично застосованим. Моделі мають точні підтверджені версії; Claude показано в порядку `Opus → Sonnet → Haiku` з новішими підтвердженими версіями сімейства першими.
 
 ### AC-014. Capability validation і семантика швидкості
 
-**Дано:** typed allowlists Codex/Claude, capability map для `low / medium / high / xhigh`, supported, unsupported та unknown комбінації й три speed presets.
-**Коли:** Власник вибирає кожну комбінацію та запускає нову сесію.
-**Тоді:** supported depth отримує валідне provider-specific mapping; unsupported або unknown комбінація блокується без silent downgrade; `швидко / збалансовано / ретельно` змінюють лише orchestration behavior і не вмикають Claude Fast Mode, API/PAYG або usage credits; critic/A2A/E2EE/verbatim/safety/privacy/permission invariants зберігаються.
+**Дано:** окремі typed allowlists Codex/Claude з підтвердженими назвами й версіями, capability map власних рівнів кожної моделі, supported, unsupported та unknown комбінації й три speed presets.
+**Коли:** Власник змінює модель або рівень одного провайдера, окремо повторює дію для другого та запускає нову сесію з кожною комбінацією.
+**Тоді:** для кожної моделі застосовується лише її підтверджений рівень, а `За замовчуванням моделі` не передає explicit effort; значення іншого провайдера не змінюються. Unsupported або unknown комбінація блокується без silent downgrade чи перенесення рівня між провайдерами; `швидко / збалансовано / ретельно` змінюють лише orchestration behavior і не вмикають Claude Fast Mode, API/PAYG або usage credits; critic/A2A/E2EE/verbatim/safety/privacy/permission invariants зберігаються.
 
 ### AC-015. Immutable effective snapshot сесії
 
@@ -461,7 +462,7 @@ V1 є строго приватною одноосібною автоматиз�
 
 ## 12. Відкладені рішення та відкриті питання
 
-Матеріальних відкритих питань, що блокують цей PRD, немає. До відповідних downstream-власників відкладено:
+Залишається одне матеріальне відкрите рішення: Власник має окремо прийняти документований residual risk для password-only доступу або дозволити сумісний другий фактор відповідно до винятку `v5.0.0-6.3.3` у `Security Requirements`. До явної відповіді це питання та оцінка безпеки залишаються заблокованими; повна відповідність OWASP ASVS 5.0.0 Level 2 не заявляється. Чинні вимоги до автентифікації й обов'язкових mitigations не змінюються. Інші рішення відкладено до відповідних downstream-власників:
 
 - точні моделі Codex і Claude;
 - typed allowlist contents, capability-map source/version, provider-specific reasoning mapping і source-backed defaults для трьох Settings groups;
@@ -478,7 +479,8 @@ V1 є строго приватною одноосібною автоматиз�
 
 | Джерело | Що підтверджує | Використання в PRD |
 |---|---|---|
-| `docs/product-idea.md` | Актуальний намір, Element/Matrix, Candidate B, V1, GoDaddy Node hosting, локальний owner-password доступ, GoDaddy/MySQL equivalents, subscription OAuth, private/non-SaaS boundary, дані, витрати, команди, рівно три Settings groups і validation/save/reset/effective/snapshot semantics | Основне джерело всіх продуктових меж і acceptance-сценаріїв, включно з `US-024`–`US-029`, `FR-037`–`FR-046`, `NFR-016`–`NFR-019`, `AC-012`–`AC-016` |
+| `docs/product-idea.md` | Актуальний намір, Element/Matrix, Candidate B, V1, GoDaddy Node hosting, локальний owner-password доступ, GoDaddy/MySQL equivalents, subscription OAuth, private/non-SaaS boundary, дані, витрати, команди, незалежні provider groups і orchestration speed, точні підтверджені версії/порядок моделей і validation/save/reset/effective/snapshot semantics | Основне джерело всіх продуктових меж і acceptance-сценаріїв, включно з `US-024`–`US-029`, `FR-037`–`FR-046`, `NFR-016`–`NFR-019`, `AC-012`–`AC-016` |
+| Виправлення користувача 02.09.2026 та product-idea invocation `e116a6de-4e8c-4b0e-b93c-ea77002a4144`; PRD invocation `676b12e7-1d7a-4e5c-831a-bb88c1493e50` | Вказівка «розділи двох провайдерів і розділи їх налаштування», уточнення порядку Claude та окремих версій моделей. Первісне групування `Моделі / Глибина міркування / Швидкість` і спільну шкалу від 16.08.2026 скасовано цим виправленням; історичне рішення не є чинною вимогою. Згадка моделі не доводить її runtime availability. | Вузьке узгодження §3.6, `US-026`, `FR-040`–`FR-043`, §8–9, `AC-013`–`AC-014` із поточним продуктовим наміром; решта меж, ID й оцінка `Security Requirements` збережені без зміни |
 | Owner-вказівка invocation `4f5ce7bd-6f8a-47d3-be6a-6e2a422928e6` | Bounded PRD revalidation after the GoDaddy product-idea reconciliation, stable existing IDs, ASVS 5.0.0 Level 2 review and no test-completion claim | Hosting/auth/storage reconciliation, `Security Requirements`, validation scope |
 | Owner-вказівка invocation `29a3dde9-6a4a-4f28-87be-4aa558d73ec8` | Bounded product-idea reconciliation to GoDaddy Node, local owner password and GoDaddy/MySQL equivalents without destructive cleanup | Canonical upstream intent consumed by this PRD |
 | Owner-вказівка invocation `81baa3f2-39b5-45d2-8c1c-238ebd66cdbb` | Попередня bounded PRD update для Google/JWT access; hosting/access частина скасована новішою owner-вказівкою, responsive/accessibility і stable traceability збережені | Історичне джерело `NFR-018` і testing evidence boundary, не чинна auth вимога |

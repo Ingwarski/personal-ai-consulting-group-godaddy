@@ -78,9 +78,11 @@ const writeResponse = async (response, output) => {
     : response.headers.get("set-cookie");
   if (Array.isArray(cookies) && cookies.length > 0) headers["set-cookie"] = cookies;
   if (typeof cookies === "string" && cookies.length > 0) headers["set-cookie"] = cookies;
+  // Read before committing headers so a rejected body can still become a safe
+  // error response. The caller awaits this work before releasing its DB lease.
+  const body = response.body === null ? undefined : Buffer.from(await response.arrayBuffer());
   output.writeHead(response.status, headers);
-  if (response.body === null) return output.end();
-  output.end(Buffer.from(await response.arrayBuffer()));
+  output.end(body);
 };
 
 const createRequestTracker = () => {
@@ -115,6 +117,11 @@ export function createGodaddyServer({
   const server = createServer(async (request, response) => {
     tracker.begin();
     try {
+      // This origin server accepts origin-form only, never proxy/authority
+      // targets or URL forms which could resolve to a different authority.
+      if (typeof request.url !== "string" || !/^\/(?!\/)[^\u0000-\u0020\u007f\\#]*$/u.test(request.url)) {
+        return json(response, 400, { status: "error", code: "invalid_request_target" });
+      }
       const url = new URL(request.url ?? "/", "http://localhost");
       if (request.method === "GET" && url.pathname === "/healthz") {
         // This endpoint is deliberately liveness-only. Configuration, MySQL,
@@ -132,13 +139,18 @@ export function createGodaddyServer({
       if (status.ok && settings !== undefined) {
         try {
           const settingsResponse = await settings.handle(nodeRequest(request));
-          if (settingsResponse !== undefined) return writeResponse(settingsResponse, response);
+          if (settingsResponse !== undefined) return await writeResponse(settingsResponse, response);
         } catch {
           return json(response, 500, { status: "error", code: "settings_runtime_failure" });
         }
       }
 
       return json(response, 404, { status: "not_found" });
+    } catch {
+      // Async HTTP listeners are not awaited by EventEmitter. Never allow a
+      // malformed request or response-stream failure to reject out of here.
+      if (response.headersSent || response.destroyed) response.destroy();
+      else json(response, 500, { status: "error", code: "request_failure" });
     } finally {
       tracker.end();
     }

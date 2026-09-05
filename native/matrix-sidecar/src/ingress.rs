@@ -62,6 +62,7 @@ pub struct PendingRejection {
 #[serde(rename_all = "snake_case")]
 pub enum IngressRejection {
     MediaExpired,
+    InvalidMedia,
 }
 
 #[derive(Debug)]
@@ -253,6 +254,82 @@ impl PendingJournal {
         self.write_encrypted_once(&path, &pending, MAX_FRAME_BYTES)?;
         sync_directory(&self.root)?;
         Ok(PersistOutcome::Created(pending))
+    }
+
+    /// Records a permanent media rejection without storing the attachment's
+    /// content, encrypted source/key, caption, or filesystem path.
+    pub fn reject_invalid_media(
+        &self,
+        event: &IngressEvent,
+        descriptor: &serde_json::Value,
+    ) -> Result<Option<PendingRejection>, JournalError> {
+        let _guard = self.mutation.lock().map_err(|_| JournalError)?;
+        let event_key = event_key_for(&event.event_id);
+        let body_hash = hash_json(&event.body)?;
+        let media_manifest_hash = hash_json(descriptor)?;
+        let event_hash = hash_json(&HashEvent {
+            event_id: &event.event_id,
+            room_id: &event.room_id,
+            sender_mxid: &event.sender_mxid,
+            sender_device_id: &event.sender_device_id,
+            encrypted: true,
+            body_hash: &body_hash,
+            relation_event_id: event.reply_to_event_id.as_deref(),
+            media_manifest_hash: &media_manifest_hash,
+        })?;
+        let mut rejection = PendingRejection {
+            sequence: 1,
+            receipt_id: receipt_id_for(&event.event_id, &event.sender_device_id),
+            event_id: event.event_id.clone(),
+            room_id: event.room_id.clone(),
+            sender_mxid: event.sender_mxid.clone(),
+            sender_device_id: event.sender_device_id.clone(),
+            reason: IngressRejection::InvalidMedia,
+            body_hash,
+            media_manifest_hash,
+            event_hash,
+        };
+        if !rejection.is_valid() {
+            return Err(JournalError);
+        }
+        let ack_path = self.ack_root.join(format!("{event_key}.ack"));
+        if ack_path.exists() {
+            let tombstone = load_tombstone(&ack_path)?;
+            return if tombstone.event_id == rejection.event_id
+                && tombstone.receipt_id == rejection.receipt_id
+                && tombstone.event_hash == rejection.event_hash
+            {
+                Ok(None)
+            } else {
+                Err(JournalError)
+            };
+        }
+        let rejected_path = self.rejection_root.join(format!("{event_key}.rejected"));
+        if rejected_path.exists() {
+            let existing = self.load_rejection(&rejected_path)?;
+            rejection.sequence = existing.sequence;
+            return if existing.matches(&rejection) {
+                Ok(Some(existing))
+            } else {
+                Err(JournalError)
+            };
+        }
+        if self.root.join(format!("{event_key}.pending")).exists() {
+            return Err(JournalError);
+        }
+        let ordered = self.replay_ordered_locked(MAX_UNACKED_EVENTS)?;
+        if ordered.len() >= MAX_UNACKED_EVENTS {
+            return Err(JournalError);
+        }
+        rejection.sequence = ordered
+            .last()
+            .map(OrderedReplay::sequence)
+            .unwrap_or(0)
+            .checked_add(1)
+            .ok_or(JournalError)?;
+        self.write_encrypted_once(&rejected_path, &rejection, 4 * 1024)?;
+        sync_directory(&self.rejection_root)?;
+        Ok(Some(rejection))
     }
 
     pub fn replay(&self, maximum: usize) -> Result<Vec<PendingIngress>, JournalError> {

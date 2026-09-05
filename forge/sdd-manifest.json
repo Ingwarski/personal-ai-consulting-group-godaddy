@@ -1,8 +1,8 @@
 {
   "checker_contract_version": 1,
   "pipeline_version": "1.1.0",
-  "state": "implementation_in_progress",
-  "updated_at": "2026-09-05T02:49:47+03:00",
+  "state": "awaiting_input",
+  "updated_at": "2026-09-05T01:50:09Z",
   "language": {
     "working_language": "uk",
     "selection_source": "recorded-preference",
@@ -15,63 +15,285 @@
     "intake_id": "godaddy-matrix-reconciliation-20260904",
     "source_mode": "existing-file",
     "handoff_receipt_path": null,
-    "product_idea_hash": "ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a",
+    "product_idea_hash": "74e9727a63cf4e5648671d0467265b27e098fc819601b0833ee53b17a3acb320",
     "current_request_id": "u06-rust-matrix-sidecar-20260904"
   },
   "artifacts": {
     "product-idea": {
       "path": "docs/product-idea.md",
       "owner_skill": "to-product-idea",
-      "owner_invocation_id": "29a3dde9-6a4a-4f28-87be-4aa558d73ec8",
-      "declared_output_set": ["docs/product-idea.md"],
+      "owner_invocation_id": "e116a6de-4e8c-4b0e-b93c-ea77002a4144",
+      "declared_output_set": [
+        "docs/product-idea.md"
+      ],
       "status": "validated",
       "mission_control_status": "Done",
       "dependencies": [],
       "dependency_status": {},
       "source_hashes": {},
       "consumed_source_fragments": {},
-      "content_hash": "ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a",
-      "validation": {"result": "passed", "working_language": "uk"},
-      "open_questions": []
+      "content_hash": "74e9727a63cf4e5648671d0467265b27e098fc819601b0833ee53b17a3acb320",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "evidence_scope": "current scoped owner reconciliation; not product execution"
+      },
+      "open_questions": [],
+      "supersedes": {
+        "owner_invocation_id": "29a3dde9-6a4a-4f28-87be-4aa558d73ec8",
+        "content_hash": "ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a",
+        "git_revision": "7f3cedde79e4f3d6a0556ca897fe9ea3b55bb541"
+      }
     },
     "prd": {
       "path": "docs/prd.md",
       "owner_skill": "to-sdd-prd",
-      "owner_invocation_id": "4f5ce7bd-6f8a-47d3-be6a-6e2a422928e6",
-      "declared_output_set": ["docs/prd.md"],
-      "status": "validated",
-      "mission_control_status": "Done",
-      "dependencies": ["product-idea"],
-      "dependency_status": {"product-idea": "validated"},
+      "owner_invocation_id": "676b12e7-1d7a-4e5c-831a-bb88c1493e50",
+      "declared_output_set": [
+        "docs/prd.md"
+      ],
+      "status": "input_needed",
+      "mission_control_status": "Input needed",
+      "dependencies": [
+        "product-idea"
+      ],
+      "dependency_status": {
+        "product-idea": "validated"
+      },
       "source_hashes": {
-        "docs/product-idea.md": "ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a"
+        "docs/product-idea.md": "74e9727a63cf4e5648671d0467265b27e098fc819601b0833ee53b17a3acb320"
       },
       "consumed_source_fragments": {},
-      "content_hash": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
-      "validation": {"result": "passed", "working_language": "uk"},
+      "content_hash": "1ba8803bc2a9273013009d3585ec2e27ef8f707c15caee257964799d36e1b612",
+      "validation": {
+        "result": "blocked",
+        "working_language": "uk",
+        "evidence_scope": "current scoped owner reconciliation; not product execution"
+      },
       "security_review": {
         "version": 1,
         "asvs_version": "5.0.0",
         "scope": "web-api",
         "level": 2,
-        "status": "complete",
+        "status": "blocked",
         "rationale": "Рівень обрано через приватні бізнес-документи, credential material, зовнішні інтеграції, state-changing Settings і остаточне видалення сесій.",
-        "definition_ref": {"path": "docs/prd.md", "heading": "## Security Requirements"},
+        "definition_ref": {
+          "path": "docs/prd.md",
+          "heading": "## Security Requirements"
+        },
         "requirements": [
-          {"requirement_id": "NFR-005", "definition_ref": {"path": "docs/prd.md", "heading": "## Security Requirements"}, "asvs_ids": ["v5.0.0-11.1.1", "v5.0.0-11.1.2", "v5.0.0-11.2.1", "v5.0.0-11.3.3", "v5.0.0-12.1.1", "v5.0.0-12.3.1", "v5.0.0-14.1.1", "v5.0.0-14.1.2"]},
-          {"requirement_id": "NFR-006", "definition_ref": {"path": "docs/prd.md", "heading": "## Security Requirements"}, "asvs_ids": ["v5.0.0-10.1.1", "v5.0.0-13.1.1", "v5.0.0-14.2.1", "v5.0.0-14.2.3", "v5.0.0-15.1.1", "v5.0.0-15.1.2", "v5.0.0-15.2.1", "v5.0.0-15.2.3"]},
-          {"requirement_id": "NFR-007", "definition_ref": {"path": "docs/prd.md", "heading": "## Security Requirements"}, "asvs_ids": ["v5.0.0-2.3.1", "v5.0.0-8.1.1", "v5.0.0-8.2.1", "v5.0.0-8.2.2", "v5.0.0-8.3.1"]},
-          {"requirement_id": "NFR-008", "definition_ref": {"path": "docs/prd.md", "heading": "## Security Requirements"}, "asvs_ids": ["v5.0.0-1.1.1", "v5.0.0-1.2.4", "v5.0.0-1.3.5", "v5.0.0-1.3.6", "v5.0.0-1.5.2", "v5.0.0-2.1.1", "v5.0.0-2.2.1", "v5.0.0-5.1.1", "v5.0.0-5.2.1", "v5.0.0-5.2.2", "v5.0.0-5.3.2", "v5.0.0-15.3.1"]},
-          {"requirement_id": "NFR-009", "definition_ref": {"path": "docs/prd.md", "heading": "## Security Requirements"}, "asvs_ids": ["v5.0.0-2.1.3", "v5.0.0-2.3.2", "v5.0.0-2.3.4", "v5.0.0-2.4.1", "v5.0.0-15.1.3", "v5.0.0-15.2.2"]},
-          {"requirement_id": "NFR-010", "definition_ref": {"path": "docs/prd.md", "heading": "## Security Requirements"}, "asvs_ids": ["v5.0.0-2.3.3", "v5.0.0-2.3.4", "v5.0.0-15.3.3"]},
-          {"requirement_id": "NFR-011", "definition_ref": {"path": "docs/prd.md", "heading": "## Security Requirements"}, "asvs_ids": ["v5.0.0-11.4.3", "v5.0.0-15.3.3"]},
-          {"requirement_id": "NFR-012", "definition_ref": {"path": "docs/prd.md", "heading": "## Security Requirements"}, "asvs_ids": ["v5.0.0-16.1.1", "v5.0.0-16.2.1", "v5.0.0-16.2.2", "v5.0.0-16.2.5", "v5.0.0-16.3.1", "v5.0.0-16.3.2", "v5.0.0-16.3.3", "v5.0.0-16.3.4", "v5.0.0-16.4.1", "v5.0.0-16.4.2", "v5.0.0-16.5.1", "v5.0.0-16.5.2", "v5.0.0-16.5.3"]},
-          {"requirement_id": "NFR-016", "definition_ref": {"path": "docs/prd.md", "heading": "## Security Requirements"}, "asvs_ids": ["v5.0.0-3.3.1", "v5.0.0-3.3.2", "v5.0.0-3.3.3", "v5.0.0-3.3.4", "v5.0.0-3.4.1", "v5.0.0-3.4.3", "v5.0.0-3.4.4", "v5.0.0-3.4.5", "v5.0.0-3.4.6", "v5.0.0-3.5.1", "v5.0.0-4.1.1", "v5.0.0-6.1.1", "v5.0.0-6.2.8", "v5.0.0-6.2.9", "v5.0.0-6.3.1", "v5.0.0-6.3.3", "v5.0.0-7.1.1", "v5.0.0-7.2.1", "v5.0.0-7.2.2", "v5.0.0-7.2.3", "v5.0.0-7.2.4", "v5.0.0-7.3.1", "v5.0.0-7.3.2", "v5.0.0-7.4.1", "v5.0.0-7.4.4", "v5.0.0-7.4.5", "v5.0.0-9.1.1", "v5.0.0-9.1.2", "v5.0.0-9.1.3", "v5.0.0-9.2.1", "v5.0.0-9.2.2", "v5.0.0-9.2.3", "v5.0.0-11.5.1", "v5.0.0-14.2.2", "v5.0.0-14.3.2", "v5.0.0-14.3.3"]},
-          {"requirement_id": "NFR-017", "definition_ref": {"path": "docs/prd.md", "heading": "## Security Requirements"}, "asvs_ids": ["v5.0.0-2.3.3", "v5.0.0-2.3.4", "v5.0.0-15.3.3"]},
-          {"requirement_id": "NFR-019", "definition_ref": {"path": "docs/prd.md", "heading": "## Security Requirements"}, "asvs_ids": ["v5.0.0-2.1.2", "v5.0.0-2.2.3", "v5.0.0-13.2.2", "v5.0.0-13.2.4", "v5.0.0-13.2.5", "v5.0.0-15.3.3", "v5.0.0-15.3.5"]}
+          {
+            "requirement_id": "NFR-005",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## Security Requirements"
+            },
+            "asvs_ids": [
+              "v5.0.0-11.1.1",
+              "v5.0.0-11.1.2",
+              "v5.0.0-11.2.1",
+              "v5.0.0-11.3.3",
+              "v5.0.0-12.1.1",
+              "v5.0.0-12.3.1",
+              "v5.0.0-14.1.1",
+              "v5.0.0-14.1.2"
+            ]
+          },
+          {
+            "requirement_id": "NFR-006",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## Security Requirements"
+            },
+            "asvs_ids": [
+              "v5.0.0-10.1.1",
+              "v5.0.0-13.1.1",
+              "v5.0.0-14.2.1",
+              "v5.0.0-14.2.3",
+              "v5.0.0-15.1.1",
+              "v5.0.0-15.1.2",
+              "v5.0.0-15.2.1",
+              "v5.0.0-15.2.3"
+            ]
+          },
+          {
+            "requirement_id": "NFR-007",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## Security Requirements"
+            },
+            "asvs_ids": [
+              "v5.0.0-2.3.1",
+              "v5.0.0-8.1.1",
+              "v5.0.0-8.2.1",
+              "v5.0.0-8.2.2",
+              "v5.0.0-8.3.1"
+            ]
+          },
+          {
+            "requirement_id": "NFR-008",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## Security Requirements"
+            },
+            "asvs_ids": [
+              "v5.0.0-1.1.1",
+              "v5.0.0-1.2.4",
+              "v5.0.0-1.3.5",
+              "v5.0.0-1.3.6",
+              "v5.0.0-1.5.2",
+              "v5.0.0-2.1.1",
+              "v5.0.0-2.2.1",
+              "v5.0.0-5.1.1",
+              "v5.0.0-5.2.1",
+              "v5.0.0-5.2.2",
+              "v5.0.0-5.3.2",
+              "v5.0.0-15.3.1"
+            ]
+          },
+          {
+            "requirement_id": "NFR-009",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## Security Requirements"
+            },
+            "asvs_ids": [
+              "v5.0.0-2.1.3",
+              "v5.0.0-2.3.2",
+              "v5.0.0-2.3.4",
+              "v5.0.0-2.4.1",
+              "v5.0.0-15.1.3",
+              "v5.0.0-15.2.2"
+            ]
+          },
+          {
+            "requirement_id": "NFR-010",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## Security Requirements"
+            },
+            "asvs_ids": [
+              "v5.0.0-2.3.3",
+              "v5.0.0-2.3.4",
+              "v5.0.0-15.3.3"
+            ]
+          },
+          {
+            "requirement_id": "NFR-011",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## Security Requirements"
+            },
+            "asvs_ids": [
+              "v5.0.0-11.4.3",
+              "v5.0.0-15.3.3"
+            ]
+          },
+          {
+            "requirement_id": "NFR-012",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## Security Requirements"
+            },
+            "asvs_ids": [
+              "v5.0.0-16.1.1",
+              "v5.0.0-16.2.1",
+              "v5.0.0-16.2.2",
+              "v5.0.0-16.2.5",
+              "v5.0.0-16.3.1",
+              "v5.0.0-16.3.2",
+              "v5.0.0-16.3.3",
+              "v5.0.0-16.3.4",
+              "v5.0.0-16.4.1",
+              "v5.0.0-16.4.2",
+              "v5.0.0-16.5.1",
+              "v5.0.0-16.5.2",
+              "v5.0.0-16.5.3"
+            ]
+          },
+          {
+            "requirement_id": "NFR-016",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## Security Requirements"
+            },
+            "asvs_ids": [
+              "v5.0.0-3.3.1",
+              "v5.0.0-3.3.2",
+              "v5.0.0-3.3.3",
+              "v5.0.0-3.3.4",
+              "v5.0.0-3.4.1",
+              "v5.0.0-3.4.3",
+              "v5.0.0-3.4.4",
+              "v5.0.0-3.4.5",
+              "v5.0.0-3.4.6",
+              "v5.0.0-3.5.1",
+              "v5.0.0-4.1.1",
+              "v5.0.0-6.1.1",
+              "v5.0.0-6.2.8",
+              "v5.0.0-6.2.9",
+              "v5.0.0-6.3.1",
+              "v5.0.0-6.3.3",
+              "v5.0.0-7.1.1",
+              "v5.0.0-7.2.1",
+              "v5.0.0-7.2.2",
+              "v5.0.0-7.2.3",
+              "v5.0.0-7.2.4",
+              "v5.0.0-7.3.1",
+              "v5.0.0-7.3.2",
+              "v5.0.0-7.4.1",
+              "v5.0.0-7.4.4",
+              "v5.0.0-7.4.5",
+              "v5.0.0-9.1.1",
+              "v5.0.0-9.1.2",
+              "v5.0.0-9.1.3",
+              "v5.0.0-9.2.1",
+              "v5.0.0-9.2.2",
+              "v5.0.0-9.2.3",
+              "v5.0.0-11.5.1",
+              "v5.0.0-14.2.2",
+              "v5.0.0-14.3.2",
+              "v5.0.0-14.3.3"
+            ]
+          },
+          {
+            "requirement_id": "NFR-017",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## Security Requirements"
+            },
+            "asvs_ids": [
+              "v5.0.0-2.3.3",
+              "v5.0.0-2.3.4",
+              "v5.0.0-15.3.3"
+            ]
+          },
+          {
+            "requirement_id": "NFR-019",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## Security Requirements"
+            },
+            "asvs_ids": [
+              "v5.0.0-2.1.2",
+              "v5.0.0-2.2.3",
+              "v5.0.0-13.2.2",
+              "v5.0.0-13.2.4",
+              "v5.0.0-13.2.5",
+              "v5.0.0-15.3.3",
+              "v5.0.0-15.3.5"
+            ]
+          }
         ]
       },
-      "open_questions": []
+      "open_questions": [
+        "Owner decision required: retain password-only with explicit MFA residual-risk acceptance, or authorize a second factor. No full ASVS Level 2 compliance claim."
+      ],
+      "supersedes": {
+        "owner_invocation_id": "4f5ce7bd-6f8a-47d3-be6a-6e2a422928e6",
+        "content_hash": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
+        "git_revision": "7f3cedde79e4f3d6a0556ca897fe9ea3b55bb541"
+      }
     },
     "project-context": {
       "path": "docs/project-context.md",
@@ -386,7 +608,9 @@
     {"candidate_id": "candidate-a", "version": "v1", "direction": "Рішення спочатку", "status": "superseded", "approved": false, "superseded_by": "candidate-b/v2"},
     {"candidate_id": "candidate-b", "version": "v1", "direction": "Дослівний консиліум", "status": "superseded", "approved": false, "superseded_by": "candidate-b/v2"},
     {"candidate_id": "candidate-c", "version": "v1", "direction": "Контроль і межі", "status": "superseded", "approved": false, "superseded_by": "candidate-b/v2"},
-    {
+{
+  "reconciliation_history_prd": {"path":"docs/prd.md","owner_skill":"to-sdd-prd","owner_invocation_id":"4f5ce7bd-6f8a-47d3-be6a-6e2a422928e6","declared_output_set":["docs/prd.md"],"status":"validated","mission_control_status":"Done","dependencies":["product-idea"],"dependency_status":{"product-idea":"validated"},"source_hashes":{"docs/product-idea.md":"ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a"},"consumed_source_fragments":{},"content_hash":"32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94","validation":{"result":"passed","working_language":"uk"},"security_review":{"version":1,"asvs_version":"5.0.0","scope":"web-api","level":2,"status":"complete","rationale":"Рівень обрано через приватні бізнес-документи, credential material, зовнішні інтеграції, state-changing Settings і остаточне видалення сесій.","definition_ref":{"path":"docs/prd.md","heading":"## Security Requirements"},"requirements":[{"requirement_id":"NFR-005","definition_ref":{"path":"docs/prd.md","heading":"## Security Requirements"},"asvs_ids":["v5.0.0-11.1.1","v5.0.0-11.1.2","v5.0.0-11.2.1","v5.0.0-11.3.3","v5.0.0-12.1.1","v5.0.0-12.3.1","v5.0.0-14.1.1","v5.0.0-14.1.2"]},{"requirement_id":"NFR-006","definition_ref":{"path":"docs/prd.md","heading":"## Security Requirements"},"asvs_ids":["v5.0.0-10.1.1","v5.0.0-13.1.1","v5.0.0-14.2.1","v5.0.0-14.2.3","v5.0.0-15.1.1","v5.0.0-15.1.2","v5.0.0-15.2.1","v5.0.0-15.2.3"]},{"requirement_id":"NFR-007","definition_ref":{"path":"docs/prd.md","heading":"## Security Requirements"},"asvs_ids":["v5.0.0-2.3.1","v5.0.0-8.1.1","v5.0.0-8.2.1","v5.0.0-8.2.2","v5.0.0-8.3.1"]},{"requirement_id":"NFR-008","definition_ref":{"path":"docs/prd.md","heading":"## Security Requirements"},"asvs_ids":["v5.0.0-1.1.1","v5.0.0-1.2.4","v5.0.0-1.3.5","v5.0.0-1.3.6","v5.0.0-1.5.2","v5.0.0-2.1.1","v5.0.0-2.2.1","v5.0.0-5.1.1","v5.0.0-5.2.1","v5.0.0-5.2.2","v5.0.0-5.3.2","v5.0.0-15.3.1"]},{"requirement_id":"NFR-009","definition_ref":{"path":"docs/prd.md","heading":"## Security Requirements"},"asvs_ids":["v5.0.0-2.1.3","v5.0.0-2.3.2","v5.0.0-2.3.4","v5.0.0-2.4.1","v5.0.0-15.1.3","v5.0.0-15.2.2"]},{"requirement_id":"NFR-010","definition_ref":{"path":"docs/prd.md","heading":"## Security Requirements"},"asvs_ids":["v5.0.0-2.3.3","v5.0.0-2.3.4","v5.0.0-15.3.3"]},{"requirement_id":"NFR-011","definition_ref":{"path":"docs/prd.md","heading":"## Security Requirements"},"asvs_ids":["v5.0.0-11.4.3","v5.0.0-15.3.3"]},{"requirement_id":"NFR-012","definition_ref":{"path":"docs/prd.md","heading":"## Security Requirements"},"asvs_ids":["v5.0.0-16.1.1","v5.0.0-16.2.1","v5.0.0-16.2.2","v5.0.0-16.2.5","v5.0.0-16.3.1","v5.0.0-16.3.2","v5.0.0-16.3.3","v5.0.0-16.3.4","v5.0.0-16.4.1","v5.0.0-16.4.2","v5.0.0-16.5.1","v5.0.0-16.5.2","v5.0.0-16.5.3"]},{"requirement_id":"NFR-016","definition_ref":{"path":"docs/prd.md","heading":"## Security Requirements"},"asvs_ids":["v5.0.0-3.3.1","v5.0.0-3.3.2","v5.0.0-3.3.3","v5.0.0-3.3.4","v5.0.0-3.4.1","v5.0.0-3.4.3","v5.0.0-3.4.4","v5.0.0-3.4.5","v5.0.0-3.4.6","v5.0.0-3.5.1","v5.0.0-4.1.1","v5.0.0-6.1.1","v5.0.0-6.2.8","v5.0.0-6.2.9","v5.0.0-6.3.1","v5.0.0-6.3.3","v5.0.0-7.1.1","v5.0.0-7.2.1","v5.0.0-7.2.2","v5.0.0-7.2.3","v5.0.0-7.2.4","v5.0.0-7.3.1","v5.0.0-7.3.2","v5.0.0-7.4.1","v5.0.0-7.4.4","v5.0.0-7.4.5","v5.0.0-9.1.1","v5.0.0-9.1.2","v5.0.0-9.1.3","v5.0.0-9.2.1","v5.0.0-9.2.2","v5.0.0-9.2.3","v5.0.0-11.5.1","v5.0.0-14.2.2","v5.0.0-14.3.2","v5.0.0-14.3.3"]},{"requirement_id":"NFR-017","definition_ref":{"path":"docs/prd.md","heading":"## Security Requirements"},"asvs_ids":["v5.0.0-2.3.3","v5.0.0-2.3.4","v5.0.0-15.3.3"]},{"requirement_id":"NFR-019","definition_ref":{"path":"docs/prd.md","heading":"## Security Requirements"},"asvs_ids":["v5.0.0-2.1.2","v5.0.0-2.2.3","v5.0.0-13.2.2","v5.0.0-13.2.4","v5.0.0-13.2.5","v5.0.0-15.3.3","v5.0.0-15.3.5"]}]},"open_questions":[]},
+  "reconciliation_history_product_idea": {"path":"docs/product-idea.md","owner_skill":"to-product-idea","owner_invocation_id":"29a3dde9-6a4a-4f28-87be-4aa558d73ec8","declared_output_set":["docs/product-idea.md"],"status":"validated","mission_control_status":"Done","dependencies":[],"dependency_status":{},"source_hashes":{},"consumed_source_fragments":{},"content_hash":"ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a","validation":{"result":"passed","working_language":"uk"},"open_questions":[]},
       "candidate_id": "candidate-b",
       "version": "v2",
       "direction": "Дослівний консиліум — Element + Налаштування власника",
@@ -490,7 +714,7 @@
     ]
   },
   "implementation_gate": {
-    "state": "authorized_for_phase3",
+    "state": "invalidated",
     "development_plan_hash": "a38919e0a84c61b081661227bd5ee936744bb9781dba2286ecc25d7d7e3974ca",
     "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
     "prompt_id": "implementation-prompt-u06-20260904-go-01",
@@ -501,7 +725,8 @@
       "path": "forge/implementation-prompt-u06-20260904.json",
       "content_hash": "ec8a4a216b37c7edc6e37d921f102c80714cf8224e884e25b85a9de8e341441c"
     },
-    "reason": "The user explicitly said go after the exact U-06 reconciliation and implementation sequence was stated."
+    "reason": "Exact-plan provenance contradicted by retained original events; see forge/authorization-correction-20260905.json. This historical receipt cannot authorize a later plan. Current explicit remediation remains in scope; no next-unit authorization is inferred.",
+    "correction_ref": "forge/authorization-correction-20260905.json"
   },
   "prototype_promotions": [
     {
@@ -517,17 +742,20 @@
     }
   ],
   "implementation": {
-    "status": "in_progress",
+    "status": "remediation_in_progress",
     "owner_invocation_id": "990d3f67-1e4a-460d-8722-0292ddf2570b",
-    "completed_local_contracts": ["U-01", "U-02", "U-03", "U-05", "U-06", "U-07"],
-    "partial_local_contracts": ["U-04", "U-08", "U-09"],
+    "completed_local_contracts": [],
+    "partial_local_contracts": ["U-01", "U-02", "U-03", "U-04", "U-05", "U-06", "U-07", "U-08", "U-09"],
+    "completion_projection_note": "Prior local completion labels are preserved in authorization-correction-20260905.json. Clearing current acceptance does not remove implemented code: current plan/requirement reconciliation and scoped acceptance are incomplete.",
     "in_progress_unit": null,
-    "next_unit": "U-08-local",
+    "next_unit": null,
     "local_verification": {
       "node": {
         "command": "npm run check",
         "result": "passed",
-        "tests": "335/335"
+        "tests": "360/360",
+        "runtime": "Node.js 22.16.0, Darwin arm64",
+        "scope": "Local credential-free regression suite, environment policy, TypeScript and build; not Linux or live GoDaddy evidence"
       },
       "rust": {
         "commands": [
@@ -536,11 +764,13 @@
           "cargo clippy --locked --all-targets -- -D warnings",
           "cargo build --release --locked"
         ],
-        "result": "passed",
-        "tests": "69/69 (64 lib + 5 bin)",
-        "host_release_build": "passed_non_deployable",
+        "result": "in_progress",
+        "tests": "83/83 (78 lib + 5 bin); final SDK state-barrier and trusted-device patches included",
+        "format": "passed",
+        "clippy": "passed_all_targets_warnings_denied",
+        "host_release_build": "in_progress_non_deployable",
         "host_release_platform": "Mach-O arm64",
-        "host_release_binary_sha256": "ab6f041bf2e953515545176115afa5c72caeecf9b7fe103f47822a8554b64986"
+        "host_release_binary_sha256": null
       },
       "artifact_ci": "not_run; locked x86_64-unknown-linux-musl checksum/SBOM/license workflow prepared",
       "real_mysql": "not_run",
@@ -559,13 +789,15 @@
     }
   },
   "affected_feature_units": ["U-05", "U-06", "U-09"],
-  "input_requests": [],
-  "next_ready_nodes": ["U-08-local"],
-  "pause_reason": null,
+  "input_requests": [{"id": "owner-auth-mfa-exception", "status": "awaiting_answer", "question": "Retain password-only with explicit MFA residual-risk acceptance, or authorize a second factor?", "blocking_node": "prd"}],
+  "next_ready_nodes": [],
+  "pause_reason": "PRD owner returned blocked security review for the existing MFA/password-only conflict. SDD downstream reconciliation and next-unit advancement pause; explicitly authorized audit remediation continues.",
   "last_resume_event": {
-    "type": "implementation_prompt",
-    "timestamp": "2026-09-04T21:43:42+03:00",
-    "source": "user_request",
-    "prompt_id": "implementation-prompt-u06-20260904-go-01"
+    "type": "audit_remediation_request",
+    "timestamp": null,
+    "recorded_at": "2026-09-05T01:50:09Z",
+    "source": "current_user_message",
+    "message": "OK. Fix the found problems, please and report on each fix.",
+    "scope_ref": "forge/authorization-correction-20260905.json"
   }
 }

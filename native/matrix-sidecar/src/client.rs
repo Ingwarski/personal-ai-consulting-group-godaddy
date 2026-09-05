@@ -6,7 +6,7 @@ use std::sync::{
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use matrix_sdk::{
-    Client, RoomMemberships, RoomState,
+    Client, RoomState,
     config::{SyncSettings, SyncToken},
     ruma::{
         OwnedEventId, OwnedRoomId, OwnedTransactionId, OwnedUserId,
@@ -19,7 +19,7 @@ use matrix_sdk::{
     sync::SyncResponse,
 };
 use thiserror::Error;
-use tokio::sync::mpsc;
+use tokio::sync::{Mutex, mpsc};
 use zeroize::Zeroizing;
 
 use crate::config::{Config, SEND_TIMEOUT_SECONDS};
@@ -41,6 +41,7 @@ struct IngressPipeline {
     sender: mpsc::Sender<MatrixOutput>,
 }
 
+#[cfg(test)]
 #[derive(serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 struct LocalAliasesResponse {
@@ -63,6 +64,15 @@ pub enum TransportError {
     TransportFailed,
 }
 
+impl From<crate::live_policy::PolicyError> for TransportError {
+    fn from(error: crate::live_policy::PolicyError) -> Self {
+        match error {
+            crate::live_policy::PolicyError::Unavailable => Self::TransportFailed,
+            crate::live_policy::PolicyError::Denied => Self::PolicyDenied,
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct MatrixClient {
     inner: Client,
@@ -78,6 +88,9 @@ pub struct MatrixClient {
     ingress_failed: Arc<AtomicBool>,
     ingress_pipeline: Arc<OnceLock<IngressPipeline>>,
     sync_checkpoint: crate::sync_checkpoint::SyncCheckpoint,
+    // SDK sync applies cached encryption, membership, history and device state.
+    // Keep that mutation out of the authorization-to-send/key-sharing boundary.
+    sdk_send_barrier: Arc<Mutex<()>>,
 }
 
 impl MatrixClient {
@@ -110,6 +123,7 @@ impl MatrixClient {
             ingress_failed: Arc::new(AtomicBool::new(false)),
             ingress_pipeline: Arc::new(OnceLock::new()),
             sync_checkpoint,
+            sdk_send_barrier: Arc::new(Mutex::new(())),
         })
     }
 
@@ -138,17 +152,15 @@ impl MatrixClient {
         if !self.requires_pre_ingress_baseline()? {
             return Ok(());
         }
-        let response = tokio::time::timeout(
-            Duration::from_secs(SEND_TIMEOUT_SECONDS),
-            self.inner.sync_once(
+        let response = self
+            .sync_sdk(
                 SyncSettings::new()
                     .timeout(Duration::from_secs(0))
                     .token(SyncToken::NoToken),
-            ),
-        )
-        .await
-        .map_err(|_| TransportError::TransportFailed)?
-        .map_err(|_| TransportError::TransportFailed)?;
+                Duration::from_secs(SEND_TIMEOUT_SECONDS),
+            )
+            .await?
+            .map_err(|_| TransportError::TransportFailed)?;
         let room_event_id = match configured_room_baseline_anchor(&response, &self.room_id)? {
             Some(event_id) => event_id,
             None => self.latest_configured_room_event_id().await?,
@@ -219,8 +231,8 @@ impl MatrixClient {
                 client.last_sync_ms.store(now_ms(), Ordering::Release);
                 let synced = client
                     .sync_with_checkpoint(
-                        SyncSettings::new().timeout(Duration::from_secs(30)),
-                        Duration::from_secs(35),
+                        SyncSettings::new().timeout(Duration::from_secs(10)),
+                        Duration::from_secs(15),
                     )
                     .await
                     .is_ok();
@@ -267,9 +279,7 @@ impl MatrixClient {
             Some(token) => SyncToken::Specific(token),
             None => SyncToken::NoToken,
         });
-        let first = tokio::time::timeout(timeout, self.inner.sync_once(settings_with_cursor))
-            .await
-            .map_err(|_| TransportError::TransportFailed)?;
+        let first = self.sync_sdk(settings_with_cursor, timeout).await?;
         let (response, require_boundary) = match first {
             Ok(response) => (response, false),
             Err(error)
@@ -278,13 +288,10 @@ impl MatrixClient {
                     && self.homeserver.origin() == crate::config::PRODUCTION_HOMESERVER_ORIGIN
                     && is_synapse_invalid_stream_token(&error) =>
             {
-                let response = tokio::time::timeout(
-                    timeout,
-                    self.inner.sync_once(settings.token(SyncToken::NoToken)),
-                )
-                .await
-                .map_err(|_| TransportError::TransportFailed)?
-                .map_err(|_| TransportError::TransportFailed)?;
+                let response = self
+                    .sync_sdk(settings.token(SyncToken::NoToken), timeout)
+                    .await?
+                    .map_err(|_| TransportError::TransportFailed)?;
                 (response, true)
             }
             Err(_) => return Err(TransportError::TransportFailed),
@@ -323,6 +330,21 @@ impl MatrixClient {
             .map_err(|_| TransportError::TransportFailed)
     }
 
+    async fn sync_sdk(
+        &self,
+        settings: SyncSettings,
+        timeout: Duration,
+    ) -> Result<Result<SyncResponse, matrix_sdk::Error>, TransportError> {
+        sync_with_sdk_guard(
+            &self.sdk_send_barrier,
+            &self.inner,
+            &self.room_id,
+            settings,
+            timeout,
+        )
+        .await
+    }
+
     pub fn install_ingress_handler(
         &self,
         journal: PendingJournal,
@@ -334,189 +356,6 @@ impl MatrixClient {
             spool: spool.clone(),
             sender: sender.clone(),
         });
-        use matrix_sdk::{
-            Room,
-            deserialized_responses::{EncryptionInfo, VerificationState},
-            ruma::events::room::{
-                encrypted::OriginalSyncRoomEncryptedEvent,
-                message::{MessageType, OriginalSyncRoomMessageEvent},
-            },
-        };
-        let client = self.clone();
-        self.inner.add_event_handler(
-            move |event: OriginalSyncRoomMessageEvent,
-                  room: Room,
-                  encryption: Option<EncryptionInfo>| {
-                let client = client.clone();
-                let journal = journal.clone();
-                let spool = spool.clone();
-                let sender = sender.clone();
-                async move {
-                    if client.ingress_pipeline.get().is_some() {
-                        return;
-                    }
-                    let Ok(permit) = sender.reserve_owned().await else {
-                        client.ingress_failed.store(true, Ordering::Release);
-                        return;
-                    };
-                    let Some(encryption) = encryption else { return };
-                    let Some(sender_device) = encryption.sender_device.as_ref() else {
-                        return;
-                    };
-                    if encryption.sender != client.owner_mxid
-                        || event.sender != client.owner_mxid
-                        || room.room_id() != client.room_id
-                        || !matches!(encryption.verification_state, VerificationState::Verified)
-                    {
-                        return;
-                    }
-                    let Ok(Some(device)) = client
-                        .inner
-                        .encryption()
-                        .get_device(&client.owner_mxid, sender_device)
-                        .await
-                    else {
-                        client.ingress_failed.store(true, Ordering::Release);
-                        return;
-                    };
-                    if !device_policy_allows(
-                        device.is_verified_with_cross_signing(),
-                        device.is_blacklisted(),
-                    ) || client.revalidate_current().await.is_err()
-                    {
-                        client.ingress_failed.store(true, Ordering::Release);
-                        return;
-                    }
-                    let (body, media) = match &event.content.msgtype {
-                        MessageType::Text(text) if bounded_nonempty_text(&text.body) => {
-                            (Some(text.body.clone()), Vec::new())
-                        }
-                        MessageType::Image(image) => {
-                            let Some(kind) = image
-                                .info
-                                .as_ref()
-                                .and_then(|info| info.mimetype.as_deref())
-                                .and_then(media_kind)
-                            else {
-                                client.ingress_failed.store(true, Ordering::Release);
-                                return;
-                            };
-                            if !declared_media_size_allowed(
-                                image.info.as_ref().and_then(|info| info.size),
-                            ) {
-                                return;
-                            }
-                            let declared_size = image
-                                .info
-                                .as_ref()
-                                .and_then(|info| info.size)
-                                .map(u64::from)
-                                .unwrap_or(0);
-                            let Ok(reference) = download_media(
-                                &client,
-                                &spool,
-                                kind,
-                                declared_size,
-                                image.source.clone(),
-                            )
-                            .await
-                            else {
-                                client.ingress_failed.store(true, Ordering::Release);
-                                return;
-                            };
-                            (image.caption().and_then(nonempty_caption), vec![reference])
-                        }
-                        MessageType::File(file) => {
-                            if file.info.as_ref().and_then(|info| info.mimetype.as_deref())
-                                != Some("application/pdf")
-                                || !declared_media_size_allowed(
-                                    file.info.as_ref().and_then(|info| info.size),
-                                )
-                            {
-                                return;
-                            }
-                            let declared_size = file
-                                .info
-                                .as_ref()
-                                .and_then(|info| info.size)
-                                .map(u64::from)
-                                .unwrap_or(0);
-                            let Ok(reference) = download_media(
-                                &client,
-                                &spool,
-                                MediaKind::Pdf,
-                                declared_size,
-                                file.source.clone(),
-                            )
-                            .await
-                            else {
-                                client.ingress_failed.store(true, Ordering::Release);
-                                return;
-                            };
-                            (file.caption().and_then(nonempty_caption), vec![reference])
-                        }
-                        _ => return,
-                    };
-                    let reply_to_event_id =
-                        event
-                            .content
-                            .relates_to
-                            .as_ref()
-                            .and_then(|relation| match relation {
-                                matrix_sdk::ruma::events::room::message::Relation::Reply(reply) => {
-                                    Some(reply.in_reply_to.event_id.to_string())
-                                }
-                                _ => None,
-                            });
-                    let cleanup_media = media.clone();
-                    let ingress = IngressEvent {
-                        event_id: event.event_id.to_string(),
-                        room_id: room.room_id().to_string(),
-                        sender_mxid: event.sender.to_string(),
-                        sender_device_id: sender_device.to_string(),
-                        body,
-                        reply_to_event_id,
-                        media,
-                    };
-                    match journal.persist(ingress) {
-                        Ok(outcome) => {
-                            if outcome.requires_incoming_media_cleanup() {
-                                for media in cleanup_media {
-                                    let _ = spool.acknowledge(&media.handle);
-                                }
-                            }
-                            if let Some(pending) = outcome.into_pending() {
-                                permit.send(MatrixOutput::Ingress(pending));
-                            }
-                        }
-                        Err(_) => {
-                            for media in cleanup_media {
-                                let _ = spool.acknowledge(&media.handle);
-                            }
-                            client.ingress_failed.store(true, Ordering::Release);
-                        }
-                    }
-                }
-            },
-        );
-        let undecryptable_client = self.clone();
-        self.inner
-            .add_event_handler(move |event: OriginalSyncRoomEncryptedEvent, room: Room| {
-                let client = undecryptable_client.clone();
-                async move {
-                    if client.ingress_pipeline.get().is_some() {
-                        return;
-                    }
-                    if undecryptable_owner_event_requires_retry(
-                        event.sender.as_str(),
-                        room.room_id().as_str(),
-                        client.owner_mxid.as_str(),
-                        client.room_id.as_str(),
-                    ) {
-                        client.ingress_failed.store(true, Ordering::Release);
-                    }
-                }
-            });
     }
 
     async fn ordered_configured_timeline(
@@ -677,6 +516,7 @@ impl MatrixClient {
         {
             return Ok(());
         }
+        self.revalidate_current().await?;
         let device = self
             .inner
             .encryption()
@@ -684,16 +524,35 @@ impl MatrixClient {
             .await
             .map_err(|_| TransportError::TransportFailed)?
             .ok_or(TransportError::TransportFailed)?;
-        if !device_policy_allows(
-            device.is_verified_with_cross_signing(),
-            device.is_blacklisted(),
-        ) || self.revalidate_current().await.is_err()
+        if device.is_deleted()
+            || !device_policy_allows(
+                device.is_verified_with_cross_signing(),
+                device.is_blacklisted(),
+            )
         {
             return Err(TransportError::PolicyDenied);
         }
-        let (body, media) = match &event.content.msgtype {
+        let reply_to_event_id =
+            event
+                .content
+                .relates_to
+                .as_ref()
+                .and_then(|relation| match relation {
+                    Relation::Reply(reply) => Some(reply.in_reply_to.event_id.to_string()),
+                    _ => None,
+                });
+        let mut ingress = IngressEvent {
+            event_id: event.event_id.to_string(),
+            room_id: room.room_id().to_string(),
+            sender_mxid: event.sender.to_string(),
+            sender_device_id: sender_device.to_string(),
+            body: None,
+            reply_to_event_id,
+            media: Vec::new(),
+        };
+        match &event.content.msgtype {
             MessageType::Text(text) if bounded_nonempty_text(&text.body) => {
-                (Some(text.body.clone()), Vec::new())
+                ingress.body = Some(text.body.clone());
             }
             MessageType::Image(image) => {
                 let Some(kind) = image
@@ -704,23 +563,27 @@ impl MatrixClient {
                 else {
                     return Ok(());
                 };
-                if !declared_media_size_allowed(image.info.as_ref().and_then(|info| info.size)) {
-                    return Ok(());
-                }
                 let size = image
                     .info
                     .as_ref()
                     .and_then(|info| info.size)
                     .map(u64::from)
                     .unwrap_or(0);
-                let reference =
-                    download_media(self, &pipeline.spool, kind, size, image.source.clone()).await?;
-                (image.caption().and_then(nonempty_caption), vec![reference])
+                ingress.body = image.caption().and_then(nonempty_caption);
+                let descriptor = serde_json::to_value(&event.content.msgtype)
+                    .map_err(|_| TransportError::TransportFailed)?;
+                let outcome =
+                    download_media(self, &pipeline.spool, kind, size, image.source.clone()).await;
+                let Some(reference) =
+                    record_media_outcome(&pipeline, &ingress, &descriptor, outcome).await?
+                else {
+                    return Ok(());
+                };
+                ingress.media.push(reference);
             }
             MessageType::File(file) => {
                 if file.info.as_ref().and_then(|info| info.mimetype.as_deref())
                     != Some("application/pdf")
-                    || !declared_media_size_allowed(file.info.as_ref().and_then(|info| info.size))
                 {
                     return Ok(());
                 }
@@ -730,39 +593,27 @@ impl MatrixClient {
                     .and_then(|info| info.size)
                     .map(u64::from)
                     .unwrap_or(0);
-                let reference = download_media(
+                ingress.body = file.caption().and_then(nonempty_caption);
+                let descriptor = serde_json::to_value(&event.content.msgtype)
+                    .map_err(|_| TransportError::TransportFailed)?;
+                let outcome = download_media(
                     self,
                     &pipeline.spool,
                     MediaKind::Pdf,
                     size,
                     file.source.clone(),
                 )
-                .await?;
-                (file.caption().and_then(nonempty_caption), vec![reference])
+                .await;
+                let Some(reference) =
+                    record_media_outcome(&pipeline, &ingress, &descriptor, outcome).await?
+                else {
+                    return Ok(());
+                };
+                ingress.media.push(reference);
             }
             _ => return Ok(()),
-        };
-        let reply_to_event_id =
-            event
-                .content
-                .relates_to
-                .as_ref()
-                .and_then(|relation| match relation {
-                    matrix_sdk::ruma::events::room::message::Relation::Reply(reply) => {
-                        Some(reply.in_reply_to.event_id.to_string())
-                    }
-                    _ => None,
-                });
-        let cleanup_media = media.clone();
-        let ingress = IngressEvent {
-            event_id: event.event_id.to_string(),
-            room_id: room.room_id().to_string(),
-            sender_mxid: event.sender.to_string(),
-            sender_device_id: sender_device.to_string(),
-            body,
-            reply_to_event_id,
-            media,
-        };
+        }
+        let cleanup_media = ingress.media.clone();
         match pipeline.journal.persist(ingress) {
             Ok(outcome) => {
                 if outcome.requires_incoming_media_cleanup() {
@@ -795,10 +646,20 @@ impl MatrixClient {
     }
 
     pub async fn send(&self, command: &SendCommand) -> Result<String, TransportError> {
+        // Leave a response margin within the Node supervisor's 30-second deadline;
+        // authorization is part of this same bounded operation.
+        tokio::time::timeout(
+            Duration::from_secs(SEND_TIMEOUT_SECONDS - 1),
+            self.send_authorized(command),
+        )
+        .await
+        .map_err(|_| TransportError::TransportFailed)?
+    }
+
+    async fn send_authorized(&self, command: &SendCommand) -> Result<String, TransportError> {
         command
             .validate()
             .map_err(|_| TransportError::PolicyDenied)?;
-        self.revalidate(command).await?;
         let room = self
             .inner
             .get_room(&self.room_id)
@@ -814,14 +675,20 @@ impl MatrixClient {
             content.relates_to = Some(Relation::Reply(Reply::with_event_id(event_id)));
         }
         let txn_id: OwnedTransactionId = command.transaction_id.clone().into();
-        let result = tokio::time::timeout(
-            Duration::from_secs(SEND_TIMEOUT_SECONDS),
-            room.send(content).with_transaction_id(txn_id),
+        send_with_sdk_guard(
+            &self.sdk_send_barrier,
+            &room,
+            &ExpectedRoom {
+                room_id: self.room_id.as_str(),
+                owner_mxid: self.owner_mxid.as_str(),
+                bot_mxid: self.bot_mxid.as_str(),
+                max_age_ms: 60_000,
+            },
+            self.revalidate(command),
+            content,
+            txn_id,
         )
         .await
-        .map_err(|_| TransportError::TransportFailed)?
-        .map_err(|_| TransportError::TransportFailed)?;
-        Ok(result.response.event_id.to_string())
     }
 
     async fn revalidate(&self, command: &SendCommand) -> Result<(), TransportError> {
@@ -836,190 +703,95 @@ impl MatrixClient {
             now_ms(),
         )
         .map_err(|_| TransportError::PolicyDenied)?;
-        if !self.homeserver.permits(&self.inner.homeserver())
-            || command.room_policy.room_id != self.room_id.as_str()
-            || command.room_policy.owner_mxid != self.owner_mxid.as_str()
-            || command.room_policy.bot_mxid != self.bot_mxid.as_str()
-            || !valid_identifier(&command.transaction_id)
-        {
-            return Err(TransportError::PolicyDenied);
-        }
-        if !self.sync_ready.load(Ordering::Acquire)
-            || now_ms().saturating_sub(self.last_sync_ms.load(Ordering::Acquire)) > 60_000
-        {
+        if !self.is_ready() || !valid_identifier(&command.transaction_id) {
             return Err(TransportError::TransportFailed);
         }
-        let room = self
-            .inner
-            .get_room(&self.room_id)
-            .ok_or(TransportError::PolicyDenied)?;
-        if room.state() != RoomState::Joined
-            || !room
-                .latest_encryption_state()
-                .await
-                .map_err(|_| TransportError::TransportFailed)?
-                .is_encrypted()
-        {
-            return Err(TransportError::PolicyDenied);
-        }
-        let joined = room
-            .members(RoomMemberships::JOIN)
-            .await
-            .map_err(|_| TransportError::TransportFailed)?;
-        let invites = room
-            .members(RoomMemberships::INVITE)
-            .await
-            .map_err(|_| TransportError::TransportFailed)?;
-        let mut joined_ids = joined
-            .iter()
-            .map(|member| member.user_id().as_str())
-            .collect::<Vec<_>>();
-        joined_ids.sort_unstable();
-        let mut expected = vec![self.owner_mxid.as_str(), self.bot_mxid.as_str()];
-        expected.sort_unstable();
-        if joined_ids != expected || !invites.is_empty() {
-            return Err(TransportError::PolicyDenied);
-        }
-        self.validate_state_policy(&room).await?;
-        self.validate_devices().await
+        self.revalidate_current_guarded().await
     }
 
     async fn revalidate_current(&self) -> Result<(), TransportError> {
-        if !self.homeserver.permits(&self.inner.homeserver()) {
-            return Err(TransportError::PolicyDenied);
-        }
-        let room = self
-            .inner
-            .get_room(&self.room_id)
-            .ok_or(TransportError::PolicyDenied)?;
+        let _guard = self.sdk_send_barrier.lock().await;
+        self.revalidate_current_guarded().await
+    }
+
+    async fn revalidate_current_guarded(&self) -> Result<(), TransportError> {
         if now_ms().saturating_sub(self.last_sync_ms.load(Ordering::Acquire)) > 60_000 {
             return Err(TransportError::TransportFailed);
         }
-        if room.state() != RoomState::Joined
-            || !room
-                .latest_encryption_state()
-                .await
-                .map_err(|_| TransportError::TransportFailed)?
-                .is_encrypted()
+        if !self.homeserver.permits(&self.inner.homeserver())
+            || self
+                .inner
+                .get_room(&self.room_id)
+                .is_none_or(|room| room.state() != RoomState::Joined)
         {
             return Err(TransportError::PolicyDenied);
         }
-        let joined = room
-            .members(RoomMemberships::JOIN)
-            .await
-            .map_err(|_| TransportError::TransportFailed)?;
-        let invites = room
-            .members(RoomMemberships::INVITE)
-            .await
-            .map_err(|_| TransportError::TransportFailed)?;
-        let mut joined_ids = joined
-            .iter()
-            .map(|member| member.user_id().as_str())
-            .collect::<Vec<_>>();
-        joined_ids.sort_unstable();
-        let mut expected = vec![self.owner_mxid.as_str(), self.bot_mxid.as_str()];
-        expected.sort_unstable();
-        if joined_ids != expected || !invites.is_empty() {
-            return Err(TransportError::PolicyDenied);
-        }
-        self.validate_state_policy(&room).await?;
-        self.validate_devices().await
-    }
-
-    async fn validate_state_policy(&self, room: &matrix_sdk::Room) -> Result<(), TransportError> {
-        use matrix_sdk::ruma::{api::client::room::Visibility, events::StateEventType};
-        if room
-            .privacy_settings()
-            .get_room_visibility()
-            .await
-            .map_err(|_| TransportError::TransportFailed)?
-            != Visibility::Private
-        {
-            return Err(TransportError::PolicyDenied);
-        }
-        for (event_type, field, expected) in [
-            ("m.room.join_rules", "join_rule", "invite"),
-            ("m.room.history_visibility", "history_visibility", "joined"),
-            ("m.room.guest_access", "guest_access", "forbidden"),
-        ] {
-            let content = state_content(room, StateEventType::from(event_type))
-                .await?
-                .ok_or(TransportError::PolicyDenied)?;
-            if content.get(field).and_then(serde_json::Value::as_str) != Some(expected) {
-                return Err(TransportError::PolicyDenied);
-            }
-        }
-        if let Some(alias) =
-            state_content(room, StateEventType::from("m.room.canonical_alias")).await?
-            && (alias.get("alias").is_some_and(|value| !value.is_null())
-                || alias
-                    .get("alt_aliases")
-                    .and_then(serde_json::Value::as_array)
-                    .is_some_and(|values| !values.is_empty()))
-        {
-            return Err(TransportError::PolicyDenied);
-        }
-        self.validate_local_aliases().await?;
-        for event_type in [
-            "m.bridge",
-            "uk.half-shot.bridge",
-            "im.vector.modular.widgets",
-        ] {
-            if !room
-                .get_state_events(StateEventType::from(event_type))
-                .await
-                .map_err(|_| TransportError::TransportFailed)?
-                .is_empty()
-            {
-                return Err(TransportError::PolicyDenied);
-            }
-        }
-        Ok(())
-    }
-
-    async fn validate_local_aliases(&self) -> Result<(), TransportError> {
-        let url = authenticated_room_aliases_url(&self.homeserver, &self.room_id)?;
-        let mut response = tokio::time::timeout(
-            Duration::from_secs(SEND_TIMEOUT_SECONDS),
-            self.http
-                .get(url)
-                .bearer_auth(self.access_token.as_str())
-                .send(),
+        crate::live_policy::authorize_current(
+            self,
+            self.room_id.as_str(),
+            self.owner_mxid.as_str(),
+            self.bot_mxid.as_str(),
+            Duration::from_secs(crate::config::CONTROL_TIMEOUT_SECONDS),
         )
         .await
-        .map_err(|_| TransportError::TransportFailed)?
-        .map_err(|_| TransportError::TransportFailed)?;
-        if !response.status().is_success() {
-            return Err(TransportError::TransportFailed);
+        .map_err(TransportError::from)
+    }
+
+    async fn policy_json(
+        &self,
+        path: &[&str],
+        max_bytes: usize,
+    ) -> Result<serde_json::Value, crate::live_policy::PolicyError> {
+        let mut url = self.homeserver.as_url().clone();
+        url.path_segments_mut()
+            .map_err(|_| crate::live_policy::PolicyError::Unavailable)?
+            .clear()
+            .extend(path.iter().copied());
+        if !self.homeserver.permits(&url) {
+            return Err(crate::live_policy::PolicyError::Unavailable);
         }
-        if response
-            .content_length()
-            .is_some_and(|length| length > MAX_ALIAS_RESPONSE_BYTES as u64)
-        {
-            return Err(TransportError::PolicyDenied);
-        }
-        let mut bytes = Vec::with_capacity(
-            response
+        let mut response = self
+            .http
+            .get(url)
+            .bearer_auth(self.access_token.as_str())
+            .send()
+            .await
+            .map_err(|_| crate::live_policy::PolicyError::Unavailable)?;
+        if !response.status().is_success()
+            || response
                 .content_length()
-                .and_then(|length| usize::try_from(length).ok())
-                .unwrap_or(0)
-                .min(MAX_ALIAS_RESPONSE_BYTES),
-        );
+                .is_some_and(|size| size > max_bytes as u64)
+        {
+            return Err(crate::live_policy::PolicyError::Unavailable);
+        }
+        let mut bytes = Vec::new();
         while let Some(chunk) = response
             .chunk()
             .await
-            .map_err(|_| TransportError::TransportFailed)?
+            .map_err(|_| crate::live_policy::PolicyError::Unavailable)?
         {
-            if bytes.len().saturating_add(chunk.len()) > MAX_ALIAS_RESPONSE_BYTES {
-                return Err(TransportError::PolicyDenied);
+            if bytes.len().saturating_add(chunk.len()) > max_bytes {
+                return Err(crate::live_policy::PolicyError::Unavailable);
             }
             bytes.extend_from_slice(&chunk);
         }
-        require_no_local_aliases(&bytes)
+        serde_json::from_slice(&bytes).map_err(|_| crate::live_policy::PolicyError::Unavailable)
     }
 
     async fn validate_devices(&self) -> Result<(), TransportError> {
         for user_id in [&self.owner_mxid, &self.bot_mxid] {
+            // Unlike get_user_devices, this performs /keys/query and applies the
+            // signed response to the SDK crypto store even when sync has not advanced.
+            let identity = self
+                .inner
+                .encryption()
+                .request_user_identity(user_id)
+                .await
+                .map_err(|_| TransportError::TransportFailed)?
+                .ok_or(TransportError::PolicyDenied)?;
+            if !identity.is_verified() {
+                return Err(TransportError::PolicyDenied);
+            }
             let devices = self
                 .inner
                 .encryption()
@@ -1029,10 +801,11 @@ impl MatrixClient {
             let collected = devices.devices().collect::<Vec<_>>();
             if collected.is_empty()
                 || collected.iter().any(|device| {
-                    !device_policy_allows(
-                        device.is_verified_with_cross_signing(),
-                        device.is_blacklisted(),
-                    )
+                    device.is_deleted()
+                        || !device_policy_allows(
+                            device.is_verified_with_cross_signing(),
+                            device.is_blacklisted(),
+                        )
                 })
             {
                 return Err(TransportError::PolicyDenied);
@@ -1046,6 +819,7 @@ impl MatrixClient {
             .map_err(|_| TransportError::TransportFailed)?
             .ok_or(TransportError::PolicyDenied)?;
         if own.device_id().as_str() != self.bot_device_id
+            || own.is_deleted()
             || !device_policy_allows(own.is_verified_with_cross_signing(), own.is_blacklisted())
         {
             return Err(TransportError::PolicyDenied);
@@ -1054,6 +828,157 @@ impl MatrixClient {
     }
 }
 
+async fn sync_with_sdk_guard(
+    barrier: &Mutex<()>,
+    client: &Client,
+    room_id: &matrix_sdk::ruma::RoomId,
+    settings: SyncSettings,
+    timeout: Duration,
+) -> Result<Result<SyncResponse, matrix_sdk::Error>, TransportError> {
+    let _guard = barrier.lock().await;
+    // A healthy authorized send may own the barrier longer than the sync HTTP
+    // budget. Waiting for it must not falsely classify sync as a fatal failure.
+    tokio::time::timeout(timeout, async {
+        let response = client.sync_once(settings).await?;
+        // Initial/limited SDK sync leaves the member cache incomplete. Finish it
+        // under the same barrier, never implicitly during an authorized send.
+        if let Some(room) = client.get_room(room_id) {
+            room.sync_members().await?;
+        }
+        Ok(response)
+    })
+    .await
+    .map_err(|_| TransportError::TransportFailed)
+}
+
+async fn send_with_sdk_guard(
+    barrier: &Mutex<()>,
+    room: &matrix_sdk::Room,
+    expected: &ExpectedRoom<'_>,
+    authorize: impl std::future::Future<Output = Result<(), TransportError>>,
+    content: RoomMessageEventContent,
+    transaction_id: OwnedTransactionId,
+) -> Result<String, TransportError> {
+    // The caller's single send deadline includes waiting for this lock.
+    let _guard = barrier.lock().await;
+    authorize.await?;
+    validate_sdk_send_cache(room, expected).await?;
+    // No SDK sync, member refresh, or other sidecar policy refresh can mutate
+    // the checked cache until encryption, key sharing and the send complete.
+    let result = room
+        .send(content)
+        .with_transaction_id(transaction_id)
+        .await
+        .map_err(|_| TransportError::TransportFailed)?;
+    Ok(result.response.event_id.to_string())
+}
+
+async fn validate_sdk_send_cache(
+    room: &matrix_sdk::Room,
+    expected: &ExpectedRoom<'_>,
+) -> Result<(), TransportError> {
+    use matrix_sdk::{RoomMemberships, ruma::events::room::history_visibility::HistoryVisibility};
+
+    // These are the exact SDK inputs used by room.send and share_room_key.
+    // A fresh raw /state check alone does not replace any of these caches.
+    if room.room_id().as_str() != expected.room_id
+        || room.state() != RoomState::Joined
+        || !room.encryption_state().is_encrypted()
+        || !room.are_members_synced()
+        || room.history_visibility() != Some(HistoryVisibility::Joined)
+    {
+        return Err(TransportError::TransportFailed);
+    }
+    let encryption = room
+        .encryption_settings()
+        .and_then(|settings| serde_json::to_value(settings).ok())
+        .ok_or(TransportError::TransportFailed)?;
+    if encryption
+        .get("algorithm")
+        .and_then(serde_json::Value::as_str)
+        != Some("m.megolm.v1.aes-sha2")
+    {
+        return Err(TransportError::TransportFailed);
+    }
+    let client = room.client();
+    let joined = client
+        .state_store()
+        .get_user_ids(room.room_id(), RoomMemberships::JOIN)
+        .await
+        .map_err(|_| TransportError::TransportFailed)?;
+    let other_active = client
+        .state_store()
+        .get_user_ids(
+            room.room_id(),
+            RoomMemberships::INVITE | RoomMemberships::KNOCK,
+        )
+        .await
+        .map_err(|_| TransportError::TransportFailed)?;
+    if joined.len() != 2
+        || !joined
+            .iter()
+            .any(|user| user.as_str() == expected.owner_mxid)
+        || !joined.iter().any(|user| user.as_str() == expected.bot_mxid)
+        || !other_active.is_empty()
+    {
+        return Err(TransportError::TransportFailed);
+    }
+    Ok(())
+}
+
+impl crate::live_policy::LivePolicySource for MatrixClient {
+    async fn room_state(&self) -> Result<serde_json::Value, crate::live_policy::PolicyError> {
+        self.policy_json(
+            &[
+                "_matrix",
+                "client",
+                "v3",
+                "rooms",
+                self.room_id.as_str(),
+                "state",
+            ],
+            1024 * 1024,
+        )
+        .await
+    }
+    async fn visibility(&self) -> Result<serde_json::Value, crate::live_policy::PolicyError> {
+        self.policy_json(
+            &[
+                "_matrix",
+                "client",
+                "v3",
+                "directory",
+                "list",
+                "room",
+                self.room_id.as_str(),
+            ],
+            MAX_ALIAS_RESPONSE_BYTES,
+        )
+        .await
+    }
+    async fn aliases(&self) -> Result<serde_json::Value, crate::live_policy::PolicyError> {
+        self.policy_json(
+            &[
+                "_matrix",
+                "client",
+                "v3",
+                "rooms",
+                self.room_id.as_str(),
+                "aliases",
+            ],
+            MAX_ALIAS_RESPONSE_BYTES,
+        )
+        .await
+    }
+    async fn refresh_verified_devices(&self) -> Result<(), crate::live_policy::PolicyError> {
+        self.validate_devices().await.map_err(|error| match error {
+            TransportError::PolicyDenied => crate::live_policy::PolicyError::Denied,
+            TransportError::TransportFailed => crate::live_policy::PolicyError::Unavailable,
+        })
+    }
+}
+
+#[cfg(test)]
 fn undecryptable_owner_event_requires_retry(
     sender_mxid: &str,
     room_id: &str,
@@ -1177,27 +1102,69 @@ fn assemble_gap_ids(
         .collect())
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum MediaDownloadError {
+    InvalidMedia,
+    Retry,
+}
+
+async fn record_media_outcome(
+    pipeline: &IngressPipeline,
+    event: &IngressEvent,
+    descriptor: &serde_json::Value,
+    outcome: Result<crate::media_spool::MediaReference, MediaDownloadError>,
+) -> Result<Option<crate::media_spool::MediaReference>, TransportError> {
+    match outcome {
+        Ok(reference) => Ok(Some(reference)),
+        Err(MediaDownloadError::Retry) => Err(TransportError::TransportFailed),
+        Err(MediaDownloadError::InvalidMedia) => {
+            if let Some(rejection) = pipeline
+                .journal
+                .reject_invalid_media(event, descriptor)
+                .map_err(|_| TransportError::TransportFailed)?
+            {
+                pipeline
+                    .sender
+                    .send(MatrixOutput::Rejected(rejection))
+                    .await
+                    .map_err(|_| TransportError::TransportFailed)?;
+            }
+            Ok(None)
+        }
+    }
+}
+
 async fn download_media(
     client: &MatrixClient,
     spool: &PrivateSpool,
     kind: MediaKind,
     declared_size: u64,
     source: matrix_sdk::ruma::events::room::MediaSource,
-) -> Result<crate::media_spool::MediaReference, TransportError> {
-    use matrix_sdk::ruma::events::room::MediaSource;
+) -> Result<crate::media_spool::MediaReference, MediaDownloadError> {
+    use matrix_sdk::ruma::events::room::{
+        EncryptedFileHash, EncryptedFileHashAlgorithm, MediaSource,
+    };
+    use sha2::{Digest, Sha256};
     use tokio::io::AsyncWriteExt;
 
     if declared_size == 0 || declared_size > crate::config::MAX_MEDIA_OBJECT_BYTES {
-        return Err(TransportError::PolicyDenied);
+        return Err(MediaDownloadError::InvalidMedia);
     }
     let encrypted = match source {
         MediaSource::Encrypted(file) => file,
-        MediaSource::Plain(_) => return Err(TransportError::PolicyDenied),
+        MediaSource::Plain(_) => return Err(MediaDownloadError::InvalidMedia),
     };
-    let url = authenticated_media_url(&client.homeserver, &encrypted.url)?;
+    let Some(EncryptedFileHash::Sha256(expected_hash)) =
+        encrypted.hashes.get(&EncryptedFileHashAlgorithm::Sha256)
+    else {
+        return Err(MediaDownloadError::InvalidMedia);
+    };
+    let expected_hash = expected_hash.clone().into_inner();
+    let url = authenticated_media_url(&client.homeserver, &encrypted.url)
+        .map_err(|_| MediaDownloadError::InvalidMedia)?;
     let staging = spool
         .create_staging_file()
-        .map_err(|_| TransportError::TransportFailed)?;
+        .map_err(|_| MediaDownloadError::Retry)?;
     let staging_path = staging.path.clone();
     let mut staging_file = tokio::fs::File::from_std(staging.file);
     let download_result = tokio::time::timeout(Duration::from_secs(SEND_TIMEOUT_SECONDS), async {
@@ -1207,73 +1174,94 @@ async fn download_media(
             .bearer_auth(client.access_token.as_str())
             .send()
             .await
-            .map_err(|_| TransportError::TransportFailed)?;
-        if !response.status().is_success()
-            || response
-                .content_length()
-                .is_some_and(|length| length > crate::config::MAX_MEDIA_OBJECT_BYTES)
-        {
-            return Err(TransportError::TransportFailed);
-        }
+            .map_err(|_| MediaDownloadError::Retry)?;
+        validate_media_response(response.status().as_u16(), response.content_length())?;
         let mut received = 0_u64;
+        let mut digest = Sha256::new();
         while let Some(chunk) = response
             .chunk()
             .await
-            .map_err(|_| TransportError::TransportFailed)?
+            .map_err(|_| MediaDownloadError::Retry)?
         {
             received = received
                 .checked_add(chunk.len() as u64)
-                .ok_or(TransportError::TransportFailed)?;
+                .ok_or(MediaDownloadError::InvalidMedia)?;
             if received > crate::config::MAX_MEDIA_OBJECT_BYTES {
-                return Err(TransportError::PolicyDenied);
+                return Err(MediaDownloadError::InvalidMedia);
             }
+            digest.update(&chunk);
             staging_file
                 .write_all(&chunk)
                 .await
-                .map_err(|_| TransportError::TransportFailed)?;
+                .map_err(|_| MediaDownloadError::Retry)?;
+        }
+        if digest.finalize().as_slice() != expected_hash {
+            return Err(MediaDownloadError::InvalidMedia);
         }
         staging_file
             .sync_all()
             .await
-            .map_err(|_| TransportError::TransportFailed)?;
-        Ok::<(), TransportError>(())
+            .map_err(|_| MediaDownloadError::Retry)?;
+        Ok::<(), MediaDownloadError>(())
     })
     .await
-    .unwrap_or(Err(TransportError::TransportFailed));
+    .unwrap_or(Err(MediaDownloadError::Retry));
     if let Err(error) = download_result {
         drop(staging_file);
-        let _ = spool.remove_staging_file(&staging_path);
+        spool
+            .remove_staging_file(&staging_path)
+            .map_err(|_| MediaDownloadError::Retry)?;
         return Err(error);
     }
     let mut encrypted_file = staging_file.into_std().await;
     encrypted_file
         .seek(SeekFrom::Start(0))
-        .map_err(|_| TransportError::TransportFailed)?;
+        .map_err(|_| MediaDownloadError::Retry)?;
     let spool_for_write = spool.clone();
-    let staging_for_remove = staging_path.clone();
     let reference = tokio::task::spawn_blocking(move || {
-        let mut decryptor = matrix_sdk_base::crypto::AttachmentDecryptor::new(
-            &mut encrypted_file,
-            encrypted.as_ref().clone().into(),
-        )
-        .map_err(|_| crate::media_spool::MediaError)?;
-        let result = spool_for_write.write_reader(kind, &mut decryptor);
-        drop(decryptor);
+        let result = (|| {
+            let mut decryptor = matrix_sdk_base::crypto::AttachmentDecryptor::new(
+                &mut encrypted_file,
+                encrypted.as_ref().clone().into(),
+            )
+            .map_err(|_| MediaDownloadError::InvalidMedia)?;
+            spool_for_write
+                .write_reader_classified(kind, &mut decryptor)
+                .map_err(|error| match error {
+                    crate::media_spool::MediaWriteError::InvalidMedia => {
+                        MediaDownloadError::InvalidMedia
+                    }
+                    crate::media_spool::MediaWriteError::Unavailable => MediaDownloadError::Retry,
+                })
+        })();
         drop(encrypted_file);
-        let cleanup = spool_for_write.remove_staging_file(&staging_for_remove);
-        match (result, cleanup) {
-            (Ok(reference), Ok(())) => Ok(reference),
-            (Err(error), _) | (Ok(_), Err(error)) => Err(error),
-        }
+        spool_for_write
+            .remove_staging_file(&staging_path)
+            .map_err(|_| MediaDownloadError::Retry)?;
+        result
     })
     .await
-    .map_err(|_| TransportError::TransportFailed)?
-    .map_err(|_| TransportError::PolicyDenied)?;
+    .map_err(|_| MediaDownloadError::Retry)??;
     if reference.length != declared_size {
-        let _ = spool.acknowledge(&reference.handle);
-        return Err(TransportError::PolicyDenied);
+        spool
+            .acknowledge(&reference.handle)
+            .map_err(|_| MediaDownloadError::Retry)?;
+        return Err(MediaDownloadError::InvalidMedia);
     }
     Ok(reference)
+}
+
+fn validate_media_response(status: u16, length: Option<u64>) -> Result<(), MediaDownloadError> {
+    if matches!(status, 404 | 410 | 413) {
+        return Err(MediaDownloadError::InvalidMedia);
+    }
+    if !(200..300).contains(&status) {
+        return Err(MediaDownloadError::Retry);
+    }
+    if length.is_some_and(|length| length > crate::config::MAX_MEDIA_OBJECT_BYTES) {
+        return Err(MediaDownloadError::InvalidMedia);
+    }
+    Ok(())
 }
 
 fn authenticated_media_url(
@@ -1300,6 +1288,7 @@ fn authenticated_media_url(
     Ok(url)
 }
 
+#[cfg(test)]
 fn authenticated_room_aliases_url(
     homeserver: &crate::config::FixedHomeserver,
     room_id: &matrix_sdk::ruma::RoomId,
@@ -1322,6 +1311,7 @@ fn authenticated_room_aliases_url(
     Ok(url)
 }
 
+#[cfg(test)]
 fn require_no_local_aliases(bytes: &[u8]) -> Result<(), TransportError> {
     if bytes.len() > MAX_ALIAS_RESPONSE_BYTES {
         return Err(TransportError::PolicyDenied);
@@ -1353,6 +1343,7 @@ fn bounded_nonempty_text(value: &str) -> bool {
         && value.len() <= crate::config::MAX_PLAINTEXT_BYTES
 }
 
+#[cfg(test)]
 fn declared_media_size_allowed(size: Option<matrix_sdk::ruma::UInt>) -> bool {
     size.is_some_and(|value| u64::from(value) <= crate::config::MAX_MEDIA_OBJECT_BYTES)
 }
@@ -1387,24 +1378,6 @@ async fn with_ingress_deadline<T>(
         .map_err(|_| TransportError::TransportFailed)?
 }
 
-async fn state_content(
-    room: &matrix_sdk::Room,
-    event_type: matrix_sdk::ruma::events::StateEventType,
-) -> Result<Option<serde_json::Value>, TransportError> {
-    use matrix_sdk::deserialized_responses::RawAnySyncOrStrippedState;
-    let raw = room
-        .get_state_event(event_type, "")
-        .await
-        .map_err(|_| TransportError::TransportFailed)?;
-    raw.map(|event| match event {
-        RawAnySyncOrStrippedState::Sync(raw) => raw.get_field("content"),
-        RawAnySyncOrStrippedState::Stripped(raw) => raw.get_field("content"),
-    })
-    .transpose()
-    .map_err(|_| TransportError::PolicyDenied)
-    .map(|value| value.flatten())
-}
-
 fn now_ms() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -1414,6 +1387,191 @@ fn now_ms() -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn authoritative_policy_failure_preserves_retry_or_denial_at_the_protocol_boundary() {
+        assert!(matches!(
+            TransportError::from(crate::live_policy::PolicyError::Unavailable),
+            TransportError::TransportFailed
+        ));
+        assert!(matches!(
+            TransportError::from(crate::live_policy::PolicyError::Denied),
+            TransportError::PolicyDenied
+        ));
+    }
+
+    async fn test_checkpoint(
+        store: &std::path::Path,
+        secret: &str,
+    ) -> crate::sync_checkpoint::SyncCheckpoint {
+        drop(
+            matrix_sdk_sqlite::SqliteStateStore::open(store, Some(secret))
+                .await
+                .unwrap(),
+        );
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            for name in [
+                "matrix-sdk-state.sqlite3",
+                "matrix-sdk-state.sqlite3-wal",
+                "matrix-sdk-state.sqlite3-shm",
+            ] {
+                let path = store.join(name);
+                if path.exists() {
+                    std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600)).unwrap();
+                }
+            }
+        }
+        let checkpoint = crate::sync_checkpoint::SyncCheckpoint::open(store, secret).unwrap();
+        checkpoint.initialize_cursor(secret).await.unwrap();
+        checkpoint
+    }
+
+    #[test]
+    fn permanent_media_failures_are_distinct_from_access_and_transport_failures() {
+        for status in [404, 410, 413] {
+            assert_eq!(
+                validate_media_response(status, None),
+                Err(MediaDownloadError::InvalidMedia)
+            );
+        }
+        for status in [401, 403, 429, 500, 503] {
+            assert_eq!(
+                validate_media_response(status, None),
+                Err(MediaDownloadError::Retry)
+            );
+        }
+        assert_eq!(
+            validate_media_response(200, Some(crate::config::MAX_MEDIA_OBJECT_BYTES + 1)),
+            Err(MediaDownloadError::InvalidMedia)
+        );
+        assert!(validate_media_response(200, Some(8)).is_ok());
+    }
+
+    #[tokio::test]
+    async fn invalid_media_is_durable_and_does_not_poison_the_next_event_or_restart() {
+        use crate::ingress::{IngressAck, OrderedReplay};
+        let fixture: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../test/fixtures/matrix-invalid-media.json"
+        ))
+        .unwrap();
+        let bad: IngressEvent = serde_json::from_value(fixture["invalid_event"].clone()).unwrap();
+        let following: IngressEvent =
+            serde_json::from_value(fixture["following_event"].clone()).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let store = temp.path().join("store");
+        crate::lock::ensure_private_directory(&store).unwrap();
+        let spool = PrivateSpool::create(&store).unwrap();
+        let secret = "ab".repeat(32);
+        let journal = PendingJournal::open(&store, &secret).unwrap();
+        let (sender, mut receiver) = mpsc::channel(4);
+        let pipeline = IngressPipeline {
+            journal: journal.clone(),
+            spool,
+            sender,
+        };
+        assert!(
+            record_media_outcome(
+                &pipeline,
+                &bad,
+                &fixture["invalid_descriptor"],
+                Err(MediaDownloadError::InvalidMedia)
+            )
+            .await
+            .unwrap()
+            .is_none()
+        );
+        let Some(MatrixOutput::Rejected(rejected)) = receiver.recv().await else {
+            panic!("missing rejection");
+        };
+        assert_eq!(
+            serde_json::to_value(crate::protocol::OutgoingFrame::rejected(rejected)).unwrap(),
+            fixture["invalid_rejection"]
+        );
+        let following_receipt = journal
+            .persist(following.clone())
+            .unwrap()
+            .into_pending()
+            .unwrap();
+        assert_eq!(following_receipt.sequence, 2);
+
+        // The sync cursor may advance only after both outcomes are durably journaled.
+        let checkpoint = test_checkpoint(&store, &secret).await;
+        checkpoint
+            .commit_cursor("after-both".into(), Some(following.event_id.clone()))
+            .unwrap();
+        drop(pipeline);
+        drop(journal);
+        let restored = PendingJournal::open(&store, &secret).unwrap();
+        let replay = restored.replay_ordered(4).unwrap();
+        assert!(matches!(
+            &replay[..],
+            [OrderedReplay::Rejected(_), OrderedReplay::Ingress(_)]
+        ));
+        assert_eq!(
+            checkpoint.committed_token().unwrap().as_deref(),
+            Some("after-both")
+        );
+        restored
+            .acknowledge(&IngressAck {
+                event_id: bad.event_id.clone(),
+                durable_receipt_id: "mysql-bad".into(),
+            })
+            .unwrap();
+        restored
+            .acknowledge(&IngressAck {
+                event_id: following.event_id,
+                durable_receipt_id: "mysql-good".into(),
+            })
+            .unwrap();
+        assert!(restored.replay_ordered(4).unwrap().is_empty());
+        assert!(
+            restored
+                .reject_invalid_media(&bad, &fixture["invalid_descriptor"])
+                .unwrap()
+                .is_none()
+        );
+    }
+
+    #[tokio::test]
+    async fn transient_media_failure_keeps_cursor_and_has_no_permanent_rejection() {
+        let fixture: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../test/fixtures/matrix-invalid-media.json"
+        ))
+        .unwrap();
+        let bad: IngressEvent = serde_json::from_value(fixture["invalid_event"].clone()).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let store = temp.path().join("store");
+        crate::lock::ensure_private_directory(&store).unwrap();
+        let journal = PendingJournal::open(&store, &"ab".repeat(32)).unwrap();
+        let checkpoint = test_checkpoint(&store, &"ab".repeat(32)).await;
+        checkpoint
+            .commit_cursor("before-failure".into(), Some("$before:matrix.org".into()))
+            .unwrap();
+        let (sender, mut receiver) = mpsc::channel(4);
+        let pipeline = IngressPipeline {
+            journal: journal.clone(),
+            spool: PrivateSpool::create(&store).unwrap(),
+            sender,
+        };
+        assert!(
+            record_media_outcome(
+                &pipeline,
+                &bad,
+                &fixture["invalid_descriptor"],
+                Err(MediaDownloadError::Retry)
+            )
+            .await
+            .is_err()
+        );
+        assert!(journal.replay_ordered(4).unwrap().is_empty());
+        assert!(receiver.try_recv().is_err());
+        assert_eq!(
+            checkpoint.committed_token().unwrap().as_deref(),
+            Some("before-failure")
+        );
+    }
 
     #[test]
     fn declared_media_size_is_mandatory_and_bounded() {
@@ -1617,3 +1775,7 @@ mod tests {
         assert!(require_no_local_aliases(br#"{"aliases":[],"extra":true}"#).is_err());
     }
 }
+
+#[cfg(test)]
+#[path = "client_sdk_tests.rs"]
+mod sdk_tests;

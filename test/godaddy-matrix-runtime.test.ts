@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
@@ -468,6 +469,76 @@ test("delivers frozen content-free media-expired rejections and retains their AC
     "$incoming:matrix.org",
     "$incoming:matrix.org"
   ]);
+  await runtime.stop();
+});
+
+test("invalid-media rejection keeps its identity and reason through replay and ACK", async () => {
+  const supervisor = new FakeSupervisor();
+  const { runtime, observed, rejected, start } = createStartedRuntime(supervisor);
+  await start();
+  const rejection = rejectionForIngress(ingress(), { reason: "invalid_media" });
+  supervisor.emitRejected(rejection);
+  supervisor.emitRejected(rejection);
+  assert.equal(observed.length, 0);
+  assert.equal(rejected.length, 2);
+  assert.equal(rejected[0]?.reason, "invalid_media");
+  assert.equal(Object.hasOwn(rejected[0] as object, "body"), false);
+  assert.equal(Object.hasOwn(rejected[0] as object, "media"), false);
+  assert.equal(supervisor.failures, 0);
+  await runtime.ackIngress({ receiptId: rejection.receiptId, durableReceiptId: String(rejection.rejection.event_hash) });
+  assert.equal(supervisor.acknowledgements.at(-1)?.eventId, rejection.rejection.event_id);
+  await runtime.stop();
+});
+
+test("Rust invalid-media fixture preserves canonical hashes, rejection ACK and following text in Node", async () => {
+  const fixture = JSON.parse(await readFile(new URL("./fixtures/matrix-invalid-media.json", import.meta.url), "utf8")) as {
+    invalid_event: Readonly<Record<string, unknown>>;
+    invalid_descriptor: Readonly<Record<string, unknown>>;
+    invalid_rejection: Readonly<{ type: string; version: number; id: string; rejection: Readonly<Record<string, unknown>> }>;
+    following_event: Readonly<Record<string, unknown>>;
+  };
+  const event = fixture.invalid_event;
+  const descriptor = fixture.invalid_descriptor;
+  const bodyHash = hashJson(event.body);
+  // Invalid media has no validated normal manifest. Rust hashes its original
+  // descriptor using serde_json's sorted object keys and sends only that hash.
+  const mediaManifestHash = hashJson(Object.fromEntries(
+    Object.entries(descriptor).sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0)
+  ));
+  const eventHash = hashJson({
+    eventId: event.event_id,
+    roomId: event.room_id,
+    senderMxid: event.sender_mxid,
+    senderDeviceId: event.sender_device_id,
+    encrypted: true,
+    bodyHash,
+    relationEventId: event.reply_to_event_id,
+    mediaManifestHash
+  });
+  const frame = fixture.invalid_rejection;
+  assert.equal(frame.type, "event_rejected");
+  assert.equal(frame.version, 1);
+  assert.equal(frame.rejection.body_hash, bodyHash);
+  assert.equal(frame.rejection.media_manifest_hash, mediaManifestHash);
+  assert.equal(frame.rejection.event_hash, eventHash);
+  assert.equal(frame.rejection.reason, "invalid_media");
+  const supervisor = new FakeSupervisor();
+  const { runtime, observed, rejected, start } = createStartedRuntime(supervisor, readyDependencies, undefined, {
+    ...config, roomId: String(event.room_id), ownerMxid: String(event.sender_mxid)
+  });
+  await start();
+  supervisor.emitRejected({ receiptId: frame.id, rejection: frame.rejection });
+  assert.equal(rejected.length, 1);
+  assert.equal(rejected[0]?.eventHash, eventHash);
+  assert.equal(observed.length, 0);
+  await runtime.ackIngress({ receiptId: frame.id, durableReceiptId: eventHash });
+  assert.deepEqual(supervisor.acknowledgements, [{
+    receiptId: frame.id, eventId: event.event_id, durableReceiptId: eventHash
+  }]);
+  supervisor.emit({ receiptId: "fixture-next-valid", payload: fixture.following_event });
+  assert.equal(observed.length, 1);
+  assert.equal(observed[0]?.body, fixture.following_event.body);
+  assert.equal(supervisor.failures, 0);
   await runtime.stop();
 });
 

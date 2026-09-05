@@ -18,6 +18,9 @@ const DEFAULT_RESTART_BACKOFF_MS = Object.freeze([100, 500, 2_000]);
 const DEFAULT_MAX_LOCK_CONTENTION_RETRIES = 8;
 const DEFAULT_LOCK_CONTENTION_BACKOFF_MS = Object.freeze([250, 1_000, 2_000, 5_000, 10_000, 15_000, 30_000]);
 const MAX_TRACKED_IDS = 4_096;
+// Retire the process before either peer's replay set fills. The remaining
+// budget accommodates in-flight responses, durable ACKs and shutdown.
+export const MATRIX_SIDECAR_GENERATION_FRAME_BUDGET = 3_072;
 const MAX_BINARY_BYTES = 256 * 1024 * 1024;
 const SAFE_ID = /^[A-Za-z0-9._:-]{1,64}$/u;
 const SAFE_TOKEN = /^[A-Za-z0-9._:-]{1,128}$/u;
@@ -81,6 +84,7 @@ export type MatrixSidecarStatus = Readonly<{
     | "crash_backoff"
     | "circuit_open"
     | "shutting_down"
+    | "generation_rollover"
     | "termination_failed";
   restartCount: number;
   circuitOpen: boolean;
@@ -469,7 +473,7 @@ function validProtocolIngressRejection(value: unknown): value is Record<string, 
     && typeof value.body_hash === "string" && SHA256_HEX.test(value.body_hash)
     && typeof value.media_manifest_hash === "string" && SHA256_HEX.test(value.media_manifest_hash)
     && typeof value.event_hash === "string" && SHA256_HEX.test(value.event_hash)
-    && value.reason === "media_expired";
+    && (value.reason === "media_expired" || value.reason === "invalid_media");
 }
 
 function validResponseResult(value: unknown): value is Record<string, unknown> {
@@ -781,6 +785,9 @@ export class MatrixSidecarSupervisor {
   #failureTerminationTimer: unknown;
   #writeChain: Promise<void> = Promise.resolve();
   #idCounter = 0;
+  #generationFrameCount = 0;
+  #rolloverGeneration: number | undefined;
+  #rolloverPromise: Promise<void> | undefined;
   #generation = 0;
   #failedGeneration: number | undefined;
   #identityVerified = false;
@@ -941,6 +948,7 @@ export class MatrixSidecarSupervisor {
 
   async start(): Promise<void> {
     if (this.#stopping) throw new MatrixSidecarError("stopped");
+    if (this.#rolloverPromise !== undefined) return this.#rolloverPromise;
     if (this.#status.reason === "termination_failed") {
       throw new MatrixSidecarError("termination_failed");
     }
@@ -979,8 +987,8 @@ export class MatrixSidecarSupervisor {
 
   async request<T = unknown>(method: string, params: Readonly<Record<string, unknown>>, timeoutMs?: number): Promise<T> {
     const drainingMediaInspection = method === "inspect_media"
-      && this.#stopRequested
-      && this.#status.reason === "shutting_down"
+      && ((this.#stopRequested && this.#status.reason === "shutting_down")
+        || this.#rolloverGeneration === this.#generation)
       && this.#handshakePhase === "ready"
       && this.#identityVerified;
     if (!drainingMediaInspection && (!this.#acceptingRequests || this.#status.matrixReadiness !== "ready")) {
@@ -1002,8 +1010,8 @@ export class MatrixSidecarSupervisor {
 
   async ack(receiptId: string, eventId: string, durableReceiptId: string): Promise<void> {
     const pendingEvent = this.#unackedEvents.get(receiptId);
-    const draining = this.#stopRequested
-      && this.#status.reason === "shutting_down"
+    const draining = ((this.#stopRequested && this.#status.reason === "shutting_down")
+      || this.#rolloverGeneration === this.#generation)
       && this.#handshakePhase === "ready"
       && this.#identityVerified;
     if (
@@ -1038,11 +1046,68 @@ export class MatrixSidecarSupervisor {
   stop(): Promise<void> {
     if (this.#stopPromise !== undefined) return this.#stopPromise;
     this.#stopping = true;
-    const operation = this.#stopInternal().finally(() => {
+    this.#stopRequested = true;
+    const operation = (async () => {
+      await this.#rolloverPromise;
+      await this.#stopInternal();
+    })().finally(() => {
       this.#stopping = false;
     });
     this.#stopPromise = operation;
     return operation;
+  }
+
+  #maybeRollover(): void {
+    if (
+      this.#stopRequested
+      || this.#rolloverPromise !== undefined
+      || this.#handshakePhase !== "ready"
+      || !this.#identityVerified
+      || this.#failedGeneration === this.#generation
+      || (this.#generationFrameCount < MATRIX_SIDECAR_GENERATION_FRAME_BUDGET
+        && this.#seenInboundIds.size < MATRIX_SIDECAR_GENERATION_FRAME_BUDGET)
+    ) return;
+    const generation = this.#generation;
+    this.#rolloverGeneration = generation;
+    this.#acceptingRequests = false;
+    this.#setStatus("alive", "not_ready", "generation_rollover", false);
+    const rollover = this.#rollGeneration(generation).finally(() => {
+      if (this.#rolloverGeneration === generation) this.#rolloverGeneration = undefined;
+      if (this.#rolloverPromise === rollover) this.#rolloverPromise = undefined;
+    });
+    this.#rolloverPromise = rollover;
+  }
+
+  async #rollGeneration(generation: number): Promise<void> {
+    const child = this.#child;
+    const childExit = this.#childExit;
+    if (child === undefined || childExit === undefined) return;
+    const deadline = this.#clock.now() + this.#options.shutdownTimeoutMs;
+    const remaining = (): number => Math.max(0, deadline - this.#clock.now());
+    try {
+      await this.#waitForDrain(remaining());
+      if (this.#stopRequested) return;
+      if (this.#child !== child || this.#failedGeneration === generation || remaining() === 0) {
+        throw new MatrixSidecarError("not_ready");
+      }
+      const id = this.#nextId("shutdown");
+      const result = await this.#sendCorrelated<Readonly<Record<string, unknown>>>({
+        type: "shutdown", version: this.#options.protocolVersion, id
+      }, id, remaining(), false);
+      if (result.name !== "shutdown_accepted" || !await this.#waitForExit(childExit, remaining())) {
+        throw new MatrixSidecarError("protocol_error");
+      }
+      // A clean shutdown response and confirmed exit are both required. Never
+      // overlap processes or clear replay history on a still-live child.
+      this.#rolloverGeneration = undefined;
+      if (!this.#stopRequested) await this.#launch();
+    } catch {
+      this.#rolloverGeneration = undefined;
+      if (this.#stopRequested) return;
+      if (generation !== this.#generation) return; // launch handles its own failures
+      if (this.#child === undefined) this.#scheduleRestart("crash");
+      else this.#protocolFailure();
+    }
   }
 
   async #stopInternal(): Promise<void> {
@@ -1135,6 +1200,7 @@ export class MatrixSidecarSupervisor {
     this.#writeChain = Promise.resolve();
     this.#lineBuffer = Buffer.alloc(0);
     this.#seenInboundIds.clear();
+    this.#generationFrameCount = 0;
     this.#unackedEvents.clear();
     this.#handshake = deferred();
     this.#supervisorHelloId = undefined;
@@ -1301,6 +1367,7 @@ export class MatrixSidecarSupervisor {
       try {
         const text = new TextDecoder("utf-8", { fatal: true }).decode(line);
         this.#processLine(text, generation);
+        this.#maybeRollover();
       } catch {
         this.#protocolFailure();
         return;
@@ -1332,6 +1399,14 @@ export class MatrixSidecarSupervisor {
     }
     if (this.#stopRequested) {
       if (frame.type === "response" && this.#pending.has(frame.id)) this.#handleResponse(frame);
+      return;
+    }
+    if (this.#rolloverGeneration === generation) {
+      if (frame.type === "response") this.#handleResponse(frame);
+      // New ingress remains durable in the Rust journal and is deliberately
+      // left unacknowledged for replay after the next verified handshake.
+      // Readiness notifications must not reopen intake during this drain.
+      else if (frame.type === "hello") this.#protocolFailure();
       return;
     }
     if (this.#handshakePhase === "blocked") {
@@ -1663,6 +1738,10 @@ export class MatrixSidecarSupervisor {
       this.#setStatus("stopped", "not_ready", "stopped", false);
       return;
     }
+    if (this.#rolloverGeneration === generation) {
+      this.#setStatus("starting", "not_ready", "generation_rollover", false);
+      return;
+    }
     this.#scheduleRestart(restartCause);
   }
 
@@ -1875,6 +1954,10 @@ export class MatrixSidecarSupervisor {
 
   #nextId(prefix: string): string {
     this.#idCounter += 1;
+    this.#generationFrameCount += 1;
+    // Queue after the current correlated request has registered itself; the
+    // drain must account for the frame which crossed the retirement budget.
+    queueMicrotask(() => this.#maybeRollover());
     return `${prefix}-${this.#idCounter}`;
   }
 

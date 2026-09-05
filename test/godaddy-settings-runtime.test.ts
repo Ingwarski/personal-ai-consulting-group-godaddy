@@ -1,20 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { GODADDY_STATE_DATABASE_ROLE, type MySqlConnection, type MySqlPool } from "../src/godaddy/mysql-storage.ts";
+import { GODADDY_STATE_DATABASE_ROLE } from "../src/godaddy/mysql-storage.ts";
 import { createGoDaddySettingsRuntime } from "../src/godaddy/settings-runtime.ts";
 import type { RuntimeBootstrap } from "../src/godaddy/runtime-bootstrap.ts";
 import { activeNow, createCapabilityReceipt } from "./fixtures/capability-receipt.ts";
+import { OwnerAuthPool } from "./fixtures/owner-auth-pool.ts";
 
-class UnusedPool implements MySqlPool {
-  execute(): Promise<readonly [unknown, unknown]> {
-    throw new Error("Settings must not touch MySQL before the owner signs in.");
-  }
-
-  getConnection(): Promise<MySqlConnection> {
-    throw new Error("Settings must not open a MySQL transaction before the owner signs in.");
-  }
-}
+// Login may persist only replay/throttle/session metadata, never application data.
+class UnusedPool extends OwnerAuthPool {}
 
 class CloseTrackingPool extends UnusedPool {
   endCount = 0;

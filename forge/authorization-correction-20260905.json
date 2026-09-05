@@ -1,0 +1,107 @@
+{
+  "event": "historical_authorization_correction",
+  "recorded_at": "2026-09-05T01:50:09Z",
+  "original_receipt": {
+    "path": "forge/implementation-prompt-u06-20260904.json",
+    "content_hash": "ec8a4a216b37c7edc6e37d921f102c80714cf8224e884e25b85a9de8e341441c",
+    "retained_unchanged": true
+  },
+  "evidence": {
+    "rollout_id": "01a05ebe-8e3f-71c3-aa13-7eb7ac33cdc5",
+    "user_event": {
+      "line": 15378,
+      "timestamp": "2026-09-04T18:38:26.045Z",
+      "message_id": "msg_01a06db7-04fd-75a3-bc69-75d1cf8d0c99",
+      "message": "go",
+      "raw_event_sha256": "a2190ed3b0a9726308cb796777d8b2e81a5a73e743270688ebf7da52a2bebbdf"
+    },
+    "plan_creation": {
+      "line": 17501,
+      "timestamp": "2026-09-04T19:55:10.601Z",
+      "content_hash": "a38919e0a84c61b081661227bd5ee936744bb9781dba2286ecc25d7d7e3974ca",
+      "raw_event_sha256": "770e684345844ee6102d530e27674239f8847e6820ba986a259c373b2727792c"
+    }
+  },
+  "conclusion": "The user authorized continuation, but the recorded receipt timestamp is inaccurate and its exact plan was created after that prompt. This receipt cannot prove approval of that later exact plan. Do not retroactively rebind the prompt or infer deliberate intent.",
+  "prior_implementation_gate": {
+    "state": "authorized_for_phase3",
+    "development_plan_hash": "a38919e0a84c61b081661227bd5ee936744bb9781dba2286ecc25d7d7e3974ca",
+    "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+    "prompt_id": "implementation-prompt-u06-20260904-go-01",
+    "awaiting_at": "2026-09-04T20:55:01+03:00",
+    "prompt_received_at": "2026-09-04T21:43:42+03:00",
+    "released_at": "2026-09-04T22:55:31+03:00",
+    "prompt_receipt": {
+      "path": "forge/implementation-prompt-u06-20260904.json",
+      "content_hash": "ec8a4a216b37c7edc6e37d921f102c80714cf8224e884e25b85a9de8e341441c"
+    },
+    "reason": "The user explicitly said go after the exact U-06 reconciliation and implementation sequence was stated."
+  },
+  "prior_implementation_projection": {
+    "status": "in_progress",
+    "owner_invocation_id": "990d3f67-1e4a-460d-8722-0292ddf2570b",
+    "completed_local_contracts": [
+      "U-01",
+      "U-02",
+      "U-03",
+      "U-05",
+      "U-06",
+      "U-07"
+    ],
+    "partial_local_contracts": [
+      "U-04",
+      "U-08",
+      "U-09"
+    ],
+    "in_progress_unit": null,
+    "next_unit": "U-08-local",
+    "local_verification": {
+      "node": {
+        "command": "npm run check",
+        "result": "passed",
+        "tests": "335/335"
+      },
+      "rust": {
+        "commands": [
+          "cargo fmt --all -- --check",
+          "cargo test --locked --lib --bins",
+          "cargo clippy --locked --all-targets -- -D warnings",
+          "cargo build --release --locked"
+        ],
+        "result": "passed",
+        "tests": "69/69 (64 lib + 5 bin)",
+        "host_release_build": "passed_non_deployable",
+        "host_release_platform": "Mach-O arm64",
+        "host_release_binary_sha256": "ab6f041bf2e953515545176115afa5c72caeecf9b7fe103f47822a8554b64986"
+      },
+      "artifact_ci": "not_run; locked x86_64-unknown-linux-musl checksum/SBOM/license workflow prepared",
+      "real_mysql": "not_run",
+      "matrix_product_integration": "not_run",
+      "godaddy_deployment": "not_run",
+      "final_path_nonretrievability": "not_run",
+      "jit_credentials": "not_run",
+      "rust_host_feasibility": "passed-and-retired; not product integration evidence"
+    },
+    "external_effects": {
+      "matrix_org": "not_run",
+      "production_oauth_change": "not_authorized",
+      "godaddy_deployment": "not_run",
+      "legacy_cleanup": "not_authorized",
+      "stateful_preview": "forbidden"
+    }
+  },
+  "prior_resume_event": {
+    "type": "implementation_prompt",
+    "timestamp": "2026-09-04T21:43:42+03:00",
+    "source": "user_request",
+    "prompt_id": "implementation-prompt-u06-20260904-go-01"
+  },
+  "current_remediation_authority": {
+    "source": "current_user_message",
+    "message": "OK. Fix the found problems, please and report on each fix.",
+    "received_at": null,
+    "received_at_evidence": "Exact event timestamp unavailable in the inspected local history; not reconstructed.",
+    "scope": "Fix and verify audited defects and records. No U08, production deployment, credentials, real Matrix/DB operation or destructive cleanup."
+  },
+  "effect": "Prior exact-plan implementation authorization invalidated. Historical completion projections are retained here, not treated as current full-unit acceptance. Current remediation is bounded by the explicit user request; subsequent unit advancement waits for reconciled sources and its applicable separate-prompt gate."
+}

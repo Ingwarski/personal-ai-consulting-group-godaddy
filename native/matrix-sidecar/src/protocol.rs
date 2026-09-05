@@ -244,6 +244,9 @@ pub enum ProtocolError {
 #[derive(Debug, Default)]
 pub struct FrameDecoder {
     outstanding: HashSet<String>,
+    // Bounded for one child-process generation. Node drains and retires the
+    // child before this hard limit; only a fresh verified process gets an
+    // empty set. Eviction or resetting a live decoder would admit replays.
     observed: HashSet<String>,
 }
 
@@ -419,6 +422,35 @@ mod tests {
             decoder.decode(br#"{"version":1,"type":"shutdown","id":"shutdown-0"}"#),
             Err(ProtocolError::Duplicate)
         ));
+    }
+
+    #[test]
+    fn replay_memory_remains_bounded_across_clean_process_generations() {
+        for generation in 0..3 {
+            let mut decoder = FrameDecoder::default();
+            for index in 0..3_072 {
+                let id = format!("request-{generation}-{index}");
+                let frame = format!(
+                    r#"{{"version":1,"type":"request","id":"{id}","command":{{"name":"health"}}}}"#
+                );
+                decoder.decode(frame.as_bytes()).unwrap();
+                decoder.complete(&id);
+                assert!(matches!(
+                    decoder.decode(frame.as_bytes()),
+                    Err(ProtocolError::Duplicate)
+                ));
+            }
+            assert_eq!(decoder.observed.len(), 3_072);
+            decoder
+                .decode(
+                    format!(r#"{{"version":1,"type":"shutdown","id":"shutdown-{generation}"}}"#)
+                        .as_bytes(),
+                )
+                .unwrap();
+            assert!(decoder.observed.len() < MAX_REPLAY_IDS);
+            // Dropping this decoder models a confirmed process exit, never
+            // a live-session replay-history reset.
+        }
     }
 
     #[test]

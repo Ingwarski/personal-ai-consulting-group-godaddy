@@ -60,6 +60,12 @@ impl MediaKind {
 #[error("media object is not permitted")]
 pub struct MediaError;
 
+#[derive(Debug)]
+pub(crate) enum MediaWriteError {
+    InvalidMedia,
+    Unavailable,
+}
+
 #[derive(Clone, Debug)]
 pub struct PrivateSpool {
     parent: PathBuf,
@@ -89,6 +95,9 @@ impl PrivateSpool {
                 .map_err(|_| MediaError)?;
         }
         ensure_private_directory(&root).map_err(|_| MediaError)?;
+        fs::File::open(parent)
+            .and_then(|directory| directory.sync_all())
+            .map_err(|_| MediaError)?;
         Ok(Self {
             parent: parent.to_path_buf(),
             root,
@@ -114,6 +123,15 @@ impl PrivateSpool {
         kind: MediaKind,
         reader: &mut impl Read,
     ) -> Result<MediaReference, MediaError> {
+        self.write_reader_classified(kind, reader)
+            .map_err(|_| MediaError)
+    }
+
+    pub(crate) fn write_reader_classified(
+        &self,
+        kind: MediaKind,
+        reader: &mut impl Read,
+    ) -> Result<MediaReference, MediaWriteError> {
         let token = Uuid::new_v4().simple().to_string()[..24].to_owned();
         let handle = format!("{}-{token}.{}", self.instance, kind.extension());
         let path = self.root.join(&handle);
@@ -124,33 +142,43 @@ impl PrivateSpool {
             use std::os::unix::fs::OpenOptionsExt;
             options.mode(0o600);
         }
-        let mut file = options.open(&path).map_err(|_| MediaError)?;
+        let mut file = options
+            .open(&path)
+            .map_err(|_| MediaWriteError::Unavailable)?;
         let result = (|| {
             let mut total = 0_u64;
             let mut prefix = Vec::with_capacity(8);
             let mut digest = Sha256::new();
             let mut buffer = [0_u8; 16 * 1024];
             loop {
-                let count = reader.read(&mut buffer).map_err(|_| MediaError)?;
+                let count = reader
+                    .read(&mut buffer)
+                    .map_err(|_| MediaWriteError::Unavailable)?;
                 if count == 0 {
                     break;
                 }
-                total = total.checked_add(count as u64).ok_or(MediaError)?;
+                total = total
+                    .checked_add(count as u64)
+                    .ok_or(MediaWriteError::InvalidMedia)?;
                 if total > MAX_MEDIA_OBJECT_BYTES {
-                    return Err(MediaError);
+                    return Err(MediaWriteError::InvalidMedia);
                 }
                 if prefix.len() < 8 {
                     let remaining = 8 - prefix.len();
                     prefix.extend_from_slice(&buffer[..count.min(remaining)]);
                 }
                 digest.update(&buffer[..count]);
-                file.write_all(&buffer[..count]).map_err(|_| MediaError)?;
+                file.write_all(&buffer[..count])
+                    .map_err(|_| MediaWriteError::Unavailable)?;
             }
             if detect_kind(&prefix) != Some(kind) {
-                return Err(MediaError);
+                return Err(MediaWriteError::InvalidMedia);
             }
-            file.sync_all().map_err(|_| MediaError)?;
-            crate::lock::verify_private_path(&path).map_err(|_| MediaError)?;
+            file.sync_all().map_err(|_| MediaWriteError::Unavailable)?;
+            fs::File::open(&self.root)
+                .and_then(|directory| directory.sync_all())
+                .map_err(|_| MediaWriteError::Unavailable)?;
+            crate::lock::verify_private_path(&path).map_err(|_| MediaWriteError::Unavailable)?;
             Ok(MediaReference {
                 handle,
                 declared_mime: kind.mime().into(),
@@ -413,6 +441,27 @@ fn detect_kind(bytes: &[u8]) -> Option<MediaKind> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn invalid_magic_is_permanent_but_storage_read_failures_are_retryable() {
+        let temp = tempfile::tempdir().unwrap();
+        let spool = create_spool(&temp);
+        assert!(matches!(
+            spool.write_reader_classified(MediaKind::Png, &mut std::io::Cursor::new(b"not png")),
+            Err(MediaWriteError::InvalidMedia)
+        ));
+        struct BrokenReader;
+        impl Read for BrokenReader {
+            fn read(&mut self, _: &mut [u8]) -> std::io::Result<usize> {
+                Err(std::io::Error::other("fixture storage failure"))
+            }
+        }
+        assert!(matches!(
+            spool.write_reader_classified(MediaKind::Png, &mut BrokenReader),
+            Err(MediaWriteError::Unavailable)
+        ));
+        assert_eq!(fs::read_dir(spool.root()).unwrap().count(), 0);
+    }
 
     fn create_spool(temp: &tempfile::TempDir) -> PrivateSpool {
         let parent = temp.path().join("spool");

@@ -354,12 +354,15 @@ export class RegistrarDO {
     const session = await this.#storage.get<SessionGeneration>(sessionKey(generation));
     if (session === undefined) return Object.freeze([]);
 
-    const messages = await Promise.all(
-      Array.from({ length: session.nextSequence - 1 }, async (_, index) =>
-        this.#storage.get<ConfirmedAgentMessage>(messageKey(generation, index + 1))
-      )
-    );
-    return deepFreeze(messages.filter((message): message is ConfirmedAgentMessage => message !== undefined));
+    // The shared database pool also serves Settings and the Matrix pumps.
+    // Keep a transcript read to one outstanding query regardless of its size,
+    // preserving queue capacity for those other operations and canonical order.
+    const messages: ConfirmedAgentMessage[] = [];
+    for (let sequence = 1; sequence < session.nextSequence; sequence += 1) {
+      const message = await this.#storage.get<ConfirmedAgentMessage>(messageKey(generation, sequence));
+      if (message !== undefined) messages.push(message);
+    }
+    return deepFreeze(messages);
   }
 
   /**

@@ -618,6 +618,7 @@ export function createGoDaddyMatrixService(
   let stopped = false;
   let lifecycleGeneration = 0;
   let terminalReason: ServiceReason | undefined;
+  let publicationReconciliationPending = false;
   let mediaConsumerUnavailable = dependencies.mediaConsumer === undefined;
   let database: GoDaddyMatrixDatabaseProbe = Object.freeze({
     mysqlAvailable: false,
@@ -735,6 +736,9 @@ export function createGoDaddyMatrixService(
       return Object.freeze({ configured: true, ready: false, reason: "termination_failed" });
     }
     if (matrix.matrixReadiness !== "ready") {
+      return Object.freeze({ configured: true, ready: false, reason: "sidecar_not_ready" });
+    }
+    if (publicationReconciliationPending) {
       return Object.freeze({ configured: true, ready: false, reason: "sidecar_not_ready" });
     }
     return Object.freeze({ configured: true, ready: true, reason: "ready" });
@@ -1037,7 +1041,7 @@ export function createGoDaddyMatrixService(
 
   const persistIngressRejection = async (task: IngressTask): Promise<boolean> => {
     const rejection = task.rejection;
-    if (rejection === undefined || rejection.reason !== "media_expired") {
+    if (rejection === undefined || !["media_expired", "invalid_media"].includes(rejection.reason)) {
       setTerminal("ingress_blocked");
       return false;
     }
@@ -1049,7 +1053,7 @@ export function createGoDaddyMatrixService(
         ownerMxid: rejection.senderMxid,
         bodyHash: rejection.bodyHash,
         mediaManifestHash: rejection.mediaManifestHash,
-        rejectionCode: "media_expired",
+        rejectionCode: rejection.reason,
         now: now()
       });
       if (!persisted.ok || !persisted.durableAck) {
@@ -1263,14 +1267,33 @@ export function createGoDaddyMatrixService(
     } catch (error) {
       const code = errorCode(error);
       if (code === "policy_denied") {
-        await blockLease(lease, "policy_denied");
+        if (publicationReconciliationPending || lease.attemptCount > 1) {
+          // Policy drift can prohibit reconciliation, but cannot undo an
+          // earlier acceptance or make its unresolved lease cancellable.
+          publicationReconciliationPending = true;
+          setTerminal("outbox_blocked");
+        } else {
+          await blockLease(lease, "policy_denied");
+        }
         return "stop";
       }
-      if (!provablyPreDispatchPublicationError(code)) {
+      if (publicationReconciliationPending || lease.attemptCount > 1 || !provablyPreDispatchPublicationError(code)) {
         // The command may have reached Matrix before the transport/response
         // was lost. Retain the lease so Stop/new-task stays fenced until a
-        // restart reconciles this same deterministic transaction ID.
-        setTerminal(code === "termination_failed" ? "termination_failed" : "sidecar_not_ready");
+        // recovered sidecar reconciles this same deterministic transaction ID.
+        // Keep maintenance and subscriptions alive: the supervisor already
+        // bounds process recovery, and the durable lease prevents an early
+        // retry while that recovery is in progress. A pre-dispatch failure
+        // on a later attempt cannot prove earlier attempts had no effect,
+        // including after a Node restart, so it must retain that fence too.
+        publicationReconciliationPending = true;
+        if (transientSidecarError(code) && lease.attemptCount < MAX_OUTBOX_ATTEMPTS) {
+          scheduleMaintenance(0);
+          scheduleOutbox(retryDelay(lease.attemptCount));
+        } else {
+          setTerminal(code === "termination_failed" ? "termination_failed"
+            : transientSidecarError(code) ? "retry_exhausted" : "sidecar_not_ready");
+        }
         return "stop";
       }
       if (transientSidecarError(code)) {
@@ -1283,6 +1306,7 @@ export function createGoDaddyMatrixService(
     }
     try {
       const marked = await input.registrarRuntime.matrixOutbox.markAccepted(lease, acceptedEventId, now());
+      if (marked.ok) publicationReconciliationPending = false;
       return marked.ok ? "accepted" : "stop";
     } catch {
       // Matrix already accepted this deterministic transaction. Never release
@@ -1324,6 +1348,7 @@ export function createGoDaddyMatrixService(
               setTerminal("outbox_blocked");
               return "stop" as const;
             }
+            if (head === "idle") publicationReconciliationPending = false;
             if (head === "idle" || head === "waiting") {
               return wakeEpoch !== epochBeforeInspect ? "retry" as const : "stop" as const;
             }

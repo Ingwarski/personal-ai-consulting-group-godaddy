@@ -2,6 +2,7 @@ pub mod client;
 pub mod config;
 pub mod egress;
 pub mod ingress;
+mod live_policy;
 pub mod lock;
 pub mod media_spool;
 pub mod protocol;

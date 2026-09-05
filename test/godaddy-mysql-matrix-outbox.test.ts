@@ -624,6 +624,47 @@ test("persists a content-free rejected ingress receipt that is ACK eligible but 
   assert.equal(acknowledged, true);
 });
 
+test("invalid media stores one content-free rejection across replay and never becomes work", async () => {
+  const input = {
+    eventId: "$invalid-media-event-0001",
+    eventHash: "a".repeat(64),
+    roomId: "!consultant:matrix.org",
+    ownerMxid: "@owner:matrix.org",
+    bodyHash: "b".repeat(64),
+    mediaManifestHash: "c".repeat(64),
+    rejectionCode: "invalid_media" as const,
+    now: new Date("2026-09-04T12:00:00.000Z")
+  };
+  let row: Readonly<Record<string, unknown>> | undefined;
+  let inserts = 0;
+  const pool = new ScriptedPool({ transaction: async (statement, values) => {
+    if (statement.startsWith("SELECT event_id")) {
+      if (statement.includes("state IN ('ready', 'leased')")) return [[], []];
+      return [row === undefined ? [] : [row], []];
+    }
+    if (statement.includes("VALUES (?, ?, 'rejected'")) {
+      inserts += 1;
+      row = {
+        ...input, state: "rejected", workIntentJson: String(values[6]),
+        ackEligibleAt: input.now.toISOString()
+      };
+      return [{ affectedRows: 1 }, []];
+    }
+    throw new Error(`Unexpected SQL: ${statement}`);
+  } });
+  const receipts = new MySqlMatrixIngressReceipts(pool);
+  assert.deepEqual(await receipts.persistRejection(input), { ok: true, replayed: false, durableAck: true, processed: false });
+  assert.deepEqual(await receipts.persistRejection(input), { ok: true, replayed: true, durableAck: true, processed: false });
+  assert.equal(inserts, 1);
+  assert.deepEqual(JSON.parse(String(row?.workIntentJson)), { rejectionCode: "invalid_media" });
+  assert.equal(await receipts.leaseNext({ leaseOwner: "node-worker-test", now: input.now, leaseMilliseconds: 30_000 }), undefined);
+  assert.deepEqual(await receipts.persistRejection({ ...input, rejectionCode: "media_expired" }), { ok: false, code: "event_conflict" });
+  // A contradictory rejection must never erase previously accepted work.
+  row = { ...row, state: "ready" };
+  assert.deepEqual(await receipts.persistRejection(input), { ok: false, code: "event_conflict" });
+  assert.equal(inserts, 1);
+});
+
 test("media expiry durably replaces only the exact unconsumed ready intent before ACK", async () => {
   const media = [{ declaredMime: "application/pdf" as const, length: 128, sha256: "d".repeat(64) }];
   const intent = {

@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
+import { EventEmitter } from "node:events";
 import test from "node:test";
 
+import { createGodaddyMySqlPool } from "../src/godaddy/mysql-pool.ts";
 import { GODADDY_REGISTRAR_NAMESPACE, createGoDaddyRegistrarRuntime } from "../src/godaddy/registrar-runtime.ts";
 import type { MySqlConnection, MySqlPool } from "../src/godaddy/mysql-storage.ts";
 import { resolveEffectiveSessionSnapshot } from "../src/settings/snapshot.ts";
@@ -102,6 +104,65 @@ class MemoryPool implements MySqlPool {
     return [{ affectedRows: 1 }, []] as const;
   }
 }
+
+test("long transcripts preserve order with the real finite pool queue and competing reads", async () => {
+  // Exercise mysql2's actual four-connection/32-waiter scheduler without a
+  // socket. Only the connections' query responses are in-memory fixtures.
+  const pool = createGodaddyMySqlPool({
+    host: "unused.invalid", port: 1, database: "fixture", user: "fixture", password: "fixture-only"
+  });
+  type FixtureConnection = {
+    _pool: unknown;
+    execute: (sql: string, values: readonly unknown[], callback: (error: Error | null, rows?: unknown, fields?: unknown) => void) => EventEmitter;
+    release: () => void;
+    _realEnd: (callback: () => void) => void;
+  };
+  const core = (pool as unknown as { pool: {
+    _allConnections: { push: (connection: FixtureConnection) => void };
+    _freeConnections: { push: (connection: FixtureConnection) => void };
+    releaseConnection: (connection: FixtureConnection) => void;
+  } }).pool;
+  const memory = new MemoryPool();
+  const count = 128;
+  memory.values.set(`${GODADDY_REGISTRAR_NAMESPACE}:registrar:session:1`, JSON.stringify({ nextSequence: count + 1 }));
+  for (let sequence = 1; sequence <= count; sequence += 1) {
+    memory.values.set(`${GODADDY_REGISTRAR_NAMESPACE}:registrar:message:1:${sequence}`, JSON.stringify({ sequence, body: `Message ${sequence}` }));
+  }
+  for (let index = 0; index < 4; index += 1) {
+    const connection: FixtureConnection = {
+      _pool: core,
+      execute(sql, values, callback) {
+        const command = new EventEmitter();
+        setImmediate(() => {
+          void memory.execute(sql, values).then(
+            ([rows, fields]) => { callback(null, rows, fields); },
+            (error: unknown) => { callback(error instanceof Error ? error : new Error("Fixture query failed")); }
+          ).finally(() => { command.emit("end"); });
+        });
+        return command;
+      },
+      release() { core.releaseConnection(connection); },
+      _realEnd(callback) { callback(); }
+    };
+    core._allConnections.push(connection);
+    core._freeConnections.push(connection);
+  }
+  try {
+    const runtime = createGoDaddyRegistrarRuntime({ pool, now: () => activeNow });
+    const transcript = runtime.registrar.getConfirmedMessages(1);
+    const competitors = Array.from({ length: 32 }, () => pool.execute(
+      "SELECT state_value AS stateValue FROM personal_consultant_state WHERE state_namespace = ? AND state_key = ?",
+      [GODADDY_REGISTRAR_NAMESPACE, "registrar:session:1"]
+    ));
+    const [messages, otherReads] = await Promise.all([transcript, Promise.all(competitors)]);
+    assert.deepEqual(messages.map((message) => message.sequence), Array.from({ length: count }, (_, index) => index + 1));
+    assert.equal(otherReads.length, 32);
+    assert.equal(Object.isFrozen(messages), true);
+    assert.equal(Object.isFrozen(messages[127]), true);
+  } finally {
+    await pool.end();
+  }
+});
 
 test("GoDaddy registrar stores the canonical active session in its own MySQL namespace", async () => {
   const receipt = createCapabilityReceipt();

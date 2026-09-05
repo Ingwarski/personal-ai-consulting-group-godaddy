@@ -843,6 +843,34 @@ test("media expiry persists only content-free hashes before ACK and ACK evidence
   await h.service.stop();
 });
 
+test("invalid media commits its explicit rejection before ACK and lets later valid ingress proceed", async () => {
+  const h = harness();
+  const rejection = rejectionFor(mediaIngress(), { reason: "invalid_media" });
+  let commit!: () => void;
+  const committed = new Promise<void>((resolve) => { commit = resolve; });
+  h.receipts.persistRejectionImpl = async () => {
+    await committed;
+    return { ok: true, replayed: false, durableAck: true, processed: false };
+  };
+  await h.service.start();
+  await h.clock.flushDue();
+  h.runtime.emitRejection(rejection);
+  await h.clock.flushDue();
+  assert.equal(h.runtime.acknowledgements.length, 0);
+  assert.equal(h.receipts.intents.length, 0);
+  assert.equal(h.runtime.mediaReads, 0);
+  commit();
+  await h.clock.flushDue();
+  assert.equal((h.receipts.rejections[0] as { rejectionCode: string }).rejectionCode, "invalid_media");
+  assert.deepEqual(h.runtime.acknowledgements, [{ receiptId: rejection.receiptId, durableReceiptId: rejection.eventHash }]);
+  h.runtime.emit(ingress({ receiptId: "receipt-next-valid", eventId: "$next-valid-event:matrix.org" }));
+  await h.clock.flushDue();
+  assert.equal(h.receipts.intents.length, 1);
+  assert.equal(h.runtime.acknowledgements.length, 2);
+  assert.equal(h.service.getReadiness().ready, true);
+  await h.service.stop();
+});
+
 test("same-receipt media expiry replaces an in-flight unconsumed intent without reading expired media", async () => {
   const h = harness();
   const event = mediaIngress();
@@ -1132,10 +1160,14 @@ test("send failures release only proven pre-dispatch leases and retain outcome-a
     if (scenario === "pre-dispatch") {
       assert.equal(h.outbox.releases, 1);
       assert.equal(h.outbox.blocks, 0);
-    } else {
+    } else if (scenario === "policy") {
       assert.equal(h.outbox.releases, 0);
       assert.equal(h.outbox.blocks, 1);
       assert.equal(h.service.getReadiness().ready, false);
+    } else {
+      assert.equal(h.outbox.releases, 0);
+      assert.equal(h.outbox.blocks, 0);
+      assert.equal(h.service.getReadiness().reason, "retry_exhausted");
     }
     await h.service.stop().catch(() => undefined);
   }
@@ -1143,15 +1175,116 @@ test("send failures release only proven pre-dispatch leases and retain outcome-a
   for (const code of ["transport_failed", "request_timeout", "not_ready", "backpressure_timeout", "stopped"] as const) {
     const h = harness();
     h.outbox.inspectImpl = async () => "available";
-    h.outbox.leaseImpl = async () => lease(8);
-    h.runtime.sendImpl = async () => { throw new MatrixSidecarError(code); };
+    h.outbox.leaseImpl = async () => lease();
+    h.runtime.sendImpl = async () => {
+      h.outbox.inspectImpl = async () => "waiting";
+      throw new MatrixSidecarError(code);
+    };
     await h.service.start();
     await h.clock.flushDue();
     assert.equal(h.outbox.releases, 0, code);
     assert.equal(h.outbox.blocks, 0, code);
     assert.equal(h.service.getReadiness().reason, "sidecar_not_ready", code);
+    assert.notEqual(h.runtime.subscriber, undefined, code);
     await h.service.stop().catch(() => undefined);
   }
+});
+
+test("lost acceptance stays fenced through a pre-dispatch retry failure and reconciles the same transaction", async () => {
+  const h = harness();
+  const publication = lease();
+  const visibleEvents = new Map<string, string>();
+  let leaseExpiresAt = 0;
+  let leased = false;
+  let accepted = false;
+  let attempts = 0;
+  h.outbox.inspectImpl = async () => accepted ? "idle"
+    : leased && h.clock.now() < leaseExpiresAt ? "waiting" : "available";
+  h.outbox.leaseImpl = async () => {
+    leased = true;
+    attempts += 1;
+    leaseExpiresAt = h.clock.now() + 60_000;
+    return { ...publication, attemptCount: attempts, leaseEpoch: attempts };
+  };
+  h.outbox.markAcceptedImpl = async () => {
+    accepted = true;
+    leased = false;
+    return { ok: true };
+  };
+  h.runtime.sendImpl = async (input) => {
+    if (attempts === 2) throw new MatrixSidecarError("request_limit");
+    const eventId = visibleEvents.get(input.transactionId) ?? "$accepted-event:matrix.org";
+    visibleEvents.set(input.transactionId, eventId);
+    if (attempts === 1) {
+      h.runtime.readiness = { liveness: "dead", matrixReadiness: "not_ready", reason: "crash_backoff", circuitOpen: false };
+      throw new MatrixSidecarError("request_timeout");
+    }
+    return { transactionId: input.transactionId, eventId, status: "accepted" };
+  };
+  await h.service.start();
+  await h.clock.flushDue();
+  assert.equal(h.runtime.sent.length, 1);
+  assert.equal(leased, true);
+  assert.equal(h.outbox.releases, 0);
+  assert.equal(h.outbox.blocks, 0);
+  assert.equal(h.service.getReadiness().ready, false);
+  assert.notEqual(h.runtime.subscriber, undefined);
+  // Recovery alone must not bypass the outstanding lease/generation fence.
+  h.runtime.readiness = { liveness: "alive", matrixReadiness: "ready", reason: "ready", circuitOpen: false };
+  await h.clock.advance(59_999);
+  h.service.wakeOutbox();
+  await h.clock.flushDue();
+  assert.equal(h.runtime.sent.length, 1);
+  assert.equal(h.service.getReadiness().ready, false);
+  await h.clock.advance(1_001);
+  assert.equal(h.runtime.sent.length, 2);
+  assert.equal(h.outbox.accepted, 0);
+  assert.equal(h.outbox.releases, 0);
+  assert.equal(h.outbox.blocks, 0);
+  assert.equal(leased, true);
+  assert.equal(h.service.getReadiness().ready, false);
+  await h.clock.advance(60_000);
+  assert.equal(h.runtime.sent.length, 3);
+  assert.deepEqual(h.runtime.sent.map((input) => input.transactionId), Array(3).fill(publication.transactionId));
+  assert.equal(visibleEvents.size, 1);
+  assert.equal(h.outbox.accepted, 1);
+  assert.equal(leased, false);
+  assert.equal(h.service.getReadiness().ready, true);
+  h.runtime.emit(ingress());
+  await h.clock.flushDue();
+  assert.equal(h.receipts.intents.length, 1);
+  assert.equal(h.runtime.acknowledgements.length, 1);
+  await h.service.stop();
+});
+
+test("exhausted ambiguous publication remains fenced and stops retrying", async () => {
+  const h = harness();
+  h.outbox.inspectImpl = async () => "available";
+  h.outbox.leaseImpl = async () => lease(8);
+  h.runtime.sendImpl = async () => { throw new MatrixSidecarError("transport_failed"); };
+  await h.service.start();
+  await h.clock.flushDue();
+  assert.equal(h.service.getReadiness().reason, "retry_exhausted");
+  assert.equal(h.outbox.releases, 0);
+  assert.equal(h.outbox.blocks, 0);
+  await h.clock.advance(120_000);
+  h.service.wakeOutbox();
+  await h.clock.flushDue();
+  assert.equal(h.runtime.sent.length, 1);
+  await h.service.stop();
+});
+
+test("policy denial on a reclaimed lease preserves any prior acceptance fence", async () => {
+  const h = harness();
+  h.outbox.inspectImpl = async () => "available";
+  h.outbox.leaseImpl = async () => lease(2);
+  h.runtime.sendImpl = async () => { throw new MatrixSidecarError("policy_denied"); };
+  await h.service.start();
+  await h.clock.flushDue();
+  assert.equal(h.service.getReadiness().reason, "outbox_blocked");
+  assert.equal(h.outbox.releases, 0);
+  assert.equal(h.outbox.blocks, 0);
+  await h.service.stop();
 });
 
 test("stop blocks new intake, drains the current ACK/evidence, then stops the sidecar exactly once", async () => {

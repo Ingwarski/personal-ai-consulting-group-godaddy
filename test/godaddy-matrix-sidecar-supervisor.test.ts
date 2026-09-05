@@ -6,6 +6,7 @@ import test from "node:test";
 import {
   MatrixSidecarError,
   MatrixSidecarSupervisor,
+  MATRIX_SIDECAR_GENERATION_FRAME_BUDGET,
   type BinaryStat,
   type MatrixSidecarChildProcess,
   type MatrixSidecarClock,
@@ -839,6 +840,106 @@ test("fails closed before inbound ID history saturation can evict and admit a la
   child.stdout.pushFrame({ type: "hello", version: 1, id: "sidecar-hello", build: "0.1.0" });
   assert.deepEqual(child.kills, ["SIGTERM"]);
   await turn();
+  await supervisor.stop();
+});
+
+test("processes more than 4096 healthy requests by verified generation rollover without opening the crash circuit", async () => {
+  const { supervisor, children } = fixture({ maxCrashes: 1 });
+  await supervisor.start();
+  for (let index = 0; index < 7_000; index += 1) {
+    if (supervisor.getStatus().reason === "generation_rollover") await supervisor.start();
+    const result = await supervisor.request("inspect_media", { media: [] });
+    assert.deepEqual(result, { name: "media", objects: [] });
+  }
+  await supervisor.start();
+  assert.ok(children.length >= 3);
+  assert.equal(supervisor.getStatus().matrixReadiness, "ready");
+  assert.equal(supervisor.getStatus().restartCount, 0);
+  assert.equal(supervisor.getStatus().circuitOpen, false);
+  for (const child of children.slice(0, -1)) {
+    assert.equal(child.kills.length, 0);
+    assert.equal(child.stdin.writes.filter((frame) => frame.type === "shutdown").length, 1);
+    assert.ok(child.stdin.writes.length < 4_096);
+    assert.equal(new Set(child.stdin.writes.map((frame) => frame.id)).size, child.stdin.writes.length);
+  }
+  // An old child cannot inject a stale response into the new generation.
+  children[0]?.stdout.pushFrame({ type: "response", version: 1, id: "initialize-2", ok: true, result: { name: "initialized" }, error: null });
+  assert.equal(supervisor.getStatus().matrixReadiness, "ready");
+  await supervisor.stop();
+});
+
+test("generation rollover drains already forwarded work and replays newly journaled ingress after re-handshake", async () => {
+  const observed: string[] = [];
+  const { supervisor, children } = fixture({
+    protocol: (index) => index === 0 ? {} : { eventAfterReady: validEvent("during-rollover") }
+  });
+  supervisor.onEvent((event) => observed.push(event.receiptId));
+  await supervisor.start();
+  const oldChild = children[0]!;
+  oldChild.stdout.pushFrame(validEvent("before-rollover"));
+  for (let index = 0; supervisor.getStatus().reason !== "generation_rollover"; index += 1) {
+    assert.ok(index < MATRIX_SIDECAR_GENERATION_FRAME_BUDGET);
+    oldChild.stdout.pushFrame({ type: "status", version: 1, id: `roll-status-${index}`, readiness: "ready" });
+  }
+  await assert.rejects(supervisor.request("health", {}), (error: unknown) => error instanceof MatrixSidecarError && error.code === "not_ready");
+  oldChild.stdout.pushFrame(validEvent("during-rollover"));
+  assert.deepEqual(observed, ["before-rollover"]);
+  assert.equal(children.length, 1);
+  assert.equal(oldChild.stdin.writes.some((frame) => frame.type === "shutdown"), false);
+  await supervisor.request("inspect_media", { media: [] });
+  await supervisor.ack("before-rollover", "$before-rollover:matrix.org", "durable-before");
+  await supervisor.start();
+  assert.equal(children.length, 2);
+  assert.deepEqual(observed, ["before-rollover", "during-rollover"]);
+  assert.equal(oldChild.stdin.writes.filter((frame) => frame.type === "ack").length, 1);
+  await supervisor.ack("during-rollover", "$during-rollover:matrix.org", "durable-after");
+  await supervisor.stop();
+});
+
+test("an undrained rollover fails closed instead of resetting replay history on a live generation", async () => {
+  const clock = new ManualClock();
+  const { supervisor, children } = fixture({ clock, shutdownTimeoutMs: 5, maxCrashes: 1 });
+  await supervisor.start();
+  const child = children[0]!;
+  child.stdout.pushFrame(validEvent("unacknowledged"));
+  for (let index = 0; supervisor.getStatus().reason !== "generation_rollover"; index += 1) {
+    child.stdout.pushFrame({ type: "status", version: 1, id: `undrained-${index}`, readiness: "ready" });
+  }
+  clock.advance(5);
+  await turn();
+  assert.deepEqual(child.kills, ["SIGTERM"]);
+  assert.equal(children.length, 1);
+  assert.equal(supervisor.getStatus().circuitOpen, true);
+  assert.equal(child.stdin.writes.some((frame) => frame.type === "ack"), false);
+  await supervisor.stop();
+});
+
+test("an explicit stop during generation rollover drains the current child without launching a replacement", async () => {
+  const { supervisor, children } = fixture();
+  await supervisor.start();
+  const child = children[0]!;
+  child.stdout.pushFrame(validEvent("stop-during-rollover"));
+  for (let index = 0; supervisor.getStatus().reason !== "generation_rollover"; index += 1) {
+    assert.ok(index < MATRIX_SIDECAR_GENERATION_FRAME_BUDGET);
+    child.stdout.pushFrame({ type: "status", version: 1, id: `stopping-${index}`, readiness: "ready" });
+  }
+  const stopping = supervisor.stop();
+  await supervisor.ack("stop-during-rollover", "$stop-during-rollover:matrix.org", "durable-stop");
+  await stopping;
+  assert.equal(children.length, 1);
+  assert.equal(child.stdin.writes.filter((frame) => frame.type === "shutdown").length, 1);
+  assert.equal(supervisor.getStatus().liveness, "stopped");
+});
+
+test("accepts a bounded content-free invalid-media rejection and acknowledges its durable receipt", async () => {
+  const { supervisor, children } = fixture();
+  const reasons: unknown[] = [];
+  supervisor.onRejectedEvent((value) => reasons.push(value.rejection.reason));
+  await supervisor.start();
+  children[0]?.stdout.pushFrame(validRejection("invalid-media", { reason: "invalid_media" }));
+  assert.deepEqual(reasons, ["invalid_media"]);
+  await supervisor.ack("invalid-media", "$invalid-media:matrix.org", "durable-invalid-media");
+  assert.equal(supervisor.getStatus().matrixReadiness, "ready");
   await supervisor.stop();
 });
 

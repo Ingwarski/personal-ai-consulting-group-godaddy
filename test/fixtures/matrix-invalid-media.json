@@ -1,0 +1,40 @@
+{
+  "invalid_event": {
+    "event_id": "$invalid-media:matrix.org",
+    "room_id": "!room:matrix.org",
+    "sender_mxid": "@owner:matrix.org",
+    "sender_device_id": "OWNER",
+    "body": null,
+    "reply_to_event_id": null,
+    "media": []
+  },
+  "invalid_descriptor": {
+    "declared_mime": "image/png",
+    "length": 8,
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "invalid_rejection": {
+    "type": "event_rejected",
+    "version": 1,
+    "id": "ingress-aba7ae6c1bb550a6c2a8a130a7550ac8",
+    "rejection": {
+      "event_id": "$invalid-media:matrix.org",
+      "room_id": "!room:matrix.org",
+      "sender_mxid": "@owner:matrix.org",
+      "sender_device_id": "OWNER",
+      "body_hash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "media_manifest_hash": "5f9ea8e8881d9a9a02bf45a014f65e86cfd315debcfbc4f2ca1247672020396a",
+      "event_hash": "e1e35850f4f3ada631b3966254529f50a53f49fcd5b6101d172cdd1586d6dcdb",
+      "reason": "invalid_media"
+    }
+  },
+  "following_event": {
+    "event_id": "$after-invalid:matrix.org",
+    "room_id": "!room:matrix.org",
+    "sender_mxid": "@owner:matrix.org",
+    "sender_device_id": "OWNER",
+    "body": "Message after an invalid attachment",
+    "reply_to_event_id": null,
+    "media": []
+  }
+}

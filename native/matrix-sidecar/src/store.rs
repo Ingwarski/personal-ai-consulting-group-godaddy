@@ -9,7 +9,7 @@ use matrix_sdk::{
     ruma::{OwnedDeviceId, OwnedUserId},
 };
 use matrix_sdk_base::crypto::store::CryptoStore;
-use matrix_sdk_base::crypto::{DecryptionSettings, TrustRequirement};
+use matrix_sdk_base::crypto::{CollectStrategy, DecryptionSettings, TrustRequirement};
 use matrix_sdk_sqlite::{SqliteCryptoStore, SqliteStateStore};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -60,6 +60,18 @@ pub struct OpenStore {
     pub sync_checkpoint: crate::sync_checkpoint::SyncCheckpoint,
 }
 
+fn private_client_builder() -> matrix_sdk::ClientBuilder {
+    Client::builder()
+        // Inbound cross-signing requirements do not constrain outbound key
+        // sharing: the SDK otherwise defaults to AllDevices. Keep the
+        // recipient restriction explicit alongside the existing trust policy.
+        .with_room_key_recipient_strategy(CollectStrategy::OnlyTrustedDevices)
+        .with_enable_share_history_on_invite(false)
+        .with_decryption_settings(DecryptionSettings {
+            sender_device_trust_requirement: TrustRequirement::CrossSigned,
+        })
+}
+
 pub async fn open(config: &Config) -> Result<OpenStore, StoreError> {
     if !config.store_root.exists() {
         return Err(StoreError::Quarantined);
@@ -101,14 +113,10 @@ pub async fn open(config: &Config) -> Result<OpenStore, StoreError> {
         .redirect(reqwest::redirect::Policy::none())
         .build()
         .map_err(|_| StoreError::Open)?;
-    let client = Client::builder()
+    let client = private_client_builder()
         .homeserver_url(config.homeserver.as_url().as_str())
         .http_client(http_client.clone())
         .respect_login_well_known(false)
-        .with_enable_share_history_on_invite(false)
-        .with_decryption_settings(DecryptionSettings {
-            sender_device_trust_requirement: TrustRequirement::CrossSigned,
-        })
         .sqlite_store(&config.store_root, Some(config.store_passphrase.as_str()))
         .build()
         .await
@@ -495,6 +503,19 @@ mod tests {
 
     const IDENTITY_A: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     const IDENTITY_B: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+
+    #[test]
+    fn production_builder_restricts_outbound_keys_to_trusted_devices() {
+        // Inspect the real pinned SDK builder before adding any credentials.
+        // Its private field has no public accessor, but its derived Debug
+        // output exposes the configured strategy without building a client.
+        let sdk_default = format!("{:?}", Client::builder());
+        assert!(sdk_default.contains("room_key_recipient_strategy: AllDevices"));
+        let production = format!("{:?}", private_client_builder());
+        assert!(production.contains("room_key_recipient_strategy: OnlyTrustedDevices"));
+        assert!(production.contains("sender_device_trust_requirement: CrossSigned"));
+        assert!(production.contains("enable_share_history_on_invite: false"));
+    }
 
     #[cfg(unix)]
     fn make_private(path: &Path) {

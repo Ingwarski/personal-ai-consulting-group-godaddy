@@ -734,11 +734,12 @@ function sameIngressIntent(left: MatrixIngressIntent, right: MatrixIngressIntent
     });
 }
 
-type MatrixIngressRejectionCode = "secret_like_content" | "media_expired";
+type MatrixIngressRejectionCode = "secret_like_content" | "media_expired" | "invalid_media";
 
 function storedRejectionCode(value: unknown): MatrixIngressRejectionCode | undefined {
   if (!isRecord(value) || !hasOnlyKeys(value, new Set(["rejectionCode"]))) return undefined;
   return value.rejectionCode === "secret_like_content" || value.rejectionCode === "media_expired"
+    || value.rejectionCode === "invalid_media"
     ? value.rejectionCode
     : undefined;
 }
@@ -923,7 +924,7 @@ export class MySqlMatrixIngressReceipts {
       || !/^[a-f0-9]{64}$/.test(input.eventHash)
       || !/^[a-f0-9]{64}$/.test(input.bodyHash)
       || !/^[a-f0-9]{64}$/.test(input.mediaManifestHash)
-      || !["secret_like_content", "media_expired"].includes(input.rejectionCode)
+      || !["secret_like_content", "media_expired", "invalid_media"].includes(input.rejectionCode)
       || !(input.now instanceof Date)
       || !Number.isFinite(input.now.getTime())
     ) throw new MatrixIngressCorruptionError();
