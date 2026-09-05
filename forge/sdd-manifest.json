@@ -1,8 +1,9 @@
 {
+  "traceability_version": 1,
   "checker_contract_version": 1,
   "pipeline_version": "1.1.0",
-  "state": "awaiting_input",
-  "updated_at": "2026-09-05T03:15:30Z",
+  "state": "reconciling",
+  "updated_at": "2026-09-05T13:16:19Z",
   "language": {
     "working_language": "uk",
     "selection_source": "recorded-preference",
@@ -15,7 +16,7 @@
     "intake_id": "godaddy-matrix-reconciliation-20260904",
     "source_mode": "existing-file",
     "handoff_receipt_path": null,
-    "product_idea_hash": "c7e0dec20e60f5eae35a16192a3b21a74e43faffb8853f8c15accf457f1eefee",
+    "product_idea_hash": "852758d725831ebb435da8ffd9a548a6ea1ad70fbab13261885a4793a12ad14e",
     "current_request_id": "google-owner-login-20260905",
     "previous_request_id": "u06-rust-matrix-sidecar-20260904"
   },
@@ -23,7 +24,7 @@
     "product-idea": {
       "path": "docs/product-idea.md",
       "owner_skill": "to-product-idea",
-      "owner_invocation_id": "6c04877e-6bb8-48ce-aa78-92be9b8e4fdd",
+      "owner_invocation_id": "03e83123-0e34-4817-a1c9-494e73ae76de",
       "declared_output_set": [
         "docs/product-idea.md"
       ],
@@ -32,36 +33,108 @@
       "dependencies": [],
       "dependency_status": {},
       "source_hashes": {},
-      "consumed_source_fragments": {},
-      "content_hash": "c7e0dec20e60f5eae35a16192a3b21a74e43faffb8853f8c15accf457f1eefee",
+      "consumed_source_fragments": {
+        "forge/google-owner-login-investigation-20260905.md": [
+          {
+            "heading": "### Authorized existing-project update — 5 September 2026, 03:15 UTC",
+            "content_hash": "8d6dcc66755e80e5fb67920b31e0b45c6d21a5c0ae17c698a910dcb813ac1676"
+          }
+        ]
+      },
+      "content_hash": "852758d725831ebb435da8ffd9a548a6ea1ad70fbab13261885a4793a12ad14e",
       "validation": {
         "result": "passed",
         "working_language": "uk",
-        "evidence_scope": "Google owner-login and no application MFA intent correction only; not implemented or deployed login evidence",
-        "submitted_at": "2026-09-05T02:26:37Z",
-        "decision_ids": ["PI-AUTH-20260905"]
+        "evidence_scope": "Source-grounded JOB normalization and Google configuration observation; no new product decision, implementation or live-login claim.",
+        "submitted_at": "2026-09-05T12:25:11.247Z",
+        "decision_ids": [
+          "PI-AUTH-20260905"
+        ],
+        "jobs": [
+          "JOB-001",
+          "JOB-002",
+          "JOB-003",
+          "JOB-004",
+          "JOB-005"
+        ]
       },
       "open_questions": [],
       "supersedes": {
-        "owner_invocation_id": "e116a6de-4e8c-4b0e-b93c-ea77002a4144",
-        "content_hash": "74e9727a63cf4e5648671d0467265b27e098fc819601b0833ee53b17a3acb320",
-        "git_revision": "8032a3630ca8399319615eaef056b306ca274e2a",
+        "owner_invocation_id": "6c04877e-6bb8-48ce-aa78-92be9b8e4fdd",
+        "content_hash": "c7e0dec20e60f5eae35a16192a3b21a74e43faffb8853f8c15accf457f1eefee",
+        "git_revision": "60bb5a8",
         "previous_supersedes": {
-          "owner_invocation_id": "29a3dde9-6a4a-4f28-87be-4aa558d73ec8",
-          "content_hash": "ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a",
-          "git_revision": "7f3cedde79e4f3d6a0556ca897fe9ea3b55bb541"
+          "owner_invocation_id": "e116a6de-4e8c-4b0e-b93c-ea77002a4144",
+          "content_hash": "74e9727a63cf4e5648671d0467265b27e098fc819601b0833ee53b17a3acb320",
+          "git_revision": "8032a3630ca8399319615eaef056b306ca274e2a",
+          "previous_supersedes": {
+            "owner_invocation_id": "29a3dde9-6a4a-4f28-87be-4aa558d73ec8",
+            "content_hash": "ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a",
+            "git_revision": "7f3cedde79e4f3d6a0556ca897fe9ea3b55bb541"
+          }
         }
+      },
+      "traceability": {
+        "definitions": [
+          {
+            "id": "JOB-001",
+            "kind": "job",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/product-idea.md",
+              "heading": "### JOB-001 — Перетворити практичну проблему на рішення і дії"
+            }
+          },
+          {
+            "id": "JOB-002",
+            "kind": "job",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/product-idea.md",
+              "heading": "### JOB-002 — Спрямувати або припинити активну роботу"
+            }
+          },
+          {
+            "id": "JOB-003",
+            "kind": "job",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/product-idea.md",
+              "heading": "### JOB-003 — Налаштувати майбутні консультації"
+            }
+          },
+          {
+            "id": "JOB-004",
+            "kind": "job",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/product-idea.md",
+              "heading": "### JOB-004 — Зберегти й контролювати повний запис консультації"
+            }
+          },
+          {
+            "id": "JOB-005",
+            "kind": "job",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/product-idea.md",
+              "heading": "### JOB-005 — Перевірити фактичні витрати й доступність квот"
+            }
+          }
+        ],
+        "links": [],
+        "metadata_submitted_at": "2026-09-05T12:49:31.579Z"
       }
     },
     "prd": {
       "path": "docs/prd.md",
       "owner_skill": "to-sdd-prd",
-      "owner_invocation_id": "1e0f7892-70e6-42e2-9da6-f58e26d7023c",
+      "owner_invocation_id": "02e7ca71-8b98-4fe7-9193-946486986952",
       "declared_output_set": [
         "docs/prd.md"
       ],
-      "status": "invalidated",
-      "mission_control_status": "Needs attention",
+      "status": "validated",
+      "mission_control_status": "Done",
       "dependencies": [
         "product-idea"
       ],
@@ -69,25 +142,45 @@
         "product-idea": "validated"
       },
       "source_hashes": {
-        "docs/product-idea.md": "c7e0dec20e60f5eae35a16192a3b21a74e43faffb8853f8c15accf457f1eefee"
+        "docs/product-idea.md": "852758d725831ebb435da8ffd9a548a6ea1ad70fbab13261885a4793a12ad14e"
       },
       "consumed_source_fragments": {
         "forge/google-owner-login-investigation-20260905.md": [
-          {"heading": "## What actually happened", "content_hash": "64ea68c2eb22ad325eb4e64cce0a7831b889679d88ac71d01fa1cd7bfbd5189b"},
-          {"heading": "## Reproduced application defect", "content_hash": "8c2ef1c7764acc1de4bb3cdbf1abff6a01b4fbd38f72b98f86e54a2674f2a1cc"},
-          {"heading": "## What Google's current documentation establishes", "content_hash": "bff74667e47f11fd5afa0c88821d37d70787f9b67a8f2dacc070ac40738fc96d"}
+          {
+            "heading": "### Authorized existing-project update — 5 September 2026, 03:15 UTC",
+            "content_hash": "8d6dcc66755e80e5fb67920b31e0b45c6d21a5c0ae17c698a910dcb813ac1676"
+          }
         ]
       },
-      "content_hash": "2d783713f3ef232c02f150996037d20635554c686f467d179b3a8f36a49573c7",
+      "content_hash": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
       "validation": {
-        "result": "blocked",
+        "result": "passed",
         "working_language": "uk",
-        "evidence_scope": "Google owner-login auth reconciliation passed; full current PRD use-case coverage is not established. Not implementation or live-login evidence.",
-        "submitted_at": "2026-09-05T03:06:05.787Z",
-        "auth_reconciliation_result": "passed",
-        "stage_postcheck": {"result": "blocked", "exit_code": 1, "issues": ["not_validated", "missing_validation"], "reason": "Overall PRD validation intentionally withheld for the recorded use-case coverage gap; auth/source hashes verified independently."},
-        "limitations": ["Existing JOB-to-UC mappings and canonical UC records are absent. This bounded auth reconciliation did not repair or validate full use-case coverage; do not advance on an overall PRD-complete claim."],
-        "decision_ids": ["PI-AUTH-20260905"]
+        "submitted_at": "2026-09-05T12:55:08Z",
+        "evidence_scope": "Source-grounded six-case traceability reconciliation. Five JOBs mapped; existing FR/NFR/AC and scoped security obligations preserved. Document validation, not implementation or live-login evidence.",
+        "use_case_ids": [
+          "UC-001",
+          "UC-002",
+          "UC-003",
+          "UC-004",
+          "UC-005",
+          "UC-006"
+        ],
+        "checks": [
+          "Complete case fields and numbered actor-system paths",
+          "JOB and FR/NFR/AC coverage reviewed",
+          "Existing US/FR/NFR/AC definitions and exclusions unchanged",
+          "git diff --check passed",
+          "Existing ASVS identifiers checked against pinned offline catalog; not a fresh full security audit",
+          "79 canonical definitions and 79 literal-evidence trace links verified by PRD owner"
+        ],
+        "architecture_handoff": "Google owner login must be available independently of model-catalog readiness; UC-004 prerequisites must not block UC-003.",
+        "limitations": [
+          "Credentials and real Google login round trip remain unverified; previously recorded live start route returned 404 at 2026-09-05T03:15:30Z."
+        ],
+        "decision_ids": [
+          "PI-AUTH-20260905"
+        ]
       },
       "security_review": {
         "version": 1,
@@ -237,7 +330,7 @@
             "requirement_id": "NFR-016",
             "definition_ref": {
               "path": "docs/prd.md",
-              "heading": "### NFR-016. Обов'язки Google-входу та сесії"
+              "heading": "### NFR-016 — Обов'язки Google-входу та сесії"
             },
             "asvs_ids": [
               "v5.0.0-3.3.1",
@@ -319,77 +412,1587 @@
           }
         ]
       },
-      "open_questions": [
-        "Owner task, not another user-choice question: reconcile missing product JOB-to-UC mappings and canonical use-case coverage before declaring the entire PRD validated."
-      ],
+      "open_questions": [],
       "supersedes": {
-        "owner_invocation_id": "676b12e7-1d7a-4e5c-831a-bb88c1493e50",
-        "content_hash": "1ba8803bc2a9273013009d3585ec2e27ef8f707c15caee257964799d36e1b612",
-        "git_revision": "ab566f5",
+        "owner_invocation_id": "1e0f7892-70e6-42e2-9da6-f58e26d7023c",
+        "content_hash": "2d783713f3ef232c02f150996037d20635554c686f467d179b3a8f36a49573c7",
+        "git_revision": "60bb5a8",
         "previous_supersedes": {
-          "owner_invocation_id": "4f5ce7bd-6f8a-47d3-be6a-6e2a422928e6",
-          "content_hash": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
-          "git_revision": "7f3cedde79e4f3d6a0556ca897fe9ea3b55bb541"
+          "owner_invocation_id": "676b12e7-1d7a-4e5c-831a-bb88c1493e50",
+          "content_hash": "1ba8803bc2a9273013009d3585ec2e27ef8f707c15caee257964799d36e1b612",
+          "git_revision": "ab566f5",
+          "previous_supersedes": {
+            "owner_invocation_id": "4f5ce7bd-6f8a-47d3-be6a-6e2a422928e6",
+            "content_hash": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
+            "git_revision": "7f3cedde79e4f3d6a0556ca897fe9ea3b55bb541"
+          }
         }
+      },
+      "traceability": {
+        "definitions": [
+          {
+            "id": "FR-001",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-002",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-003",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-004",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-005",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-006",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-007",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-008",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-009",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-010",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-011",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-012",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-013",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-014",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-015",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-016",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-017",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-018",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-019",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-020",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-021",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-022",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-023",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-024",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-025",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-026",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-027",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-028",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-029",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-030",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-031",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-032",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-033",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-034",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-035",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-036",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-037",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-038",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-039",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-040",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-041",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-042",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-043",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-044",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-045",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "FR-046",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "## 6. Функціональні вимоги"
+            }
+          },
+          {
+            "id": "NFR-001",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### 7.1. Швидкість"
+            }
+          },
+          {
+            "id": "NFR-002",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### 7.1. Швидкість"
+            }
+          },
+          {
+            "id": "NFR-003",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### 7.1. Швидкість"
+            }
+          },
+          {
+            "id": "NFR-004",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### 7.1. Швидкість"
+            }
+          },
+          {
+            "id": "NFR-005",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### 7.2. Безпека та приватність"
+            }
+          },
+          {
+            "id": "NFR-006",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### 7.2. Безпека та приватність"
+            }
+          },
+          {
+            "id": "NFR-007",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### 7.2. Безпека та приватність"
+            }
+          },
+          {
+            "id": "NFR-008",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### 7.2. Безпека та приватність"
+            }
+          },
+          {
+            "id": "NFR-009",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### 7.3. Цілісність і прозорість"
+            }
+          },
+          {
+            "id": "NFR-010",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### 7.3. Цілісність і прозорість"
+            }
+          },
+          {
+            "id": "NFR-011",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### 7.3. Цілісність і прозорість"
+            }
+          },
+          {
+            "id": "NFR-012",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### 7.3. Цілісність і прозорість"
+            }
+          },
+          {
+            "id": "NFR-013",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### 7.4. Сумісність і читабельність"
+            }
+          },
+          {
+            "id": "NFR-014",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### 7.4. Сумісність і читабельність"
+            }
+          },
+          {
+            "id": "NFR-015",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### 7.4. Сумісність і читабельність"
+            }
+          },
+          {
+            "id": "NFR-016",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### 7.5. Безпека, цілісність і доступність Settings"
+            }
+          },
+          {
+            "id": "NFR-017",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### 7.5. Безпека, цілісність і доступність Settings"
+            }
+          },
+          {
+            "id": "NFR-018",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### 7.5. Безпека, цілісність і доступність Settings"
+            }
+          },
+          {
+            "id": "NFR-019",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### 7.5. Безпека, цілісність і доступність Settings"
+            }
+          },
+          {
+            "id": "NFR-016.a",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### NFR-016 — Обов'язки Google-входу та сесії"
+            }
+          },
+          {
+            "id": "NFR-016.b",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### NFR-016 — Обов'язки Google-входу та сесії"
+            }
+          },
+          {
+            "id": "NFR-016.c",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### NFR-016 — Обов'язки Google-входу та сесії"
+            }
+          },
+          {
+            "id": "NFR-016.d",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### NFR-016 — Обов'язки Google-входу та сесії"
+            }
+          },
+          {
+            "id": "NFR-016.e",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### NFR-016 — Обов'язки Google-входу та сесії"
+            }
+          },
+          {
+            "id": "NFR-016.f",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### NFR-016 — Обов'язки Google-входу та сесії"
+            }
+          },
+          {
+            "id": "NFR-016.g",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### NFR-016 — Обов'язки Google-входу та сесії"
+            }
+          },
+          {
+            "id": "NFR-016.h",
+            "kind": "requirement",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "### NFR-016 — Обов'язки Google-входу та сесії"
+            }
+          },
+          {
+            "id": "UC-001",
+            "kind": "use_case",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "id": "UC-002",
+            "kind": "use_case",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-002 — Уточнити, зупинити або змінити активну задачу"
+            }
+          },
+          {
+            "id": "UC-003",
+            "kind": "use_case",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-003 — Увійти через Google та керувати локальною сесією"
+            }
+          },
+          {
+            "id": "UC-004",
+            "kind": "use_case",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-004 — Зберегти параметри майбутніх консультацій"
+            }
+          },
+          {
+            "id": "UC-005",
+            "kind": "use_case",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-005 — Архівувати, експортувати або видалити цілу сесію"
+            }
+          },
+          {
+            "id": "UC-006",
+            "kind": "use_case",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-006 — Переглянути фактичні витрати та статус квот"
+            }
+          }
+        ],
+        "links": [
+          {
+            "from": "FR-001",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-002",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-003",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-004",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-005",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-006",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-007",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-008",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-009",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-010",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-011",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-012",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-013",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-014",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-015",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-016",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-017",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-018",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-019",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-023",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-024",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-025",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-026",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-027",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-028",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-029",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-030",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-034",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-035",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-036",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "NFR-001",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "NFR-002",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "NFR-003",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "NFR-004",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "NFR-005",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "NFR-006",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "NFR-007",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "NFR-008",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "NFR-010",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "NFR-013",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "NFR-014",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "NFR-015",
+            "to": "UC-001",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "FR-020",
+            "to": "UC-002",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-002 — Уточнити, зупинити або змінити активну задачу"
+            }
+          },
+          {
+            "from": "FR-021",
+            "to": "UC-002",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-002 — Уточнити, зупинити або змінити активну задачу"
+            }
+          },
+          {
+            "from": "FR-022",
+            "to": "UC-002",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-002 — Уточнити, зупинити або змінити активну задачу"
+            }
+          },
+          {
+            "from": "NFR-009",
+            "to": "UC-002",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-002 — Уточнити, зупинити або змінити активну задачу"
+            }
+          },
+          {
+            "from": "FR-037",
+            "to": "UC-003",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-003 — Увійти через Google та керувати локальною сесією"
+            }
+          },
+          {
+            "from": "FR-038",
+            "to": "UC-003",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-003 — Увійти через Google та керувати локальною сесією"
+            }
+          },
+          {
+            "from": "FR-039",
+            "to": "UC-003",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-003 — Увійти через Google та керувати локальною сесією"
+            }
+          },
+          {
+            "from": "NFR-016",
+            "to": "UC-003",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-003 — Увійти через Google та керувати локальною сесією"
+            }
+          },
+          {
+            "from": "NFR-016.a",
+            "to": "UC-003",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-003 — Увійти через Google та керувати локальною сесією"
+            }
+          },
+          {
+            "from": "NFR-016.b",
+            "to": "UC-003",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-003 — Увійти через Google та керувати локальною сесією"
+            }
+          },
+          {
+            "from": "NFR-016.c",
+            "to": "UC-003",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-003 — Увійти через Google та керувати локальною сесією"
+            }
+          },
+          {
+            "from": "NFR-016.d",
+            "to": "UC-003",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-003 — Увійти через Google та керувати локальною сесією"
+            }
+          },
+          {
+            "from": "NFR-016.e",
+            "to": "UC-003",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-003 — Увійти через Google та керувати локальною сесією"
+            }
+          },
+          {
+            "from": "NFR-016.f",
+            "to": "UC-003",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-003 — Увійти через Google та керувати локальною сесією"
+            }
+          },
+          {
+            "from": "NFR-016.g",
+            "to": "UC-003",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-003 — Увійти через Google та керувати локальною сесією"
+            }
+          },
+          {
+            "from": "NFR-016.h",
+            "to": "UC-003",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-003 — Увійти через Google та керувати локальною сесією"
+            }
+          },
+          {
+            "from": "FR-040",
+            "to": "UC-004",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-004 — Зберегти параметри майбутніх консультацій"
+            }
+          },
+          {
+            "from": "FR-041",
+            "to": "UC-004",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-004 — Зберегти параметри майбутніх консультацій"
+            }
+          },
+          {
+            "from": "FR-042",
+            "to": "UC-004",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-004 — Зберегти параметри майбутніх консультацій"
+            }
+          },
+          {
+            "from": "FR-043",
+            "to": "UC-004",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-004 — Зберегти параметри майбутніх консультацій"
+            }
+          },
+          {
+            "from": "FR-044",
+            "to": "UC-004",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-004 — Зберегти параметри майбутніх консультацій"
+            }
+          },
+          {
+            "from": "FR-045",
+            "to": "UC-004",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-004 — Зберегти параметри майбутніх консультацій"
+            }
+          },
+          {
+            "from": "FR-046",
+            "to": "UC-004",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-004 — Зберегти параметри майбутніх консультацій"
+            }
+          },
+          {
+            "from": "NFR-017",
+            "to": "UC-004",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-004 — Зберегти параметри майбутніх консультацій"
+            }
+          },
+          {
+            "from": "NFR-018",
+            "to": "UC-004",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-004 — Зберегти параметри майбутніх консультацій"
+            }
+          },
+          {
+            "from": "NFR-019",
+            "to": "UC-004",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-004 — Зберегти параметри майбутніх консультацій"
+            }
+          },
+          {
+            "from": "FR-031",
+            "to": "UC-005",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-005 — Архівувати, експортувати або видалити цілу сесію"
+            }
+          },
+          {
+            "from": "FR-032",
+            "to": "UC-005",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-005 — Архівувати, експортувати або видалити цілу сесію"
+            }
+          },
+          {
+            "from": "NFR-011",
+            "to": "UC-005",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-005 — Архівувати, експортувати або видалити цілу сесію"
+            }
+          },
+          {
+            "from": "FR-033",
+            "to": "UC-006",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-006 — Переглянути фактичні витрати та статус квот"
+            }
+          },
+          {
+            "from": "NFR-012",
+            "to": "UC-006",
+            "relation": "specifies",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-006 — Переглянути фактичні витрати та статус квот"
+            }
+          },
+          {
+            "from": "UC-001",
+            "to": "JOB-001",
+            "relation": "realizes_job",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-001 — Отримати консультацію та практичне рішення"
+            }
+          },
+          {
+            "from": "UC-002",
+            "to": "JOB-002",
+            "relation": "realizes_job",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-002 — Уточнити, зупинити або змінити активну задачу"
+            }
+          },
+          {
+            "from": "UC-003",
+            "to": "JOB-003",
+            "relation": "realizes_job",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-003 — Увійти через Google та керувати локальною сесією"
+            }
+          },
+          {
+            "from": "UC-004",
+            "to": "JOB-003",
+            "relation": "realizes_job",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-004 — Зберегти параметри майбутніх консультацій"
+            }
+          },
+          {
+            "from": "UC-005",
+            "to": "JOB-004",
+            "relation": "realizes_job",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-005 — Архівувати, експортувати або видалити цілу сесію"
+            }
+          },
+          {
+            "from": "UC-006",
+            "to": "JOB-005",
+            "relation": "realizes_job",
+            "definition_ref": {
+              "path": "docs/prd.md",
+              "heading": "#### UC-006 — Переглянути фактичні витрати та статус квот"
+            }
+          }
+        ],
+        "metadata_submitted_at": "2026-09-05T12:55:08Z"
       }
     },
     "project-context": {
       "path": "docs/project-context.md",
       "owner_skill": "to-project-context",
-      "owner_invocation_id": "44c97281-e1d8-47ec-a1ea-d2a4659d20d4",
-      "declared_output_set": ["docs/project-context.md", "docs/canonical-terms.md"],
-      "status": "invalidated",
-      "mission_control_status": "Needs attention",
-      "dependencies": ["product-idea", "prd"],
-      "dependency_status": {"product-idea": "validated", "prd": "validated"},
+      "owner_invocation_id": "2e2563ed-bf4b-4989-b376-9cea7d86de22",
+      "declared_output_set": [
+        "docs/project-context.md",
+        "docs/canonical-terms.md"
+      ],
+      "status": "validated",
+      "mission_control_status": "Done",
+      "dependencies": [
+        "product-idea",
+        "prd"
+      ],
+      "dependency_status": {
+        "product-idea": "validated",
+        "prd": "validated"
+      },
       "source_hashes": {
-        "docs/product-idea.md": "ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a",
-        "docs/prd.md": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94"
+        "docs/product-idea.md": "852758d725831ebb435da8ffd9a548a6ea1ad70fbab13261885a4793a12ad14e",
+        "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc"
       },
       "consumed_source_fragments": {},
-      "content_hash": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
-      "validation": {"result": "passed", "working_language": "uk"},
+      "content_hash": "458da1092f8ac6b10fca6aadc33fab6b9b56aef650fff23e814fe84cb15735a4",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "submitted_at": "2026-09-05T13:05:43.992Z",
+        "evidence_scope": "Coupled source-grounded context and vocabulary reconciliation: Google-only login, independent sessions/provider settings and JOB/UC references. Not implementation or live-login evidence.",
+        "checks": [
+          "Both files reread",
+          "Shared invocation and source set verified",
+          "Scoped semantic and obsolete-claim checks passed",
+          "git diff --check passed"
+        ]
+      },
       "open_questions": [],
-      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
+      "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
+      "supersedes": {
+        "owner_invocation_id": "44c97281-e1d8-47ec-a1ea-d2a4659d20d4",
+        "content_hash": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
+        "git_revision": "60bb5a8"
+      }
     },
     "canonical-terms": {
       "path": "docs/canonical-terms.md",
       "owner_skill": "to-project-context",
-      "owner_invocation_id": "44c97281-e1d8-47ec-a1ea-d2a4659d20d4",
-      "declared_output_set": ["docs/project-context.md", "docs/canonical-terms.md"],
-      "status": "invalidated",
-      "mission_control_status": "Needs attention",
-      "dependencies": ["product-idea", "prd"],
-      "dependency_status": {"product-idea": "validated", "prd": "validated"},
+      "owner_invocation_id": "2e2563ed-bf4b-4989-b376-9cea7d86de22",
+      "declared_output_set": [
+        "docs/project-context.md",
+        "docs/canonical-terms.md"
+      ],
+      "status": "validated",
+      "mission_control_status": "Done",
+      "dependencies": [
+        "product-idea",
+        "prd"
+      ],
+      "dependency_status": {
+        "product-idea": "validated",
+        "prd": "validated"
+      },
       "source_hashes": {
-        "docs/product-idea.md": "ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a",
-        "docs/prd.md": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94"
+        "docs/product-idea.md": "852758d725831ebb435da8ffd9a548a6ea1ad70fbab13261885a4793a12ad14e",
+        "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc"
       },
       "consumed_source_fragments": {},
-      "content_hash": "e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da",
-      "validation": {"result": "passed", "working_language": "uk"},
+      "content_hash": "dd4a7ef9ee403f941b649247b14eafff044af717d54fb8731b0d2d26665848d3",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "submitted_at": "2026-09-05T13:05:43.992Z",
+        "evidence_scope": "Coupled source-grounded context and vocabulary reconciliation: Google-only login, independent sessions/provider settings and JOB/UC references. Not implementation or live-login evidence.",
+        "checks": [
+          "Both files reread",
+          "Shared invocation and source set verified",
+          "Scoped semantic and obsolete-claim checks passed",
+          "git diff --check passed"
+        ]
+      },
       "open_questions": [],
-      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
+      "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
+      "supersedes": {
+        "owner_invocation_id": "44c97281-e1d8-47ec-a1ea-d2a4659d20d4",
+        "content_hash": "e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da",
+        "git_revision": "60bb5a8"
+      }
     },
     "guardrails": {
       "path": "docs/guardrails.md",
       "owner_skill": "to-guardrails",
-      "owner_invocation_id": "642f1125-ddd5-4f2e-9395-8c8179cc6c72",
-      "declared_output_set": ["docs/guardrails.md"],
-      "status": "invalidated",
-      "mission_control_status": "Needs attention",
-      "dependencies": ["prd", "project-context", "canonical-terms"],
-      "dependency_status": {"prd": "validated", "project-context": "validated", "canonical-terms": "validated"},
+      "owner_invocation_id": "e07821a9-7e8e-4f6f-9951-25a3b689ebab",
+      "declared_output_set": [
+        "docs/guardrails.md"
+      ],
+      "status": "validated",
+      "mission_control_status": "Done",
+      "dependencies": [
+        "prd",
+        "project-context",
+        "canonical-terms"
+      ],
+      "dependency_status": {
+        "prd": "validated",
+        "project-context": "validated",
+        "canonical-terms": "validated"
+      },
       "source_hashes": {
-        "docs/prd.md": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
-        "docs/project-context.md": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
-        "docs/canonical-terms.md": "e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da"
+        "docs/product-idea.md": "852758d725831ebb435da8ffd9a548a6ea1ad70fbab13261885a4793a12ad14e",
+        "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
+        "docs/project-context.md": "458da1092f8ac6b10fca6aadc33fab6b9b56aef650fff23e814fe84cb15735a4",
+        "docs/canonical-terms.md": "dd4a7ef9ee403f941b649247b14eafff044af717d54fb8731b0d2d26665848d3"
       },
       "consumed_source_fragments": {},
-      "content_hash": "4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48",
-      "validation": {"result": "passed", "working_language": "uk"},
+      "content_hash": "6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "submitted_at": "2026-09-05T13:13:52Z",
+        "evidence_scope": "Bounded source-authority and access/provider guardrail reconciliation, preserving existing unrelated rules. Document validation, not implementation or live-login evidence.",
+        "checks": [
+          "Post-write reread",
+          "Current consumed-source hashes verified",
+          "Stale auth/provider wording checked",
+          "git diff --check passed"
+        ],
+        "clarification": "Google login events and Settings values/session data paths remain isolated from AI credentials; this does not prohibit separately authorized protected runtime subscription setup."
+      },
       "open_questions": [],
-      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
+      "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
+      "supersedes": {
+        "owner_invocation_id": "642f1125-ddd5-4f2e-9395-8c8179cc6c72",
+        "content_hash": "4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48",
+        "git_revision": "60bb5a8"
+      }
     },
     "user-journey": {
       "path": "docs/user-journey.md",
@@ -410,7 +2013,8 @@
       "content_hash": "dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77",
       "validation": {"result": "passed", "working_language": "uk"},
       "open_questions": [],
-      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
+      "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
+      "revalidation_reason": "Current Google-only owner-login and independent provider settings require source-grounded owner reconciliation. PRD now has validated JOB/UC coverage. The no-application-MFA decision is settled; dependencies, not a repeated MFA question, govern dispatch. Prior hashes/invocation retained until each owner returns."
     },
     "screen-map": {
       "path": "docs/screen-map.md",
@@ -432,7 +2036,8 @@
       "content_hash": "385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52",
       "validation": {"result": "passed", "working_language": "uk"},
       "open_questions": [],
-      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
+      "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
+      "revalidation_reason": "Current Google-only owner-login and independent provider settings require source-grounded owner reconciliation. PRD now has validated JOB/UC coverage. The no-application-MFA decision is settled; dependencies, not a repeated MFA question, govern dispatch. Prior hashes/invocation retained until each owner returns."
     },
     "wireframes": {
       "path": "docs/wireframes.md",
@@ -455,7 +2060,8 @@
       "content_hash": "49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca",
       "validation": {"result": "passed", "working_language": "uk"},
       "open_questions": [],
-      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
+      "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
+      "revalidation_reason": "Current Google-only owner-login and independent provider settings require source-grounded owner reconciliation. PRD now has validated JOB/UC coverage. The no-application-MFA decision is settled; dependencies, not a repeated MFA question, govern dispatch. Prior hashes/invocation retained until each owner returns."
     },
     "design-brief": {
       "path": "docs/design-brief.md",
@@ -479,7 +2085,8 @@
       "content_hash": "719a32b4ea4fef9f9eaa0ee08864f00fa57f9637be530e67c404d58d1c2e5608",
       "validation": {"result": "passed", "working_language": "uk"},
       "open_questions": [],
-      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
+      "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
+      "revalidation_reason": "Current Google-only owner-login and independent provider settings require source-grounded owner reconciliation. PRD now has validated JOB/UC coverage. The no-application-MFA decision is settled; dependencies, not a repeated MFA question, govern dispatch. Prior hashes/invocation retained until each owner returns."
     },
     "architecture": {
       "path": "docs/architecture.md",
@@ -518,7 +2125,8 @@
         "NFR-019": {"path": "docs/architecture.md", "heading": "## 14. Product-security mapping"}
       },
       "open_questions": [],
-      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
+      "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
+      "revalidation_reason": "Current Google-only owner-login and independent provider settings require source-grounded owner reconciliation. PRD now has validated JOB/UC coverage. The no-application-MFA decision is settled; dependencies, not a repeated MFA question, govern dispatch. Prior hashes/invocation retained until each owner returns."
     },
     "dod-evals": {
       "path": "docs/dod-evals.md",
@@ -558,7 +2166,8 @@
         "NFR-019": {"path": "docs/dod-evals.md", "heading": "#### Security coverage NFR-019"}
       },
       "open_questions": [],
-      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
+      "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
+      "revalidation_reason": "Current Google-only owner-login and independent provider settings require source-grounded owner reconciliation. PRD now has validated JOB/UC coverage. The no-application-MFA decision is settled; dependencies, not a repeated MFA question, govern dispatch. Prior hashes/invocation retained until each owner returns."
     },
     "qa-checklist": {
       "path": "docs/qa-checklist.md",
@@ -600,7 +2209,8 @@
         "NFR-019": {"path": "docs/qa-checklist.md", "heading": "### `QA-SEC-001` — Complete PRD security obligation coverage"}
       },
       "open_questions": [],
-      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
+      "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
+      "revalidation_reason": "Current Google-only owner-login and independent provider settings require source-grounded owner reconciliation. PRD now has validated JOB/UC coverage. The no-application-MFA decision is settled; dependencies, not a repeated MFA question, govern dispatch. Prior hashes/invocation retained until each owner returns."
     },
     "development-plan": {
       "path": "docs/development-plan.md",
@@ -642,7 +2252,8 @@
         "NFR-019": {"path": "docs/development-plan.md", "heading": "## Security Coverage"}
       },
       "open_questions": ["Production Matrix identities/room/device policy, final paths and JIT credentials remain external gates."],
-      "revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance."
+      "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
+      "revalidation_reason": "Current Google-only owner-login and independent provider settings require source-grounded owner reconciliation. PRD now has validated JOB/UC coverage. The no-application-MFA decision is settled; dependencies, not a repeated MFA question, govern dispatch. Prior hashes/invocation retained until each owner returns."
     }
   },
   "prototype_candidate_set": {
@@ -868,10 +2479,17 @@
       "resolution": "Reused the existing Google project and OAuth client. Added and verified the GoDaddy callback while preserving Cloudflare; saved the hosting authorized domain and identity-only scopes. No new client/project, credential operation, GoDaddy secret change or deployment. Live login remains unimplemented; this answer is not a future valid-plan implementation receipt.",
       "blocking_node": "google-owner-login-provider-configuration",
       "evidence_ref": "forge/google-owner-login-investigation-20260905.md"
+    },
+    {
+      "id": "google-owner-account-binding",
+      "status": "awaiting_answer",
+      "question": "Confirm whether the Google project's current administrator account is also the sole app-owner sign-in account.",
+      "blocking_node": "google-owner-login-credential-provisioning",
+      "scope": "Deployment identity only. Does not block source-grounded SDD reconciliation or authorize an unconfirmed owner account. The exact account remains outside this manifest."
     }
   ],
-  "next_ready_nodes": [],
-  "pause_reason": "Owner authorized modifying the existing Google project. The existing client's GoDaddy callback, hosting authorized domain and minimal identity scopes are saved and verified; no separate project/client was created. Credential provisioning, app implementation and real login remain unfinished; live /auth/google/start returned 404 at 2026-09-05T03:15:30Z. Bounded PRD auth reconciliation passed, but overall PRD advancement remains blocked by existing absent JOB-to-UC/use-case coverage, not by unanswered Google-configuration or MFA choices. Existing downstream source bindings and the invalid implementation gate remain preserved. No live-login or release success is claimed.",
+  "next_ready_nodes": ["user-journey"],
+  "pause_reason": "Checkpoint: source reconciliation through guardrails passed the current checker on Python 3.12.14. Five JOBs, six complete use cases and owner-returned typed links are recorded; context, terminology and access/provider rules now match Google-only owner login with no application MFA or password fallback. Journey, screens, design, architecture, verification and development-plan reconciliation remain unfinished and invalidated. Exact owner-account binding is pending user input before live access, not a blocker to document reconciliation. Credentials, production login code and live round-trip verification remain unfinished; the implementation gate is not released. No live-login or release success is claimed.",
   "resume_history": [{
     "type": "audit_remediation_request",
     "timestamp": null,
