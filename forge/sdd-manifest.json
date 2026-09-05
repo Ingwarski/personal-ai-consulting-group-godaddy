@@ -433,7 +433,7 @@
       "recorded_at": "2026-09-05T16:55:16.702Z"
     },
     "architecture": {
-      "invocation_id": "04349874-a162-45c6-be6c-d26172ec8f5e",
+      "invocation_id": "d0ecf837-81d5-4a44-9698-69c2a2b39f22",
       "outputs": [
         "docs/architecture.md"
       ],
@@ -483,7 +483,11 @@
         "scripts/godaddy-state-schema.sql": "full",
         "native/matrix-sidecar/Cargo.toml": "full",
         "native/matrix-sidecar/Cargo.lock": "full",
-        ".github/workflows/matrix-sidecar.yml": "full"
+        ".github/workflows/matrix-sidecar.yml": "full",
+        "src/godaddy/owner-google-auth.ts": "full",
+        "src/godaddy/google-identity-provider.ts": "full",
+        "src/godaddy/owner-auth-client.ts": "full",
+        "src/http/security-headers.ts": "full"
       },
       "source_hashes": {
         "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
@@ -496,20 +500,24 @@
         "README.md": "540a76cb67521d9f3652ec15604f9dc7657f865af639baf13df506f07288c81b",
         "forge/design/evidence/candidate-b/v2/approval-render-binding-20260905.json": "30d4d7665209f591821ed00bdb551789fb560a4056c50c3aa0ee7a64eade7598",
         "docs/g00-feasibility-receipt-2026-09-03.md": "352d3974ece6f53877aa8bd3596c004fde4a554fa5eacb60846163c2219c6744",
-        "package.json": "37c436772007d340d21c4b7b8c5d2c9c384262e758e935c949b6160752674614",
+        "package.json": "dd55c20318fa4cde6f8847af02049571954c4f01c40358061aeaf9bb1d500c21",
         "src/godaddy/server.mjs": "36fc71aa73e2ca505c1a0c51ebd61f7768e22de7ed2ad2d8fd2595713a2506cc",
-        "src/godaddy/mysql-storage.ts": "1341afa12c0ad04d6463d2bedf54ba813e6d4e4ee07e5d317a11d7c6c8319d1d",
+        "src/godaddy/mysql-storage.ts": "eead845b845f3dcef736c13048ac5c7f8bac2834b1b4b8487a59362ac639b41b",
         "src/godaddy/mysql-archive-storage.ts": "c00b5c3c7c2c5f2e87324e52e2bf43ddfd03be4a15ce293b21d0b9e3b5b3d60e",
         "src/godaddy/owner-password-auth.ts": "aeafa1a2391ed998554270ab366e08df3b79607bf20ab4637b91eb63b1bea354",
-        "src/godaddy/settings-runtime.ts": "87a41cf31345eef9120a829142e6162d74fd40fa8d3772a2eb40d51eff027d51",
-        "src/godaddy/application-runtime.ts": "66f4bee22e4e025d34a3c28ee7ad83e29308d622e70bc31bf2e23aacc43b794d",
+        "src/godaddy/settings-runtime.ts": "7b1516eabf6ec74748bf195b4b30962bdfe6679c5c6306e20b545ce93ff04b0e",
+        "src/godaddy/application-runtime.ts": "4e1a0aac6be32ab7b20ad46ded064f6884b1b54be2b48b8fd817a201d22cbd98",
         "src/godaddy/codex-app-server-process.ts": "8a0a990a28c51781e1cf07d354fe7a0c480bb1340f7abd08f0ef4d11a0294b84",
         "src/godaddy/claude-code-process.ts": "00c76653fa9234d45bde4049bd85cb2d5670a37561509ace222e543facef04b3",
         "test/godaddy-owner-password-auth.test.ts": "8d85b630cbd2819f1e3a582efa441c1aca13b866d55c316cc17a908b049f0158",
         "scripts/godaddy-state-schema.sql": "7070d2b83c2521a0994505c17cdec645820bfbcb0beb8014c17a9a09ea5a3e80",
         "native/matrix-sidecar/Cargo.toml": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1",
         "native/matrix-sidecar/Cargo.lock": "4a0469995afd74cd03b3095a180cef059ae0feb57008bb7cf6d000e007d55db7",
-        ".github/workflows/matrix-sidecar.yml": "7d938106d59726180af6951353af8ad5a244948fb1fc13af8f080547e026119e"
+        ".github/workflows/matrix-sidecar.yml": "7d938106d59726180af6951353af8ad5a244948fb1fc13af8f080547e026119e",
+        "src/godaddy/owner-google-auth.ts": "98185c8f1c9f8be3deb53071350a2665f4af5506671ced1b12579618a81cfa74",
+        "src/godaddy/google-identity-provider.ts": "849a97b03a654e709d8ece1e9f56435a111f3cd058830e670b3d261cb9f92c8d",
+        "src/godaddy/owner-auth-client.ts": "3ec94265b65f6dddbc162d76b27339100c9246984aae8a372e45a6d5f1de9864",
+        "src/http/security-headers.ts": "35c2b04a9a612783b613559e3339263f2f02689c0cb9e8a263ad6836c01b50e1"
       },
       "consumed_source_fragments": {
         "docs/project-context.md": [
@@ -583,7 +591,7 @@
           }
         ]
       },
-      "recorded_at": "2026-09-05T16:56:04.706Z"
+      "recorded_at": "2026-09-05T18:13:44.596Z"
     },
     "product-idea": {
       "invocation_id": "4a88d038-7d5c-4714-8f82-72c6a8c43f68",
@@ -765,7 +773,7 @@
       "recorded_at": "2026-09-05T16:53:19.547Z"
     },
     "dod-evals": {
-      "invocation_id": "038d1e3c-3aaf-465c-af48-cf0cd9e7f6f4",
+      "invocation_id": "cd85b9cb-9f5c-4399-830e-ddc1c5e2fb77",
       "outputs": [
         "docs/dod-evals.md"
       ],
@@ -811,7 +819,7 @@
         "docs/design-brief.md": "a5feac6981acefb15cc84e827080d72b4b7b3734a1e6487cf4046f611095396e",
         "docs/architecture.md": "4f89d993e0029b3dd5b34231ae4177ae315faa860d6e15212c689b8d67ff05d6",
         "docs/product-idea.md": "852758d725831ebb435da8ffd9a548a6ea1ad70fbab13261885a4793a12ad14e",
-        "package.json": "37c436772007d340d21c4b7b8c5d2c9c384262e758e935c949b6160752674614",
+        "package.json": "dd55c20318fa4cde6f8847af02049571954c4f01c40358061aeaf9bb1d500c21",
         ".github/workflows/matrix-sidecar.yml": "7d938106d59726180af6951353af8ad5a244948fb1fc13af8f080547e026119e",
         "native/matrix-sidecar/Cargo.toml": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1",
         "native/matrix-sidecar/Cargo.lock": "4a0469995afd74cd03b3095a180cef059ae0feb57008bb7cf6d000e007d55db7"
@@ -882,7 +890,7 @@
           }
         ]
       },
-      "recorded_at": "2026-09-05T17:34:43.932Z"
+      "recorded_at": "2026-09-05T18:06:27.893Z"
     },
     "qa-checklist": {
       "invocation_id": "7ab9f9be-9ee5-47a8-a329-5f77488253ad",
@@ -997,7 +1005,7 @@
       "recorded_at": "2026-09-05T17:34:45.692Z"
     },
     "development-plan": {
-      "invocation_id": "6e95790f-e5cd-428e-93fe-49b35bfa417b",
+      "invocation_id": "9d90a3cb-2ba6-4840-af45-8bd9a778cfd3",
       "outputs": [
         "docs/development-plan.md"
       ],
@@ -1079,7 +1087,7 @@
         "docs/wireframes.md": "e065b36af6ba851cb79a2028227b4599129da9c3656dc4be1a913d08cba62ed5",
         "docs/design-brief.md": "a5feac6981acefb15cc84e827080d72b4b7b3734a1e6487cf4046f611095396e",
         "docs/architecture.md": "4f89d993e0029b3dd5b34231ae4177ae315faa860d6e15212c689b8d67ff05d6",
-        "package.json": "37c436772007d340d21c4b7b8c5d2c9c384262e758e935c949b6160752674614",
+        "package.json": "dd55c20318fa4cde6f8847af02049571954c4f01c40358061aeaf9bb1d500c21",
         ".github/workflows/matrix-sidecar.yml": "7d938106d59726180af6951353af8ad5a244948fb1fc13af8f080547e026119e",
         "native/matrix-sidecar/Cargo.toml": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1"
       },
@@ -1293,14 +1301,14 @@
           }
         ]
       },
-      "recorded_at": "2026-09-05T17:35:16.807Z"
+      "recorded_at": "2026-09-05T18:06:53.120Z"
     }
   },
   "traceability_version": 1,
   "checker_contract_version": 1,
   "pipeline_version": "1.1.0",
-  "state": "awaiting-implementation-prompt",
-  "updated_at": "2026-09-05T17:35:39.845Z",
+  "state": "implementation",
+  "updated_at": "2026-09-05T18:19:07.827Z",
   "language": {
     "working_language": "uk",
     "selection_source": "recorded-preference",
@@ -5159,7 +5167,7 @@
     "architecture": {
       "path": "docs/architecture.md",
       "owner_skill": "to-architecture",
-      "owner_invocation_id": "04349874-a162-45c6-be6c-d26172ec8f5e",
+      "owner_invocation_id": "d0ecf837-81d5-4a44-9698-69c2a2b39f22",
       "declared_output_set": [
         "docs/architecture.md"
       ],
@@ -5197,20 +5205,24 @@
         "README.md": "540a76cb67521d9f3652ec15604f9dc7657f865af639baf13df506f07288c81b",
         "forge/design/evidence/candidate-b/v2/approval-render-binding-20260905.json": "30d4d7665209f591821ed00bdb551789fb560a4056c50c3aa0ee7a64eade7598",
         "docs/g00-feasibility-receipt-2026-09-03.md": "352d3974ece6f53877aa8bd3596c004fde4a554fa5eacb60846163c2219c6744",
-        "package.json": "37c436772007d340d21c4b7b8c5d2c9c384262e758e935c949b6160752674614",
+        "package.json": "dd55c20318fa4cde6f8847af02049571954c4f01c40358061aeaf9bb1d500c21",
         "src/godaddy/server.mjs": "36fc71aa73e2ca505c1a0c51ebd61f7768e22de7ed2ad2d8fd2595713a2506cc",
-        "src/godaddy/mysql-storage.ts": "1341afa12c0ad04d6463d2bedf54ba813e6d4e4ee07e5d317a11d7c6c8319d1d",
+        "src/godaddy/mysql-storage.ts": "eead845b845f3dcef736c13048ac5c7f8bac2834b1b4b8487a59362ac639b41b",
         "src/godaddy/mysql-archive-storage.ts": "c00b5c3c7c2c5f2e87324e52e2bf43ddfd03be4a15ce293b21d0b9e3b5b3d60e",
         "src/godaddy/owner-password-auth.ts": "aeafa1a2391ed998554270ab366e08df3b79607bf20ab4637b91eb63b1bea354",
-        "src/godaddy/settings-runtime.ts": "87a41cf31345eef9120a829142e6162d74fd40fa8d3772a2eb40d51eff027d51",
-        "src/godaddy/application-runtime.ts": "66f4bee22e4e025d34a3c28ee7ad83e29308d622e70bc31bf2e23aacc43b794d",
+        "src/godaddy/settings-runtime.ts": "7b1516eabf6ec74748bf195b4b30962bdfe6679c5c6306e20b545ce93ff04b0e",
+        "src/godaddy/application-runtime.ts": "4e1a0aac6be32ab7b20ad46ded064f6884b1b54be2b48b8fd817a201d22cbd98",
         "src/godaddy/codex-app-server-process.ts": "8a0a990a28c51781e1cf07d354fe7a0c480bb1340f7abd08f0ef4d11a0294b84",
         "src/godaddy/claude-code-process.ts": "00c76653fa9234d45bde4049bd85cb2d5670a37561509ace222e543facef04b3",
         "test/godaddy-owner-password-auth.test.ts": "8d85b630cbd2819f1e3a582efa441c1aca13b866d55c316cc17a908b049f0158",
         "scripts/godaddy-state-schema.sql": "7070d2b83c2521a0994505c17cdec645820bfbcb0beb8014c17a9a09ea5a3e80",
         "native/matrix-sidecar/Cargo.toml": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1",
         "native/matrix-sidecar/Cargo.lock": "4a0469995afd74cd03b3095a180cef059ae0feb57008bb7cf6d000e007d55db7",
-        ".github/workflows/matrix-sidecar.yml": "7d938106d59726180af6951353af8ad5a244948fb1fc13af8f080547e026119e"
+        ".github/workflows/matrix-sidecar.yml": "7d938106d59726180af6951353af8ad5a244948fb1fc13af8f080547e026119e",
+        "src/godaddy/owner-google-auth.ts": "98185c8f1c9f8be3deb53071350a2665f4af5506671ced1b12579618a81cfa74",
+        "src/godaddy/google-identity-provider.ts": "849a97b03a654e709d8ece1e9f56435a111f3cd058830e670b3d261cb9f92c8d",
+        "src/godaddy/owner-auth-client.ts": "3ec94265b65f6dddbc162d76b27339100c9246984aae8a372e45a6d5f1de9864",
+        "src/http/security-headers.ts": "35c2b04a9a612783b613559e3339263f2f02689c0cb9e8a263ad6836c01b50e1"
       },
       "consumed_source_fragments": {
         "docs/project-context.md": [
@@ -5291,8 +5303,8 @@
         "validated_at": "2026-09-05T16:06:49.650Z",
         "executor": "root inline to-architecture continuation",
         "scope": "Affected auth, provider, scoped repository and baseline reconciliation; tests not run",
-        "reviewed_at": "2026-09-05T16:56:29.586Z",
-        "review_scope": "Перевірено незмінні механізми NFR-016.a–h, ізоляцію Google/local/AI, DB/configuration та provider-readiness. Хеші названих code/schema/CI observations повторно звірені, файли незмінні; нових runtime-тестів або deployment немає. Поточний report спожито лише як збережене Google-спостереження.",
+        "reviewed_at": "2026-09-05T18:13:44.916Z",
+        "review_scope": "Завершальна no-change перевірка §8: до source bindings явно додані фактично прочитані нові owner-google-auth, Google identity provider, owner-auth-client та змінені security headers. Перевірено остаточний d00f8c9: stale generation не перезаписує нові sessions; activation latch встановлюється після commit; JWT/nonce/network і purpose-bound CSRF залишаються в межах target contract. Архітектурний текст, PRD і baseline не змінені; датований preimplementation Source References збережений як історичний snapshot. Це не live/ASVS certification.",
         "checker_revision": "408af3a"
       },
       "security_coverage": {
@@ -5344,7 +5356,7 @@
       "open_questions": [],
       "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
       "supersedes": {
-        "owner_invocation_id": "4222ec69-7773-48e7-80d4-068903a61683",
+        "owner_invocation_id": "732fc07e-645e-4d94-9e89-1baf3a6d8f57",
         "content_hash": "4f89d993e0029b3dd5b34231ae4177ae315faa860d6e15212c689b8d67ff05d6",
         "source_hashes": {
           "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
@@ -5353,20 +5365,17 @@
           "docs/screen-map.md": "fe25f595f954cb7b04e369aec65066ec31d7a66a3359953c968343713d41039d",
           "docs/wireframes.md": "e065b36af6ba851cb79a2028227b4599129da9c3656dc4be1a913d08cba62ed5",
           "docs/design-brief.md": "a5feac6981acefb15cc84e827080d72b4b7b3734a1e6487cf4046f611095396e",
-          "docs/project-context.md": "458da1092f8ac6b10fca6aadc33fab6b9b56aef650fff23e814fe84cb15735a4",
-          "docs/canonical-terms.md": "dd4a7ef9ee403f941b649247b14eafff044af717d54fb8731b0d2d26665848d3",
           "docs/product-idea.md": "852758d725831ebb435da8ffd9a548a6ea1ad70fbab13261885a4793a12ad14e",
           "README.md": "540a76cb67521d9f3652ec15604f9dc7657f865af639baf13df506f07288c81b",
-          "forge/google-owner-login-investigation-20260905.md": "9b0b7e1b925cf5a05abdd83dccc5741594ddd121df653f43c4eb9218e915614f",
           "forge/design/evidence/candidate-b/v2/approval-render-binding-20260905.json": "30d4d7665209f591821ed00bdb551789fb560a4056c50c3aa0ee7a64eade7598",
           "docs/g00-feasibility-receipt-2026-09-03.md": "352d3974ece6f53877aa8bd3596c004fde4a554fa5eacb60846163c2219c6744",
-          "package.json": "37c436772007d340d21c4b7b8c5d2c9c384262e758e935c949b6160752674614",
+          "package.json": "dd55c20318fa4cde6f8847af02049571954c4f01c40358061aeaf9bb1d500c21",
           "src/godaddy/server.mjs": "36fc71aa73e2ca505c1a0c51ebd61f7768e22de7ed2ad2d8fd2595713a2506cc",
-          "src/godaddy/mysql-storage.ts": "1341afa12c0ad04d6463d2bedf54ba813e6d4e4ee07e5d317a11d7c6c8319d1d",
+          "src/godaddy/mysql-storage.ts": "eead845b845f3dcef736c13048ac5c7f8bac2834b1b4b8487a59362ac639b41b",
           "src/godaddy/mysql-archive-storage.ts": "c00b5c3c7c2c5f2e87324e52e2bf43ddfd03be4a15ce293b21d0b9e3b5b3d60e",
           "src/godaddy/owner-password-auth.ts": "aeafa1a2391ed998554270ab366e08df3b79607bf20ab4637b91eb63b1bea354",
-          "src/godaddy/settings-runtime.ts": "87a41cf31345eef9120a829142e6162d74fd40fa8d3772a2eb40d51eff027d51",
-          "src/godaddy/application-runtime.ts": "66f4bee22e4e025d34a3c28ee7ad83e29308d622e70bc31bf2e23aacc43b794d",
+          "src/godaddy/settings-runtime.ts": "7b1516eabf6ec74748bf195b4b30962bdfe6679c5c6306e20b545ce93ff04b0e",
+          "src/godaddy/application-runtime.ts": "4e1a0aac6be32ab7b20ad46ded064f6884b1b54be2b48b8fd817a201d22cbd98",
           "src/godaddy/codex-app-server-process.ts": "8a0a990a28c51781e1cf07d354fe7a0c480bb1340f7abd08f0ef4d11a0294b84",
           "src/godaddy/claude-code-process.ts": "00c76653fa9234d45bde4049bd85cb2d5670a37561509ace222e543facef04b3",
           "test/godaddy-owner-password-auth.test.ts": "8d85b630cbd2819f1e3a582efa441c1aca13b866d55c316cc17a908b049f0158",
@@ -5381,25 +5390,108 @@
           "validated_at": "2026-09-05T16:06:49.650Z",
           "executor": "root inline to-architecture continuation",
           "scope": "Affected auth, provider, scoped repository and baseline reconciliation; tests not run",
-          "checker_result": "blocked",
-          "checker_issue": "source_usage_missing after concurrent uncommitted shared-checker change"
+          "reviewed_at": "2026-09-05T18:06:26.779Z",
+          "review_scope": "Після реалізації U-04 повторно перевірено зміни package.json, MySQL fail-closed parsing, settings HTTP adapter і незалежний запуск Matrix. Механізми §8 та approved baseline не змінені: Google-only, PKCE, bounded verified JWT, одноразовий durable claim, generation/session/CSRF та no-referrer + cors. Source References у документі лишаються датованим знімком попередньої інвокації, не новою заявою про поточний код. Нові кодові спостереження прив'язані до поточних хешів; живі Google/MySQL/GoDaddy докази не заявляються.",
+          "checker_revision": "408af3a"
         },
         "supersedes": {
-          "owner_invocation_id": "3a6b70d5-d73f-414f-8f06-3a004cc1c66e",
-          "content_hash": "96366beeb83c11336b6466618115af51cb8190a05afec03fe0ad697adc89929e",
+          "owner_invocation_id": "04349874-a162-45c6-be6c-d26172ec8f5e",
+          "content_hash": "4f89d993e0029b3dd5b34231ae4177ae315faa860d6e15212c689b8d67ff05d6",
           "source_hashes": {
-            "docs/prd.md": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
-            "docs/project-context.md": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
-            "docs/canonical-terms.md": "e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da",
-            "docs/guardrails.md": "4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48",
-            "docs/user-journey.md": "dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77",
-            "docs/screen-map.md": "385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52",
-            "docs/wireframes.md": "49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca",
-            "docs/design-brief.md": "719a32b4ea4fef9f9eaa0ee08864f00fa57f9637be530e67c404d58d1c2e5608"
+            "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
+            "docs/guardrails.md": "6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b",
+            "docs/user-journey.md": "ef058d468fde194ff38efe5d209edbdc3f061d90e4f9602671071c1cc28b2c39",
+            "docs/screen-map.md": "fe25f595f954cb7b04e369aec65066ec31d7a66a3359953c968343713d41039d",
+            "docs/wireframes.md": "e065b36af6ba851cb79a2028227b4599129da9c3656dc4be1a913d08cba62ed5",
+            "docs/design-brief.md": "a5feac6981acefb15cc84e827080d72b4b7b3734a1e6487cf4046f611095396e",
+            "docs/product-idea.md": "852758d725831ebb435da8ffd9a548a6ea1ad70fbab13261885a4793a12ad14e",
+            "README.md": "540a76cb67521d9f3652ec15604f9dc7657f865af639baf13df506f07288c81b",
+            "forge/design/evidence/candidate-b/v2/approval-render-binding-20260905.json": "30d4d7665209f591821ed00bdb551789fb560a4056c50c3aa0ee7a64eade7598",
+            "docs/g00-feasibility-receipt-2026-09-03.md": "352d3974ece6f53877aa8bd3596c004fde4a554fa5eacb60846163c2219c6744",
+            "package.json": "37c436772007d340d21c4b7b8c5d2c9c384262e758e935c949b6160752674614",
+            "src/godaddy/server.mjs": "36fc71aa73e2ca505c1a0c51ebd61f7768e22de7ed2ad2d8fd2595713a2506cc",
+            "src/godaddy/mysql-storage.ts": "1341afa12c0ad04d6463d2bedf54ba813e6d4e4ee07e5d317a11d7c6c8319d1d",
+            "src/godaddy/mysql-archive-storage.ts": "c00b5c3c7c2c5f2e87324e52e2bf43ddfd03be4a15ce293b21d0b9e3b5b3d60e",
+            "src/godaddy/owner-password-auth.ts": "aeafa1a2391ed998554270ab366e08df3b79607bf20ab4637b91eb63b1bea354",
+            "src/godaddy/settings-runtime.ts": "87a41cf31345eef9120a829142e6162d74fd40fa8d3772a2eb40d51eff027d51",
+            "src/godaddy/application-runtime.ts": "66f4bee22e4e025d34a3c28ee7ad83e29308d622e70bc31bf2e23aacc43b794d",
+            "src/godaddy/codex-app-server-process.ts": "8a0a990a28c51781e1cf07d354fe7a0c480bb1340f7abd08f0ef4d11a0294b84",
+            "src/godaddy/claude-code-process.ts": "00c76653fa9234d45bde4049bd85cb2d5670a37561509ace222e543facef04b3",
+            "test/godaddy-owner-password-auth.test.ts": "8d85b630cbd2819f1e3a582efa441c1aca13b866d55c316cc17a908b049f0158",
+            "scripts/godaddy-state-schema.sql": "7070d2b83c2521a0994505c17cdec645820bfbcb0beb8014c17a9a09ea5a3e80",
+            "native/matrix-sidecar/Cargo.toml": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1",
+            "native/matrix-sidecar/Cargo.lock": "4a0469995afd74cd03b3095a180cef059ae0feb57008bb7cf6d000e007d55db7",
+            ".github/workflows/matrix-sidecar.yml": "7d938106d59726180af6951353af8ad5a244948fb1fc13af8f080547e026119e"
           },
           "validation": {
             "result": "passed",
-            "working_language": "uk"
+            "working_language": "uk",
+            "validated_at": "2026-09-05T16:06:49.650Z",
+            "executor": "root inline to-architecture continuation",
+            "scope": "Affected auth, provider, scoped repository and baseline reconciliation; tests not run",
+            "reviewed_at": "2026-09-05T16:56:29.586Z",
+            "review_scope": "Перевірено незмінні механізми NFR-016.a–h, ізоляцію Google/local/AI, DB/configuration та provider-readiness. Хеші названих code/schema/CI observations повторно звірені, файли незмінні; нових runtime-тестів або deployment немає. Поточний report спожито лише як збережене Google-спостереження.",
+            "checker_revision": "408af3a"
+          },
+          "supersedes": {
+            "owner_invocation_id": "4222ec69-7773-48e7-80d4-068903a61683",
+            "content_hash": "4f89d993e0029b3dd5b34231ae4177ae315faa860d6e15212c689b8d67ff05d6",
+            "source_hashes": {
+              "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
+              "docs/guardrails.md": "6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b",
+              "docs/user-journey.md": "ef058d468fde194ff38efe5d209edbdc3f061d90e4f9602671071c1cc28b2c39",
+              "docs/screen-map.md": "fe25f595f954cb7b04e369aec65066ec31d7a66a3359953c968343713d41039d",
+              "docs/wireframes.md": "e065b36af6ba851cb79a2028227b4599129da9c3656dc4be1a913d08cba62ed5",
+              "docs/design-brief.md": "a5feac6981acefb15cc84e827080d72b4b7b3734a1e6487cf4046f611095396e",
+              "docs/project-context.md": "458da1092f8ac6b10fca6aadc33fab6b9b56aef650fff23e814fe84cb15735a4",
+              "docs/canonical-terms.md": "dd4a7ef9ee403f941b649247b14eafff044af717d54fb8731b0d2d26665848d3",
+              "docs/product-idea.md": "852758d725831ebb435da8ffd9a548a6ea1ad70fbab13261885a4793a12ad14e",
+              "README.md": "540a76cb67521d9f3652ec15604f9dc7657f865af639baf13df506f07288c81b",
+              "forge/google-owner-login-investigation-20260905.md": "9b0b7e1b925cf5a05abdd83dccc5741594ddd121df653f43c4eb9218e915614f",
+              "forge/design/evidence/candidate-b/v2/approval-render-binding-20260905.json": "30d4d7665209f591821ed00bdb551789fb560a4056c50c3aa0ee7a64eade7598",
+              "docs/g00-feasibility-receipt-2026-09-03.md": "352d3974ece6f53877aa8bd3596c004fde4a554fa5eacb60846163c2219c6744",
+              "package.json": "37c436772007d340d21c4b7b8c5d2c9c384262e758e935c949b6160752674614",
+              "src/godaddy/server.mjs": "36fc71aa73e2ca505c1a0c51ebd61f7768e22de7ed2ad2d8fd2595713a2506cc",
+              "src/godaddy/mysql-storage.ts": "1341afa12c0ad04d6463d2bedf54ba813e6d4e4ee07e5d317a11d7c6c8319d1d",
+              "src/godaddy/mysql-archive-storage.ts": "c00b5c3c7c2c5f2e87324e52e2bf43ddfd03be4a15ce293b21d0b9e3b5b3d60e",
+              "src/godaddy/owner-password-auth.ts": "aeafa1a2391ed998554270ab366e08df3b79607bf20ab4637b91eb63b1bea354",
+              "src/godaddy/settings-runtime.ts": "87a41cf31345eef9120a829142e6162d74fd40fa8d3772a2eb40d51eff027d51",
+              "src/godaddy/application-runtime.ts": "66f4bee22e4e025d34a3c28ee7ad83e29308d622e70bc31bf2e23aacc43b794d",
+              "src/godaddy/codex-app-server-process.ts": "8a0a990a28c51781e1cf07d354fe7a0c480bb1340f7abd08f0ef4d11a0294b84",
+              "src/godaddy/claude-code-process.ts": "00c76653fa9234d45bde4049bd85cb2d5670a37561509ace222e543facef04b3",
+              "test/godaddy-owner-password-auth.test.ts": "8d85b630cbd2819f1e3a582efa441c1aca13b866d55c316cc17a908b049f0158",
+              "scripts/godaddy-state-schema.sql": "7070d2b83c2521a0994505c17cdec645820bfbcb0beb8014c17a9a09ea5a3e80",
+              "native/matrix-sidecar/Cargo.toml": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1",
+              "native/matrix-sidecar/Cargo.lock": "4a0469995afd74cd03b3095a180cef059ae0feb57008bb7cf6d000e007d55db7",
+              ".github/workflows/matrix-sidecar.yml": "7d938106d59726180af6951353af8ad5a244948fb1fc13af8f080547e026119e"
+            },
+            "validation": {
+              "result": "passed",
+              "working_language": "uk",
+              "validated_at": "2026-09-05T16:06:49.650Z",
+              "executor": "root inline to-architecture continuation",
+              "scope": "Affected auth, provider, scoped repository and baseline reconciliation; tests not run",
+              "checker_result": "blocked",
+              "checker_issue": "source_usage_missing after concurrent uncommitted shared-checker change"
+            },
+            "supersedes": {
+              "owner_invocation_id": "3a6b70d5-d73f-414f-8f06-3a004cc1c66e",
+              "content_hash": "96366beeb83c11336b6466618115af51cb8190a05afec03fe0ad697adc89929e",
+              "source_hashes": {
+                "docs/prd.md": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
+                "docs/project-context.md": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
+                "docs/canonical-terms.md": "e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da",
+                "docs/guardrails.md": "4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48",
+                "docs/user-journey.md": "dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77",
+                "docs/screen-map.md": "385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52",
+                "docs/wireframes.md": "49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca",
+                "docs/design-brief.md": "719a32b4ea4fef9f9eaa0ee08864f00fa57f9637be530e67c404d58d1c2e5608"
+              },
+              "validation": {
+                "result": "passed",
+                "working_language": "uk"
+              }
+            }
           }
         }
       },
@@ -5449,13 +5541,30 @@
         "scripts/godaddy-state-schema.sql": "full",
         "native/matrix-sidecar/Cargo.toml": "full",
         "native/matrix-sidecar/Cargo.lock": "full",
-        ".github/workflows/matrix-sidecar.yml": "full"
+        ".github/workflows/matrix-sidecar.yml": "full",
+        "src/godaddy/owner-google-auth.ts": "full",
+        "src/godaddy/google-identity-provider.ts": "full",
+        "src/godaddy/owner-auth-client.ts": "full",
+        "src/http/security-headers.ts": "full"
+      },
+      "implementation_observations": {
+        "reviewed_at": "2026-09-05T18:06:26.633Z",
+        "scope": [
+          "U-04",
+          "U-01 composition seam",
+          "U-03 identity adapter",
+          "U-07 session-bound gateway"
+        ],
+        "document_semantics": "existing_target_contract_unchanged",
+        "historical_source_table": "retained_as_dated_preimplementation_snapshot",
+        "external_verification": "not_run",
+        "open_variance": "Callback rate limit uses clean 303 to a fixed retry page returning429; same limiter and bounded Retry-After. No policy weakening."
       }
     },
     "dod-evals": {
       "path": "docs/dod-evals.md",
       "owner_skill": "to-dod-evals",
-      "owner_invocation_id": "038d1e3c-3aaf-465c-af48-cf0cd9e7f6f4",
+      "owner_invocation_id": "cd85b9cb-9f5c-4399-830e-ddc1c5e2fb77",
       "declared_output_set": [
         "docs/dod-evals.md"
       ],
@@ -5493,7 +5602,7 @@
         "docs/design-brief.md": "a5feac6981acefb15cc84e827080d72b4b7b3734a1e6487cf4046f611095396e",
         "docs/architecture.md": "4f89d993e0029b3dd5b34231ae4177ae315faa860d6e15212c689b8d67ff05d6",
         "docs/product-idea.md": "852758d725831ebb435da8ffd9a548a6ea1ad70fbab13261885a4793a12ad14e",
-        "package.json": "37c436772007d340d21c4b7b8c5d2c9c384262e758e935c949b6160752674614",
+        "package.json": "dd55c20318fa4cde6f8847af02049571954c4f01c40358061aeaf9bb1d500c21",
         ".github/workflows/matrix-sidecar.yml": "7d938106d59726180af6951353af8ad5a244948fb1fc13af8f080547e026119e",
         "native/matrix-sidecar/Cargo.toml": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1",
         "native/matrix-sidecar/Cargo.lock": "4a0469995afd74cd03b3095a180cef059ae0feb57008bb7cf6d000e007d55db7"
@@ -5568,8 +5677,8 @@
       "validation": {
         "result": "passed",
         "working_language": "uk",
-        "reviewed_at": "2026-09-05T17:34:44.442Z",
-        "review_scope": "Final semantic-language correction: Google-вхід із локальною сесією; Rust mechanism attribution removed from PI source row (architecture remains authority). No gate or product scope change.",
+        "reviewed_at": "2026-09-05T18:06:28.204Z",
+        "review_scope": "Перевірено package.json після встановлення рівно google-auth-library 11.0.2 та незмінні architecture/PRD/baseline. Команди build/typecheck/test/environment і gate definitions не потребують зміни. Ця owner-інвокація лише повторно валідує визначення; вона не виконувала тести й не оголошує release або security gate passed.",
         "checker_revision": "408af3a"
       },
       "security_coverage": {
@@ -5654,8 +5763,8 @@
         "native/matrix-sidecar/Cargo.lock": "full"
       },
       "supersedes": {
-        "owner_invocation_id": "fc5d070b-3ce6-4ebd-9fe6-6efb6041f6e3",
-        "content_hash": "8c5531c80bb4019dd4359f4434332e41fb8ec08eaf2899d4432cf5179c7653f1",
+        "owner_invocation_id": "038d1e3c-3aaf-465c-af48-cf0cd9e7f6f4",
+        "content_hash": "a044585f2d94376eacd3924f751d19de93cdbe20074e30bad5cf291d880a5d7e",
         "source_hashes": {
           "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
           "docs/guardrails.md": "6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b",
@@ -5673,27 +5782,52 @@
         "validation": {
           "result": "passed",
           "working_language": "uk",
-          "reviewed_at": "2026-09-05T17:01:53.006Z",
-          "review_scope": "Збережено G-01–G-23 (G-13 історичний неактивний). Узгоджено G-18 із Google та всіма NFR-016.a–h/FR-038(a–d)/FR-039(a–c), G-19 з незалежними провайдерами, DB-D18/DB-D19 і v2 render binding; виправлено застарілі Rust/CI/MFA твердження. Визначення підготовлені, гейти не виконано.",
+          "reviewed_at": "2026-09-05T17:34:44.442Z",
+          "review_scope": "Final semantic-language correction: Google-вхід із локальною сесією; Rust mechanism attribution removed from PI source row (architecture remains authority). No gate or product scope change.",
           "checker_revision": "408af3a"
         },
         "supersedes": {
-          "owner_invocation_id": "2ed3d2cc-bad8-48f1-bf8e-c892d7bb9e6c",
-          "content_hash": "135dc8038171a95d4dc84796c2c0d58c8fc886c73ded6d6b9c881b53da1e0fc5",
+          "owner_invocation_id": "fc5d070b-3ce6-4ebd-9fe6-6efb6041f6e3",
+          "content_hash": "8c5531c80bb4019dd4359f4434332e41fb8ec08eaf2899d4432cf5179c7653f1",
           "source_hashes": {
-            "docs/prd.md": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
-            "docs/project-context.md": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
-            "docs/canonical-terms.md": "e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da",
-            "docs/guardrails.md": "4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48",
-            "docs/user-journey.md": "dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77",
-            "docs/screen-map.md": "385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52",
-            "docs/wireframes.md": "49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca",
-            "docs/design-brief.md": "719a32b4ea4fef9f9eaa0ee08864f00fa57f9637be530e67c404d58d1c2e5608",
-            "docs/architecture.md": "96366beeb83c11336b6466618115af51cb8190a05afec03fe0ad697adc89929e"
+            "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
+            "docs/guardrails.md": "6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b",
+            "docs/user-journey.md": "ef058d468fde194ff38efe5d209edbdc3f061d90e4f9602671071c1cc28b2c39",
+            "docs/screen-map.md": "fe25f595f954cb7b04e369aec65066ec31d7a66a3359953c968343713d41039d",
+            "docs/wireframes.md": "e065b36af6ba851cb79a2028227b4599129da9c3656dc4be1a913d08cba62ed5",
+            "docs/design-brief.md": "a5feac6981acefb15cc84e827080d72b4b7b3734a1e6487cf4046f611095396e",
+            "docs/architecture.md": "4f89d993e0029b3dd5b34231ae4177ae315faa860d6e15212c689b8d67ff05d6",
+            "docs/product-idea.md": "852758d725831ebb435da8ffd9a548a6ea1ad70fbab13261885a4793a12ad14e",
+            "package.json": "37c436772007d340d21c4b7b8c5d2c9c384262e758e935c949b6160752674614",
+            ".github/workflows/matrix-sidecar.yml": "7d938106d59726180af6951353af8ad5a244948fb1fc13af8f080547e026119e",
+            "native/matrix-sidecar/Cargo.toml": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1",
+            "native/matrix-sidecar/Cargo.lock": "4a0469995afd74cd03b3095a180cef059ae0feb57008bb7cf6d000e007d55db7"
           },
           "validation": {
             "result": "passed",
-            "working_language": "uk"
+            "working_language": "uk",
+            "reviewed_at": "2026-09-05T17:01:53.006Z",
+            "review_scope": "Збережено G-01–G-23 (G-13 історичний неактивний). Узгоджено G-18 із Google та всіма NFR-016.a–h/FR-038(a–d)/FR-039(a–c), G-19 з незалежними провайдерами, DB-D18/DB-D19 і v2 render binding; виправлено застарілі Rust/CI/MFA твердження. Визначення підготовлені, гейти не виконано.",
+            "checker_revision": "408af3a"
+          },
+          "supersedes": {
+            "owner_invocation_id": "2ed3d2cc-bad8-48f1-bf8e-c892d7bb9e6c",
+            "content_hash": "135dc8038171a95d4dc84796c2c0d58c8fc886c73ded6d6b9c881b53da1e0fc5",
+            "source_hashes": {
+              "docs/prd.md": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
+              "docs/project-context.md": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
+              "docs/canonical-terms.md": "e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da",
+              "docs/guardrails.md": "4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48",
+              "docs/user-journey.md": "dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77",
+              "docs/screen-map.md": "385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52",
+              "docs/wireframes.md": "49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca",
+              "docs/design-brief.md": "719a32b4ea4fef9f9eaa0ee08864f00fa57f9637be530e67c404d58d1c2e5608",
+              "docs/architecture.md": "96366beeb83c11336b6466618115af51cb8190a05afec03fe0ad697adc89929e"
+            },
+            "validation": {
+              "result": "passed",
+              "working_language": "uk"
+            }
           }
         }
       }
@@ -8348,7 +8482,7 @@
     "development-plan": {
       "path": "docs/development-plan.md",
       "owner_skill": "to-development-plan",
-      "owner_invocation_id": "6e95790f-e5cd-428e-93fe-49b35bfa417b",
+      "owner_invocation_id": "9d90a3cb-2ba6-4840-af45-8bd9a778cfd3",
       "declared_output_set": [
         "docs/development-plan.md"
       ],
@@ -8389,7 +8523,7 @@
         "docs/wireframes.md": "e065b36af6ba851cb79a2028227b4599129da9c3656dc4be1a913d08cba62ed5",
         "docs/design-brief.md": "a5feac6981acefb15cc84e827080d72b4b7b3734a1e6487cf4046f611095396e",
         "docs/architecture.md": "4f89d993e0029b3dd5b34231ae4177ae315faa860d6e15212c689b8d67ff05d6",
-        "package.json": "37c436772007d340d21c4b7b8c5d2c9c384262e758e935c949b6160752674614",
+        "package.json": "dd55c20318fa4cde6f8847af02049571954c4f01c40358061aeaf9bb1d500c21",
         ".github/workflows/matrix-sidecar.yml": "7d938106d59726180af6951353af8ad5a244948fb1fc13af8f080547e026119e",
         "native/matrix-sidecar/Cargo.toml": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1"
       },
@@ -8607,8 +8741,8 @@
       "validation": {
         "result": "passed",
         "working_language": "uk",
-        "reviewed_at": "2026-09-05T17:35:38.727Z",
-        "review_scope": "Final upstream wording/definition bindings rechecked. Unit scope, traceability, evidence limitations and separate implementation-prompt boundary unchanged.",
+        "reviewed_at": "2026-09-05T18:06:53.433Z",
+        "review_scope": "Повторно перевірено зміни package.json та виконувані команди після U-04; поточні PRD/architecture/DoD/QA і frozen baseline незмінні. Межі U-04, залежні seams, усі unit/check mappings і дозволені adaptations лишаються чинними. Actual runner checkout a402199 і planned comparison anchor7d2e944 розрізняються в operational promotion receipt; історичне походження destination bytes не відновлюється заднім числом. U-04 не оголошено завершеним без решти обов'язкових live/visual/user evidence; наступний Unit не починається.",
         "checker_revision": "408af3a"
       },
       "security_coverage": {
@@ -10575,8 +10709,8 @@
         ]
       },
       "supersedes": {
-        "owner_invocation_id": "40292cef-041c-4d63-bddf-866e09cc383c",
-        "content_hash": "fff7e2fd75c29df80078ff1333f4846e51dea90cac7d9a6c36981ad9273b1bdf",
+        "owner_invocation_id": "6e95790f-e5cd-428e-93fe-49b35bfa417b",
+        "content_hash": "f17072dc044dc12ee20039a78f856801df5121aef19922966fece2eebf17d15a",
         "source_hashes": {
           "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
           "docs/guardrails.md": "6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b",
@@ -10592,29 +10726,52 @@
         "validation": {
           "result": "passed",
           "working_language": "uk",
-          "reviewed_at": "2026-09-05T17:30:43.363Z",
-          "review_scope": "Збережено G-00 і U-01–U-09 та історію часткової реалізації. Узгоджено U-04 Google-only, незалежні provider settings/readiness, усі 73 вимоги й 46 станів, 134 QA checks/22 active gates, JOB/UC/UI/lifecycle/interfaces; зафіксовано missing historical promotion receipt без реконструкції. QA execution results не спожито; чекати окремий implementation prompt.",
+          "reviewed_at": "2026-09-05T17:35:38.727Z",
+          "review_scope": "Final upstream wording/definition bindings rechecked. Unit scope, traceability, evidence limitations and separate implementation-prompt boundary unchanged.",
           "checker_revision": "408af3a"
         },
         "supersedes": {
-          "owner_invocation_id": "990d3f67-1e4a-460d-8722-0292ddf2570b",
-          "content_hash": "a38919e0a84c61b081661227bd5ee936744bb9781dba2286ecc25d7d7e3974ca",
+          "owner_invocation_id": "40292cef-041c-4d63-bddf-866e09cc383c",
+          "content_hash": "fff7e2fd75c29df80078ff1333f4846e51dea90cac7d9a6c36981ad9273b1bdf",
           "source_hashes": {
-            "docs/prd.md": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
-            "docs/project-context.md": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
-            "docs/canonical-terms.md": "e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da",
-            "docs/guardrails.md": "4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48",
-            "docs/user-journey.md": "dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77",
-            "docs/screen-map.md": "385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52",
-            "docs/wireframes.md": "49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca",
-            "docs/design-brief.md": "719a32b4ea4fef9f9eaa0ee08864f00fa57f9637be530e67c404d58d1c2e5608",
-            "docs/architecture.md": "96366beeb83c11336b6466618115af51cb8190a05afec03fe0ad697adc89929e",
-            "docs/dod-evals.md": "135dc8038171a95d4dc84796c2c0d58c8fc886c73ded6d6b9c881b53da1e0fc5",
-            "docs/qa-checklist.md": "6dcd97be6b137dedc75f13b6c7dd37f6716ef95fe7c67dc5989233783d8b8006"
+            "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
+            "docs/guardrails.md": "6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b",
+            "docs/user-journey.md": "ef058d468fde194ff38efe5d209edbdc3f061d90e4f9602671071c1cc28b2c39",
+            "docs/screen-map.md": "fe25f595f954cb7b04e369aec65066ec31d7a66a3359953c968343713d41039d",
+            "docs/wireframes.md": "e065b36af6ba851cb79a2028227b4599129da9c3656dc4be1a913d08cba62ed5",
+            "docs/design-brief.md": "a5feac6981acefb15cc84e827080d72b4b7b3734a1e6487cf4046f611095396e",
+            "docs/architecture.md": "4f89d993e0029b3dd5b34231ae4177ae315faa860d6e15212c689b8d67ff05d6",
+            "package.json": "37c436772007d340d21c4b7b8c5d2c9c384262e758e935c949b6160752674614",
+            ".github/workflows/matrix-sidecar.yml": "7d938106d59726180af6951353af8ad5a244948fb1fc13af8f080547e026119e",
+            "native/matrix-sidecar/Cargo.toml": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1"
           },
           "validation": {
             "result": "passed",
-            "working_language": "uk"
+            "working_language": "uk",
+            "reviewed_at": "2026-09-05T17:30:43.363Z",
+            "review_scope": "Збережено G-00 і U-01–U-09 та історію часткової реалізації. Узгоджено U-04 Google-only, незалежні provider settings/readiness, усі 73 вимоги й 46 станів, 134 QA checks/22 active gates, JOB/UC/UI/lifecycle/interfaces; зафіксовано missing historical promotion receipt без реконструкції. QA execution results не спожито; чекати окремий implementation prompt.",
+            "checker_revision": "408af3a"
+          },
+          "supersedes": {
+            "owner_invocation_id": "990d3f67-1e4a-460d-8722-0292ddf2570b",
+            "content_hash": "a38919e0a84c61b081661227bd5ee936744bb9781dba2286ecc25d7d7e3974ca",
+            "source_hashes": {
+              "docs/prd.md": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
+              "docs/project-context.md": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
+              "docs/canonical-terms.md": "e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da",
+              "docs/guardrails.md": "4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48",
+              "docs/user-journey.md": "dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77",
+              "docs/screen-map.md": "385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52",
+              "docs/wireframes.md": "49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca",
+              "docs/design-brief.md": "719a32b4ea4fef9f9eaa0ee08864f00fa57f9637be530e67c404d58d1c2e5608",
+              "docs/architecture.md": "96366beeb83c11336b6466618115af51cb8190a05afec03fe0ad697adc89929e",
+              "docs/dod-evals.md": "135dc8038171a95d4dc84796c2c0d58c8fc886c73ded6d6b9c881b53da1e0fc5",
+              "docs/qa-checklist.md": "6dcd97be6b137dedc75f13b6c7dd37f6716ef95fe7c67dc5989233783d8b8006"
+            },
+            "validation": {
+              "result": "passed",
+              "working_language": "uk"
+            }
           }
         }
       }
@@ -10668,8 +10825,8 @@
       "status": "verified",
       "recorded_hash": "57d103c5ed17bcc9a9d95a58718f83c33b8257229fc825b756367321eaa33199",
       "observed_hash": "57d103c5ed17bcc9a9d95a58718f83c33b8257229fc825b756367321eaa33199",
-      "checked_at": "2026-09-05T15:45:55.159Z",
-      "scope": "Current declared root and two shared dependencies; static closure verified. Historical August16 exact root continuity remains unproven; no new browser or approval event."
+      "checked_at": "2026-09-05T18:19:07.544Z",
+      "scope": "Current candidate root and both frozen shared dependencies rechecked by post-U04 implementation checker; no frozen edits or new approval. Historical August16 continuity limitation unchanged."
     },
     "prior_operator_overrides": [
       "SUR-02 uses the approved HappyPro Academy palette; no product-authored notification sound.",
@@ -14695,25 +14852,39 @@
     ]
   },
   "implementation_gate": {
-    "state": "awaiting-implementation-prompt",
+    "state": "authorized_for_phase3",
     "development_plan_hash": "f17072dc044dc12ee20039a78f856801df5121aef19922966fece2eebf17d15a",
     "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
     "awaiting_at": "2026-09-05T17:35:39.845Z",
-    "reason": "Current SDD migration authorizes documentation only. A separate later explicit implementation prompt must bind this plan and baseline. Prior U-06 authorization is invalidated and retained below.",
+    "prompt_id": "implementation-u04-google-20260905-01",
+    "prompt_received_at": "2026-09-05T17:38:07.954Z",
+    "released_at": "2026-09-05T17:40:02.645Z",
+    "prompt_receipt": {
+      "path": "forge/implementation-prompt-u04-google-20260905.json",
+      "content_hash": "9dcd385d98a55682f1b58c0bce4ae3cc06a465db5b0774ca04af49c206ee2b18"
+    },
+    "reason": "Explicit development request after completed-plan pause, revalidated unchanged sources/baseline. Scoped U-04 host execution only; no new external/high-risk authority.",
     "supersedes": {
-      "state": "invalidated",
-      "development_plan_hash": "a38919e0a84c61b081661227bd5ee936744bb9781dba2286ecc25d7d7e3974ca",
+      "state": "awaiting-implementation-prompt",
+      "development_plan_hash": "f17072dc044dc12ee20039a78f856801df5121aef19922966fece2eebf17d15a",
       "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
-      "prompt_id": "implementation-prompt-u06-20260904-go-01",
-      "awaiting_at": "2026-09-04T20:55:01+03:00",
-      "prompt_received_at": "2026-09-04T21:43:42+03:00",
-      "released_at": "2026-09-04T22:55:31+03:00",
-      "prompt_receipt": {
-        "path": "forge/implementation-prompt-u06-20260904.json",
-        "content_hash": "ec8a4a216b37c7edc6e37d921f102c80714cf8224e884e25b85a9de8e341441c"
-      },
-      "reason": "Exact-plan provenance contradicted by retained original events; see forge/authorization-correction-20260905.json. This historical receipt cannot authorize a later plan. Current explicit remediation remains in scope; no next-unit authorization is inferred.",
-      "correction_ref": "forge/authorization-correction-20260905.json"
+      "awaiting_at": "2026-09-05T17:35:39.845Z",
+      "reason": "Current SDD migration authorizes documentation only. A separate later explicit implementation prompt must bind this plan and baseline. Prior U-06 authorization is invalidated and retained below.",
+      "supersedes": {
+        "state": "invalidated",
+        "development_plan_hash": "a38919e0a84c61b081661227bd5ee936744bb9781dba2286ecc25d7d7e3974ca",
+        "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+        "prompt_id": "implementation-prompt-u06-20260904-go-01",
+        "awaiting_at": "2026-09-04T20:55:01+03:00",
+        "prompt_received_at": "2026-09-04T21:43:42+03:00",
+        "released_at": "2026-09-04T22:55:31+03:00",
+        "prompt_receipt": {
+          "path": "forge/implementation-prompt-u06-20260904.json",
+          "content_hash": "ec8a4a216b37c7edc6e37d921f102c80714cf8224e884e25b85a9de8e341441c"
+        },
+        "reason": "Exact-plan provenance contradicted by retained original events; see forge/authorization-correction-20260905.json. This historical receipt cannot authorize a later plan. Current explicit remediation remains in scope; no next-unit authorization is inferred.",
+        "correction_ref": "forge/authorization-correction-20260905.json"
+      }
     }
   },
   "prototype_promotions": [
@@ -14741,21 +14912,29 @@
           "strategy": "reimplement"
         }
       ],
-      "started_at": null,
-      "receipt": null,
+      "started_at": "2026-09-05T17:56:09.425Z",
+      "receipt": {
+        "path": "forge/runs/U-04/u04-google-20260905/prototype-promotion.json",
+        "content_hash": "6902fa0a541f94abd4e44b05bb3e2f95e8e3da05c12da3eb9e1a7a228173ef7f"
+      },
       "base_commit": "7d2e944f9500a6c38745ce39b414ffc3b946a37c",
-      "provenance_status": "unverified_historical_destination_origin",
+      "provenance_status": "current_git_diff_verified_historical_origin_not_certified",
       "inspection": {
         "checked_at": "2026-09-05T17:32:12.551Z",
         "destinations_exist": true,
         "historical_receipt_found": false,
         "latest_destination_commit": "31fdf9e51e18174c892265c5f6792c241a0f3aaa",
         "scope": "No new promotion started. Current files do not prove historical promotion. G-16 provenance claim remains unsupported until actual evidence; never reconstruct a historical receipt. New runner must register actual base/start before edits."
-      }
+      },
+      "run_id": "u04-google-20260905",
+      "runner": "direct-codex-phase3",
+      "actual_checkout_base_commit": "a402199ec528b237659f77d98aa41b2f017a5984",
+      "historical_limitation": "No historical promotion receipt exists. This run records only a new inspected adaptation; the planned Git comparison anchor is preserved, and prior destination origin is not retroactively certified.",
+      "verification_status": "blocked_pending_full_ui_and_live_evidence"
     }
   ],
   "implementation": {
-    "status": "sdd_reconciled_awaiting_implementation_prompt",
+    "status": "u04_locally_verified_pending_live_evidence",
     "owner_invocation_id": "990d3f67-1e4a-460d-8722-0292ddf2570b",
     "completed_local_contracts": [],
     "partial_local_contracts": [
@@ -14769,10 +14948,47 @@
       "U-08",
       "U-09"
     ],
-    "completion_projection_note": "Existing partial U-01–U-09 code and prior local verification preserved; current SDD acceptance reconciled, no new execution or live pass claimed. Next authorized repair would be U-04 Google-only with U-01/U-03/U-07 seams.",
-    "in_progress_unit": null,
+    "completion_projection_note": "Google-only owner identity/session/HTTP implementation and focused dependencies implemented locally. Full U-04 completion remains pending required live provider/GoDaddy/MySQL and full UI/user evidence; no next Unit started.",
+    "in_progress_unit": "U-04",
     "next_unit": "U-04",
     "local_verification": {
+      "node": {
+        "result": "passed",
+        "tests": "521/521",
+        "runtime": "Node.js 22.23.2, Darwin arm64",
+        "command": "node --experimental-strip-types --test --test-reporter=tap test/*.test.ts test/*.test.mjs",
+        "build": "passed",
+        "typecheck": "passed",
+        "environment_policy": "passed",
+        "diff_check": "passed",
+        "scope": "Credential-free local provider, durable-state simulation, HTTP and regression tests; no real Google/MySQL/GoDaddy claim."
+      },
+      "browser": {
+        "status": "passed_local_scope",
+        "path": "output/playwright/u04-google-20260905/browser-results.json",
+        "content_hash": "d6c5574e85b324538fbed8666301c395a1490e5494230b84204a40daa2ff9b5e",
+        "scope": "Real Chromium + localHTTPS; natural Origin/FetchMetadata, cross-site Lax return, logout/cancel/revoke/error recovery,1440/390 partial visual. Simulated Google/AI/MySQL only."
+      },
+      "real_mysql": "not_run",
+      "google_live": "not_run",
+      "godaddy_deployment": "not_run",
+      "pipeline": {
+        "command": "sdd_check.py --project . --after implementation",
+        "result": "passed",
+        "issues": 0,
+        "checker_revision": "408af3af8ba1d5690544796afb8dd2f5a2d06de0",
+        "checked_at": "2026-09-05T18:19:07.727Z",
+        "scope": "Source/baseline/prompt/promotion metadata consistency only; blocked promotion verification remains explicitly not a release pass."
+      }
+    },
+    "external_effects": {
+      "matrix_org": "not_run",
+      "production_oauth_change": "not_performed",
+      "godaddy_deployment": "not_run",
+      "legacy_cleanup": "not_authorized",
+      "stateful_preview": "forbidden"
+    },
+    "prior_evidence": {
       "node": {
         "command": "npm run check",
         "result": "passed",
@@ -14804,13 +15020,9 @@
       "rust_host_feasibility": "passed-and-retired; not product integration evidence",
       "scope_note": "Historical observations from prior runs, not rerun or refreshed in this SDD-only migration; prior artifact_ci in_progress is not a current live-status claim."
     },
-    "external_effects": {
-      "matrix_org": "not_run",
-      "production_oauth_change": "not_authorized",
-      "godaddy_deployment": "not_run",
-      "legacy_cleanup": "not_authorized",
-      "stateful_preview": "forbidden"
-    }
+    "run_id": "u04-google-20260905",
+    "run_receipt": "forge/runs/U-04/u04-google-20260905/verification.json",
+    "run_receipt_hash": "5187d3b7a89fa37b45b3dd0871c244a54ef74b0536f018e84148b6205e1a75b6"
   },
   "affected_feature_units": ["U-01", "U-02", "U-03", "U-04", "U-05", "U-06", "U-07", "U-09"],
   "input_requests": [
@@ -14857,7 +15069,7 @@
     }
   ],
   "next_ready_nodes": [],
-  "pause_reason": "All 13 SDD artifacts pass the current checker. Stop after development-plan as required by to-sdd-pipeline; next implementation is U-04 Google-only plus scoped dependent seams only after a new separate prompt. Product/release tests not run.",
+  "pause_reason": null,
   "current_reconciliation_blockers": [
     {
       "id": "sdd-render-precheck-20260905",

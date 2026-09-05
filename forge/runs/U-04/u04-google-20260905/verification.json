@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "run_id": "u04-google-20260905",
+  "unit_id": "U-04",
+  "executor": "direct Codex Phase 3 runner with separate provider/service review and HTTP/browser execution",
+  "code_revision": "d00f8c9ba064ed6f258b7b7975a98d104b2bac8b",
+  "development_plan_hash": "f17072dc044dc12ee20039a78f856801df5121aef19922966fece2eebf17d15a",
+  "baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+  "completed_at": "2026-09-05T18:18:12.164Z",
+  "local_result": "passed",
+  "unit_completion": "not_completed",
+  "release_readiness": "not_evaluated",
+  "commands": [
+    {
+      "command": "node --experimental-strip-types --test --test-reporter=tap test/*.test.ts test/*.test.mjs",
+      "runtime": "Node.js22.23.2 Darwin arm64",
+      "exit_code": 0,
+      "tests": 521,
+      "passed": 521,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "duration_ms": 1956.36025
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run check:environment",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  ],
+  "browser_evidence": {
+    "kind": "functional",
+    "path": "output/playwright/u04-google-20260905/browser-results.json",
+    "content_hash": "d6c5574e85b324538fbed8666301c395a1490e5494230b84204a40daa2ff9b5e",
+    "source_hashes": {
+      "src/godaddy/settings-runtime.ts": "7b1516eabf6ec74748bf195b4b30962bdfe6679c5c6306e20b545ce93ff04b0e",
+      "src/godaddy/owner-google-auth.ts": "98185c8f1c9f8be3deb53071350a2665f4af5506671ced1b12579618a81cfa74",
+      "src/godaddy/owner-auth-client.ts": "3ec94265b65f6dddbc162d76b27339100c9246984aae8a372e45a6d5f1de9864",
+      "src/http/security-headers.ts": "35c2b04a9a612783b613559e3339263f2f02689c0cb9e8a263ad6836c01b50e1",
+      "src/settings/ui/template.ts": "b32f5e0516b1714581aace02a14fe3879c75046245388c3a5e14682e1a494530",
+      "src/settings/ui/client.js": "e8437d45ef22bdbdebb87d09aba4bd8644b6b6916b32f8daa1e3cf9c63c2fa11",
+      "test/fixtures/google-owner-browser-server.mts": "b954b8ca67d639e99bfbb6df626e7d113f91112230a52340aeb53fcf02367cea"
+    },
+    "screenshots": {
+      "cancelled-login-mobile.png": "df5a7e43d6bdcb374abb89d9736d074f5bad41500098f0a6e4f7ee9273db37b8",
+      "entry-after-revoke-desktop.png": "2312791e0dec588f684d7bb26dc14012219f089c9f13a547e600d43916750f7e",
+      "entry-desktop.png": "2312791e0dec588f684d7bb26dc14012219f089c9f13a547e600d43916750f7e",
+      "entry-mobile-after-logout.png": "f1d7c754fde00e537d8ee31375ce6e7e32846451bf8d1f77892ca1a82fae9534",
+      "rejected-action-desktop.png": "0b3d9b225fe51d8bfc7f8bd5b1bfd3e7b80e06b0e8a834ed986c035234522392",
+      "runtime-after-google-return-desktop.png": "4e32842388a622a63bc5786dccf1e3e9422b71d60603e84c70f2cb040624e573",
+      "runtime-after-google-return-mobile.png": "c8adcc8cb27f5c049f13121378ac8fcf4f30d8858fe333051a7a808d3e7d00a1",
+      "settings-desktop.png": "3f75c37e32ef142f80f4f1c58a96e485060dc609309d12fb1d81adc6b5344645",
+      "settings-mobile.png": "a96d4b3b1dc71ea98368cd1bab07eec2592074c51956be8acc01fc91ef0128a4"
+    }
+  },
+  "supporting_qa_ids": [
+    "QA-AUTH-001",
+    "QA-AUTH-002",
+    "QA-AUTH-003",
+    "QA-AUTH-004",
+    "QA-AUTH-005",
+    "QA-AUTH-006",
+    "QA-AUTH-007",
+    "QA-AUTH-008",
+    "QA-INT-013",
+    "QA-INT-014",
+    "QA-INT-015",
+    "QA-INT-022",
+    "QA-JRN-005",
+    "QA-JRN-006",
+    "QA-DEV-007",
+    "QA-REG-008"
+  ],
+  "full_qa_check_passes_claimed": [],
+  "fixed_findings": [
+    "Malformed provider identity must deny without raw exception.",
+    "Retired configuration may not replace newer durable sessions, even when callback/network overlaps rollout.",
+    "Configuration activation latch must wait for successful database commit.",
+    "SameSiteStrict/nativeform no-referrer behavior replaced with Lax plus CORS-mode same-origin POST; strict server guards preserved.",
+    "Missing Settings action error target and misleading pristine-state heading corrected."
+  ],
+  "not_performed": [
+    "real Google login/client configuration verification",
+    "GoDaddy deployment",
+    "live MySQL locking/concurrency",
+    "Linux deployment verification",
+    "full visual/accessibility/representative-user validation",
+    "Matrix product integration",
+    "production secrets change",
+    "legacy cleanup"
+  ],
+  "rerun_rule": "Rerun affected automated/browser checks after auth/session/HTTP changes; require deployed Google/GoDaddy/MySQL and full applicable QA evidence before closing U-04 or release.",
+  "sources": [
+    "https://developers.google.com/identity/openid-connect/openid-connect",
+    "https://fetch.spec.whatwg.org/#append-a-request-origin-header"
+  ],
+  "cleanup": "Dedicated local browser/server stopped. Ephemeral self-signed TLS files and transient fixture-state snapshots removed; durable sanitized evidence retained."
+}

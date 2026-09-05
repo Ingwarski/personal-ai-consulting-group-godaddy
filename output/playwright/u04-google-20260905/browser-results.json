@@ -1,0 +1,615 @@
+{
+  "schemaVersion": 1,
+  "scope": "Local real-browser transport and partial visual verification only",
+  "completedAt": "2026-09-05T18:14:48Z",
+  "sourceCommit": "d00f8c9ba064ed6f258b7b7975a98d104b2bac8b",
+  "sourceHashes": {
+    "src/godaddy/settings-runtime.ts": "7b1516eabf6ec74748bf195b4b30962bdfe6679c5c6306e20b545ce93ff04b0e",
+    "src/godaddy/owner-google-auth.ts": "98185c8f1c9f8be3deb53071350a2665f4af5506671ced1b12579618a81cfa74",
+    "src/godaddy/owner-auth-client.ts": "3ec94265b65f6dddbc162d76b27339100c9246984aae8a372e45a6d5f1de9864",
+    "src/http/security-headers.ts": "35c2b04a9a612783b613559e3339263f2f02689c0cb9e8a263ad6836c01b50e1",
+    "src/settings/ui/template.ts": "b32f5e0516b1714581aace02a14fe3879c75046245388c3a5e14682e1a494530",
+    "src/settings/ui/client.js": "e8437d45ef22bdbdebb87d09aba4bd8644b6b6916b32f8daa1e3cf9c63c2fa11",
+    "test/fixtures/google-owner-browser-server.mts": "b954b8ca67d639e99bfbb6df626e7d113f91112230a52340aeb53fcf02367cea"
+  },
+  "browser": {
+    "tool": "Playwright CLI",
+    "session": "u04-google",
+    "engine": "Chromium",
+    "origin": "https://127.0.0.1:4319",
+    "temporarySelfSignedTLS": true,
+    "ignoreHTTPSErrorsForLocalFixture": true,
+    "appRequestsIntercepted": false,
+    "googleAuthorizationResponse": "Simulated HTML only; no network request reached Google",
+    "otherExternalRequests": "blocked",
+    "viewports": [
+      {
+        "width": 1440,
+        "height": 1000,
+        "scrollWidth": 1440
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "scrollWidth": 390
+      }
+    ]
+  },
+  "results": [
+    {
+      "check": "Explicit Google start",
+      "result": "pass",
+      "evidence": "Natural browser POST had canonical HTTPS Origin, Sec-Fetch-Site=same-origin, no Referer, and HTTP200. No application request headers were inserted or modified by interception."
+    },
+    {
+      "check": "Same-tab cross-site return without capability catalog",
+      "result": "pass",
+      "evidence": "Simulated Google-origin link produced cross-site callback GET303 then operations/runtime GET200. Token exchange count1 and AI action count0 before explicitly clicking catalog refresh."
+    },
+    {
+      "check": "Local session cookie policy",
+      "result": "pass",
+      "evidence": {
+        "names": [
+          "__Host-personal-consultant-google-browser",
+          "__Host-personal-consultant-google-owner"
+        ],
+        "domain": "127.0.0.1",
+        "path": "/",
+        "secure": true,
+        "httpOnly": true,
+        "sameSite": "Lax",
+        "transactionCookieRemovedAfterCallback": true
+      }
+    },
+    {
+      "check": "Explicit runtime catalog action",
+      "result": "pass",
+      "evidence": "POST200 with canonical Origin/same-origin Fetch Metadata and no Referer; only this explicit click incremented the fixture AI action counter."
+    },
+    {
+      "check": "Settings rendering and controls",
+      "result": "pass_partial",
+      "evidence": "Protected settings HTML/CSS/JS returned200; logout/revoke controls visible, zero password inputs, no horizontal overflow at1440px or390px."
+    },
+    {
+      "check": "Local logout",
+      "result": "pass",
+      "evidence": "Actual browser button POST200 returned to sign-in; subsequent protected settings GET303 returned to sign-in."
+    },
+    {
+      "check": "Google cancellation and retry",
+      "result": "pass",
+      "evidence": "Cross-site cancellation callback303 cleaned URL to /auth/sign-in/denied and displayed retry; no token exchange for cancellation. Subsequent successful login with ready catalog landed directly on /settings."
+    },
+    {
+      "check": "Revoke-all control",
+      "result": "pass_local_current_browser",
+      "evidence": "Actual browser revoke POST200 returned to sign-in; subsequent settingsGET redirected. Cross-browser durable revocation separately covered by unit tests, not claimed as two-browser observation here."
+    },
+    {
+      "check": "Tampered action CSRF and visible recovery",
+      "result": "pass",
+      "evidence": "Deliberately replaced a hidden fixture logout token with an invalid43-character value; browser POST returned403, kept protected session/page, showed generic error in data-owner-action-status and moved focus there. Reload recovered valid controls."
+    },
+    {
+      "check": "Final-source visual recapture",
+      "result": "pass_partial",
+      "evidence": "Restarted HTTPS fixture after template changes, repeated login/setup, captured desktop/mobile Settings using final source. Pristine status heading now 'Набір сумісний'; owner error target is present."
+    },
+    {
+      "check": "Browser storage",
+      "result": "pass",
+      "evidence": "localStorage and sessionStorage remained empty after logout; cookie values not recorded."
+    }
+  ],
+  "observationsFirstPass": {
+    "observations": [
+      {
+        "path": "/auth/sign-in",
+        "method": "GET",
+        "origin": null,
+        "site": "none",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/owner-auth.js",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/favicon.ico",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 404
+      },
+      {
+        "path": "/auth/google/start",
+        "method": "POST",
+        "origin": "https://127.0.0.1:4319",
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/auth/sign-in",
+        "method": "GET",
+        "origin": null,
+        "site": "none",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/owner-auth.js",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/auth/google/start",
+        "method": "POST",
+        "origin": "https://127.0.0.1:4319",
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/auth/google/callback",
+        "method": "GET",
+        "origin": null,
+        "site": "cross-site",
+        "referrer": null,
+        "status": 303
+      },
+      {
+        "path": "/operations/runtime",
+        "method": "GET",
+        "origin": null,
+        "site": "cross-site",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/owner-auth.js",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/operations/runtime/catalog",
+        "method": "POST",
+        "origin": "https://127.0.0.1:4319",
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/settings",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/owner-auth.js",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/settings.css",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/settings.js",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/auth/sign-out",
+        "method": "POST",
+        "origin": "https://127.0.0.1:4319",
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/auth/sign-in",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/owner-auth.js",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/settings",
+        "method": "GET",
+        "origin": null,
+        "site": "none",
+        "referrer": null,
+        "status": 303
+      },
+      {
+        "path": "/auth/sign-in",
+        "method": "GET",
+        "origin": null,
+        "site": "none",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/owner-auth.js",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/auth/google/start",
+        "method": "POST",
+        "origin": "https://127.0.0.1:4319",
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/auth/google/callback",
+        "method": "GET",
+        "origin": null,
+        "site": "cross-site",
+        "referrer": null,
+        "status": 303
+      },
+      {
+        "path": "/auth/sign-in/denied",
+        "method": "GET",
+        "origin": null,
+        "site": "cross-site",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/owner-auth.js",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/auth/google/start",
+        "method": "POST",
+        "origin": "https://127.0.0.1:4319",
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/auth/google/callback",
+        "method": "GET",
+        "origin": null,
+        "site": "cross-site",
+        "referrer": null,
+        "status": 303
+      },
+      {
+        "path": "/settings",
+        "method": "GET",
+        "origin": null,
+        "site": "cross-site",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/owner-auth.js",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/settings.css",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/settings.js",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/auth/sessions/revoke",
+        "method": "POST",
+        "origin": "https://127.0.0.1:4319",
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/auth/sign-in",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/owner-auth.js",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/settings",
+        "method": "GET",
+        "origin": null,
+        "site": "none",
+        "referrer": null,
+        "status": 303
+      },
+      {
+        "path": "/auth/sign-in",
+        "method": "GET",
+        "origin": null,
+        "site": "none",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/owner-auth.js",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      }
+    ],
+    "exchanges": 2,
+    "aiActions": 1
+  },
+  "observationsFinalSourcePass": {
+    "observations": [
+      {
+        "path": "/auth/sign-in",
+        "method": "GET",
+        "origin": null,
+        "site": "none",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/owner-auth.js",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/auth/google/start",
+        "method": "POST",
+        "origin": "https://127.0.0.1:4319",
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/auth/google/callback",
+        "method": "GET",
+        "origin": null,
+        "site": "cross-site",
+        "referrer": null,
+        "status": 303
+      },
+      {
+        "path": "/operations/runtime",
+        "method": "GET",
+        "origin": null,
+        "site": "cross-site",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/owner-auth.js",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/operations/runtime/catalog",
+        "method": "POST",
+        "origin": "https://127.0.0.1:4319",
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/settings",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/owner-auth.js",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/settings.css",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/settings.js",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/auth/sign-out",
+        "method": "POST",
+        "origin": "https://127.0.0.1:4319",
+        "site": "same-origin",
+        "referrer": null,
+        "status": 403
+      },
+      {
+        "path": "/settings",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/owner-auth.js",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/settings.css",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/settings.js",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/auth/sessions/revoke",
+        "method": "POST",
+        "origin": "https://127.0.0.1:4319",
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/auth/sign-in",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/owner-auth.js",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/settings",
+        "method": "GET",
+        "origin": null,
+        "site": "none",
+        "referrer": null,
+        "status": 303
+      },
+      {
+        "path": "/auth/sign-in",
+        "method": "GET",
+        "origin": null,
+        "site": "none",
+        "referrer": null,
+        "status": 200
+      },
+      {
+        "path": "/assets/owner-auth.js",
+        "method": "GET",
+        "origin": null,
+        "site": "same-origin",
+        "referrer": null,
+        "status": 200
+      }
+    ],
+    "exchanges": 1,
+    "aiActions": 1
+  },
+  "screenshots": {
+    "cancelled-login-mobile.png": "df5a7e43d6bdcb374abb89d9736d074f5bad41500098f0a6e4f7ee9273db37b8",
+    "entry-after-revoke-desktop.png": "2312791e0dec588f684d7bb26dc14012219f089c9f13a547e600d43916750f7e",
+    "entry-desktop.png": "2312791e0dec588f684d7bb26dc14012219f089c9f13a547e600d43916750f7e",
+    "entry-mobile-after-logout.png": "f1d7c754fde00e537d8ee31375ce6e7e32846451bf8d1f77892ca1a82fae9534",
+    "rejected-action-desktop.png": "0b3d9b225fe51d8bfc7f8bd5b1bfd3e7b80e06b0e8a834ed986c035234522392",
+    "runtime-after-google-return-desktop.png": "4e32842388a622a63bc5786dccf1e3e9422b71d60603e84c70f2cb040624e573",
+    "runtime-after-google-return-mobile.png": "c8adcc8cb27f5c049f13121378ac8fcf4f30d8858fe333051a7a808d3e7d00a1",
+    "settings-desktop.png": "3f75c37e32ef142f80f4f1c58a96e485060dc609309d12fb1d81adc6b5344645",
+    "settings-mobile.png": "a96d4b3b1dc71ea98368cd1bab07eec2592074c51956be8acc01fc91ef0128a4"
+  },
+  "limitations": [
+    "Google identity provider and authorization page simulated; not proof of live Google client configuration or real Google login.",
+    "MySQL and AI runtime are in-memory/local fixture implementations; no live credentials, DB or subscriptions used.",
+    "Mobile means resized Chromium viewport, not a physical mobile browser/device.",
+    "Partial visual and keyboard/focus observations only; no full design-baseline comparison, comprehensive accessibility audit, representative-user task or complete UI gate claimed.",
+    "Initial route mock setup stalled once and was replaced before successful proof. Final app requests were never intercepted; only simulated Google response was fulfilled.",
+    "First pass preceded the final minor template error-target/client status-label changes; second pass loaded final source and recaptured Settings."
+  ],
+  "cleanup": {
+    "browserSessionClosed": true,
+    "fixtureServerStopped": true,
+    "temporaryTLSFilesRemoved": true,
+    "automaticSnapshotsWithTransientFixtureStateRemoved": true
+  }
+}

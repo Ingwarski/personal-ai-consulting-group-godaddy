@@ -1,0 +1,35 @@
+{
+  "event": "implementation_prompt",
+  "role": "user",
+  "intent": "start_production_implementation",
+  "prompt_id": "implementation-u04-google-20260905-01",
+  "message_id": "msg_01a072a6-2bd2-70f3-8962-d665a9797e99",
+  "message": "OK. Continue [$to-sdd-pipeline](/Users/ingwar/Projects/SDD Pipeline Skills/skills/to-sdd-pipeline/SKILL.md) development",
+  "received_at": "2026-09-05T17:38:07.954Z",
+  "recorded_at": "2026-09-05T17:40:02.645Z",
+  "development_plan_hash": "f17072dc044dc12ee20039a78f856801df5121aef19922966fece2eebf17d15a",
+  "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+  "source": {
+    "host": "Codex desktop",
+    "thread_id": "01a05ebe-8e3f-71c3-aa13-7eb7ac33cdc5",
+    "event_timestamp": "2026-09-05T17:38:07.954Z"
+  },
+  "scope": {
+    "unit": "U-04",
+    "dependent_seams": [
+      "U-01",
+      "U-03",
+      "U-07"
+    ],
+    "allowed": "Implement and verify Google-only owner login and scoped session/readiness isolation under the current plan.",
+    "excluded": [
+      "live credential mutation",
+      "Google Console changes",
+      "deployment",
+      "real Matrix room/device effects",
+      "legacy cleanup",
+      "database wipe",
+      "stateful Preview"
+    ]
+  }
+}

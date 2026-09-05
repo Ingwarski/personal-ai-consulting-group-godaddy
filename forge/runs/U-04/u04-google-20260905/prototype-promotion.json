@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "promotion_id": "u04-google-new-adaptation-20260905",
+  "unit_id": "U-04",
+  "run_id": "u04-google-20260905",
+  "development_plan_ref": "docs/development-plan.md",
+  "development_plan_hash": "f17072dc044dc12ee20039a78f856801df5121aef19922966fece2eebf17d15a",
+  "baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+  "visual_target_hash": "07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6",
+  "candidate_id": "candidate-b",
+  "version": "v2",
+  "prototype_source_root": "forge/design/candidates/candidate-b/v2",
+  "prototype_tree_hash": "57d103c5ed17bcc9a9d95a58718f83c33b8257229fc825b756367321eaa33199",
+  "hash_algorithm": "sdd-render-sha256-v2",
+  "render_dependencies": [
+    "forge/design/candidate-sets/whatsapp-consultant/v1/shared/scenario-fixture.js",
+    "forge/design/candidate-sets/matrix-consultant/v2/shared/scenario-fixture.js"
+  ],
+  "path_mappings": [
+    {
+      "source": "forge/design/candidates/candidate-b/v2/index.html",
+      "destination": "src/settings/ui/template.ts",
+      "strategy": "adapt",
+      "source_hash": "07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6",
+      "destination_hash": "b32f5e0516b1714581aace02a14fe3879c75046245388c3a5e14682e1a494530"
+    },
+    {
+      "source": "forge/design/candidates/candidate-b/v2/styles.css",
+      "destination": "src/settings/ui/styles.css",
+      "strategy": "adapt",
+      "source_hash": "e79543dfcc1cd297e4904caa2944a790d581499025353fffb913f30b4fed7cb8",
+      "destination_hash": "afdf6d6cbe00bcb4ea926e820f1ef68b3deb5a6695bc6511614548cc37abbcdc"
+    },
+    {
+      "source": "forge/design/candidates/candidate-b/v2/app.js",
+      "destination": "src/settings/ui/controller.ts",
+      "strategy": "reimplement",
+      "source_hash": "5446f6a4a987b6d71cd6ddb4fa0a46c409d4c69c0a7083c31f043101ef9bcd95",
+      "destination_hash": "9041bcaef3f36d1bcefce5ce333e79787140dd35fd93fe89689401955de45b35"
+    },
+    {
+      "source": "forge/design/candidates/candidate-b/v2/validate.mjs",
+      "destination": "test/settings-ui.test.ts",
+      "strategy": "reimplement",
+      "source_hash": "baeafb315ee1891885e00ef81561620b35b29ca27d55646b07012c9820920440",
+      "destination_hash": "b2cbb4a9c470d006394508b3e4e901f15df22ff0b4b9fe01739d8e06c79990dd"
+    }
+  ],
+  "base_commit": "7d2e944f9500a6c38745ce39b414ffc3b946a37c",
+  "actual_checkout_base_commit": "a402199ec528b237659f77d98aa41b2f017a5984",
+  "head_commit": "d00f8c9ba064ed6f258b7b7975a98d104b2bac8b",
+  "changed_paths": [
+    "src/settings/ui/template.ts",
+    "test/settings-ui.test.ts"
+  ],
+  "patch_hash": "4d2f31e2bd617bdfa7bf90f35ef0bb24751e1e9bf78190765c82817da8bbfa1f",
+  "actual_run_patch_hash": "4d2f31e2bd617bdfa7bf90f35ef0bb24751e1e9bf78190765c82817da8bbfa1f",
+  "adaptations": [
+    "DB-D18: bind existing Settings presentation to Google-owned local session; visible purpose-bound logout/revoke controls and error target.",
+    "Existing three independent provider/speed groups and styles retained; source-independent protocol implementation is not copied from the mockup.",
+    "Add current auth-control regression assertions to the planned test destination."
+  ],
+  "variances": [
+    "No full approved-baseline visual comparison, all states/viewport/accessibility coverage or representative-user validation performed. Partial desktop/mobile visual evidence is not a passed fidelity gate."
+  ],
+  "qa_ids": [
+    "QA-VIS-001",
+    "QA-VIS-002",
+    "QA-VIS-003",
+    "QA-WF-005",
+    "QA-REG-008"
+  ],
+  "visual_evidence": [
+    {
+      "kind": "visual",
+      "path": "output/playwright/u04-google-20260905/settings-desktop.png",
+      "content_hash": "3f75c37e32ef142f80f4f1c58a96e485060dc609309d12fb1d81adc6b5344645"
+    },
+    {
+      "kind": "visual",
+      "path": "output/playwright/u04-google-20260905/settings-mobile.png",
+      "content_hash": "a96d4b3b1dc71ea98368cd1bab07eec2592074c51956be8acc01fc91ef0128a4"
+    }
+  ],
+  "verification_status": "blocked",
+  "provenance_status": "current_git_diff_verified_historical_origin_not_certified",
+  "evidence_limit": "New runner-authored receipt derived from actual Git comparison, not reconstructed historical promotion success. Full UI gate and real-environment proof remain outstanding.",
+  "completed_at": "2026-09-05T18:18:12.164Z"
+}
