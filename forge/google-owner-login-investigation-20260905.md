@@ -1,6 +1,6 @@
 # Google owner-login investigation — 5 September 2026
 
-Status: historical investigation and proposed restoration, **not an implemented or deployed login fix**. Scope is the existing Personal Consultant GoDaddy app. No credentials, Google configuration, Published service, database, domain, HappyPro repository, or original consultant repository was changed.
+Status: historical investigation and verified Google configuration update, **not an implemented or deployed login fix**. Scope is the existing Personal Consultant GoDaddy app. Google configuration was changed only under the later explicit authorization recorded below. No credentials, Published service, database, DNS, HappyPro repository, or original consultant repository was changed.
 
 ## Current Owner decision
 
@@ -82,6 +82,17 @@ The earlier lock-related pause is now resolved. In the signed-in external Chrome
 The Owner questioned the selected app. The All-projects picker was inspected, and the Owner then explicitly confirmed, “Oh, no, that is the right app then.” No other project was opened. An unsaved Web application creation form was cancelled; no client, domain, scope, credential or consent configuration was saved.
 
 The proposed next external action is a separate **GoDaddy — Personal AI Consulting Group** web client with only the exact GoDaddy redirect, preserving the Cloudflare client. Explicit approval was requested for creating that client and storing its generated client secret only in this app's GoDaddy Published Secrets. The request does not authorize deployment, DNS changes, MFA, or modification of the legacy client. Until answered, no credential is created. GoDaddy's Published secret-name inventory contains no `GOOGLE_OAUTH_*` names; existing secret values were not read or exposed. Preview secrets and the shared database configuration were not edited.
+
+### Authorized existing-project update — 5 September 2026, 03:15 UTC
+
+The Owner answered: “No, use this current project on google. You may modify it to make my google login work.” This supersedes the proposed separate-client creation. The existing project `personal-ai-consulting-group` and existing Web application client `273536674765-3emfsaccd7tjdm4lpoe50pj5n9ffe8tp.apps.googleusercontent.com` were reused. No new project or OAuth client was created.
+
+- Added `https://wy2v0putg6.c35.airoapp.ai/auth/google/callback` to the existing client's Authorized redirect URIs. Google displayed **OAuth client saved**; reopening the client confirmed the exact new callback and original Cloudflare callback both persisted. The original JavaScript origin, client name and secret were retained.
+- Added `airoapp.ai` to this project's Branding authorized-domain list. Google displayed **Branding changes saved!**; the list contained both `cloudflareaccess.com` and `airoapp.ai`. This is OAuth configuration, not domain ownership verification, a new domain registration or a DNS change. No homepage/privacy/terms claim was invented or verification application submitted. [Google Branding requirements](https://support.google.com/cloud/answer/15549049?hl=en)
+- Saved only the non-sensitive `openid` and `https://www.googleapis.com/auth/userinfo.email` declarations. Reopening Data Access confirmed both persisted; sensitive and restricted scope tables remained empty. These declarations do not substitute for the application's exact request scopes or owner allowlist.
+- No secret was created, revealed, rotated, disabled or transferred. The existing client-secret value is not retrievable in the Console; secure application credential provisioning remains unfinished. No GoDaddy secret or deployment was changed, and no application-enforced MFA was added.
+
+At `2026-09-05T03:15:30Z`, a fresh unauthenticated GET to the live app's `/auth/google/start` returned HTTP 404. Google Console acceptance is now established for the stored callback, but authorization propagation, code exchange, owner-session establishment and the complete browser round trip are not verified. The live application still needs its separately gated auth implementation and credential provisioning before login can work.
 
 ## SDD handoff boundary
 

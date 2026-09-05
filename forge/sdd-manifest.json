@@ -2,7 +2,7 @@
   "checker_contract_version": 1,
   "pipeline_version": "1.1.0",
   "state": "awaiting_input",
-  "updated_at": "2026-09-05T03:11:23Z",
+  "updated_at": "2026-09-05T03:15:30Z",
   "language": {
     "working_language": "uk",
     "selection_source": "recorded-preference",
@@ -860,14 +860,18 @@
     },
     {
       "id": "google-godaddy-client-creation",
-      "status": "awaiting_answer",
+      "status": "answered",
       "question": "May I create a separate GoDaddy OAuth web client in the confirmed project with only the exact GoDaddy callback, and store the generated client secret only in this app's GoDaddy Published Secrets? No deployment, DNS change, legacy-client modification or MFA.",
+      "answer": "No, use this current project on google. You may modify it to make my google login work.",
+      "answer_timestamp": null,
+      "recorded_at": "2026-09-05T03:15:30Z",
+      "resolution": "Reused the existing Google project and OAuth client. Added and verified the GoDaddy callback while preserving Cloudflare; saved the hosting authorized domain and identity-only scopes. No new client/project, credential operation, GoDaddy secret change or deployment. Live login remains unimplemented; this answer is not a future valid-plan implementation receipt.",
       "blocking_node": "google-owner-login-provider-configuration",
       "evidence_ref": "forge/google-owner-login-investigation-20260905.md"
     }
   ],
   "next_ready_nodes": [],
-  "pause_reason": "Google project inspection is complete and the Owner confirmed the selected project. The GoDaddy callback is absent from its legacy Cloudflare client. Separate client creation and Published-only secret storage await explicit scoped approval. Bounded PRD auth reconciliation passed, but overall PRD advancement remains blocked by existing absent JOB-to-UC/use-case coverage, not by the answered MFA choice. Existing downstream source bindings and the invalid implementation gate remain preserved. No live-login or release success is claimed.",
+  "pause_reason": "Owner authorized modifying the existing Google project. The existing client's GoDaddy callback, hosting authorized domain and minimal identity scopes are saved and verified; no separate project/client was created. Credential provisioning, app implementation and real login remain unfinished; live /auth/google/start returned 404 at 2026-09-05T03:15:30Z. Bounded PRD auth reconciliation passed, but overall PRD advancement remains blocked by existing absent JOB-to-UC/use-case coverage, not by unanswered Google-configuration or MFA choices. Existing downstream source bindings and the invalid implementation gate remain preserved. No live-login or release success is claimed.",
   "resume_history": [{
     "type": "audit_remediation_request",
     "timestamp": null,
