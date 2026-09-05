@@ -208,6 +208,58 @@ test("Google owner start rejects missing, wrong, duplicate, tampered and expired
   assert.equal(h.exchanges.length, 0);
 });
 
+test("Google callback accepts its RFC 9207 issuer metadata without bypassing owner verification", async () => {
+  const h = harness();
+  const flow = await begin(h.service);
+  const parameters = flow.parameters();
+  parameters.set("iss", "https://accounts.google.com");
+  parameters.set("scope", "openid email");
+  parameters.set("authuser", "0");
+  parameters.set("prompt", "none");
+  const result = await h.service.finish({ cookieHeader: flow.jar.header(), parameters });
+  assert.equal(result.ok, true);
+  assert.equal(h.exchanges.length, 1);
+  flow.jar.applyAll(result.cookies);
+  assert.ok(await h.service.getVerifiedOwner(flow.jar.header()));
+
+  const rejected = harness();
+  rejected.setExchange(async () => undefined);
+  const attempt = await begin(rejected.service);
+  const unverified = attempt.parameters();
+  unverified.set("iss", "https://accounts.google.com");
+  assert.equal((await rejected.service.finish({ cookieHeader: attempt.jar.header(), parameters: unverified })).ok, false);
+  assert.equal(rejected.exchanges.length, 1);
+  assert.equal(rejected.storage.snapshot().sessions.length, 0);
+});
+
+test("Google callback rejects non-exact or duplicate issuer metadata before exchange", async (t) => {
+  for (const issuer of ["", "accounts.google.com", "http://accounts.google.com", "https://accounts.google.com/",
+    "https://accounts.google.com.attacker.test", "https://accounts.google.com?ignored=true", "https://ACCOUNTS.GOOGLE.COM"]) {
+    await t.test(`reject issuer ${JSON.stringify(issuer)}`, async () => {
+      const h = harness(); const flow = await begin(h.service); const parameters = flow.parameters();
+      parameters.set("iss", issuer);
+      assert.equal((await h.service.finish({ cookieHeader: flow.jar.header(), parameters })).ok, false);
+      assert.equal(h.exchanges.length, 0);
+      assert.equal(h.storage.snapshot().sessions.length, 0);
+    });
+  }
+  const h = harness(); const flow = await begin(h.service); const parameters = flow.parameters();
+  parameters.append("iss", "https://accounts.google.com");
+  parameters.append("iss", "https://accounts.google.com");
+  assert.equal((await h.service.finish({ cookieHeader: flow.jar.header(), parameters })).ok, false);
+  assert.equal(h.exchanges.length, 0);
+});
+
+test("Google cancellation with issuer metadata consumes its transaction without token exchange", async () => {
+  const h = harness(); const flow = await begin(h.service);
+  const parameters = new URLSearchParams({ state: flow.state, error: "access_denied", iss: "https://accounts.google.com" });
+  assert.equal((await h.service.finish({ cookieHeader: flow.jar.header(), parameters })).ok, false);
+  assert.equal(h.exchanges.length, 0);
+  const retry = flow.parameters(); retry.set("iss", "https://accounts.google.com");
+  assert.equal((await h.service.finish({ cookieHeader: flow.jar.header(), parameters: retry })).ok, false);
+  assert.equal(h.exchanges.length, 0);
+});
+
 test("Google callback rejects invalid protocol parameters without exchanging a token", async (t) => {
   const cases: [string, (parameters: URLSearchParams) => void][] = [
     ["duplicate state", (p) => p.append("state", p.get("state")!)], ["duplicate code", (p) => p.append("code", "second")],

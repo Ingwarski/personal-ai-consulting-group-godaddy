@@ -433,7 +433,8 @@
       "recorded_at": "2026-09-05T16:55:16.702Z"
     },
     "architecture": {
-      "invocation_id": "d0ecf837-81d5-4a44-9698-69c2a2b39f22",
+      "invocation_id": "architecture-google-issuer-20260905T214916Z",
+      "previous_invocation_id": "d0ecf837-81d5-4a44-9698-69c2a2b39f22",
       "outputs": [
         "docs/architecture.md"
       ],
@@ -514,7 +515,7 @@
         "native/matrix-sidecar/Cargo.toml": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1",
         "native/matrix-sidecar/Cargo.lock": "4a0469995afd74cd03b3095a180cef059ae0feb57008bb7cf6d000e007d55db7",
         ".github/workflows/matrix-sidecar.yml": "7d938106d59726180af6951353af8ad5a244948fb1fc13af8f080547e026119e",
-        "src/godaddy/owner-google-auth.ts": "98185c8f1c9f8be3deb53071350a2665f4af5506671ced1b12579618a81cfa74",
+        "src/godaddy/owner-google-auth.ts": "2eb9e5e6ef6e6a61d04aaf48a269f006cfbcc330c4cdec83ab8e2c9ced131b6b",
         "src/godaddy/google-identity-provider.ts": "849a97b03a654e709d8ece1e9f56435a111f3cd058830e670b3d261cb9f92c8d",
         "src/godaddy/owner-auth-client.ts": "3ec94265b65f6dddbc162d76b27339100c9246984aae8a372e45a6d5f1de9864",
         "src/http/security-headers.ts": "35c2b04a9a612783b613559e3339263f2f02689c0cb9e8a263ad6836c01b50e1"
@@ -5167,7 +5168,7 @@
     "architecture": {
       "path": "docs/architecture.md",
       "owner_skill": "to-architecture",
-      "owner_invocation_id": "d0ecf837-81d5-4a44-9698-69c2a2b39f22",
+      "owner_invocation_id": "architecture-google-issuer-20260905T214916Z",
       "declared_output_set": [
         "docs/architecture.md"
       ],
@@ -5219,7 +5220,7 @@
         "native/matrix-sidecar/Cargo.toml": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1",
         "native/matrix-sidecar/Cargo.lock": "4a0469995afd74cd03b3095a180cef059ae0feb57008bb7cf6d000e007d55db7",
         ".github/workflows/matrix-sidecar.yml": "7d938106d59726180af6951353af8ad5a244948fb1fc13af8f080547e026119e",
-        "src/godaddy/owner-google-auth.ts": "98185c8f1c9f8be3deb53071350a2665f4af5506671ced1b12579618a81cfa74",
+        "src/godaddy/owner-google-auth.ts": "2eb9e5e6ef6e6a61d04aaf48a269f006cfbcc330c4cdec83ab8e2c9ced131b6b",
         "src/godaddy/google-identity-provider.ts": "849a97b03a654e709d8ece1e9f56435a111f3cd058830e670b3d261cb9f92c8d",
         "src/godaddy/owner-auth-client.ts": "3ec94265b65f6dddbc162d76b27339100c9246984aae8a372e45a6d5f1de9864",
         "src/http/security-headers.ts": "35c2b04a9a612783b613559e3339263f2f02689c0cb9e8a263ad6836c01b50e1"
@@ -5558,7 +5559,20 @@
         "document_semantics": "existing_target_contract_unchanged",
         "historical_source_table": "retained_as_dated_preimplementation_snapshot",
         "external_verification": "not_run",
-        "open_variance": "Callback rate limit uses clean 303 to a fixed retry page returning429; same limiter and bounded Retry-After. No policy weakening."
+        "open_variance": "Callback rate limit uses clean 303 to a fixed retry page returning429; same limiter and bounded Retry-After. No policy weakening.",
+        "callback_issuer_reconciliation": {
+          "reviewed_at": "2026-09-05T21:49:16Z",
+          "executor": "root inline to-architecture",
+          "previous_owner_invocation_id": "d0ecf837-81d5-4a44-9698-69c2a2b39f22",
+          "previous_source_hash": "98185c8f1c9f8be3deb53071350a2665f4af5506671ced1b12579618a81cfa74",
+          "result": "passed_no_document_change",
+          "scope": "Повторно перевірено §8.1–8.3 та callback diff: дозволений лише один RFC 9207 iss з точним https://accounts.google.com до token exchange. Відсутній iss зберігає підтримку попередніх відповідей єдиного фіксованого Google provider; signed JWT issuer/audience/nonce, PKCE, owner binding, одноразова транзакція та session/CSRF не змінені. PRD, baseline і семантика архітектури незмінні.",
+          "regression_evidence": "Новий позитивний тест спочатку відтворив відмову; після виправлення 10 targeted і 531/531 повного npm run check пройшли на Node 22.23.2. Повторна жива авторизація ще не перевірена.",
+          "sources": [
+            "https://accounts.google.com/.well-known/openid-configuration",
+            "https://www.rfc-editor.org/rfc/rfc9207.html#section-2.4"
+          ]
+        }
       }
     },
     "dod-evals": {

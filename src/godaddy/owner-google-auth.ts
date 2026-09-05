@@ -221,8 +221,13 @@ export function createOwnerGoogleService(input: Readonly<{
       const failure = (result: Denied = denied()) => ({ ...result, cookies: [clearTransaction()] });
       const params = request.parameters;
       // Google's ordinary callback metadata is bounded but not trusted. Protocol duplicates are rejected.
-      const allowed = new Set(["state", "code", "error", "error_description", "error_uri", "scope", "authuser", "prompt", "hd"]);
+      const allowed = new Set(["state", "code", "error", "error_description", "error_uri", "scope", "authuser", "prompt", "hd", "iss"]);
       if (params.toString().length > 8_192 || [...params.keys()].some((key) => !allowed.has(key) || params.getAll(key).length !== 1)) return failure();
+      // Google advertises RFC 9207 issuer metadata in its authorization response.
+      // Compare the decoded value exactly with Google's discovery issuer, before
+      // exchanging any code. Keep support for older responses without metadata;
+      // the fixed token endpoint and signed ID-token issuer checks still apply.
+      if (params.has("iss") && params.get("iss") !== "https://accounts.google.com") return failure();
       const rawState = params.get("state"); const code = params.get("code"); const error = params.get("error");
       if (rawState === null || !ID.test(rawState) || (code === null) === (error === null) ||
         (code !== null && (code.length < 1 || code.length > 4_096 || /[\s\u0000-\u001f\u007f]/u.test(code))) ||
