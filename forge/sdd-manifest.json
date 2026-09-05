@@ -46,7 +46,7 @@
       "recorded_at": "2026-09-05T13:57:35.262Z"
     },
     "design-brief": {
-      "invocation_id": "6551270b-0a92-42ab-957d-dde740932b90",
+      "invocation_id": "b2a38573-47e4-4726-b220-85eab3644647",
       "outputs": [
         "docs/design-brief.md"
       ],
@@ -61,17 +61,60 @@
         "forge/design/candidates/candidate-b/v2/index.html": "07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6",
         "forge/design/candidates/candidate-b/v2/app.js": "5446f6a4a987b6d71cd6ddb4fa0a46c409d4c69c0a7083c31f043101ef9bcd95",
         "forge/design/candidates/candidate-b/v2/styles.css": "e79543dfcc1cd297e4904caa2944a790d581499025353fffb913f30b4fed7cb8",
-        "forge/design/evidence/candidate-b/v2/approval-receipt.json": "1b39065b05a2c9b987ab8bf88c118f92e144190769c4ebb9e8a039f21540c300"
+        "forge/design/candidates/candidate-b/v2/validate.mjs": "baeafb315ee1891885e00ef81561620b35b29ca27d55646b07012c9820920440",
+        "forge/design/evidence/candidate-b/v2/approval-receipt.json": "1b39065b05a2c9b987ab8bf88c118f92e144190769c4ebb9e8a039f21540c300",
+        "forge/design/evidence/candidate-b/v2/visual-qa.json": "5935076764338dd01816d3a4b2bbbb7ee770b108eb5f0c561823946487391f76",
+        "forge/design/evidence/candidate-b/v1/visual-qa.json": "b47e3b312f8f28cd68eadc338f039459813410a9f788025da9d7cff536237f2e",
+        "forge/design/candidate-sets/whatsapp-consultant/v1/shared/scenario-fixture.js": "96732f738a41bf1f838736de77a748ef65704d68010553bbf43638f83ddd1af6",
+        "forge/design/candidate-sets/matrix-consultant/v2/shared/scenario-fixture.js": "0f3959792187148a2e1ae842c738644da7ed60ddc01776948f86914b8fb207e6",
+        "forge/design/evidence/candidate-b/v2/approval-render-binding-20260905.json": "30d4d7665209f591821ed00bdb551789fb560a4056c50c3aa0ee7a64eade7598"
       },
       "consumed_source_fragments": {},
-      "recorded_at": "2026-09-05T14:07:41.678Z"
+      "recorded_at": "2026-09-05T15:18:21.354Z"
+    },
+    "architecture": {
+      "invocation_id": "4222ec69-7773-48e7-80d4-068903a61683",
+      "outputs": [
+        "docs/architecture.md"
+      ],
+      "source_hashes": {
+        "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
+        "docs/guardrails.md": "6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b",
+        "docs/user-journey.md": "ef058d468fde194ff38efe5d209edbdc3f061d90e4f9602671071c1cc28b2c39",
+        "docs/screen-map.md": "fe25f595f954cb7b04e369aec65066ec31d7a66a3359953c968343713d41039d",
+        "docs/wireframes.md": "e065b36af6ba851cb79a2028227b4599129da9c3656dc4be1a913d08cba62ed5",
+        "docs/design-brief.md": "a5feac6981acefb15cc84e827080d72b4b7b3734a1e6487cf4046f611095396e",
+        "docs/project-context.md": "458da1092f8ac6b10fca6aadc33fab6b9b56aef650fff23e814fe84cb15735a4",
+        "docs/canonical-terms.md": "dd4a7ef9ee403f941b649247b14eafff044af717d54fb8731b0d2d26665848d3",
+        "docs/product-idea.md": "852758d725831ebb435da8ffd9a548a6ea1ad70fbab13261885a4793a12ad14e",
+        "README.md": "540a76cb67521d9f3652ec15604f9dc7657f865af639baf13df506f07288c81b",
+        "forge/google-owner-login-investigation-20260905.md": "9b0b7e1b925cf5a05abdd83dccc5741594ddd121df653f43c4eb9218e915614f",
+        "forge/design/evidence/candidate-b/v2/approval-render-binding-20260905.json": "30d4d7665209f591821ed00bdb551789fb560a4056c50c3aa0ee7a64eade7598",
+        "docs/g00-feasibility-receipt-2026-09-03.md": "352d3974ece6f53877aa8bd3596c004fde4a554fa5eacb60846163c2219c6744",
+        "package.json": "37c436772007d340d21c4b7b8c5d2c9c384262e758e935c949b6160752674614",
+        "src/godaddy/server.mjs": "36fc71aa73e2ca505c1a0c51ebd61f7768e22de7ed2ad2d8fd2595713a2506cc",
+        "src/godaddy/mysql-storage.ts": "1341afa12c0ad04d6463d2bedf54ba813e6d4e4ee07e5d317a11d7c6c8319d1d",
+        "src/godaddy/mysql-archive-storage.ts": "c00b5c3c7c2c5f2e87324e52e2bf43ddfd03be4a15ce293b21d0b9e3b5b3d60e",
+        "src/godaddy/owner-password-auth.ts": "aeafa1a2391ed998554270ab366e08df3b79607bf20ab4637b91eb63b1bea354",
+        "src/godaddy/settings-runtime.ts": "87a41cf31345eef9120a829142e6162d74fd40fa8d3772a2eb40d51eff027d51",
+        "src/godaddy/application-runtime.ts": "66f4bee22e4e025d34a3c28ee7ad83e29308d622e70bc31bf2e23aacc43b794d",
+        "src/godaddy/codex-app-server-process.ts": "8a0a990a28c51781e1cf07d354fe7a0c480bb1340f7abd08f0ef4d11a0294b84",
+        "src/godaddy/claude-code-process.ts": "00c76653fa9234d45bde4049bd85cb2d5670a37561509ace222e543facef04b3",
+        "test/godaddy-owner-password-auth.test.ts": "8d85b630cbd2819f1e3a582efa441c1aca13b866d55c316cc17a908b049f0158",
+        "scripts/godaddy-state-schema.sql": "7070d2b83c2521a0994505c17cdec645820bfbcb0beb8014c17a9a09ea5a3e80",
+        "native/matrix-sidecar/Cargo.toml": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1",
+        "native/matrix-sidecar/Cargo.lock": "4a0469995afd74cd03b3095a180cef059ae0feb57008bb7cf6d000e007d55db7",
+        ".github/workflows/matrix-sidecar.yml": "7d938106d59726180af6951353af8ad5a244948fb1fc13af8f080547e026119e"
+      },
+      "consumed_source_fragments": {},
+      "recorded_at": "2026-09-05T15:46:13.564Z"
     }
   },
   "traceability_version": 1,
   "checker_contract_version": 1,
   "pipeline_version": "1.1.0",
-  "state": "reconciling",
-  "updated_at": "2026-09-05T15:02:00Z",
+  "state": "blocked",
+  "updated_at": "2026-09-05T16:09:17.462Z",
   "language": {
     "working_language": "uk",
     "selection_source": "recorded-preference",
@@ -3139,7 +3182,7 @@
     "design-brief": {
       "path": "docs/design-brief.md",
       "owner_skill": "to-design-brief",
-      "owner_invocation_id": "6551270b-0a92-42ab-957d-dde740932b90",
+      "owner_invocation_id": "b2a38573-47e4-4726-b220-85eab3644647",
       "declared_output_set": [
         "docs/design-brief.md"
       ],
@@ -3174,21 +3217,187 @@
         "forge/design/candidates/candidate-b/v2/index.html": "07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6",
         "forge/design/candidates/candidate-b/v2/app.js": "5446f6a4a987b6d71cd6ddb4fa0a46c409d4c69c0a7083c31f043101ef9bcd95",
         "forge/design/candidates/candidate-b/v2/styles.css": "e79543dfcc1cd297e4904caa2944a790d581499025353fffb913f30b4fed7cb8",
-        "forge/design/evidence/candidate-b/v2/approval-receipt.json": "1b39065b05a2c9b987ab8bf88c118f92e144190769c4ebb9e8a039f21540c300"
+        "forge/design/candidates/candidate-b/v2/validate.mjs": "baeafb315ee1891885e00ef81561620b35b29ca27d55646b07012c9820920440",
+        "forge/design/evidence/candidate-b/v2/approval-receipt.json": "1b39065b05a2c9b987ab8bf88c118f92e144190769c4ebb9e8a039f21540c300",
+        "forge/design/evidence/candidate-b/v2/visual-qa.json": "5935076764338dd01816d3a4b2bbbb7ee770b108eb5f0c561823946487391f76",
+        "forge/design/evidence/candidate-b/v1/visual-qa.json": "b47e3b312f8f28cd68eadc338f039459813410a9f788025da9d7cff536237f2e",
+        "forge/design/candidate-sets/whatsapp-consultant/v1/shared/scenario-fixture.js": "96732f738a41bf1f838736de77a748ef65704d68010553bbf43638f83ddd1af6",
+        "forge/design/candidate-sets/matrix-consultant/v2/shared/scenario-fixture.js": "0f3959792187148a2e1ae842c738644da7ed60ddc01776948f86914b8fb207e6",
+        "forge/design/evidence/candidate-b/v2/approval-render-binding-20260905.json": "30d4d7665209f591821ed00bdb551789fb560a4056c50c3aa0ee7a64eade7598"
       },
       "consumed_source_fragments": {},
-      "content_hash": "dd4f41754bf02ca40ef72142a64d8b446876801a5185383b280dfee3dfc4183e",
+      "content_hash": "a5feac6981acefb15cc84e827080d72b4b7b3734a1e6487cf4046f611095396e",
       "validation": {
         "result": "passed",
         "working_language": "uk",
-        "validated_at": "2026-09-05T14:25:18Z",
-        "scope": "Affected Google-only owner access and independent provider model/effort presentation; frozen prototype unchanged; product reviews remain not_run."
+        "validated_at": "2026-09-05T15:45:54.984Z",
+        "executor": "root inline to-design-brief recovery after owner capacity error",
+        "scope": "Reviewed complete saved narrow diff, current source hashes and render hash; no product tests or new approval."
       },
       "open_questions": [],
       "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
       "supersedes": {
-        "owner_invocation_id": "06b76b50-f5b1-45e6-94c8-8bfaee8e5781",
-        "content_hash": "719a32b4ea4fef9f9eaa0ee08864f00fa57f9637be530e67c404d58d1c2e5608",
+        "owner_invocation_id": "6551270b-0a92-42ab-957d-dde740932b90",
+        "content_hash": "dd4f41754bf02ca40ef72142a64d8b446876801a5185383b280dfee3dfc4183e",
+        "source_hashes": {
+          "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
+          "docs/user-journey.md": "ef058d468fde194ff38efe5d209edbdc3f061d90e4f9602671071c1cc28b2c39",
+          "docs/screen-map.md": "fe25f595f954cb7b04e369aec65066ec31d7a66a3359953c968343713d41039d",
+          "docs/wireframes.md": "e065b36af6ba851cb79a2028227b4599129da9c3656dc4be1a913d08cba62ed5",
+          "docs/guardrails.md": "6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b",
+          "docs/project-context.md": "458da1092f8ac6b10fca6aadc33fab6b9b56aef650fff23e814fe84cb15735a4",
+          "docs/canonical-terms.md": "dd4a7ef9ee403f941b649247b14eafff044af717d54fb8731b0d2d26665848d3",
+          "forge/design/candidates/candidate-b/v2/index.html": "07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6",
+          "forge/design/candidates/candidate-b/v2/app.js": "5446f6a4a987b6d71cd6ddb4fa0a46c409d4c69c0a7083c31f043101ef9bcd95",
+          "forge/design/candidates/candidate-b/v2/styles.css": "e79543dfcc1cd297e4904caa2944a790d581499025353fffb913f30b4fed7cb8",
+          "forge/design/evidence/candidate-b/v2/approval-receipt.json": "1b39065b05a2c9b987ab8bf88c118f92e144190769c4ebb9e8a039f21540c300"
+        },
+        "validation": {
+          "result": "passed",
+          "working_language": "uk",
+          "validated_at": "2026-09-05T14:25:18Z",
+          "scope": "Affected Google-only owner access and independent provider model/effort presentation; frozen prototype unchanged; product reviews remain not_run."
+        },
+        "supersedes": {
+          "owner_invocation_id": "06b76b50-f5b1-45e6-94c8-8bfaee8e5781",
+          "content_hash": "719a32b4ea4fef9f9eaa0ee08864f00fa57f9637be530e67c404d58d1c2e5608",
+          "source_hashes": {
+            "docs/prd.md": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
+            "docs/project-context.md": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
+            "docs/canonical-terms.md": "e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da",
+            "docs/guardrails.md": "4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48",
+            "docs/user-journey.md": "dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77",
+            "docs/screen-map.md": "385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52",
+            "docs/wireframes.md": "49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca"
+          },
+          "validation": {
+            "result": "passed",
+            "working_language": "uk"
+          }
+        }
+      }
+    },
+    "architecture": {
+      "path": "docs/architecture.md",
+      "owner_skill": "to-architecture",
+      "owner_invocation_id": "4222ec69-7773-48e7-80d4-068903a61683",
+      "declared_output_set": [
+        "docs/architecture.md"
+      ],
+      "status": "blocked",
+      "mission_control_status": "Blocked",
+      "validated_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+      "dependencies": [
+        "prd",
+        "project-context",
+        "canonical-terms",
+        "guardrails",
+        "user-journey",
+        "screen-map",
+        "wireframes",
+        "design-brief"
+      ],
+      "dependency_status": {
+        "prd": "validated",
+        "project-context": "validated",
+        "canonical-terms": "validated",
+        "guardrails": "validated",
+        "user-journey": "validated",
+        "screen-map": "validated",
+        "wireframes": "validated",
+        "design-brief": "validated"
+      },
+      "source_hashes": {
+        "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
+        "docs/guardrails.md": "6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b",
+        "docs/user-journey.md": "ef058d468fde194ff38efe5d209edbdc3f061d90e4f9602671071c1cc28b2c39",
+        "docs/screen-map.md": "fe25f595f954cb7b04e369aec65066ec31d7a66a3359953c968343713d41039d",
+        "docs/wireframes.md": "e065b36af6ba851cb79a2028227b4599129da9c3656dc4be1a913d08cba62ed5",
+        "docs/design-brief.md": "a5feac6981acefb15cc84e827080d72b4b7b3734a1e6487cf4046f611095396e",
+        "docs/project-context.md": "458da1092f8ac6b10fca6aadc33fab6b9b56aef650fff23e814fe84cb15735a4",
+        "docs/canonical-terms.md": "dd4a7ef9ee403f941b649247b14eafff044af717d54fb8731b0d2d26665848d3",
+        "docs/product-idea.md": "852758d725831ebb435da8ffd9a548a6ea1ad70fbab13261885a4793a12ad14e",
+        "README.md": "540a76cb67521d9f3652ec15604f9dc7657f865af639baf13df506f07288c81b",
+        "forge/google-owner-login-investigation-20260905.md": "9b0b7e1b925cf5a05abdd83dccc5741594ddd121df653f43c4eb9218e915614f",
+        "forge/design/evidence/candidate-b/v2/approval-render-binding-20260905.json": "30d4d7665209f591821ed00bdb551789fb560a4056c50c3aa0ee7a64eade7598",
+        "docs/g00-feasibility-receipt-2026-09-03.md": "352d3974ece6f53877aa8bd3596c004fde4a554fa5eacb60846163c2219c6744",
+        "package.json": "37c436772007d340d21c4b7b8c5d2c9c384262e758e935c949b6160752674614",
+        "src/godaddy/server.mjs": "36fc71aa73e2ca505c1a0c51ebd61f7768e22de7ed2ad2d8fd2595713a2506cc",
+        "src/godaddy/mysql-storage.ts": "1341afa12c0ad04d6463d2bedf54ba813e6d4e4ee07e5d317a11d7c6c8319d1d",
+        "src/godaddy/mysql-archive-storage.ts": "c00b5c3c7c2c5f2e87324e52e2bf43ddfd03be4a15ce293b21d0b9e3b5b3d60e",
+        "src/godaddy/owner-password-auth.ts": "aeafa1a2391ed998554270ab366e08df3b79607bf20ab4637b91eb63b1bea354",
+        "src/godaddy/settings-runtime.ts": "87a41cf31345eef9120a829142e6162d74fd40fa8d3772a2eb40d51eff027d51",
+        "src/godaddy/application-runtime.ts": "66f4bee22e4e025d34a3c28ee7ad83e29308d622e70bc31bf2e23aacc43b794d",
+        "src/godaddy/codex-app-server-process.ts": "8a0a990a28c51781e1cf07d354fe7a0c480bb1340f7abd08f0ef4d11a0294b84",
+        "src/godaddy/claude-code-process.ts": "00c76653fa9234d45bde4049bd85cb2d5670a37561509ace222e543facef04b3",
+        "test/godaddy-owner-password-auth.test.ts": "8d85b630cbd2819f1e3a582efa441c1aca13b866d55c316cc17a908b049f0158",
+        "scripts/godaddy-state-schema.sql": "7070d2b83c2521a0994505c17cdec645820bfbcb0beb8014c17a9a09ea5a3e80",
+        "native/matrix-sidecar/Cargo.toml": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1",
+        "native/matrix-sidecar/Cargo.lock": "4a0469995afd74cd03b3095a180cef059ae0feb57008bb7cf6d000e007d55db7",
+        ".github/workflows/matrix-sidecar.yml": "7d938106d59726180af6951353af8ad5a244948fb1fc13af8f080547e026119e"
+      },
+      "consumed_source_fragments": {},
+      "content_hash": "4f89d993e0029b3dd5b34231ae4177ae315faa860d6e15212c689b8d67ff05d6",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "validated_at": "2026-09-05T16:06:49.650Z",
+        "executor": "root inline to-architecture continuation",
+        "scope": "Affected auth, provider, scoped repository and baseline reconciliation; tests not run",
+        "checker_result": "blocked",
+        "checker_issue": "source_usage_missing after concurrent uncommitted shared-checker change"
+      },
+      "security_coverage": {
+        "NFR-005": {
+          "path": "docs/architecture.md",
+          "heading": "## 14. Product-security mapping"
+        },
+        "NFR-006": {
+          "path": "docs/architecture.md",
+          "heading": "## 14. Product-security mapping"
+        },
+        "NFR-007": {
+          "path": "docs/architecture.md",
+          "heading": "## 14. Product-security mapping"
+        },
+        "NFR-008": {
+          "path": "docs/architecture.md",
+          "heading": "## 14. Product-security mapping"
+        },
+        "NFR-009": {
+          "path": "docs/architecture.md",
+          "heading": "## 14. Product-security mapping"
+        },
+        "NFR-010": {
+          "path": "docs/architecture.md",
+          "heading": "## 14. Product-security mapping"
+        },
+        "NFR-011": {
+          "path": "docs/architecture.md",
+          "heading": "## 14. Product-security mapping"
+        },
+        "NFR-012": {
+          "path": "docs/architecture.md",
+          "heading": "## 14. Product-security mapping"
+        },
+        "NFR-016": {
+          "path": "docs/architecture.md",
+          "heading": "## 14. Product-security mapping"
+        },
+        "NFR-017": {
+          "path": "docs/architecture.md",
+          "heading": "## 14. Product-security mapping"
+        },
+        "NFR-019": {
+          "path": "docs/architecture.md",
+          "heading": "## 14. Product-security mapping"
+        }
+      },
+      "open_questions": [],
+      "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
+      "supersedes": {
+        "owner_invocation_id": "3a6b70d5-d73f-414f-8f06-3a004cc1c66e",
+        "content_hash": "96366beeb83c11336b6466618115af51cb8190a05afec03fe0ad697adc89929e",
         "source_hashes": {
           "docs/prd.md": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
           "docs/project-context.md": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
@@ -3196,53 +3405,14 @@
           "docs/guardrails.md": "4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48",
           "docs/user-journey.md": "dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77",
           "docs/screen-map.md": "385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52",
-          "docs/wireframes.md": "49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca"
+          "docs/wireframes.md": "49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca",
+          "docs/design-brief.md": "719a32b4ea4fef9f9eaa0ee08864f00fa57f9637be530e67c404d58d1c2e5608"
         },
         "validation": {
           "result": "passed",
           "working_language": "uk"
         }
       }
-    },
-    "architecture": {
-      "path": "docs/architecture.md",
-      "owner_skill": "to-architecture",
-      "owner_invocation_id": "3a6b70d5-d73f-414f-8f06-3a004cc1c66e",
-      "declared_output_set": ["docs/architecture.md"],
-      "status": "invalidated",
-      "mission_control_status": "Needs attention",
-      "validated_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
-      "dependencies": ["prd", "project-context", "canonical-terms", "guardrails", "user-journey", "screen-map", "wireframes", "design-brief"],
-      "dependency_status": {"prd": "validated", "project-context": "validated", "canonical-terms": "validated", "guardrails": "validated", "user-journey": "validated", "screen-map": "validated", "wireframes": "validated", "design-brief": "validated"},
-      "source_hashes": {
-        "docs/prd.md": "32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94",
-        "docs/project-context.md": "1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15",
-        "docs/canonical-terms.md": "e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da",
-        "docs/guardrails.md": "4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48",
-        "docs/user-journey.md": "dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77",
-        "docs/screen-map.md": "385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52",
-        "docs/wireframes.md": "49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca",
-        "docs/design-brief.md": "719a32b4ea4fef9f9eaa0ee08864f00fa57f9637be530e67c404d58d1c2e5608"
-      },
-      "consumed_source_fragments": {},
-      "content_hash": "96366beeb83c11336b6466618115af51cb8190a05afec03fe0ad697adc89929e",
-      "validation": {"result": "passed", "working_language": "uk"},
-      "security_coverage": {
-        "NFR-005": {"path": "docs/architecture.md", "heading": "## 14. Product-security mapping"},
-        "NFR-006": {"path": "docs/architecture.md", "heading": "## 14. Product-security mapping"},
-        "NFR-007": {"path": "docs/architecture.md", "heading": "## 14. Product-security mapping"},
-        "NFR-008": {"path": "docs/architecture.md", "heading": "## 14. Product-security mapping"},
-        "NFR-009": {"path": "docs/architecture.md", "heading": "## 14. Product-security mapping"},
-        "NFR-010": {"path": "docs/architecture.md", "heading": "## 14. Product-security mapping"},
-        "NFR-011": {"path": "docs/architecture.md", "heading": "## 14. Product-security mapping"},
-        "NFR-012": {"path": "docs/architecture.md", "heading": "## 14. Product-security mapping"},
-        "NFR-016": {"path": "docs/architecture.md", "heading": "## 14. Product-security mapping"},
-        "NFR-017": {"path": "docs/architecture.md", "heading": "## 14. Product-security mapping"},
-        "NFR-019": {"path": "docs/architecture.md", "heading": "## 14. Product-security mapping"}
-      },
-      "open_questions": [],
-      "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
-      "revalidation_reason": "Current Google-only owner-login and independent provider settings require source-grounded owner reconciliation. PRD now has validated JOB/UC coverage. The no-application-MFA decision is settled; dependencies, not a repeated MFA question, govern dispatch. Prior hashes/invocation retained until each owner returns."
     },
     "dod-evals": {
       "path": "docs/dod-evals.md",
@@ -3403,22 +3573,25 @@
   ],
   "active_baseline": {
     "baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
-    "canonical_ref": {"path": "docs/design-brief.md", "heading": "## Approved Visual Baseline"},
+    "canonical_ref": {
+      "path": "docs/design-brief.md",
+      "heading": "## Approved Visual Baseline"
+    },
     "prototype_source_root": "forge/design/candidates/candidate-b/v2",
-    "prototype_tree_hash": "4c6f2d51be1baf5962035933deeec7095d31f1d3e6c473ec9e43cb0e3a360744",
-    "hash_algorithm": "sdd-tree-sha256-v1",
+    "prototype_tree_hash": "57d103c5ed17bcc9a9d95a58718f83c33b8257229fc825b756367321eaa33199",
+    "hash_algorithm": "sdd-render-sha256-v2",
     "visual_target_path": "forge/design/candidates/candidate-b/v2/index.html",
     "visual_target_hash": "07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6",
     "approval_receipt": {
-      "path": "forge/design/evidence/candidate-b/v2/approval-receipt.json",
-      "content_hash": "1b39065b05a2c9b987ab8bf88c118f92e144190769c4ebb9e8a039f21540c300"
+      "path": "forge/design/evidence/candidate-b/v2/approval-render-binding-20260905.json",
+      "content_hash": "30d4d7665209f591821ed00bdb551789fb560a4056c50c3aa0ee7a64eade7598"
     },
     "integrity": {
       "status": "verified",
-      "recorded_hash": "4c6f2d51be1baf5962035933deeec7095d31f1d3e6c473ec9e43cb0e3a360744",
-      "observed_hash": "4c6f2d51be1baf5962035933deeec7095d31f1d3e6c473ec9e43cb0e3a360744",
-      "checked_at": "2026-09-05T13:39:09Z",
-      "scope": "Original v1 root bytes only; complete render-dependency closure is blocked by sdd-render-precheck-20260905, not verified."
+      "recorded_hash": "57d103c5ed17bcc9a9d95a58718f83c33b8257229fc825b756367321eaa33199",
+      "observed_hash": "57d103c5ed17bcc9a9d95a58718f83c33b8257229fc825b756367321eaa33199",
+      "checked_at": "2026-09-05T15:45:55.159Z",
+      "scope": "Current declared root and two shared dependencies; static closure verified. Historical August16 exact root continuity remains unproven; no new browser or approval event."
     },
     "prior_operator_overrides": [
       "SUR-02 uses the approved HappyPro Academy palette; no product-authored notification sound.",
@@ -3450,7 +3623,29 @@
         }
       }
     ],
-    "supersedes": "whatsapp-consultant/v1"
+    "supersedes": "whatsapp-consultant/v1",
+    "prior_render_binding": {
+      "hash_algorithm": "sdd-tree-sha256-v1",
+      "prototype_tree_hash": "4c6f2d51be1baf5962035933deeec7095d31f1d3e6c473ec9e43cb0e3a360744",
+      "approval_receipt": {
+        "path": "forge/design/evidence/candidate-b/v2/approval-receipt.json",
+        "content_hash": "1b39065b05a2c9b987ab8bf88c118f92e144190769c4ebb9e8a039f21540c300"
+      },
+      "integrity": {
+        "status": "verified",
+        "recorded_hash": "4c6f2d51be1baf5962035933deeec7095d31f1d3e6c473ec9e43cb0e3a360744",
+        "observed_hash": "4c6f2d51be1baf5962035933deeec7095d31f1d3e6c473ec9e43cb0e3a360744",
+        "checked_at": "2026-09-05T13:39:09Z",
+        "scope": "Original v1 root bytes only; complete render-dependency closure is blocked by sdd-render-precheck-20260905, not verified."
+      }
+    },
+    "candidate_id": "candidate-b",
+    "version": "v2",
+    "render_dependencies": [
+      "forge/design/candidate-sets/whatsapp-consultant/v1/shared/scenario-fixture.js",
+      "forge/design/candidate-sets/matrix-consultant/v2/shared/scenario-fixture.js"
+    ],
+    "historical_evidence_limitation": "Original legacy hash 96b91ba9622f8301809ed10ef661a313006e0c2743712912c624edc36a2ca8eb remains unreproduced; owner-reviewed current binding does not assert historical root-byte continuity or a new approval."
   },
   "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
   "verification": {
@@ -3635,8 +3830,8 @@
       "scope": "Deployment identity only. Does not block source-grounded SDD reconciliation or authorize an unconfirmed owner account. The exact account remains outside this manifest."
     }
   ],
-  "next_ready_nodes": ["design-brief"],
-  "pause_reason": "The authorized shared-checker repair is committed and tested: unloaded Node helpers and JavaScript URL constructors no longer cause browser-resource false alarms. Architecture-approved remains blocked only by the incomplete historical shared-dependency record. Design-brief prerequisites passed for bounded owner-reviewed migration. Frozen prototype, original receipts, production app, credentials and database are unchanged. No live Google-login or release success is claimed.",
+  "next_ready_nodes": [],
+  "pause_reason": "Shared validator and skill contracts changed concurrently after the passing architecture precheck; new source_usage migration blocks ten artifacts. Saved architecture is not mechanically validated under this new uncommitted checker. Await stable-version decision; no production or concurrent shared-repository edits.",
   "current_reconciliation_blockers": [
     {
       "id": "sdd-render-precheck-20260905",
@@ -3690,7 +3885,59 @@
           "complete_bundle_probe_hash": "57d103c5ed17bcc9a9d95a58718f83c33b8257229fc825b756367321eaa33199",
           "probe_limit": "Read-only probe with both known fixture paths; not a migrated approval or passing architecture gate."
         }
+      },
+      "status": "resolved",
+      "resolved_at": "2026-09-05T15:47:10.118Z",
+      "resolution": {
+        "receipt_path": "forge/design/evidence/candidate-b/v2/approval-render-binding-20260905.json",
+        "receipt_hash": "30d4d7665209f591821ed00bdb551789fb560a4056c50c3aa0ee7a64eade7598",
+        "design_brief_hash": "a5feac6981acefb15cc84e827080d72b4b7b3734a1e6487cf4046f611095396e",
+        "render_hash": "57d103c5ed17bcc9a9d95a58718f83c33b8257229fc825b756367321eaa33199",
+        "after_design_brief": "passed",
+        "before_architecture_approved": "passed",
+        "limitation": "Current dependency binding only; original August16 root-byte continuity not proven."
       }
+    },
+    {
+      "id": "concurrent-validator-change-20260905",
+      "status": "blocked",
+      "observed_at": "2026-09-05T16:09:17.132Z",
+      "node": "architecture-approved",
+      "result": "blocked",
+      "issue_code": "source_usage_missing",
+      "affected_artifacts": [
+        "product-idea",
+        "prd",
+        "project-context",
+        "canonical-terms",
+        "guardrails",
+        "user-journey",
+        "screen-map",
+        "wireframes",
+        "design-brief",
+        "architecture"
+      ],
+      "tested_committed_checker": {
+        "commit": "1606dd4",
+        "content_hash": "25fbe14f389bead99c0e627143dc92afd76876247b418afd79d8c1774f412496"
+      },
+      "concurrent_uncommitted_checker": {
+        "content_hash": "58fb5f9218545696863eb0cdb5cdb498a575bd638527bc78fb1123e46413567a",
+        "new_requirement": "source_usage owner-reviewed metadata on all prior artifacts",
+        "changed_paths": [
+          "skills/to-development-plan/SKILL.md",
+          "skills/to-product-idea/SKILL.md",
+          "skills/to-sdd-pipeline/SKILL.md",
+          "skills/to-sdd-pipeline/references/common-contract.md",
+          "skills/to-sdd-pipeline/references/manifest-contract.md",
+          "skills/to-sdd-pipeline/scripts/sdd_check.py",
+          "tests/test_sdd_check.py",
+          "tests/test_source_usage.py"
+        ]
+      },
+      "boundary": "Concurrent shared-repository edits were inspected only, not authored, reverted, committed or bypassed by this run.",
+      "resolution_required": "Choose a stable validator: authorize an isolated pin to tested commit1606dd4 for this reconciliation, or finish the concurrent checker change before expanding to its owner-reviewed metadata migration. No older checker was used to bypass the failed result.",
+      "preserved_work": "Design binding passed before concurrent change; architecture saved and semantically reviewed inline; DoD/QA/plan remain pending, production unchanged."
     }
   ],
   "resume_history": [{

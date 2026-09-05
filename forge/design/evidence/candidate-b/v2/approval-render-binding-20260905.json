@@ -1,0 +1,48 @@
+{
+  "event": "approve_design_baseline",
+  "actor": "user",
+  "baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+  "selected_candidate": "candidate-b",
+  "selected_version": "v2",
+  "message": "ОК. Закрий хром і продовжуй розробку",
+  "visual_target_path": "forge/design/candidates/candidate-b/v2/index.html",
+  "visual_target_hash": "07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6",
+  "prototype_source_root": "forge/design/candidates/candidate-b/v2",
+  "prototype_tree_hash": "57d103c5ed17bcc9a9d95a58718f83c33b8257229fc825b756367321eaa33199",
+  "hash_algorithm": "sdd-render-sha256-v2",
+  "render_dependencies": [
+    "forge/design/candidate-sets/whatsapp-consultant/v1/shared/scenario-fixture.js",
+    "forge/design/candidate-sets/matrix-consultant/v2/shared/scenario-fixture.js"
+  ],
+  "approved_at": "2026-08-16T02:22:48+03:00",
+  "normalization": {
+    "kind": "owner_reviewed_legacy_dependency_binding",
+    "recorded_at": "2026-09-05T15:16:10Z",
+    "owner_skill": "to-design-brief",
+    "review_invocation_id": "1d2b3940-a05a-4bd6-a413-9142fe504684",
+    "source_receipt": {
+      "path": "forge/design/evidence/candidate-b/v2/approval-receipt.json",
+      "content_hash": "1b39065b05a2c9b987ab8bf88c118f92e144190769c4ebb9e8a039f21540c300"
+    },
+    "previous_hash_algorithm": "sdd-tree-sha256-v1",
+    "previous_normalized_root_hash": "4c6f2d51be1baf5962035933deeec7095d31f1d3e6c473ec9e43cb0e3a360744",
+    "legacy_recorded_hash": "96b91ba9622f8301809ed10ef661a313006e0c2743712912c624edc36a2ca8eb",
+    "source_hashes": {
+      "forge/design/evidence/candidate-b/v2/visual-qa.json": "5935076764338dd01816d3a4b2bbbb7ee770b108eb5f0c561823946487391f76",
+      "forge/design/evidence/candidate-b/v1/visual-qa.json": "b47e3b312f8f28cd68eadc338f039459813410a9f788025da9d7cff536237f2e",
+      "forge/design/candidate-sets/whatsapp-consultant/v1/shared/scenario-fixture.js": "96732f738a41bf1f838736de77a748ef65704d68010553bbf43638f83ddd1af6",
+      "forge/design/candidate-sets/matrix-consultant/v2/shared/scenario-fixture.js": "0f3959792187148a2e1ae842c738644da7ed60ddc01776948f86914b8fb207e6"
+    },
+    "facts": [
+      "Both dependency hashes match their historical fixture evidence.",
+      "Current source root matches the September 4 normalized receipt.",
+      "The original receipt and all frozen source/dependency bytes remain unchanged."
+    ],
+    "limitations": [
+      "Original legacy hash 96b91... remains unreproduced; continuity of the exact August 16 root bytes is unproven.",
+      "This normalizes current dependency bindings, not retrospective proof of the exact August 16 rendering bundle.",
+      "This is neither a new visual approval nor evidence of unauthorized postapproval drift.",
+      "No visual, runtime, security, usability or release checks were executed by this migration."
+    ]
+  }
+}

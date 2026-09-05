@@ -4,7 +4,7 @@
 - Версія brief: V1, незмінний approved baseline зі scoped Google/provider overrides
 - Статус: approved
 - Дата: 05.09.2026
-- owner_invocation_id: `6551270b-0a92-42ab-957d-dde740932b90`
+- owner_invocation_id: `b2a38573-47e4-4726-b220-85eab3644647`
 
 ## Source References
 
@@ -26,7 +26,7 @@
 
 ### Поточні матеріали
 
-Для DBM-01–DBM-11: `required_for_generation: true`, `access_status: resolved`, дозволено лише локальне читання; це залежність design-handoff, не дозвіл його запускати. Семантично спожиті лише перелічені в Source References фрагменти. Файли та hashes наведено точно; source-документи й frozen bundle не змінювалися.
+Для DBM-01–DBM-11 і DBM-15–DBM-19: `required_for_generation: true`, `access_status: resolved`, дозволено лише локальне читання; це залежність design-handoff, не дозвіл його запускати. Незмінені upstream-фрагменти повторно використано за перевіреними hashes; нове читання обмежене прив'язкою залежностей та історичними hash-полями. Файли та hashes наведено точно; source-документи й frozen bundle не змінювалися.
 
 | material_id | kind | Шлях | Призначення / source basis | Hash |
 |---|---|---|---|---|
@@ -41,14 +41,19 @@
 | `DBM-09` | frozen_script | `forge/design/candidates/candidate-b/v2/app.js` | Demo/provenance, не auth чи model authority | `5446f6a4a987b6d71cd6ddb4fa0a46c409d4c69c0a7083c31f043101ef9bcd95` |
 | `DBM-10` | frozen_style | `forge/design/candidates/candidate-b/v2/styles.css` | Незмінна палітра/appearance | `e79543dfcc1cd297e4904caa2944a790d581499025353fffb913f30b4fed7cb8` |
 | `DBM-11` | approval_receipt | `forge/design/evidence/candidate-b/v2/approval-receipt.json` | Original approval/normalization | `1b39065b05a2c9b987ab8bf88c118f92e144190769c4ebb9e8a039f21540c300` |
+| `DBM-15` | frozen_script | `forge/design/candidate-sets/whatsapp-consultant/v1/shared/scenario-fixture.js` | Пряма залежність `index.html`; лише незмінність fixture, не нова продуктова вимога | `96732f738a41bf1f838736de77a748ef65704d68010553bbf43638f83ddd1af6` |
+| `DBM-16` | frozen_script | `forge/design/candidate-sets/matrix-consultant/v2/shared/scenario-fixture.js` | Пряма залежність `index.html`; лише незмінність fixture, не model authority | `0f3959792187148a2e1ae842c738644da7ed60ddc01776948f86914b8fb207e6` |
+| `DBM-17` | historical_evidence | `forge/design/evidence/candidate-b/v1/visual-qa.json` | Лише `sourceIntegrity.sharedFixtureSha256` як історичне підтвердження DBM-15; перевірки не повторювалися | `b47e3b312f8f28cd68eadc338f039459813410a9f788025da9d7cff536237f2e` |
+| `DBM-18` | historical_evidence | `forge/design/evidence/candidate-b/v2/visual-qa.json` | Лише `matrix_fixture_hash`, `source_tree_hash`, час та межі історичного approval/QA; перевірки не повторювалися | `5935076764338dd01816d3a4b2bbbb7ee770b108eb5f0c561823946487391f76` |
+| `DBM-19` | approval_receipt | `forge/design/evidence/candidate-b/v2/approval-render-binding-20260905.json` | Поточна операційна прив'язка залежностей після owner-review; збережені original receipt та обмеження історичного доказу, не нове visual approval | `30d4d7665209f591821ed00bdb551789fb560a4056c50c3aa0ee7a64eade7598` |
 
 - `DBM-12`: official_guidance, https://developers.google.com/identity/branding-guidelines, required_for_generation true, access_status resolved; дозволений режим — публічне read-only відкриття 05.09.2026. Спожито Render HTML Button Element / Download Pre-Approved Brand Icons / Create a custom Sign in with Google Button; сторінка оновлена 07.07.2026. Підстава — P-11/DB-D18, не розширення app-стилю; asset не завантажено.
-- `DBM-13`: prior_owned_document, попередній `docs/design-brief.md`, required_for_generation false, access_status resolved; локально спожита історія й незмінені правила; hash `719a32b4ea4fef9f9eaa0ee08864f00fa57f9637be530e67c404d58d1c2e5608`.
+- `DBM-13`: prior_owned_document, попередній `docs/design-brief.md`, required_for_generation false, access_status resolved; локально спожиті baseline/inventory/provenance, решта правил збережені; hash перед цією міграцією `dd4f41754bf02ca40ef72142a64d8b446876801a5185383b280dfee3dfc4183e`. Історичний hash перед Google/provider-узгодженням: `719a32b4ea4fef9f9eaa0ee08864f00fa57f9637be530e67c404d58d1c2e5608`.
 - `DBM-14`: frozen_tree_member, `forge/design/candidates/candidate-b/v2/validate.mjs`, required_for_generation false, access_status not_required для семантики; лише включений до read-only tree hash, не прочитаний як нова вимога й не виконаний; hash `baeafb315ee1891885e00ef81561620b35b29ca27d55646b07012c9820920440`.
 
 ### Успадкована історія
 
-Нижченаведені HappyPro, Element/Matrix, accessibility, preview, old-candidate/capture/evidence згадки — успадковані source references original approval, `required_for_generation: false` у цьому узгодженні, `access_status: not_required`; нових читань або перевірок цих зовнішніх матеріалів не виконували. Вони не підмінюють поточні DBM-джерела.
+Нижченаведені HappyPro, Element/Matrix, accessibility, preview, old-candidate/capture/evidence згадки — успадковані source references original approval, `required_for_generation: false` у цьому узгодженні, `access_status: not_required`; виняток — точно названі hash-поля локальних DBM-17/DBM-18. Нових читань або перевірок зовнішніх матеріалів не виконували; DBM-12 повторно використано з попереднього узгодження. Історичні згадки не підмінюють поточні DBM-джерела.
 
 | Source / version | Спожиті факти | Design inference | Exclusions |
 |---|---|---|---|
@@ -534,24 +539,28 @@ Don't:
 
 ## Approved Visual Baseline
 
-Read-only спостереження 05.09.2026: SHA-256 target/receipt і незалежний UTF-8 path-sorted hash усіх чотирьох regular files за sdd-tree-sha256-v1 підтвердили незмінні значення нижче. Links, newline paths і виключення не застосовані. Prototype/validator не запускалися; visual/heuristic/user/accessibility/runtime/security execution цього invocation — not_run.
+Локальна перевірка лише читанням 05.09.2026 підтвердила поточні hashes target, обох receipts, чотирьох файлів кореня й двох прямих shared-залежностей. Кореневий `sdd-tree-sha256-v1` збережений як компонент; поточний повний hash-домен — корінь і дві точні залежності за `sdd-render-sha256-v2`. Це підтверджує нинішні bytes, не їхню безперервну тотожність від 16.08.2026. Links, newline paths і виключення не застосовані. Prototype/validator не запускалися; visual/heuristic/user/accessibility/runtime/security execution цього invocation — not_run.
 
 - Status: approved
 - Baseline ID: `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`
 - Selected Candidate And Version: `B — Дослівний консиліум v2` — Matrix-native `SUR-01` + HappyPro-palette `SUR-02`
 - Immutable Visual Target Reference And SHA-256: `forge/design/candidates/candidate-b/v2/index.html`; `07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6`
-- Frozen Prototype Source Root, Algorithm And Tree Hash: `forge/design/candidates/candidate-b/v2`; `sdd-tree-sha256-v1`; `4c6f2d51be1baf5962035933deeec7095d31f1d3e6c473ec9e43cb0e3a360744`
+- Frozen Prototype Source Root, Algorithm And Tree Hash: `forge/design/candidates/candidate-b/v2`; `sdd-render-sha256-v2`; `57d103c5ed17bcc9a9d95a58718f83c33b8257229fc825b756367321eaa33199`
+- Render Dependencies: `forge/design/candidate-sets/whatsapp-consultant/v1/shared/scenario-fixture.js` — `96732f738a41bf1f838736de77a748ef65704d68010553bbf43638f83ddd1af6`; `forge/design/candidate-sets/matrix-consultant/v2/shared/scenario-fixture.js` — `0f3959792187148a2e1ae842c738644da7ed60ddc01776948f86914b8fb207e6`. Обидва файли підключено з `index.html`; вони входять до aggregate, а не до самого кореня.
+- Previous Normalized Root Hash: `sdd-tree-sha256-v1`; `4c6f2d51be1baf5962035933deeec7095d31f1d3e6c473ec9e43cb0e3a360744` — незмінний поточний чотирифайловий корінь, який відповідає нормалізації 04.09.2026; сам по собі не охоплює shared-залежності.
 - Prototype Artifact References: `index.html`, `styles.css`, `app.js`, `validate.mjs`; `forge/design/evidence/candidate-b/v2/visual-qa.json`; four screenshots under `forge/design/evidence/candidate-b/v2/`
 - Visual Definition Of Done Scope: повна відповідність цій revision для `SUR-01` і `SUR-02`: Matrix-native content choreography, повний дослівний body, роль/`HH:MM`, safe states, settings one-page hierarchy, HappyPro palette, keyboard/focus, responsive order; старі v1-кандидати не є visual target
 - Covered Screens States And Viewports: `SUR-01`–`SUR-02`, `MG-01`–`MG-13`, `SG-01`–`SG-05`, `SS-01`–`SS-46`, `390/430/768/1280/1440px`
-- Approval Receipt: `forge/design/evidence/candidate-b/v2/approval-receipt.json`; явне повідомлення Власника 16.08.2026: «ОК. Закрий хром і продовжуй розробку» після перегляду Candidate B v2
+- Approval Receipt: `forge/design/evidence/candidate-b/v2/approval-receipt.json`; SHA-256 `1b39065b05a2c9b987ab8bf88c118f92e144190769c4ebb9e8a039f21540c300`; явне повідомлення Власника 16.08.2026: «ОК. Закрий хром і продовжуй розробку» після перегляду Candidate B v2. Original receipt не змінено.
+- Dependency Binding Receipt: `forge/design/evidence/candidate-b/v2/approval-render-binding-20260905.json`; SHA-256 `30d4d7665209f591821ed00bdb551789fb560a4056c50c3aa0ee7a64eade7598`; поточний операційний запис `owner_reviewed_legacy_dependency_binding`, `recorded_at: 2026-09-05T15:16:10Z`, review invocation `1d2b3940-a05a-4bd6-a413-9142fe504684`. Для v2 binding застосовується цей запис із посиланням на original receipt, а не нова згода Власника.
 - Approved At: `2026-08-16T02:22:48+03:00`
-- Approval Provenance: original whole-design approval лишається чинним; normalization `2026-09-04T21:43:42+03:00` лише записала canonical target/tree metadata без зміни candidate bytes або approval scope
+- Approval Provenance: original whole-design approval та його час збережені. Нормалізація `2026-09-04T21:43:42+03:00` записала поточні target/root metadata; міграція 05.09.2026 додала до hash-домену лише дві залежності з hashes, що збігаються з історичними fixture-доказами. Це поточна owner-reviewed прив'язка без зміни frozen bytes, не нове visual approval і не ретроспективний доказ точного rendering bundle від 16.08.2026.
+- Historical Evidence Limitation: початковий legacy hash `96b91ba9622f8301809ed10ef661a313006e0c2743712912c624edc36a2ca8eb` залишається невідтвореним; безперервна тотожність точних bytes кореня від 16.08.2026 не доведена. Це обмеження не є доказом несанкціонованої зміни після approval; історичні QA-результати не приписуються нинішньому bundle як щойно виконані перевірки.
 - Permitted Variance: нативні Element/ОС відмінності допустимі як platform variance; body/order/role/Matrix replies і незмінена поведінка збережені. Лише DB-D18/DB-D19 замінюють відповідні access/provider наслідки frozen demo; довільна зміна палітри або цілісного напряму не дозволена.
 - Operator Overrides: історичні палітра HappyPro й заборона спеціальних звуків збережені. Чинні DB-D18 (Google/local-session presentation замість DB-D17) і DB-D19 (незалежні provider model/effort, точні версії/порядок, каталог) спираються на підтверджені upstream-рішення. Scope: SUR-02, P-11–15, SG-01–05, SS-30–46 лише в названих access/provider/recovery наслідках. Збережені one-page utility, палітра, Matrix-подача, Baseline ID, frozen bytes та original receipt. Це не новий whole-design approval і не live-login доказ.
 - Supersedes: попередні WhatsApp `A/B/C v1` як поточний design target; їхні source/evidence артефакти лишаються незмінними історичними записами
 - Superseded By: none
-- Downstream Invalidation: архітектура → DoD/evals → QA → development plan мають звірити лише наслідки DB-D18/DB-D19 із тим самим Baseline ID/target/tree. Попередня implementation authorization не переноситься автоматично; потрібен окремий пізніший implementation prompt. Frozen demo — provenance, не буквальний auth/shared-effort/model target; цей owner не змінює runtime або manifest.
+- Downstream Invalidation: архітектура → DoD/evals → QA → development plan мають звірити лише наслідки DB-D18/DB-D19 із тим самим Baseline ID/target та поточною v2-прив'язкою кореня і залежностей, зберігаючи історичне обмеження. Попередня implementation authorization не переноситься автоматично; потрібен окремий пізніший implementation prompt. Frozen demo — provenance, не буквальний auth/shared-effort/model target; цей owner не змінює runtime або manifest.
 
 ## Validation Report
 
@@ -564,7 +573,7 @@ Read-only спостереження 05.09.2026: SHA-256 target/receipt і не�
 - Pattern closure: `P-01`–`P-15` мають appearance і behavior principles — 15/15.
 - Screen/state coverage: `SUR-01`–`SUR-02` — 2/2; `MG-01`–`MG-13` — 13/13; settings-групи `SG-01`, `SG-02`, `SG-03`, `SG-04`, `SG-05` — 5/5; `SS-01`–`SS-46` — 46/46 через state-pattern contract.
 - Direction inventory: активний approved baseline — один, Candidate B v2; historical superseded набір містить рівно три candidates `A/B/C v1`. Нові A/C не вигадані після явного вибору Власника.
-- Source inventory: поточні DBM-джерела відокремлені від успадкованої історії; сім upstream-хешів, target, original receipt і чотирифайлове frozen tree перевірено. Це byte-evidence, не browser/runtime validation.
+- Source inventory: поточні DBM-джерела відокремлені від успадкованої історії; усі 17 hashes поточного dispatch перевірено: сім upstream-документів, чотири файли кореня, дві shared-залежності, два історичні QA-записи й обидва receipts. V2 aggregate відтворюється; це byte-evidence, не browser/runtime validation.
 
 ### Pass 2 — Judgment
 
@@ -577,6 +586,10 @@ Read-only спостереження 05.09.2026: SHA-256 target/receipt і не�
 - Scoped-override review: DB-D18/DB-D19 змінюють тільки Google/session/provider контракти; нових поверхонь, Matrix-подачі або глобальної token-системи немає. Google-brand виняток стосується лише кнопки.
 - Evidence mismatch (Medium, неблокувальний для авторства): frozen prototype зберігає історичні Cloudflare/demo identity, shared effort і непідтверджені model fixtures. DB-D18/DB-D19 замінюють ці наслідки без переписування bytes/receipt. Живий вхід, user/heuristic/accessibility execution не перевірялися.
 - Unresolved-content marker scan: 0 markers; approved-baseline поля мають повні canonical metadata та provenance.
+
+### Перевірка міграції прив'язки залежностей — 05.09.2026
+
+Зміна обмежена metadata, inventory і provenance; DB-D18/DB-D19, решта design-контракту, original receipt та frozen bytes збережені. Нових продуктових або візуальних рішень немає. Поточний aggregate та hashes джерел перевірено; невідтворений legacy hash і недоведена тотожність кореня від 16.08.2026 явно залишаються обмеженням історичного доказу, не прихованим pass. Міграція не виконує й не замінює visual, heuristic, user, accessibility, runtime, security або release-перевірки.
 
 ## Confirmed Design Decisions
 

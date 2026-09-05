@@ -4,43 +4,57 @@
 
 - `status`: reconciled all-GoDaddy target; implementation and destructive cleanup remain separately gated
 - `architecture_owner`: `to-architecture`
-- `owner_invocation_id`: `3a6b70d5-d73f-414f-8f06-3a004cc1c66e`
-- `updated_at`: `2026-09-04`
+- `owner_invocation_id`: `4222ec69-7773-48e7-80d4-068903a61683`
+- `updated_at`: `2026-09-05`
 - `runtime_host`: existing GoDaddy Node 22 application
 - `matrix_sdk`: `0.18.0`
-- `approved_baseline`: `PC-MATRIX-CANDIDATE-B-V2-20260816-R1` with scoped `DB-D17` owner-login override
+- `approved_baseline`: `PC-MATRIX-CANDIDATE-B-V2-20260816-R1` з чинними `DB-D18`/`DB-D19` та v2-прив'язкою залежностей
 
-Цей документ задає цільову production-архітектуру, а не твердження про завершене розгортання. Нативні Element/Matrix UX та ізольовані subscription-OAuth контури Codex і Claude збережено. Cloudflare Workers, Durable Objects, R2, Cloudflare Access і Google OAuth більше не є production-компонентами.
+Цей документ задає цільову production-архітектуру, а не твердження про завершене розгортання. Нативні Element/Matrix UX та ізольовані subscription-OAuth контури Codex і Claude збережено. Cloudflare Workers, Durable Objects, R2 і Cloudflare Access не є цільовими production-компонентами; прямий Google OIDC повертається тільки як перевірка особи Власника, не як AI-авторизація.
 
 ## 1. Джерела правди (Source References)
 
 Хеші зафіксовано на момент цієї owner-інвокації; пізніші зміни джерел вимагають reconciliation, а не тихого наслідування.
 
-| Джерело | SHA-256 | Використаний фрагмент |
-|---|---|---|
-| `README.md` | `540a76cb67521d9f3652ec15604f9dc7657f865af639baf13df506f07288c81b` | межі репозиторію і запуску |
-| `docs/product-idea.md` | `ecc16d6b81c0019f462947b52c013b96636577bd3a14503638102004c7058c8a` | GoDaddy-напрям, дві поверхні |
-| `docs/prd.md` | `32d42a752cae06c4a5dd09a9fce408b537ae06cf6c8fd2fceb7e40773b0c3b94` | FR-001–FR-046; NFR-005–008, 016–019 |
-| `docs/project-context.md` | `1b1268b1055984b5c142740196d3473a3c68518b47db7e1a1645fd8684e3ed15` | середовище і межі runtime |
-| `docs/canonical-terms.md` | `e94b5540ac769b72fa454d364fcd708cbfa4b2a7d6fd19a3ed0a184fc4f253da` | канонічні сутності й стани |
-| `docs/guardrails.md` | `4705073ab9e4ccefb3ebc9abd48762fe549f7d529def86aa70f2ad5bf092fa48` | fail-closed і cleanup gates |
-| `docs/user-journey.md` | `dda85ac0e9a82152aa0c7b121c624341e2628381fa8d1aff2ffe7fe4b85b0e77` | Matrix і Settings journeys |
-| `docs/screen-map.md` | `385708ad8bff541db37d265297d458c5c473a0053f0051cc2d908342bddacd52` | `SUR-01`, `SUR-02` і GoDaddy owner-login states |
-| `docs/wireframes.md` | `49fc8ede68901b6e9be1548a162c13177c1a245bc19bf6f3bb73fe8dfc8324ca` | approved interaction contracts і GoDaddy owner-login reconciliation |
-| `docs/design-brief.md` | `719a32b4ea4fef9f9eaa0ee08864f00fa57f9637be530e67c404d58d1c2e5608` | Candidate B visual baseline і GoDaddy owner-login reconciliation |
-| `forge/design/evidence/candidate-b/v2/approval-receipt.json` | `1b39065b05a2c9b987ab8bf88c118f92e144190769c4ebb9e8a039f21540c300` | immutable whole-design approval provenance |
-| `docs/development-plan.md` | `f888032705479f2dcc2a9d9adb8fb4180fc95f63b7b3bf0d6664334bf6cc2e52` | U-06 Rust sidecar and release evidence |
-| `docs/g00-feasibility-receipt-2026-09-03.md` | `352d3974ece6f53877aa8bd3596c004fde4a554fa5eacb60846163c2219c6744` | synthetic Published host/store/process receipt |
-| `package.json` | `37c436772007d340d21c4b7b8c5d2c9c384262e758e935c949b6160752674614` | Node 22 build/start conventions |
-| `src/godaddy/server.mjs` | `36f3e24258d17de6d4a9d4b38076bb4eb74b33a4ea0b7aab23fc79aad5699976` | current supervisor/health seam |
-| `src/godaddy/mysql-storage.ts` | `f947d132ab6f154e2d5ad0590daf85e79d87623d8ee3424f2e8a1df36131ba09` | MySQL state adapter |
-| `src/godaddy/mysql-archive-storage.ts` | `c00b5c3c7c2c5f2e87324e52e2bf43ddfd03be4a15ce293b21d0b9e3b5b3d60e` | encrypted archive adapter |
-| `src/godaddy/owner-password-auth.ts` | `5d3fd315dd69c206e7ad8aecac8d4210806294cb256efb109d0b736b0c0ce57b` | current local auth seam and known gaps |
-| `scripts/godaddy-state-schema.sql` | `ad0e44a17c9544154c6117933af9876d6654d519a69e6fbc045d10f03a53a723` | explicit, non-automatic schema |
+| Джерело | SHA-256 |
+|---|---|
+| `docs/prd.md` | `a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc` |
+| `docs/guardrails.md` | `6b88dcd634b03203f9f8dde93bd4e4abdba3fe57205b5f3bb776106b39bd999b` |
+| `docs/user-journey.md` | `ef058d468fde194ff38efe5d209edbdc3f061d90e4f9602671071c1cc28b2c39` |
+| `docs/screen-map.md` | `fe25f595f954cb7b04e369aec65066ec31d7a66a3359953c968343713d41039d` |
+| `docs/wireframes.md` | `e065b36af6ba851cb79a2028227b4599129da9c3656dc4be1a913d08cba62ed5` |
+| `docs/design-brief.md` | `a5feac6981acefb15cc84e827080d72b4b7b3734a1e6487cf4046f611095396e` |
+| `docs/project-context.md` | `458da1092f8ac6b10fca6aadc33fab6b9b56aef650fff23e814fe84cb15735a4` |
+| `docs/canonical-terms.md` | `dd4a7ef9ee403f941b649247b14eafff044af717d54fb8731b0d2d26665848d3` |
+| `docs/product-idea.md` | `852758d725831ebb435da8ffd9a548a6ea1ad70fbab13261885a4793a12ad14e` |
+| `README.md` | `540a76cb67521d9f3652ec15604f9dc7657f865af639baf13df506f07288c81b` |
+| `forge/google-owner-login-investigation-20260905.md` | `9b0b7e1b925cf5a05abdd83dccc5741594ddd121df653f43c4eb9218e915614f` |
+| `forge/design/evidence/candidate-b/v2/approval-render-binding-20260905.json` | `30d4d7665209f591821ed00bdb551789fb560a4056c50c3aa0ee7a64eade7598` |
+| `docs/g00-feasibility-receipt-2026-09-03.md` | `352d3974ece6f53877aa8bd3596c004fde4a554fa5eacb60846163c2219c6744` |
+| `package.json` | `37c436772007d340d21c4b7b8c5d2c9c384262e758e935c949b6160752674614` |
+| `src/godaddy/server.mjs` | `36fc71aa73e2ca505c1a0c51ebd61f7768e22de7ed2ad2d8fd2595713a2506cc` |
+| `src/godaddy/mysql-storage.ts` | `1341afa12c0ad04d6463d2bedf54ba813e6d4e4ee07e5d317a11d7c6c8319d1d` |
+| `src/godaddy/mysql-archive-storage.ts` | `c00b5c3c7c2c5f2e87324e52e2bf43ddfd03be4a15ce293b21d0b9e3b5b3d60e` |
+| `src/godaddy/owner-password-auth.ts` | `aeafa1a2391ed998554270ab366e08df3b79607bf20ab4637b91eb63b1bea354` |
+| `src/godaddy/settings-runtime.ts` | `87a41cf31345eef9120a829142e6162d74fd40fa8d3772a2eb40d51eff027d51` |
+| `src/godaddy/application-runtime.ts` | `66f4bee22e4e025d34a3c28ee7ad83e29308d622e70bc31bf2e23aacc43b794d` |
+| `src/godaddy/codex-app-server-process.ts` | `8a0a990a28c51781e1cf07d354fe7a0c480bb1340f7abd08f0ef4d11a0294b84` |
+| `src/godaddy/claude-code-process.ts` | `00c76653fa9234d45bde4049bd85cb2d5670a37561509ace222e543facef04b3` |
+| `test/godaddy-owner-password-auth.test.ts` | `8d85b630cbd2819f1e3a582efa441c1aca13b866d55c316cc17a908b049f0158` |
+| `scripts/godaddy-state-schema.sql` | `7070d2b83c2521a0994505c17cdec645820bfbcb0beb8014c17a9a09ea5a3e80` |
+| `native/matrix-sidecar/Cargo.toml` | `513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1` |
+| `native/matrix-sidecar/Cargo.lock` | `4a0469995afd74cd03b3095a180cef059ae0feb57008bb7cf6d000e007d55db7` |
+| `.github/workflows/matrix-sidecar.yml` | `7d938106d59726180af6951353af8ad5a244948fb1fc13af8f080547e026119e` |
+
+Спожито чинні продукт/access/provider контракти й відповідні технічні фрагменти; незмінні Matrix-рішення збережені. Репозиторій перевірено лише читанням 05.09.2026: `sed`/ `rg -n` для названих auth/runtime файлів, `rg --files native scripts .github src/godaddy test`, SHA-256 точних шляхів. Поточний checkout містить Rust workspace, lockfile й CI workflow; наявність файлів не є доказом Published deployment. Старі code observations і посилання на plan не визначають нові архітектурні рішення.
+
+Первинні Google-джерела, перевірені 05.09.2026: [OIDC](https://developers.google.com/identity/openid-connect/openid-connect), [перевірка ID Token](https://developers.google.com/identity/gsi/web/guides/verify-google-id-token), [оформлення кнопки](https://developers.google.com/identity/branding-guidelines); код `google-auth-library@11.0.2`, Node `>=22`, [зафіксований commit c249594](https://github.com/googleapis/google-cloud-node/tree/c249594c6ef41e4b36f1ef8869341a4c98c092b0/core/packages/google-auth-library-nodejs). `getToken` не перевіряє ID Token; `verifyIdToken` потребує явного `audience` і не виконує прикладні nonce/transaction/owner checks. Пакет ще не встановлено.
+
+Baseline: `PC-MATRIX-CANDIDATE-B-V2-20260816-R1`; `sdd-render-sha256-v2`; aggregate `57d103c5ed17bcc9a9d95a58718f83c33b8257229fc825b756367321eaa33199`; target `07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6`. Канонічні дві shared-залежності та receipt — у design brief. Це поточна owner-reviewed прив'язка; початковий legacy hash не відтворено, безперервну тотожність точного кореня від 16.08.2026 не доведено; нового approval або visual run немає.
 
 ## 2. Архітектурний висновок (Architecture Overview)
 
-V1 має дві поверхні: `SUR-01`, приватну invite-only E2EE Matrix-кімнату в нативному Element; і `SUR-02`, Settings у тому самому GoDaddy Node 22 app, захищені локальним сильним owner-password і підписаною session cookie.
+V1 має дві поверхні: `SUR-01`, приватну invite-only E2EE Matrix-кімнату в нативному Element; і `SUR-02`, Settings у тому самому GoDaddy Node 22 app, захищені Google OIDC лише дозволеного Власника та окремою серверною сесією застосунку.
 
 ```mermaid
 flowchart LR
@@ -51,6 +65,8 @@ flowchart LR
     N --> C[Codex subscription OAuth process]
     N --> A[Claude subscription OAuth process]
     N --> S[Owner Settings]
+    S -->|явний вхід| G[Google OIDC]
+    G -->|code + state| N
     R --> Q[(encrypted SQLite crypto store)]
 ```
 
@@ -153,13 +169,42 @@ Device revocation не відкликає вже розкриті history keys. 
 
 Matrix outbound має fixed production homeserver URL та exact HTTPS-origin allowlist. Caller-controlled discovery, URL, host, downgrade і proxy заборонені. Redirects вимкнено; якщо SDK transport технічно вимагає redirect handling, приймається тільки exact allowlisted HTTPS target після повторної перевірки. Media URL не розширює allowlist.
 
-## 8. Settings authentication і consistency
+## 8. Google-вхід, локальна сесія і Settings
 
-Google OAuth і Cloudflare Access замінені локальним owner-password лише для `SUR-02`. Published secret приймається через same-origin one-time challenge. Password порівнюється constant-time; session підписує окремий HMAC key, cookie має `Secure`, `HttpOnly`, `SameSite=Strict`, bounded idle та absolute expiry, rotation після login/sensitive change і server-side logout invalidation. State-changing requests вимагають origin allowlist і CSRF token; fail-closed headers забороняють cache.
+### 8.1. Межа особи та OAuth-транзакції
 
-PRD вимагає приймати щонайменше 64-character owner-password та throttling. Поточний auth seam має 32-character minimum і 12-hour absolute cookie без повного throttling/idle/rotation/logout контракту; це implementation gap, а не дозволене спрощення. Settings save/reset є full-object validation + version/CAS + idempotency key в одній MySQL transaction. Конфлікт не робить partial write.
+Цільовий `owner-google-auth.ts` замінює лише password identity seam; `settings-runtime.ts` лишається HTTP-адаптером. `FR-038(a)`: явний Google-вхід і точна серверна owner-перевірка; `FR-038(b)`: одноразова браузерна транзакція; `FR-038(c)`: локальна сесія для всіх protected bytes та origin/CSRF для змін; `FR-038(d)`: наявні app/hostname, лише identity scopes `openid email`, без app MFA/password fallback/реєстрації/іншого IdP. `FR-039(a)`: окремі логічні й credential domains Google, local session, Codex та Claude; `FR-039(b)`: Google/AI credentials і login transaction material не виходять у child env, browser payload, Matrix, logs або archive; `FR-039(c)`: вхід/відмова/вихід/relogin не змінюють AI credential state.
 
-Відсутність MFA не відповідає заявленому ASVS L2 control `v5.0.0-6.3.3`; production security gate потребує або другого фактора, або явного owner residual-risk acceptance з відповідним коригуванням assurance claim.
+| Пункт | Механізм і дозволені межі |
+|---|---|
+| `NFR-016.a` | Фіксовані HTTPS Google authorization/token/JWKS endpoints, не discovery від клієнта. Authorization-code flow з PKCE S256. Перед прийняттям JWT — bounded compact JWS, `alg=RS256`, без caller-supplied `jku/x5u`; офіційна бібліотека перевіряє trusted Google keys/підпис/строки з явно переданим `audience=GOOGLE_CLIENT_ID`. Додатково точні issuer `https://accounts.google.com` або `accounts.google.com` (нормалізуються до першого), audience лише цей клієнт, `azp` якщо є — цей клієнт, `nonce` і типи claims; `exp>now`, `iat<=now+60s`, `iat>=transaction.createdAt-60s`. Access token не є ID Token. Library default clock tolerance не послаблює ці перевірки. |
+| `NFR-016.b` | `email_verified===true`, exact normalized preauthorized Gmail із захищеної конфігурації, без видалення dots/plus aliases; непорожній Google `sub`. Після повної перевірки перший дозволений саме цей email атомарно прив'язує issuer/sub; інший email або інший sub не перебіндовує owner. Display name/login_hint/перший сторонній login не авторизують. Значення email/sub не записуються у Git або публічні відповіді. |
+| `NFR-016.c` | `GET /auth/sign-in` показує кнопку; лише її same-origin POST `/auth/google/start` з login-intent CSRF починає flow. HTTP GET start не робить OAuth-переходу. 32 random bytes окремо для state, browser binding, nonce і PKCE verifier; TTL 10 хв. Callback `GET /auth/google/callback` приймає один code+state або error+state, відхиляє duplicates/oversize/зайві protocol values, вимагає відповідну cookie й atomic claim транзакції перед token exchange. Не тримати DB lock під час мережі: pending→claimed→consumed, crash/timeout лишає claimed непридатною для повтору до expiry; повторити можна лише новий flow. Фінальний commit повторно перевіряє строки, config generation, owner binding та claim. Скасування/помилка споживає transaction, очищає cookie, не видає сесії. |
+| `NFR-016.d` | Окрема random 256-bit reference session, HMAC-підписана; у MySQL лише hash reference, строки, generation та owner binding. Кожний protected request перевіряє signature, origin, generation і durable registry всередині transaction зі свіжим часом після lock wait. Успішний повторний login атомарно припиняє попередню сесію браузера і видає нову. Google ID/access token не використовується як app cookie. |
+| `NFR-016.e` | Зберегти 30 хв idle, 12 год absolute, максимум 16 сесій; після очищення expired entries досягнення межі відхиляє нову, не витісняє інший браузер. Видимий POST `/auth/sign-out` відкликає поточну сесію; захищений POST `/auth/sessions/revoke` відкликає всі через durable generation increment. Зміна allowed identity, client/origin, session key або `SETTINGS_OWNER_ENABLED=false` відразу робить старі сесії непридатними. Logout не є Google logout: provider session може залишитися; `prompt=select_account` дає вибір, не доводить свіжий пароль/MFA. Втративши всі браузерні сесії, Власник може ротувати session key/disable у захищеному GoDaddy config; без пароля застосунку. |
+| `NFR-016.f` | Host-only `__Host-` cookies: `Secure; HttpOnly; Path=/; SameSite=Lax` і обмежений Max-Age для transaction/session. Lax потрібен для cross-site top-level GET з Google та повернення з окремого AI authorization; protected GET не змінює Settings. Callback має окрему protocol verification, а не same-origin mutation guard. Усі локальні POST/PUT, включно start/logout/revoke, перевіряють canonical HTTPS Origin, `Sec-Fetch-Site=same-origin`, purpose-bound CSRF, метод/тип/розмір. No-store на auth/protected/error/redirect, restrictive CSP/frame-ancestors, HSTS/nosniff/content-type та `Referrer-Policy: no-referrer`; callback одразу 303 на clean allowlisted local path. Не копіювати query у Location/log. |
+| `NFR-016.g` | Durable bounded limiter: для browser binding 5 спроб start/finish за 60с; глобально 60 starts/finishes за 60с, максимум 128 pending transactions. Перевірка до token exchange; нова cookie не скидає глобальну межу, restart не скидає лічильники. 429 з bounded Retry-After, без permanent lockout; browser-bound failure counters не дозволяють іншому браузеру заблокувати чинні сесії. Строки/лічильники очищаються транзакційно; invalid-state flood не пише необмежених ID. Ліміти — target policy до негативної перевірки, не твердження про наявну реалізацію. |
+| `NFR-016.h` | Власної MFA немає за чинним винятком PRD; Google login не видається за доказ MFA чи повної ASVS L2-відповідності. Умови перегляду винятку залишаються в PRD, повторного питання Власнику немає. |
+
+### 8.2. Збереження стану, конфігурації та відмов
+
+Використати наявний transactional MySQL adapter без DDL: окремий namespace/key `owner-google-access-v1`, щоб старі `owner-access-v2` password sessions ніколи не приймалися новим verifier. Старі записи не видаляються цією міграцією. Session/config generation — HMAC від versioned purpose, client ID, fixed origin, allowed email та enabled flag; окремий durable revocation counter. Операційне disable завжди поєднується з ротацією session key; re-enable зберігає новий key і не воскресає старі сесії, навіть якщо попередній процес не встиг записати disable у DB.
+
+Pending transaction у MySQL містить лише state/browser/nonce hashes, timestamps/status/config generation та AEAD ciphertext PKCE verifier; AES-256-GCM із fresh nonce, key поза DB, AAD зв'язує transaction ID/generation. Raw code, ID/access/refresh token не зберігаються; `access_type=offline` і refresh token не запитуються. Після exchange токени транзитні у Node memory, не child env/browser storage. Транзакції й expired sessions видаляються тільки з цього namespace; no shared table wipe. 10с network timeout, 64KiB response bound, fixed endpoint, без автоматичного retry token exchange чи redirect. Кеш trusted JWKS bounded його TTL, unknown key — один контрольований refresh; помилка ключів закриває вхід, не вимикає чинну локальну сесію.
+
+Дозволені діагностики: категорія, час, hash correlation, результат; ніколи raw library error/cause/request/response/JWT/code/query/email/sub або secrets. Бібліотека може включати їх у error strings/config, тому помилка відображається лише через allowlisted categories. Protected data не потрапляє навіть у denial/503.
+
+### 8.3. Незалежна готовність та збережені safeguards
+
+Читання коду підтвердило вже наявні MySQL one-use, rotation, logout, restart/concurrency safety, idle/absolute expiry та bounded sessions у `owner-password-auth.ts`; старе твердження про їх відсутність було застарілим. Їхні regression tests зберегти, адаптувавши identity seam; password strength/constant-time password tests стають історією вилученого способу входу.
+
+Auth-ready потребує лише Published/runtime policy, DB та Google/session/CSRF config, не capability catalog, Codex або Claude readiness. Після успішного login — `/operations/runtime`, якщо catalog неготовий, інакше `/settings`. Усі runtime setup routes, Settings APIs/assets, logout/revoke перевіряють одну owner session; наявний protected Codex setup запускається лише своєю окремою явною дією, не самим Google login. CSRF audience змінюється з `local-owner-password` на versioned `owner-google-settings-v1`.
+
+Composition root розрізняє auth-ready, Matrix transport-ready та consultation-ready. Missing Google config закриває лише owner web access; не зупиняє вже незалежно налаштований Matrix transport. Catalog/AI failure блокує нову консультацію, а не owner login. `configured=settings.configured && matrix.configured` не є умовою запуску незалежного Matrix transport; shared pool shutdown order/fencing збережено. Неповна готовність не стає загальним ready.
+
+### 8.4. Незалежні provider settings
+
+`FR-040`, `FR-041`, `FR-042`, `FR-043`: окремі typed model/effort catalogs Codex і Claude, рівно три підтверджені групи. Codex models походять із поточного authenticated app-server runtime; не hardcoded allowlist, що приховує підтверджений Sol. Claude — точні успішно перевірені version IDs, family order Opus→Sonnet→Haiku, новіші підтверджені версії першими; жодна згадка нової версії не створює entitlement. Model-default не передає explicit effort. Зміна одного провайдера не змінює інший; unsupported/stale/unknown combination блокує save/new session без silent downgrade. `FR-044`, `FR-045`, `FR-046`, `NFR-017`, обидві частини `NFR-019`: current/default/effective відокремлені; full-object schema/CAS/idempotency commit або жодного write; active snapshot незмінний, versioned capability mapping відтворюваний. Speed змінює лише дозволену оркестрацію, не billing tier чи safety.
 
 ## 9. Integration Map: orchestration і archive
 
@@ -173,7 +218,7 @@ Names only:
 
 - host: `RUNTIME_MODE`, `PORT`, `GODADDY_ALLOWED_ORIGINS`, `GODADDY_TRUSTED_PROXY_MODE`;
 - MySQL: `GODADDY_STATE_DATABASE_ROLE`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`;
-- Settings: `SETTINGS_OWNER_PASSWORD`, `SETTINGS_SESSION_HMAC_KEY`, `SETTINGS_CSRF_HMAC_KEY`;
+- Settings/Google: `SETTINGS_PUBLIC_ORIGIN` (точний `https://wy2v0putg6.c35.airoapp.ai`), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SETTINGS_OWNER_GOOGLE_EMAIL`, `SETTINGS_OWNER_ENABLED` (лише явні `true|false`), `SETTINGS_SESSION_HMAC_KEY`, `SETTINGS_CSRF_HMAC_KEY`, `SETTINGS_OAUTH_TRANSACTION_KEY` (окремий 256-bit AEAD key);
 - catalogs: `CAPABILITY_CATALOG_JSON`, `SPEED_POLICY_CATALOG_JSON`;
 - sidecar: `MATRIX_SIDECAR_PATH`, `MATRIX_SIDECAR_SHA256`, `MATRIX_PROTOCOL_VERSION`;
 - store/media: `MATRIX_STORE_DIR`, `MATRIX_STORE_PASSPHRASE`, `MATRIX_MEDIA_SPOOL_DIR`;
@@ -181,13 +226,13 @@ Names only:
 - archive: `ARCHIVE_ENCRYPTION_KEY`, `ARCHIVE_KEY_ID`;
 - agents: isolated provider-owned Codex subscription state; `CLAUDE_CODE_OAUTH_TOKEN` only in Claude process.
 
-Secrets і їх значення не входять у Git, logs, health, browser або archive. Forwarded host/proto довіряються лише за explicit provider mode; effective origin має належати fixed allowlist.
+Secrets і allowed identity values не входять у Git, logs, health, browser або archive. Callback утворюється тільки як `SETTINGS_PUBLIC_ORIGIN + /auth/google/callback`; request.url у server adapter є внутрішнім `http://godaddy.internal`, тому не є public origin. Host/forwarded headers не задають redirect_uri; вони лише проходять чинну allowlist policy. Missing/invalid Google config повертає безпечний 503 для залежних auth routes, без password fallback. Наявний client/secret, старі Cloudflare origin/callback і стандартний GoDaddy hostname збережені; додавання secret values і live verification — окрема захищена операція. `SETTINGS_OWNER_PASSWORD` більше не читається цільовим auth; його зовнішнє видалення тут не дозволене.
 
 ## 11. Build і packaging
 
 CI будує `x86_64-unknown-linux-musl` у pinned toolchain/builder командою `cargo build --release --locked --frozen`, strip-ить binary та публікує immutable artifact, SHA-256 manifest, SBOM і license inventory. Promotion кладе binary у fixed non-public app path. Node до spawn перевіряє exact checksum, executable ownership/mode і protocol version. Runtime compilation/download заборонені.
 
-До U-06 репозиторій не має production Rust workspace, committed lockfile чи CI artifact workflow; наведене тут є обов’язковим design contract, не evidence of implementation.
+Історично до U-06 workspace/lockfile/workflow були відсутні. Поточні файли вже існують (джерела §1); їх наявність не доводить Linux artifact, фінальний private path, real-room integration або deployed readiness.
 
 ## 12. Production-path gate, readiness і recovery
 
@@ -199,7 +244,7 @@ Backup вважається придатним лише після isolated rest
 
 ## 13. Спостережуваність і SLO
 
-Логи structured і content-free: correlation ID, event/transaction ID hash, state transition, latency bucket, retry count, SDK/error class. Заборонені message body, media path/content, access token, passphrase, archive key, owner-password і OAuth material. Метрики: sync freshness, outbox age/depth, retry rate, lock contention, spool bytes/age, readiness reasons, settings conflict rate. Alert не містить контенту.
+Логи structured і content-free: correlation ID, event/transaction ID hash, state transition, latency bucket, retry count, SDK/error class. Заборонені message body, media path/content, access token, passphrase, archive key, Google/session і AI OAuth material. Метрики: sync freshness, outbox age/depth, retry rate, lock contention, spool bytes/age, readiness reasons, settings conflict rate. Alert не містить контенту.
 
 ## 14. Product-security mapping
 
@@ -215,13 +260,13 @@ Backup вважається придатним лише після isolated rest
 | `NFR-010` | §5.1: persisted canonical order, transactional confirm/outbox and restart recovery | concurrent append/send, crash/restart, retry and order-correlation tests |
 | `NFR-011` | §9: authenticated archive manifest and verification before read/export | ciphertext/manifest tamper, wrong-key and restore-integrity tests |
 | `NFR-012` | §§9, 13: truthful provider/cost state, content-free security events and observable failures | log injection/redaction, failure/status and cost-source reconciliation tests |
-| `NFR-016` | §8: local password, signed bounded session, origin/CSRF and fail-closed access | auth bypass, throttle, expiry, rotation/logout tests; MFA resolution |
+| `NFR-016` | §8.1–8.3: кожний пункт a–h, Google identity, durable session, cross-site return і local CSRF | positive/denied/recovery для кожного пункту; без app MFA або false assurance |
 | `NFR-017` | §§5.1, 8: atomic Settings/snapshot, CAS/idempotency and rollback | concurrency, replay and transaction-failure tests |
-| `NFR-019` | §§7, 10, 12: fixed host/redirect policy, minimal exposure, stateless Preview | SSRF/redirect/forwarded-host and Preview write-denial tests |
+| `NFR-019` | §§7, 8.4, 10, 12: відтворюваний capability mapping плюс fixed host/redirect, minimal exposure, stateless Preview | drift/mapping, SSRF/redirect/forwarded-host і Preview write-denial tests |
 
 ### 14.1. Clause і journey coverage
 
-`docs/user-journey.md` не визначає `UC-*` identifiers, тому архітектура мапить його канонічні stages, не вигадуючи UC IDs.
+Канонічні `UC-*` належать PRD; journey використовує ці самі IDs: `UC-001` — консультація (§§4–9), `UC-002` — керування сесією (§§5, 9), `UC-003` — Google-вхід (§8.1–8.3), `UC-004` — Settings (§8.4), `UC-005` — архів (§9), `UC-006` — витрати (§13). Це технічні реалізації сценаріїв, не нові use cases.
 
 | Journey / PRD clauses | Реалізаційна boundary |
 |---|---|
@@ -230,7 +275,7 @@ Backup вважається придатним лише після isolated rest
 | stage 9; `FR-026`–`FR-030`, `FR-034`–`FR-036`; `NFR-010`, `NFR-012`, `NFR-014` | source/privacy/permission gates + confirmed message registration + Matrix egress formatter |
 | stage 10; `FR-031`–`FR-032`; `NFR-011` | MySQL application-encrypted archive, integrity manifest, export/delete/tombstone flows |
 | active-session costs; `FR-033`; `NFR-012` | provider-reported usage adapters і Settings-owned declared cost inputs; unknown stays unknown |
-| Settings journey; `FR-037`–`FR-046`; `NFR-016`–`NFR-019` | Node local auth/CSRF, typed catalog validation, atomic MySQL settings version і immutable session snapshot; responsive/accessibility presentation remains baseline-owned |
+| Settings journey; `FR-037`–`FR-046`; `NFR-016`–`NFR-019` | Node Google/local-session auth/CSRF, typed catalog validation, atomic MySQL settings version і immutable session snapshot; responsive/accessibility presentation remains baseline-owned |
 
 ## 15. Architecture Decision Log
 
@@ -238,7 +283,7 @@ Backup вважається придатним лише після isolated rest
 |---|---|---|
 | AD-01 | Element/Matrix є основною UX boundary | retained |
 | AD-02 | один bot identity, verbatim role-labelled conversation | retained |
-| AD-03 | Google OAuth/Cloudflare Access для Settings | superseded локальним owner-password |
+| AD-03 | Історичний Google OAuth/Cloudflare Access для Settings | старий Access gateway лишається superseded; прямий Google OIDC визначає AD-22 |
 | AD-04 | Cloudflare є runtime host | superseded існуючим GoDaddy Node 22 app |
 | AD-05 | Durable Objects володіють state/order | superseded MySQL transactions/outbox |
 | AD-06 | subscription OAuth domains ізольовані | retained |
@@ -250,13 +295,15 @@ Backup вважається придатним лише після isolated rest
 | AD-12 | explicit destructive recovery gate | retained |
 | AD-13 | R2 archive | superseded MySQL ciphertext/tombstones |
 | AD-14 | Preview | stateless через shared provider DB |
-| AD-15 | Settings access | local strong owner-password + signed bounded session |
+| AD-15 | Історичний password Settings access | superseded AD-22; durable session safeguards збережені |
 | AD-16 | Matrix crypto | Rust `matrix-sdk` 0.18.0 sidecar owns encrypted SQLite |
 | AD-17 | production private path | exact non-retrievability gate precedes credentials |
 | AD-18 | identity recovery | fresh device/empty store або exact device+store restore; no hybrid |
 | AD-19 | delivery truth | durable order; accepted, device-delivered і read — різні стани |
 | AD-20 | IPC/network | bounded private NDJSON/media spool і fixed outbound allowlist |
 | AD-21 | operations | liveness окремо від readiness; no automatic store reset |
+| AD-22 | Прямий Google OIDC + окрема durable owner session (§8) | PI-AUTH-20260905/DB-D18; відхилені password fallback, новий Google client та AI-auth coupling; no app MFA за винятком PRD |
+| AD-23 | Незалежні provider catalogs і readiness (§8.3–8.4) | DB-D19; спільна effort шкала, приховані confirmed models і catalog-gated login відхилені |
 
 ## 16. Ризики та пом'якшення (Risks And Mitigations)
 
@@ -266,16 +313,20 @@ Backup вважається придатним лише після isolated rest
 4. Media spool тимчасово містить plaintext; defaults потребують release memory/disk/cleanup evidence.
 5. Shared MySQL робить Preview виключно stateless; будь-який Preview write є release blocker.
 6. MySQL schema/outbox lease/index design має формально довести ordering, dedupe і fencing під concurrency/restart.
-7. Local Settings auth має implementation gaps і невирішений MFA/ASVS residual risk.
+7. Google implementation, protected credential provisioning і live same-tab login ще не перевірені. App MFA decision визначене PRD; ризик компрометації Google/local session лишається, без претензії на повну ASVS compliance.
 8. Revocation device не відкликає історичні keys; incident runbook має передбачити нову room boundary.
 9. Pinned SDK/dependencies потребують vulnerability monitoring і контрольованого upgrade path.
-10. `wireframes.md`, `design-brief.md`, `project-context.md` і `canonical-terms.md` можуть ще містити історичні Cloudflare/Google формулювання; цю topology визначають новіші PRD/guardrails і цей документ.
+10. Frozen demo/старі receipts зберігають історичні auth/model semantics; чинні DB-D18/DB-D19 та явне історичне hash-обмеження не можна підміняти новим runtime/visual доказом.
 11. Legacy Git/source, secrets і database cleanup заборонено до immutable rollback, encrypted backup, isolated restore/reconciliation, exact destructive manifest і action-time owner confirmation.
 
 ## 17. Відкриті питання (Open Questions)
 
-Перед implementation/release треба визначити: exact private paths; остаточні media limits після evidence; фізичну outbox/lease schema; isolated restore target; MFA або residual-risk рішення; точний upstream content-classifier/command allowlist.
+Перед implementation/release треба визначити: exact private paths; остаточні media limits після evidence; фізичну outbox/lease schema; isolated restore target; точний upstream content-classifier/command allowlist.
 
 ## 18. Поза scope (Out Of Scope)
 
 Власний homeserver, VPS, browser chat, multi-owner/multi-room, Matrix bridges/widgets, API/PAYG AI credentials, автоматичний store reset, stateful Preview і destructive legacy cleanup без окремої авторизації не входять у V1.
+
+## Перевірка узгодження — 05.09.2026
+
+Механічне та змістове review: джерела, шість UC, auth-пункти NFR-016.a–h, 11 security parent IDs, конкретні config/route/session boundaries і DB-D18/DB-D19 узгоджені; решта scope збережена. Документ визначає цільовий контракт. Product/security/browser тести не виконувалися; deployment і live Google login не підтверджені.
