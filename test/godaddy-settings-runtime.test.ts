@@ -136,7 +136,7 @@ function fixture(options: { pool?: OwnerAuthPool; runtime?: RuntimeBootstrap; go
 
 test("catalog failures identify the failing step without leaking details or clearing credentials", async () => {
   const codes: Extract<RuntimeCapabilityCatalogResult, { ok: false }>["code"][] = [
-    'claude_auth_rejected', 'claude_quota_blocked', 'claude_cli_incompatible', 'claude_process_failed',
+    'claude_auth_rejected', 'claude_access_denied', 'claude_quota_blocked', 'claude_cli_incompatible', 'claude_process_failed',
     'claude_invalid_response', 'claude_models_unavailable', 'catalog_storage_failed', 'invalid_models', 'invalid_defaults'
   ];
   for (const code of codes) {
@@ -155,6 +155,7 @@ test("catalog failures identify the failing step without leaking details or clea
     assert.ok(html.includes(`<code>${code}</code>`));
     assert.match(html, /Codex: ready \(план: pro\)/);
     if (code === 'claude_auth_rejected') assert.match(html, /Claude Code: auth_required/);
+    if (code === 'claude_access_denied') { assert.match(html, /Claude Code: unavailable/); assert.match(html, /HTTP 403/); }
     if (code === 'claude_quota_blocked') assert.match(html, /Claude Code: quota_blocked/);
     assert.doesNotMatch(html, /Перевірте готовність обох підписок/);
     assert.match(html, /Каталог можливостей активний/, 'previous valid catalog is preserved');

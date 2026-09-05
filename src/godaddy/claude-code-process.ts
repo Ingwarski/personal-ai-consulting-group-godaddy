@@ -39,7 +39,7 @@ export type CommandResult = Readonly<{
   termination?: "spawn_failed" | "timeout" | "output_limit" | "signal";
 }>;
 
-export type ClaudeDiscoveryFailureCode = "claude_auth_rejected" | "claude_quota_blocked" |
+export type ClaudeDiscoveryFailureCode = "claude_auth_rejected" | "claude_access_denied" | "claude_quota_blocked" |
   "claude_cli_incompatible" | "claude_process_failed" | "claude_invalid_response" | "claude_models_unavailable";
 
 // Only these fixed categories may cross the provider boundary. Never retain a
@@ -62,10 +62,12 @@ function commandDiagnostic(result: CommandResult) {
     const value: unknown = JSON.parse(result.stdout.length <= MAX_OUTPUT_BYTES ? result.stdout : "null");
     if (typeof value === "object" && value !== null && !Array.isArray(value)) { record = value as Record<string, unknown>; jsonObject = true; }
   } catch { /* Non-JSON CLI failures are represented by booleans only. */ }
-  const message = jsonObject ? (typeof record.result === "string" ? record.result : "") : result.stdout;
+  const errorMessages = Array.isArray(record.errors) ? record.errors.filter((value): value is string => typeof value === "string").slice(0, 10).join("\n") : "";
+  const message = jsonObject ? `${typeof record.result === "string" ? record.result : ""}\n${errorMessages}` : result.stdout;
   const text = `${message}\n${result.stderr}`.slice(0, MAX_OUTPUT_BYTES * 2);
   const hints = [
     ["oauth_scope", /(?:oauth|token).{0,100}(?:scope|permission)|insufficient_scope/iu],
+    ["organization", /organization|workspace|membership|account.{0,60}(?:disabled|suspended)/iu],
     ["billing", /credit balance|billing|payment required|extra usage|spending limit/iu],
     ["region", /unsupported country|country.{0,60}not supported|region.{0,60}not supported/iu],
     ["tls", /certificate|CERT_|TLS|SSL/iu],
@@ -102,6 +104,7 @@ function subscriptionAuthenticated(status: CommandResult): boolean {
 
 function discoveryFailure(result: CommandResult): ClaudeDiscoveryFailureCode {
   const text = `${result.stdout}\n${result.stderr}`.slice(0, MAX_OUTPUT_BYTES * 2);
+  if (commandDiagnostic(result).api_status === 403 || /\b403\b/iu.test(text)) return "claude_access_denied";
   if (/unknown (?:option|argument)|unrecognized (?:option|argument)/iu.test(text)) return "claude_cli_incompatible";
   if (/\b401\b|authentication_error|invalid.{0,30}(?:token|credential)|(?:token|credential).{0,30}(?:expired|invalid)|not logged in|please (?:run \/login|log in)/iu.test(text)) return "claude_auth_rejected";
   if (/\b429\b|rate_limit|rate limit|usage limit|quota|hit your limit/iu.test(text)) return "claude_quota_blocked";

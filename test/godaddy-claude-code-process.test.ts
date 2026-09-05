@@ -174,6 +174,7 @@ test("Claude readiness rejects unsuccessful, malformed and non-subscription stat
 test("Claude discovery reports only safe failure categories and stops repeated global failures", async () => {
   for (const [message, code] of [
     ['401 authentication_error invalid token SECRET-MARKER', 'claude_auth_rejected'],
+    ['API Error: 403 SECRET-MARKER', 'claude_access_denied'],
     ['429 rate_limit_error SECRET-MARKER', 'claude_quota_blocked'],
     ["unknown option '--safe-mode' SECRET-MARKER", 'claude_cli_incompatible'],
     ['model not available SECRET-MARKER', 'claude_models_unavailable'],
@@ -219,4 +220,8 @@ test("Claude failure diagnostics retain only bounded numeric fields and fixed ca
   assert.equal(untrusted.diagnostic?.api_status, null);
   assert.equal(untrusted.diagnostic?.terminal_reason, 'other_or_absent');
   assert.doesNotMatch(JSON.stringify(untrusted), /SECRET/);
+  const errorArray = new ClaudeDiscoveryFailure('claude_access_denied', { exitCode: 1,
+    stdout: JSON.stringify({ api_error_status: 403, errors: ['Account is not a member of the organization SECRET-MARKER'], terminal_reason: 'api_error' }), stderr: '' });
+  assert.equal(errorArray.diagnostic?.failure_hint, 'organization');
+  assert.doesNotMatch(JSON.stringify(errorArray), /SECRET/);
 });

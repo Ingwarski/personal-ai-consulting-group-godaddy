@@ -12,7 +12,7 @@ export type ClaudeRuntimeCatalogProbe = Readonly<{
 export type RuntimeCapabilityCatalogResult =
   | Readonly<{ ok: true; receipt: CapabilityReceipt }>
   | Readonly<{ ok: false; code: "codex_not_ready" | "claude_not_ready" | "private_boundary_failed" | "claude_paid_acceleration_forbidden" | "invalid_models" | "invalid_defaults" |
-      "claude_auth_rejected" | "claude_quota_blocked" | "claude_cli_incompatible" | "claude_process_failed" | "claude_invalid_response" | "claude_models_unavailable" |
+      "claude_auth_rejected" | "claude_access_denied" | "claude_quota_blocked" | "claude_cli_incompatible" | "claude_process_failed" | "claude_invalid_response" | "claude_models_unavailable" |
       "catalog_storage_failed" | "catalog_refresh_failed" }>;
 
 const allAvailable = (models: readonly ProviderModelCapability[]): boolean =>

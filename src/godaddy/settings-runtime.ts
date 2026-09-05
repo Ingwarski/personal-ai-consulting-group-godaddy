@@ -33,6 +33,7 @@ const catalogFailureMessages: Readonly<Record<CatalogFailureCode, string>> = Obj
   invalid_models: "Провайдер повернув несумісний список моделей. Потрібна перевірка відповіді runtime.",
   invalid_defaults: "Не вдалося сформувати сумісні початкові налаштування з підтверджених моделей.",
   claude_auth_rejected: "Claude Code відхилив авторизацію підписки під час перевірки моделей. Вхід Codex змінювати не потрібно.",
+  claude_access_denied: "Сервіс Claude відхилив запит із сервера: HTTP 403. Потрібно перевірити дозволи облікового запису Claude, токен або доступ із мережі хостингу. Ця помилка не визначає точну причину. Вхід Google і Codex змінювати не потрібно.",
   claude_quota_blocked: "Під час перевірки моделей Claude Code повідомив про ліміт використання. Повторіть після його поновлення.",
   claude_cli_incompatible: "Встановлена версія Claude Code не підтримує команду перевірки моделей. Потрібне виправлення розгортання, не повторний вхід Codex.",
   claude_process_failed: "Команда перевірки моделей Claude Code завершилася помилкою. Потрібна перевірка запуску Claude Code на сервері.",
@@ -512,6 +513,7 @@ export function createGoDaddySettingsRuntime(
           return render({
             ...status,
             ...(!refreshed.ok && refreshed.code === "claude_auth_rejected" ? { claude: "auth_required" as const } : {}),
+            ...(!refreshed.ok && refreshed.code === "claude_access_denied" ? { claude: "unavailable" as const } : {}),
             ...(!refreshed.ok && refreshed.code === "claude_quota_blocked" ? { claude: "quota_blocked" as const } : {}),
             catalogReady: refreshed.ok || catalog !== undefined,
             catalogResult: refreshed.ok ? "updated" : "unavailable",

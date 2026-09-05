@@ -508,10 +508,10 @@
         "src/godaddy/mysql-storage.ts": "eead845b845f3dcef736c13048ac5c7f8bac2834b1b4b8487a59362ac639b41b",
         "src/godaddy/mysql-archive-storage.ts": "c00b5c3c7c2c5f2e87324e52e2bf43ddfd03be4a15ce293b21d0b9e3b5b3d60e",
         "src/godaddy/owner-password-auth.ts": "aeafa1a2391ed998554270ab366e08df3b79607bf20ab4637b91eb63b1bea354",
-        "src/godaddy/settings-runtime.ts": "8a01f847f66acce33302036bfd379a0411bdfc4e896ab664766967fd8189afa3",
+        "src/godaddy/settings-runtime.ts": "4d7808a83fea04a09f727b4c97020ee976d9deb8b173899a77fb1fd62a4c79df",
         "src/godaddy/application-runtime.ts": "4e1a0aac6be32ab7b20ad46ded064f6884b1b54be2b48b8fd817a201d22cbd98",
         "src/godaddy/codex-app-server-process.ts": "8a0a990a28c51781e1cf07d354fe7a0c480bb1340f7abd08f0ef4d11a0294b84",
-        "src/godaddy/claude-code-process.ts": "9ad63586d357c490ad95e06756093e64000555fefc42593fe108e6dc018ea07d",
+        "src/godaddy/claude-code-process.ts": "dcf304da50cb4f6ab2b79545672ae732b28f46b93dfabb32df9e7ff722a1e60a",
         "test/godaddy-owner-password-auth.test.ts": "8d85b630cbd2819f1e3a582efa441c1aca13b866d55c316cc17a908b049f0158",
         "scripts/godaddy-state-schema.sql": "7070d2b83c2521a0994505c17cdec645820bfbcb0beb8014c17a9a09ea5a3e80",
         "native/matrix-sidecar/Cargo.toml": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1",
@@ -522,7 +522,7 @@
         "src/godaddy/owner-auth-client.ts": "3ec94265b65f6dddbc162d76b27339100c9246984aae8a372e45a6d5f1de9864",
         "src/http/security-headers.ts": "35c2b04a9a612783b613559e3339263f2f02689c0cb9e8a263ad6836c01b50e1",
         "src/godaddy/runtime-bootstrap.ts": "b75bb4df41eeb522400d053ffe733e77d61f1f2c0bcf5d416a9095a01475e066",
-        "src/runtime/capability-catalog.ts": "11dd5a6ee13004ea8b65b05e9736b7b9a73adcfd1e5b957514d30aad1862ccf1"
+        "src/runtime/capability-catalog.ts": "6cf849654b213589761f439813c65ea27615a891881053deed7bb4972dba2bf0"
       },
       "consumed_source_fragments": {
         "docs/project-context.md": [
@@ -5215,10 +5215,10 @@
         "src/godaddy/mysql-storage.ts": "eead845b845f3dcef736c13048ac5c7f8bac2834b1b4b8487a59362ac639b41b",
         "src/godaddy/mysql-archive-storage.ts": "c00b5c3c7c2c5f2e87324e52e2bf43ddfd03be4a15ce293b21d0b9e3b5b3d60e",
         "src/godaddy/owner-password-auth.ts": "aeafa1a2391ed998554270ab366e08df3b79607bf20ab4637b91eb63b1bea354",
-        "src/godaddy/settings-runtime.ts": "8a01f847f66acce33302036bfd379a0411bdfc4e896ab664766967fd8189afa3",
+        "src/godaddy/settings-runtime.ts": "4d7808a83fea04a09f727b4c97020ee976d9deb8b173899a77fb1fd62a4c79df",
         "src/godaddy/application-runtime.ts": "4e1a0aac6be32ab7b20ad46ded064f6884b1b54be2b48b8fd817a201d22cbd98",
         "src/godaddy/codex-app-server-process.ts": "8a0a990a28c51781e1cf07d354fe7a0c480bb1340f7abd08f0ef4d11a0294b84",
-        "src/godaddy/claude-code-process.ts": "9ad63586d357c490ad95e06756093e64000555fefc42593fe108e6dc018ea07d",
+        "src/godaddy/claude-code-process.ts": "dcf304da50cb4f6ab2b79545672ae732b28f46b93dfabb32df9e7ff722a1e60a",
         "test/godaddy-owner-password-auth.test.ts": "8d85b630cbd2819f1e3a582efa441c1aca13b866d55c316cc17a908b049f0158",
         "scripts/godaddy-state-schema.sql": "7070d2b83c2521a0994505c17cdec645820bfbcb0beb8014c17a9a09ea5a3e80",
         "native/matrix-sidecar/Cargo.toml": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1",
@@ -5229,7 +5229,7 @@
         "src/godaddy/owner-auth-client.ts": "3ec94265b65f6dddbc162d76b27339100c9246984aae8a372e45a6d5f1de9864",
         "src/http/security-headers.ts": "35c2b04a9a612783b613559e3339263f2f02689c0cb9e8a263ad6836c01b50e1",
         "src/godaddy/runtime-bootstrap.ts": "b75bb4df41eeb522400d053ffe733e77d61f1f2c0bcf5d416a9095a01475e066",
-        "src/runtime/capability-catalog.ts": "11dd5a6ee13004ea8b65b05e9736b7b9a73adcfd1e5b957514d30aad1862ccf1"
+        "src/runtime/capability-catalog.ts": "6cf849654b213589761f439813c65ea27615a891881053deed7bb4972dba2bf0"
       },
       "consumed_source_fragments": {
         "docs/project-context.md": [
@@ -5564,6 +5564,7 @@
           "result": "passed_no_document_change",
           "scope": "§8.2–8.4, FR-039/FR-041 та NFR-017/NFR-019: перевіряється JSON login status Claude subscription OAuth; error envelope не приймається за успішну відповідь; користувач бачить лише фіксовану безпечну категорію помилки. Claude authentication/quota/CLI failures зупиняють зайві probes. Каталог та credentials не очищаються; збереження тільки після підтверджених моделей. Google auth, provider isolation, модельні кандидати, paid-mode заборони та baseline не змінені.",
           "tests": "npm run check: 539/539, Node 22.23.2; build, typecheck, environment policy passed.",
+          "http403_followup": "Published на 3f2cce4: Claude process exit 1, API status 403, terminal_reason api_error; це не native launch failure. Додано окремий claude_access_denied без припущення про точну причину та без credential reset. 403 не відсікає наступні моделі, бо може бути model-specific. Error arrays перетворюються лише на закриту категорію; raw text не зберігається.",
           "diagnostic_followup": "Перший Published retry на 5d2d1af повернув claude_process_failed. Додано лише bounded numeric metadata та закриті категорії для server logs; жодного raw stdout/stderr, prompts, paths, session IDs чи credentials. Google session і Codex pro збережені. Остаточний live result зберігається окремим run receipt.",
           "previous_source_hashes": {
             "src/godaddy/claude-code-process.ts": "00c76653fa9234d45bde4049bd85cb2d5670a37561509ace222e543facef04b3",

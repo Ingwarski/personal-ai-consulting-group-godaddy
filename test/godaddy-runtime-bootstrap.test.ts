@@ -32,7 +32,7 @@ function fixture(discoverModels: GoDaddyClaudeCodeProcess["discoverModels"], fai
 }
 
 test('bootstrap preserves safe discovery failures and does not write or replace a valid catalog', async () => {
-  for (const code of ['claude_auth_rejected', 'claude_quota_blocked', 'claude_cli_incompatible', 'claude_process_failed', 'claude_invalid_response', 'claude_models_unavailable'] as const) {
+  for (const code of ['claude_auth_rejected', 'claude_access_denied', 'claude_quota_blocked', 'claude_cli_incompatible', 'claude_process_failed', 'claude_invalid_response', 'claude_models_unavailable'] as const) {
     const h = fixture(async () => { throw new ClaudeDiscoveryFailure(code); });
     assert.deepEqual(await h.runtime.refreshCatalog(), { ok: false, code });
     assert.equal(h.writes(), 0);
