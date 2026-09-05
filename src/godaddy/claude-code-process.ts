@@ -38,6 +38,37 @@ export type CommandResult = Readonly<{
   stderr: string;
 }>;
 
+export type ClaudeDiscoveryFailureCode = "claude_auth_rejected" | "claude_quota_blocked" |
+  "claude_cli_incompatible" | "claude_process_failed" | "claude_invalid_response" | "claude_models_unavailable";
+
+// Only these fixed categories may cross the provider boundary. Never retain a
+// raw CLI error as message/cause: it can contain credentials or response data.
+export class ClaudeDiscoveryFailure extends Error {
+  readonly code: ClaudeDiscoveryFailureCode;
+  constructor(code: ClaudeDiscoveryFailureCode) { super(code); this.name = "ClaudeDiscoveryFailure"; this.code = code; }
+}
+
+function subscriptionAuthenticated(status: CommandResult): boolean {
+  if (status.exitCode !== 0 || Buffer.byteLength(status.stdout, "utf8") > MAX_OUTPUT_BYTES) return false;
+  try {
+    const value: unknown = JSON.parse(status.stdout);
+    if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+    const record = value as Record<string, unknown>;
+    // This launcher injects only CLAUDE_CODE_OAUTH_TOKEN, not an API key or
+    // another provider's credentials. Presence is not a successful model call.
+    return record.loggedIn === true && record.authMethod === "oauth_token" && record.apiProvider === "firstParty";
+  } catch { return false; }
+}
+
+function discoveryFailure(result: CommandResult): ClaudeDiscoveryFailureCode {
+  const text = `${result.stdout}\n${result.stderr}`.slice(0, MAX_OUTPUT_BYTES * 2);
+  if (/unknown (?:option|argument)|unrecognized (?:option|argument)/iu.test(text)) return "claude_cli_incompatible";
+  if (/\b401\b|authentication_error|invalid.{0,30}(?:token|credential)|(?:token|credential).{0,30}(?:expired|invalid)|not logged in|please (?:run \/login|log in)/iu.test(text)) return "claude_auth_rejected";
+  if (/\b429\b|rate_limit|rate limit|usage limit|quota|hit your limit/iu.test(text)) return "claude_quota_blocked";
+  if (/model.{0,80}(?:not found|not available|unavailable|not supported)|(?:invalid|unknown|unsupported) model|does not exist/iu.test(text)) return "claude_models_unavailable";
+  return result.exitCode === 0 ? "claude_invalid_response" : "claude_process_failed";
+}
+
 export type CommandRunner = (input: Readonly<{
   executable: string;
   arguments: readonly string[];
@@ -182,6 +213,9 @@ function parseCompletion(value: string): Readonly<{ turnRef: string; body: strin
     if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return undefined;
     const result = (parsed as Record<string, unknown>).result;
     const sessionId = (parsed as Record<string, unknown>).session_id;
+    const isError = (parsed as Record<string, unknown>).is_error;
+    const subtype = (parsed as Record<string, unknown>).subtype;
+    if ((isError !== undefined && isError !== false) || (subtype !== undefined && subtype !== "success")) return undefined;
     if (!safeText(result) || typeof sessionId !== "string" || !/^[A-Za-z0-9_-]{1,256}$/u.test(sessionId)) return undefined;
     return Object.freeze({ turnRef: sessionId, body: result });
   } catch {
@@ -223,7 +257,7 @@ export function createGoDaddyClaudeCodeProcess(options: GoDaddyClaudeCodeProcess
     processRef,
     async inspectSubscription(): Promise<ClaudeCodeSubscriptionStatus> {
       const status = await execute(["auth", "status", "--json"]);
-      const ready = status.exitCode === 0 && Buffer.byteLength(status.stdout, "utf8") <= MAX_OUTPUT_BYTES;
+      const ready = subscriptionAuthenticated(status);
       return Object.freeze({
         processRef,
         authMode: ready ? "claude_code_oauth" : "other",
@@ -259,8 +293,9 @@ export function createGoDaddyClaudeCodeProcess(options: GoDaddyClaudeCodeProcess
     },
     async discoverModels(): Promise<readonly ProviderModelCapability[]> {
       const status = await execute(["auth", "status", "--json"]);
-      if (status.exitCode !== 0) return Object.freeze([]);
+      if (!subscriptionAuthenticated(status)) throw new ClaudeDiscoveryFailure("claude_auth_rejected");
       const models: ProviderModelCapability[] = [];
+      let failure: ClaudeDiscoveryFailureCode = "claude_models_unavailable";
       for (const candidate of candidates) {
         const baseline = await execute([
           "--print",
@@ -274,7 +309,13 @@ export function createGoDaddyClaudeCodeProcess(options: GoDaddyClaudeCodeProcess
           "--model", candidate,
           "Reply with the single word READY."
         ]);
-        if (baseline.exitCode !== 0 || parseCompletion(baseline.stdout) === undefined) continue;
+        if (baseline.exitCode !== 0 || parseCompletion(baseline.stdout) === undefined) {
+          failure = discoveryFailure(baseline);
+          if (failure === "claude_auth_rejected" || failure === "claude_quota_blocked" || failure === "claude_cli_incompatible") {
+            throw new ClaudeDiscoveryFailure(failure);
+          }
+          continue;
+        }
         const supportedReasoningEfforts: ProviderReasoningEffort[] = [];
         for (const effort of ["low", "medium", "high", "xhigh", "max"] as const) {
           const probe = await execute([
@@ -291,6 +332,10 @@ export function createGoDaddyClaudeCodeProcess(options: GoDaddyClaudeCodeProcess
             "Reply with the single word READY."
           ]);
           if (probe.exitCode === 0 && parseCompletion(probe.stdout) !== undefined) supportedReasoningEfforts.push(effort);
+          else {
+            const code = discoveryFailure(probe);
+            if (code === "claude_auth_rejected" || code === "claude_quota_blocked" || code === "claude_cli_incompatible") throw new ClaudeDiscoveryFailure(code);
+          }
         }
         const reasoningMappings: Record<ProviderReasoningEffort, string> = {};
         for (const effort of supportedReasoningEfforts) reasoningMappings[effort] = effort;
@@ -303,6 +348,7 @@ export function createGoDaddyClaudeCodeProcess(options: GoDaddyClaudeCodeProcess
           reasoningMappings: Object.freeze(reasoningMappings)
         }));
       }
+      if (models.length === 0) throw new ClaudeDiscoveryFailure(failure);
       return Object.freeze(models);
     }
   });

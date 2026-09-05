@@ -9,6 +9,7 @@ import { createVerifiedSettingsGateway, type VerifiedSettingsGateway } from "../
 import { OwnerSettingsDO } from "../settings/owner-settings-do.ts";
 import type { CapabilityReceipt } from "../settings/types.ts";
 import { parseRuntimeEnvironment } from "../runtime/environment.ts";
+import type { RuntimeCapabilityCatalogResult } from "../runtime/capability-catalog.ts";
 import { createOwnerGoogleService, parseOwnerGoogleConfiguration } from "./owner-google-auth.ts";
 import type { GoogleIdentityProvider } from "./google-identity-provider.ts";
 import { ownerAuthClientJavaScript } from "./owner-auth-client.ts";
@@ -23,6 +24,23 @@ import { createGoDaddyRegistrarRuntime, type GoDaddyRegistrarRuntime } from "./r
 import { createRuntimeBootstrap, type RuntimeBootstrap } from "./runtime-bootstrap.ts";
 
 type SettingsAsset = "settings.css" | "settings.js";
+type CatalogFailureCode = Extract<RuntimeCapabilityCatalogResult, { ok: false }>["code"];
+const catalogFailureMessages: Readonly<Record<CatalogFailureCode, string>> = Object.freeze({
+  codex_not_ready: "Codex не підтвердив готовність підписки. Перевірте його стан і повторіть перевірку.",
+  claude_not_ready: "Claude Code не підтвердив вхід через підписку. Вхід Codex змінювати не потрібно.",
+  private_boundary_failed: "Не підтверджено ізоляцію приватних підписок. Потрібна перевірка конфігурації застосунку.",
+  claude_paid_acceleration_forbidden: "Claude Code повідомив про платний режим, заборонений налаштуваннями застосунку.",
+  invalid_models: "Провайдер повернув несумісний список моделей. Потрібна перевірка відповіді runtime.",
+  invalid_defaults: "Не вдалося сформувати сумісні початкові налаштування з підтверджених моделей.",
+  claude_auth_rejected: "Claude Code відхилив авторизацію підписки під час перевірки моделей. Вхід Codex змінювати не потрібно.",
+  claude_quota_blocked: "Під час перевірки моделей Claude Code повідомив про ліміт використання. Повторіть після його поновлення.",
+  claude_cli_incompatible: "Встановлена версія Claude Code не підтримує команду перевірки моделей. Потрібне виправлення розгортання, не повторний вхід Codex.",
+  claude_process_failed: "Команда перевірки моделей Claude Code завершилася помилкою. Потрібна перевірка запуску Claude Code на сервері.",
+  claude_invalid_response: "Claude Code не повернув коректної успішної відповіді на перевірку моделей.",
+  claude_models_unavailable: "Claude Code не підтвердив жодної з налаштованих моделей для цієї підписки.",
+  catalog_storage_failed: "Моделі перевірено, але каталог не вдалося зберегти в базі даних. Повторіть збереження без очищення входу.",
+  catalog_refresh_failed: "Перевірка каталогу перервалася через внутрішню помилку. Потрібна перевірка runtime на сервері."
+});
 
 export type GoDaddySettingsRuntime = Readonly<{
   configured: boolean;
@@ -232,6 +250,7 @@ function operationDocument(input: Readonly<{
   deviceAuthorizationFailed?: boolean;
   codexResetResult?: "cleared" | "failed";
   catalogResult?: "updated" | "unavailable";
+  catalogFailure?: CatalogFailureCode;
   actionTokens: Readonly<Record<string, string>>;
 }>): string {
   const form = (path: string, label: string): string => `<form action="${path}" method="post" data-owner-action><input type="hidden" name="formToken" value="${escapeHtml(input.actionTokens[path] ?? "")}" /><button type="submit">${label}</button></form>`;
@@ -251,9 +270,11 @@ function operationDocument(input: Readonly<{
     : input.codexResetResult === "failed"
       ? '<p role="alert">Не вдалося повністю очистити попередній вхід Codex. Стан на екрані може бути застарілим; не починайте новий вхід і повторіть очищення.</p>'
       : "";
+  const failureCode = input.catalogFailure !== undefined && Object.hasOwn(catalogFailureMessages, input.catalogFailure)
+    ? input.catalogFailure : "catalog_refresh_failed";
   const catalogResult = input.catalogResult === "updated"
     ? '<p role="status">Каталог можливостей оновлено.</p>'
-    : input.catalogResult === "unavailable" ? '<p role="alert">Каталог не оновлено. Перевірте готовність обох підписок і повторіть дію.</p>' : "";
+    : input.catalogResult === "unavailable" ? `<p role="alert">Каталог не оновлено. ${catalogFailureMessages[failureCode]} Код: <code>${failureCode}</code>.</p>` : "";
   return `<!doctype html>
 <html lang="uk">
   <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Підготовка runtime — Personal Consultant</title><script src="/assets/owner-auth.js" defer></script></head>
@@ -484,12 +505,17 @@ export function createGoDaddySettingsRuntime(
               codexResetResult: reset ? "cleared" : "failed"
             }, reset ? 200 : 503);
           }
-          const refreshed = await runtime.refreshCatalog();
+          let refreshed: RuntimeCapabilityCatalogResult;
+          try { refreshed = await runtime.refreshCatalog(); }
+          catch { refreshed = { ok: false, code: "catalog_refresh_failed" }; }
           if (refreshed.ok) receipt = refreshed.receipt;
           return render({
             ...status,
+            ...(!refreshed.ok && refreshed.code === "claude_auth_rejected" ? { claude: "auth_required" as const } : {}),
+            ...(!refreshed.ok && refreshed.code === "claude_quota_blocked" ? { claude: "quota_blocked" as const } : {}),
             catalogReady: refreshed.ok || catalog !== undefined,
-            catalogResult: refreshed.ok ? "updated" : "unavailable"
+            catalogResult: refreshed.ok ? "updated" : "unavailable",
+            ...(!refreshed.ok ? { catalogFailure: refreshed.code } : {})
           }, refreshed.ok ? 200 : 503);
         }
         return plain("Method not allowed.", 405, { allow: url.pathname === "/operations/runtime" ? "GET" : "POST" });

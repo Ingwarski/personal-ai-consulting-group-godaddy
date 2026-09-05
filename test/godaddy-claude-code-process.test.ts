@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createGoDaddyClaudeCodeProcess, type CommandRunner } from "../src/godaddy/claude-code-process.ts";
+import { ClaudeDiscoveryFailure, createGoDaddyClaudeCodeProcess, type CommandRunner } from "../src/godaddy/claude-code-process.ts";
 import { SafeConsiliumFailure } from "../src/consilium/failures.ts";
 import { createCapabilityReceipt } from "./fixtures/capability-receipt.ts";
 
@@ -13,6 +13,7 @@ const secretEnvironment = Object.freeze({
 });
 
 const models = () => createCapabilityReceipt().claudeModels;
+const authenticatedStatus = JSON.stringify({ loggedIn: true, authMethod: "oauth_token", apiProvider: "firstParty" });
 
 test("does not create a Claude process without a locally injected subscription token", () => {
   assert.equal(createGoDaddyClaudeCodeProcess({ environment: {}, getModels: models }), undefined);
@@ -22,7 +23,7 @@ test("checks only Claude subscription auth in a disposable, scrubbed child envir
   const calls: Parameters<CommandRunner>[0][] = [];
   const run: CommandRunner = async (input) => {
     calls.push(input);
-    return { exitCode: 0, stdout: '{"loggedIn":true}', stderr: "" };
+    return { exitCode: 0, stdout: authenticatedStatus, stderr: "" };
   };
   const process = createGoDaddyClaudeCodeProcess({
     environment: secretEnvironment,
@@ -118,7 +119,7 @@ test("probes exact current Claude models and exposes only the usable per-model e
   const calls: Parameters<CommandRunner>[0][] = [];
   const run: CommandRunner = async (input) => {
     calls.push(input);
-    if (input.arguments[0] === "auth") return { exitCode: 0, stdout: "{}", stderr: "" };
+    if (input.arguments[0] === "auth") return { exitCode: 0, stdout: authenticatedStatus, stderr: "" };
     const effortIndex = input.arguments.indexOf("--effort");
     const effort = effortIndex === -1 ? null : input.arguments[effortIndex + 1];
     const model = input.arguments[input.arguments.indexOf("--model") + 1];
@@ -154,4 +155,53 @@ test("probes exact current Claude models and exposes only the usable per-model e
   assert.equal(calls.some((call) => call.arguments.includes("claude-opus-5")), true);
   assert.equal(calls.some((call) => call.arguments.includes("claude-opus-4-8")), true);
   assert.equal(calls.some((call) => call.arguments.includes("opus")), false);
+});
+
+test("Claude readiness rejects unsuccessful, malformed and non-subscription status despite exit zero", async () => {
+  for (const stdout of ['{"loggedIn":false}', '{}', 'not-json', 'null', '[]',
+    JSON.stringify({ loggedIn: "true", authMethod: "oauth_token", apiProvider: "firstParty" }),
+    JSON.stringify({ loggedIn: true, authMethod: "api_key", apiProvider: "firstParty" }),
+    JSON.stringify({ loggedIn: true, authMethod: "oauth_token", apiProvider: "bedrock" })]) {
+    let calls = 0;
+    const runtime = createGoDaddyClaudeCodeProcess({ environment: secretEnvironment, getModels: models,
+      run: async () => { calls++; return { exitCode: 0, stdout, stderr: "" }; } })!;
+    assert.equal((await runtime.inspectSubscription()).readiness, "auth_required");
+    await assert.rejects(runtime.discoverModels(), (error: unknown) => error instanceof ClaudeDiscoveryFailure && error.code === "claude_auth_rejected");
+    assert.equal(calls, 2, "no generation after an invalid status response");
+  }
+});
+
+test("Claude discovery reports only safe failure categories and stops repeated global failures", async () => {
+  for (const [message, code] of [
+    ['401 authentication_error invalid token SECRET-MARKER', 'claude_auth_rejected'],
+    ['429 rate_limit_error SECRET-MARKER', 'claude_quota_blocked'],
+    ["unknown option '--safe-mode' SECRET-MARKER", 'claude_cli_incompatible'],
+    ['model not available SECRET-MARKER', 'claude_models_unavailable'],
+    ['command failed SECRET-MARKER', 'claude_process_failed']
+  ] as const) {
+    let generations = 0;
+    const runtime = createGoDaddyClaudeCodeProcess({ environment: secretEnvironment, getModels: models,
+      run: async ({ arguments: args }) => {
+        if (args[0] === 'auth') return { exitCode: 0, stdout: authenticatedStatus, stderr: '' };
+        generations++;
+        return { exitCode: 1, stdout: '', stderr: message };
+      } })!;
+    await assert.rejects(runtime.discoverModels(), (error: unknown) => {
+      assert.ok(error instanceof ClaudeDiscoveryFailure);
+      assert.equal(error.code, code);
+      assert.doesNotMatch(String(error), /SECRET-MARKER/);
+      assert.equal(error.cause, undefined);
+      return true;
+    });
+    assert.equal(generations, ['claude_auth_rejected', 'claude_quota_blocked', 'claude_cli_incompatible'].includes(code) ? 1 : 6);
+  }
+});
+
+test("Claude error envelopes are not successful model completions even with exit zero", async () => {
+  const runtime = createGoDaddyClaudeCodeProcess({ environment: { ...secretEnvironment, CLAUDE_CODE_MODEL_CANDIDATES: 'claude-opus-5' }, getModels: models,
+    run: async ({ arguments: args }) => args[0] === 'auth' ? { exitCode: 0, stdout: authenticatedStatus, stderr: '' } : {
+      exitCode: 0, stdout: JSON.stringify({ is_error: true, subtype: 'error_during_execution', result: 'Failure', session_id: 'test-id' }), stderr: ''
+    } })!;
+  await assert.rejects(runtime.discoverModels(), (error: unknown) => error instanceof ClaudeDiscoveryFailure && error.code === 'claude_invalid_response');
+  await assert.rejects(runtime.runCritique({ modelId: 'claude-opus-5', runtimeModelId: 'claude-opus-5', reasoningEffort: null, prompt: 'Test.' }), /claude_invalid_completion/);
 });

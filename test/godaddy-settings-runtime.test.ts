@@ -6,6 +6,7 @@ import { createGoDaddySettingsRuntime, type GoDaddySettingsRuntime } from "../sr
 import { GOOGLE_SESSION_COOKIE } from "../src/godaddy/owner-google-auth.ts";
 import type { GoogleIdentityProvider } from "../src/godaddy/google-identity-provider.ts";
 import type { RuntimeBootstrap } from "../src/godaddy/runtime-bootstrap.ts";
+import type { RuntimeCapabilityCatalogResult } from "../src/runtime/capability-catalog.ts";
 import { activeNow, createCapabilityReceipt } from "./fixtures/capability-receipt.ts";
 import { OwnerAuthPool } from "./fixtures/owner-auth-pool.ts";
 
@@ -132,6 +133,46 @@ function fixture(options: { pool?: OwnerAuthPool; runtime?: RuntimeBootstrap; go
   });
   return { runtime, pool };
 }
+
+test("catalog failures identify the failing step without leaking details or clearing credentials", async () => {
+  const codes: Extract<RuntimeCapabilityCatalogResult, { ok: false }>["code"][] = [
+    'claude_auth_rejected', 'claude_quota_blocked', 'claude_cli_incompatible', 'claude_process_failed',
+    'claude_invalid_response', 'claude_models_unavailable', 'catalog_storage_failed', 'invalid_models', 'invalid_defaults'
+  ];
+  for (const code of codes) {
+    let resets = 0;
+    const { runtime } = fixture({ runtime: bootstrap({
+      status: async () => ({ codex: 'ready', codexPlanType: 'pro', claude: 'ready' }),
+      refreshCatalog: async () => ({ ok: false, code }),
+      resetCodexAuthorization: async () => { resets++; return true; }
+    }) });
+    const { jar } = await login(runtime);
+    const page = await runtime.handle(request('/operations/runtime', jar));
+    const token = formToken(await page!.text(), '/operations/runtime/catalog');
+    const result = await runtime.handle(actionRequest('/operations/runtime/catalog', token, jar));
+    assert.equal(result?.status, 503);
+    const html = await result!.text();
+    assert.ok(html.includes(`<code>${code}</code>`));
+    assert.match(html, /Codex: ready \(план: pro\)/);
+    if (code === 'claude_auth_rejected') assert.match(html, /Claude Code: auth_required/);
+    if (code === 'claude_quota_blocked') assert.match(html, /Claude Code: quota_blocked/);
+    assert.doesNotMatch(html, /Перевірте готовність обох підписок/);
+    assert.match(html, /Каталог можливостей активний/, 'previous valid catalog is preserved');
+    assert.equal(resets, 0);
+  }
+});
+
+test("unexpected catalog exceptions stay private and leave the Google session usable", async () => {
+  const { runtime } = fixture({ runtime: bootstrap({ refreshCatalog: async () => { throw new Error('RAW-SECRET-MARKER'); } }) });
+  const { jar } = await login(runtime);
+  const page = await runtime.handle(request('/operations/runtime', jar));
+  const response = await runtime.handle(actionRequest('/operations/runtime/catalog', formToken(await page!.text(), '/operations/runtime/catalog'), jar));
+  assert.equal(response?.status, 503);
+  const html = await response!.text();
+  assert.match(html, /catalog_refresh_failed/);
+  assert.doesNotMatch(html, /RAW-SECRET-MARKER/);
+  assert.equal((await runtime.handle(request('/operations/runtime', jar)))?.status, 200);
+});
 
 test("Google configuration and Published policy fail closed before a pool is created; password is not a fallback", async () => {
   for (const change of [{}, { SETTINGS_OWNER_ENABLED: "false" }, { RUNTIME_MODE: "preview" },

@@ -433,8 +433,8 @@
       "recorded_at": "2026-09-05T16:55:16.702Z"
     },
     "architecture": {
-      "invocation_id": "architecture-google-issuer-20260905T214916Z",
-      "previous_invocation_id": "d0ecf837-81d5-4a44-9698-69c2a2b39f22",
+      "invocation_id": "architecture-catalog-failure-20260905T221436Z",
+      "previous_invocation_id": "architecture-google-issuer-20260905T214916Z",
       "outputs": [
         "docs/architecture.md"
       ],
@@ -488,7 +488,9 @@
         "src/godaddy/owner-google-auth.ts": "full",
         "src/godaddy/google-identity-provider.ts": "full",
         "src/godaddy/owner-auth-client.ts": "full",
-        "src/http/security-headers.ts": "full"
+        "src/http/security-headers.ts": "full",
+        "src/godaddy/runtime-bootstrap.ts": "full",
+        "src/runtime/capability-catalog.ts": "full"
       },
       "source_hashes": {
         "docs/prd.md": "a45aa866bd0591ba778b8ddf1528f9789fd954eef86dd2d8109c8db3f0ed23cc",
@@ -506,10 +508,10 @@
         "src/godaddy/mysql-storage.ts": "eead845b845f3dcef736c13048ac5c7f8bac2834b1b4b8487a59362ac639b41b",
         "src/godaddy/mysql-archive-storage.ts": "c00b5c3c7c2c5f2e87324e52e2bf43ddfd03be4a15ce293b21d0b9e3b5b3d60e",
         "src/godaddy/owner-password-auth.ts": "aeafa1a2391ed998554270ab366e08df3b79607bf20ab4637b91eb63b1bea354",
-        "src/godaddy/settings-runtime.ts": "7b1516eabf6ec74748bf195b4b30962bdfe6679c5c6306e20b545ce93ff04b0e",
+        "src/godaddy/settings-runtime.ts": "8a01f847f66acce33302036bfd379a0411bdfc4e896ab664766967fd8189afa3",
         "src/godaddy/application-runtime.ts": "4e1a0aac6be32ab7b20ad46ded064f6884b1b54be2b48b8fd817a201d22cbd98",
         "src/godaddy/codex-app-server-process.ts": "8a0a990a28c51781e1cf07d354fe7a0c480bb1340f7abd08f0ef4d11a0294b84",
-        "src/godaddy/claude-code-process.ts": "00c76653fa9234d45bde4049bd85cb2d5670a37561509ace222e543facef04b3",
+        "src/godaddy/claude-code-process.ts": "0045d909d66d7243163555890a6e6dfcd94a51f4bf0d76e7131b9bc7d99f7ce6",
         "test/godaddy-owner-password-auth.test.ts": "8d85b630cbd2819f1e3a582efa441c1aca13b866d55c316cc17a908b049f0158",
         "scripts/godaddy-state-schema.sql": "7070d2b83c2521a0994505c17cdec645820bfbcb0beb8014c17a9a09ea5a3e80",
         "native/matrix-sidecar/Cargo.toml": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1",
@@ -518,7 +520,9 @@
         "src/godaddy/owner-google-auth.ts": "2eb9e5e6ef6e6a61d04aaf48a269f006cfbcc330c4cdec83ab8e2c9ced131b6b",
         "src/godaddy/google-identity-provider.ts": "849a97b03a654e709d8ece1e9f56435a111f3cd058830e670b3d261cb9f92c8d",
         "src/godaddy/owner-auth-client.ts": "3ec94265b65f6dddbc162d76b27339100c9246984aae8a372e45a6d5f1de9864",
-        "src/http/security-headers.ts": "35c2b04a9a612783b613559e3339263f2f02689c0cb9e8a263ad6836c01b50e1"
+        "src/http/security-headers.ts": "35c2b04a9a612783b613559e3339263f2f02689c0cb9e8a263ad6836c01b50e1",
+        "src/godaddy/runtime-bootstrap.ts": "f39524c698e8272456b0bcbb3511fc6ad0f3d75d8e235e559e70923129e87f52",
+        "src/runtime/capability-catalog.ts": "11dd5a6ee13004ea8b65b05e9736b7b9a73adcfd1e5b957514d30aad1862ccf1"
       },
       "consumed_source_fragments": {
         "docs/project-context.md": [
@@ -5168,7 +5172,7 @@
     "architecture": {
       "path": "docs/architecture.md",
       "owner_skill": "to-architecture",
-      "owner_invocation_id": "architecture-google-issuer-20260905T214916Z",
+      "owner_invocation_id": "architecture-catalog-failure-20260905T221436Z",
       "declared_output_set": [
         "docs/architecture.md"
       ],
@@ -5211,10 +5215,10 @@
         "src/godaddy/mysql-storage.ts": "eead845b845f3dcef736c13048ac5c7f8bac2834b1b4b8487a59362ac639b41b",
         "src/godaddy/mysql-archive-storage.ts": "c00b5c3c7c2c5f2e87324e52e2bf43ddfd03be4a15ce293b21d0b9e3b5b3d60e",
         "src/godaddy/owner-password-auth.ts": "aeafa1a2391ed998554270ab366e08df3b79607bf20ab4637b91eb63b1bea354",
-        "src/godaddy/settings-runtime.ts": "7b1516eabf6ec74748bf195b4b30962bdfe6679c5c6306e20b545ce93ff04b0e",
+        "src/godaddy/settings-runtime.ts": "8a01f847f66acce33302036bfd379a0411bdfc4e896ab664766967fd8189afa3",
         "src/godaddy/application-runtime.ts": "4e1a0aac6be32ab7b20ad46ded064f6884b1b54be2b48b8fd817a201d22cbd98",
         "src/godaddy/codex-app-server-process.ts": "8a0a990a28c51781e1cf07d354fe7a0c480bb1340f7abd08f0ef4d11a0294b84",
-        "src/godaddy/claude-code-process.ts": "00c76653fa9234d45bde4049bd85cb2d5670a37561509ace222e543facef04b3",
+        "src/godaddy/claude-code-process.ts": "0045d909d66d7243163555890a6e6dfcd94a51f4bf0d76e7131b9bc7d99f7ce6",
         "test/godaddy-owner-password-auth.test.ts": "8d85b630cbd2819f1e3a582efa441c1aca13b866d55c316cc17a908b049f0158",
         "scripts/godaddy-state-schema.sql": "7070d2b83c2521a0994505c17cdec645820bfbcb0beb8014c17a9a09ea5a3e80",
         "native/matrix-sidecar/Cargo.toml": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1",
@@ -5223,7 +5227,9 @@
         "src/godaddy/owner-google-auth.ts": "2eb9e5e6ef6e6a61d04aaf48a269f006cfbcc330c4cdec83ab8e2c9ced131b6b",
         "src/godaddy/google-identity-provider.ts": "849a97b03a654e709d8ece1e9f56435a111f3cd058830e670b3d261cb9f92c8d",
         "src/godaddy/owner-auth-client.ts": "3ec94265b65f6dddbc162d76b27339100c9246984aae8a372e45a6d5f1de9864",
-        "src/http/security-headers.ts": "35c2b04a9a612783b613559e3339263f2f02689c0cb9e8a263ad6836c01b50e1"
+        "src/http/security-headers.ts": "35c2b04a9a612783b613559e3339263f2f02689c0cb9e8a263ad6836c01b50e1",
+        "src/godaddy/runtime-bootstrap.ts": "f39524c698e8272456b0bcbb3511fc6ad0f3d75d8e235e559e70923129e87f52",
+        "src/runtime/capability-catalog.ts": "11dd5a6ee13004ea8b65b05e9736b7b9a73adcfd1e5b957514d30aad1862ccf1"
       },
       "consumed_source_fragments": {
         "docs/project-context.md": [
@@ -5546,9 +5552,23 @@
         "src/godaddy/owner-google-auth.ts": "full",
         "src/godaddy/google-identity-provider.ts": "full",
         "src/godaddy/owner-auth-client.ts": "full",
-        "src/http/security-headers.ts": "full"
+        "src/http/security-headers.ts": "full",
+        "src/godaddy/runtime-bootstrap.ts": "full",
+        "src/runtime/capability-catalog.ts": "full"
       },
       "implementation_observations": {
+        "catalog_failure_reconciliation": {
+          "previous_owner_invocation_id": "architecture-google-issuer-20260905T214916Z",
+          "reviewed_at": "2026-09-05T22:14:36Z",
+          "executor": "root inline to-architecture",
+          "result": "passed_no_document_change",
+          "scope": "§8.2–8.4, FR-039/FR-041 та NFR-017/NFR-019: перевіряється JSON login status Claude subscription OAuth; error envelope не приймається за успішну відповідь; користувач бачить лише фіксовану безпечну категорію помилки. Claude authentication/quota/CLI failures зупиняють зайві probes. Каталог та credentials не очищаються; збереження тільки після підтверджених моделей. Google auth, provider isolation, модельні кандидати, paid-mode заборони та baseline не змінені.",
+          "tests": "npm run check: 538/538, Node 22.23.2; build, typecheck, environment policy passed. Live retry pending.",
+          "previous_source_hashes": {
+            "src/godaddy/claude-code-process.ts": "00c76653fa9234d45bde4049bd85cb2d5670a37561509ace222e543facef04b3",
+            "src/godaddy/settings-runtime.ts": "7b1516eabf6ec74748bf195b4b30962bdfe6679c5c6306e20b545ce93ff04b0e"
+          }
+        },
         "reviewed_at": "2026-09-05T18:06:26.633Z",
         "scope": [
           "U-04",

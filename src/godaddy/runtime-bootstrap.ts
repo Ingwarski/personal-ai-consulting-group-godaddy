@@ -1,5 +1,5 @@
 import { createRuntimeCapabilityCatalog, type RuntimeCapabilityCatalogResult } from "../runtime/capability-catalog.ts";
-import { createGoDaddyClaudeCodeProcess, type GoDaddyClaudeCodeProcess } from "./claude-code-process.ts";
+import { ClaudeDiscoveryFailure, createGoDaddyClaudeCodeProcess, type GoDaddyClaudeCodeProcess } from "./claude-code-process.ts";
 import { createGoDaddyCodexAppServer, type CodexDeviceAuthorization, type GoDaddyCodexAppServer } from "./codex-app-server-process.ts";
 import { MySqlKeyValueStorage, type MySqlPool } from "./mysql-storage.ts";
 import { createRuntimeCredentialVault } from "./runtime-credential-vault.ts";
@@ -116,7 +116,10 @@ export function createRuntimeBootstrap(options: RuntimeBootstrapOptions): Runtim
       if (claudeStatus.readiness !== "ready" || claudeStatus.authMode !== "claude_code_oauth") return { ok: false, code: "claude_not_ready" };
       if (!codexProbe.runtime.privateSingleOwner || !claudeStatus.privateSingleOwner) return { ok: false, code: "private_boundary_failed" };
       if (claudeStatus.fastModeEnabled || claudeStatus.extraUsageEnabled) return { ok: false, code: "claude_paid_acceleration_forbidden" };
-      const claudeModels = await claude.discoverModels();
+      let claudeModels: readonly ProviderModelCapability[];
+      try { claudeModels = await claude.discoverModels(); }
+      catch (error) { return { ok: false, code: error instanceof ClaudeDiscoveryFailure ? error.code : "catalog_refresh_failed" }; }
+      if (claudeModels.length === 0) return { ok: false, code: "claude_models_unavailable" };
       const defaults = chooseDefaults(codexProbe.models, claudeModels, codexProbe.defaultModelId);
       if (defaults === undefined) return { ok: false, code: "invalid_defaults" };
       const issuedAt = now();
@@ -133,7 +136,8 @@ export function createRuntimeBootstrap(options: RuntimeBootstrapOptions): Runtim
         expiresAt: new Date(issuedAt.getTime() + 24 * 60 * 60_000)
       });
       if (result.ok) {
-        await runtimeStorage.put(CATALOG_STORAGE_KEY, result.receipt);
+        try { await runtimeStorage.put(CATALOG_STORAGE_KEY, result.receipt); }
+        catch { return { ok: false, code: "catalog_storage_failed" }; }
         catalog = result.receipt;
       }
       return result;
