@@ -92,7 +92,12 @@ export class MySqlKeyValueStorage implements RegistrarStorage, SettingsStorage {
     const [rows] = await this.#executor.execute(statement, [this.#namespace, key]);
     const row = firstRow(rows);
     if (row === undefined) return undefined;
-    return parseStoredJson(row.stateValue) as T | undefined;
+    const parsed = parseStoredJson(row.stateValue);
+    if (parsed === undefined && this.#namespace === "owner-google-access-v1") {
+      // A present but corrupt security document is not a first-use empty store.
+      throw new Error("Owner access state is invalid.");
+    }
+    return parsed as T | undefined;
   }
 
   async put<T>(key: string, value: T): Promise<void> {

@@ -25,10 +25,10 @@ export class OwnerAuthPool implements MySqlPool {
   }
 
   #execute(values: Map<string, string>, statement: string, parameters: readonly unknown[]): readonly [unknown, unknown] {
-    if (parameters[0] !== "owner-access-v2" || typeof parameters[1] !== "string") {
+    if (!["owner-access-v2", "owner-google-access-v1"].includes(String(parameters[0])) || typeof parameters[1] !== "string") {
       throw new Error("Unauthenticated fixture must not touch application state.");
     }
-    const key = parameters[1];
+    const key = parameters[0] === "owner-access-v2" ? parameters[1] : `${parameters[0]}:${parameters[1]}`;
     if (statement.startsWith("SELECT")) {
       const stateValue = values.get(key);
       return [stateValue === undefined ? [] : [{ stateValue }], []];

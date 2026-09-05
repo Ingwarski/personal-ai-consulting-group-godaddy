@@ -149,7 +149,7 @@ test("forbidden production credentials fail before any stateful composition", as
   assert.equal(pools, 0);
 });
 
-test("invalid shutdown policy and incomplete Settings fail before background Matrix work", async () => {
+test("invalid shutdown policy fails early, but incomplete owner web auth does not block configured Matrix transport", async () => {
   let pools = 0;
   assert.throws(() => createGoDaddyApplicationRuntime({ environment: productionEnvironment }, {
     shutdownTimeoutMs: 999,
@@ -193,7 +193,7 @@ test("invalid shutdown policy and incomplete Settings fail before background Mat
   });
   assert.equal(application.configured, false);
   await application.start();
-  assert.equal(matrixStarts, 0);
+  assert.equal(matrixStarts, 1);
   await application.stop();
 });
 

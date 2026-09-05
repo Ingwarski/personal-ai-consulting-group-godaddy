@@ -144,7 +144,7 @@ export function createGoDaddyApplicationRuntime(
   const configured = settings.configured && createdMatrixService.configured;
 
   const start = (): Promise<void> => {
-    if (stopping || !configured) return Promise.resolve();
+    if (stopping || !createdMatrixService.configured) return Promise.resolve();
     startPromise ??= createdMatrixService.start().catch(() => undefined);
     return startPromise;
   };

@@ -75,7 +75,7 @@
     } else if (dirty) {
       setStatus("success", "Незалежні налаштування Codex і Claude Code підтверджені. Збереження застосує їх лише до наступної сесії.");
     } else {
-      setStatus("success", "Набір сумісний. Змін для збереження немає.");
+      setStatus("success", "Набір сумісний. Змін для збереження немає.", "Набір сумісний");
     }
     if (cancelButton instanceof HTMLButtonElement) cancelButton.disabled = !dirty;
   };
@@ -117,10 +117,13 @@
   };
 
   const refreshCsrfToken = async () => {
+    const actionToken = document.querySelector('meta[name="owner-csrf-refresh-token"]')?.getAttribute("content");
     const response = await fetch("/api/settings/csrf", {
       method: "POST",
+      mode: "cors",
       credentials: "same-origin",
-      headers: { "content-type": "application/json" }
+      headers: { "content-type": "application/json", ...(actionToken ? { "x-owner-action-token": actionToken } : {}) },
+      body: "{}"
     });
     if (!response.ok) return false;
     const body = await response.json();

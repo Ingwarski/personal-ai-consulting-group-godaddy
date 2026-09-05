@@ -19,6 +19,9 @@ test("settings browser client is valid JavaScript and carries only the full-obje
   assert.match(source, /response\.status === 409/);
   assert.match(source, /fetch\("\/api\/settings", \{ credentials: "same-origin" \}\)/);
   assert.match(source, /fetch\("\/api\/settings\/csrf"/);
+  assert.match(source, /"x-owner-action-token": actionToken/);
+  assert.match(source, /mode: "cors"/);
+  assert.match(source, /setStatus\("success", "Набір сумісний\. Змін для збереження немає\.", "Набір сумісний"\)/);
   assert.doesNotMatch(source, /response\.status === 403[^}]+submit\(/s);
   assert.doesNotMatch(source, /oauth|password|api[_-]?key|fast mode|payg|credits/i);
 });

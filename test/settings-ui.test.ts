@@ -146,3 +146,20 @@ test("verified access receives the settings document with protective browser hea
   assert.match(response.headers.get("content-security-policy") ?? "", /default-src 'self'/);
   assert.match(await response.text(), /Налаштування власника/);
 });
+
+test("Google owner controls carry separate purpose tokens without altering the three settings groups", async () => {
+  const model = await pageModel();
+  const html = renderSettingsDocument({ ...model, ownerActionTokens: {
+    "/auth/sign-out": "logout-test-token",
+    "/auth/sessions/revoke": "revoke-test-token",
+    "/api/settings/csrf": "refresh-test-token"
+  } });
+  assert.match(html, /name="owner-csrf-refresh-token" content="refresh-test-token"/);
+  assert.match(html, /src="\/assets\/owner-auth\.js" defer/);
+  assert.match(html, /action="\/auth\/sign-out" method="post" data-owner-action><input type="hidden" name="formToken" value="logout-test-token"/);
+  assert.match(html, /action="\/auth\/sessions\/revoke" method="post" data-owner-action><input type="hidden" name="formToken" value="revoke-test-token"/);
+  assert.equal((html.match(/class="settings-group"/gu) ?? []).length, 3);
+  assert.doesNotMatch(html, /name="password"|Ключ входу/);
+  assert.match(html, /не вихід із Google/);
+  assert.match(html, /data-owner-action-status role="status" aria-live="polite" tabindex="-1"/);
+});

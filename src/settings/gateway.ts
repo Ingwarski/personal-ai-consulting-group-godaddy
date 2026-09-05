@@ -32,6 +32,7 @@ export function createVerifiedSettingsGateway(input: Readonly<{
   getCapabilityReceipt: () => CapabilityReceipt;
   csrf: CsrfTokenService;
   csrfBinding: CsrfBinding;
+  ownerActionTokens?: Readonly<Record<string, string>>;
   now: () => Date;
 }>): VerifiedSettingsGateway {
   const ensureInitialized = async (): Promise<boolean> => (await input.ownerSettings.initialize()).ok;
@@ -57,7 +58,8 @@ export function createVerifiedSettingsGateway(input: Readonly<{
           getCapabilityReceipt: input.getCapabilityReceipt,
           issueCsrfToken: async () => csrfToken,
           now: input.now,
-          hasVerifiedAccess: () => true
+          hasVerifiedAccess: () => true,
+          ...(input.ownerActionTokens === undefined ? {} : { ownerActionTokens: input.ownerActionTokens })
         }));
       }
 

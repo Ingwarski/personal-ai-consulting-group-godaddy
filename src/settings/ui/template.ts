@@ -8,6 +8,7 @@ export type SettingsPageModel = Readonly<{
   csrfToken: string;
   draft?: OwnerSettings;
   now: Date;
+  ownerActionTokens?: Readonly<Record<string, string>>;
 }>;
 
 const SPEEDS: ReadonlyArray<Readonly<{ value: SpeedPreset; title: string; description: string }>> = [
@@ -161,6 +162,7 @@ export function renderSettingsDocument(model: SettingsPageModel): string {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light" />
     <meta name="settings-csrf-token" content="${escapeHtml(model.csrfToken)}" />
+    ${model.ownerActionTokens === undefined ? "" : `<meta name="owner-csrf-refresh-token" content="${escapeHtml(model.ownerActionTokens["/api/settings/csrf"] ?? "")}" /><script src="/assets/owner-auth.js" defer></script>`}
     <title>Налаштування власника</title>
     <link rel="stylesheet" href="/assets/settings.css" />
     <script id="settings-catalog" type="application/json">${clientCatalog}</script>
@@ -182,11 +184,14 @@ export function renderSettingsDocument(model: SettingsPageModel): string {
         <div>
           <p class="section-kicker">Доступ власника</p>
           <h2 id="access-title">Власник підтверджений</h2>
-          <p>Доступ перевірено. Ключ входу, дані підписок та OAuth-облікові дані тут не відображаються.</p>
+          <p>Доступ перевірено. Дані підписок і Google-облікові дані тут не відображаються.</p>
         </div>
         <div>
           <span class="access-state">Доступ надано</span>
-          <form action="/auth/sign-out" method="post"><button class="button quiet" type="submit">Вийти</button></form>
+          ${model.ownerActionTokens === undefined ? "" : `<form action="/auth/sign-out" method="post" data-owner-action><input type="hidden" name="formToken" value="${escapeHtml(model.ownerActionTokens["/auth/sign-out"] ?? "")}" /><button class="button quiet" type="submit">Вийти</button></form>
+          <form action="/auth/sessions/revoke" method="post" data-owner-action><input type="hidden" name="formToken" value="${escapeHtml(model.ownerActionTokens["/auth/sessions/revoke"] ?? "")}" /><button class="button quiet" type="submit">Вийти на всіх пристроях</button></form>
+          <p>Це завершує лише доступ до застосунку, не вихід із Google. Підписки Codex і Claude Code залишаться підключеними.</p>
+          <p id="owner-action-status" data-owner-action-status role="status" aria-live="polite" tabindex="-1"></p><noscript>Для безпечного входу й виходу потрібен JavaScript.</noscript>`}
         </div>
       </section>
 

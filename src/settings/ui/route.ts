@@ -9,6 +9,7 @@ export type SettingsPageDependencies = Readonly<{
   issueCsrfToken: () => Promise<string>;
   now: () => Date;
   hasVerifiedAccess: (request: Request) => boolean;
+  ownerActionTokens?: Readonly<Record<string, string>>;
 }>;
 
 const html = (body: string, status: number): Response =>
@@ -38,7 +39,8 @@ export async function handleSettingsPage(
       read,
       capabilityReceipt: dependencies.getCapabilityReceipt(),
       csrfToken: await dependencies.issueCsrfToken(),
-      now: dependencies.now()
+      now: dependencies.now(),
+      ...(dependencies.ownerActionTokens === undefined ? {} : { ownerActionTokens: dependencies.ownerActionTokens })
     }),
     200
   );
