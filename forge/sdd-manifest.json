@@ -70,8 +70,8 @@
   "traceability_version": 1,
   "checker_contract_version": 1,
   "pipeline_version": "1.1.0",
-  "state": "blocked",
-  "updated_at": "2026-09-05T14:35:31Z",
+  "state": "reconciling",
+  "updated_at": "2026-09-05T15:02:00Z",
   "language": {
     "working_language": "uk",
     "selection_source": "recorded-preference",
@@ -3635,8 +3635,8 @@
       "scope": "Deployment identity only. Does not block source-grounded SDD reconciliation or authorize an unconfirmed owner account. The exact account remains outside this manifest."
     }
   ],
-  "next_ready_nodes": [],
-  "pause_reason": "Owner confirmation recorded without account value in repository metadata. Journey, screen map, wireframes and design-brief document postchecks passed. Required architecture-approved precheck failed baseline_integrity: shared checker misclassifies node:crypto in unchanged frozen Node validation script as a mutable browser resource. Separately, old v1 baseline omits two actual shared render dependencies. No architecture dispatch or implementation followed the failure. Checker repair requires authority for separate SDD Pipeline Skills repository; legacy dependency migration needs owner-reviewed provenance, not fabricated approval. Google credentials, implementation and live verification remain unfinished.",
+  "next_ready_nodes": ["design-brief"],
+  "pause_reason": "The authorized shared-checker repair is committed and tested: unloaded Node helpers and JavaScript URL constructors no longer cause browser-resource false alarms. Architecture-approved remains blocked only by the incomplete historical shared-dependency record. Design-brief prerequisites passed for bounded owner-reviewed migration. Frozen prototype, original receipts, production app, credentials and database are unchanged. No live Google-login or release success is claimed.",
   "current_reconciliation_blockers": [
     {
       "id": "sdd-render-precheck-20260905",
@@ -3658,8 +3658,39 @@
         "forge/design/candidate-sets/whatsapp-consultant/v1/shared/scenario-fixture.js": "96732f738a41bf1f838736de77a748ef65704d68010553bbf43638f83ddd1af6",
         "forge/design/candidate-sets/matrix-consultant/v2/shared/scenario-fixture.js": "0f3959792187148a2e1ae842c738644da7ed60ddc01776948f86914b8fb207e6"
       },
-      "resolution_required": "Obtain authority to repair the shared checker in its separate repository; then have the design owner review legacy dependency evidence and migrate bindings without changing frozen bytes or inventing past approval. Rerun required precheck before architecture dispatch.",
-      "bypassed": false
+      "resolution_required": "Complete owner-reviewed historical shared-dependency binding migration in this project, preserving frozen source bytes and original approval. Design-brief prerequisites passed; rerun architecture-approved only after that record is reconciled.",
+      "bypassed": false,
+      "prior_resolution_required": "Obtain authority to repair the shared checker in its separate repository; then have the design owner review legacy dependency evidence and migrate bindings without changing frozen bytes or inventing past approval. Rerun required precheck before architecture dispatch.",
+      "checker_repair": {
+        "status": "completed",
+        "commit": "1606dd4",
+        "repository": "Ingwarski/sdd-pipeline-skills",
+        "branch": "codex/fix-render-resource-validation",
+        "content_hash": "25fbe14f389bead99c0e627143dc92afd76876247b418afd79d8c1774f412496",
+        "verified_at": "2026-09-05T15:02:00Z",
+        "fixes": [
+          "Unloaded Node helper files remain hashed but are not parsed as browser modules.",
+          "CSS resource extraction no longer mistakes JavaScript URL constructors for CSS url()."
+        ],
+        "tests": {
+          "python_total": 123,
+          "passed": 122,
+          "skipped": 1,
+          "skip_reason": "Optional PyYAML parser unavailable",
+          "unix_install": "passed",
+          "unix_retirement": "passed",
+          "unix_update": "passed",
+          "environment": "Python 3.12.14; temporary isolated test roots; no personal installer run"
+        },
+        "project_recheck": {
+          "node": "architecture-approved",
+          "result": "blocked",
+          "issue_code": "baseline_integrity",
+          "remaining_issue": "Missing shared scenario-fixture files in historical v1 baseline record; no Node builtin or JavaScript URL false alarm remains.",
+          "complete_bundle_probe_hash": "57d103c5ed17bcc9a9d95a58718f83c33b8257229fc825b756367321eaa33199",
+          "probe_limit": "Read-only probe with both known fixture paths; not a migrated approval or passing architecture gate."
+        }
+      }
     }
   ],
   "resume_history": [{
