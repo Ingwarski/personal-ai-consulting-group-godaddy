@@ -14948,7 +14948,7 @@
     }
   ],
   "implementation": {
-    "status": "u04_locally_verified_pending_live_evidence",
+    "status": "u04_live_google_verified_pending_remaining_evidence",
     "owner_invocation_id": "990d3f67-1e4a-460d-8722-0292ddf2570b",
     "completed_local_contracts": [],
     "partial_local_contracts": [
@@ -14962,15 +14962,15 @@
       "U-08",
       "U-09"
     ],
-    "completion_projection_note": "Google-only owner identity/session/HTTP implementation and focused dependencies implemented locally. Full U-04 completion remains pending required live provider/GoDaddy/MySQL and full UI/user evidence; no next Unit started.",
+    "completion_projection_note": "Google-вхід перевірено на Published GoDaddy: два успішні входи, reload, logout і відмова protected route після logout. Локально 531/531; повна U-04 перевірка MySQL concurrency/restart та UI/user evidence ще не завершена. Наступний Unit не розпочато. Попередній локальний run receipt збережено незмінним; нові докази у published_verification.",
     "in_progress_unit": "U-04",
     "next_unit": "U-04",
     "local_verification": {
       "node": {
         "result": "passed",
-        "tests": "521/521",
+        "tests": "531/531",
         "runtime": "Node.js 22.23.2, Darwin arm64",
-        "command": "node --experimental-strip-types --test --test-reporter=tap test/*.test.ts test/*.test.mjs",
+        "command": "npm run check",
         "build": "passed",
         "typecheck": "passed",
         "environment_policy": "passed",
@@ -14983,9 +14983,9 @@
         "content_hash": "d6c5574e85b324538fbed8666301c395a1490e5494230b84204a40daa2ff9b5e",
         "scope": "Real Chromium + localHTTPS; natural Origin/FetchMetadata, cross-site Lax return, logout/cancel/revoke/error recovery,1440/390 partial visual. Simulated Google/AI/MySQL only."
       },
-      "real_mysql": "not_run",
-      "google_live": "not_run",
-      "godaddy_deployment": "not_run",
+      "real_mysql": "positive_live_auth_path_only; concurrency_restart_negative_tests_not_run",
+      "google_live": "passed_bounded_scope_see_published_verification",
+      "godaddy_deployment": "passed_see_published_verification",
       "pipeline": {
         "command": "sdd_check.py --project . --after implementation",
         "result": "passed",
@@ -14998,7 +14998,7 @@
     "external_effects": {
       "matrix_org": "not_run",
       "production_oauth_change": "not_performed",
-      "godaddy_deployment": "not_run",
+      "godaddy_deployment": "published_d4ba9f0_after_explicit_user_authorization",
       "legacy_cleanup": "not_authorized",
       "stateful_preview": "forbidden"
     },
@@ -15036,7 +15036,17 @@
     },
     "run_id": "u04-google-20260905",
     "run_receipt": "forge/runs/U-04/u04-google-20260905/verification.json",
-    "run_receipt_hash": "5187d3b7a89fa37b45b3dd0871c244a54ef74b0536f018e84148b6205e1a75b6"
+    "run_receipt_hash": "5187d3b7a89fa37b45b3dd0871c244a54ef74b0536f018e84148b6205e1a75b6",
+    "published_verification": {
+      "run_id": "u04-google-published-20260906",
+      "path": "forge/runs/U-04/u04-google-published-20260906/verification.json",
+      "content_hash": "d89a31e83fb4f4644eb48c18d88ded1b432399d23ef8771b7cf0bf441466b7ca",
+      "observed_at": "2026-09-05T21:55:26Z",
+      "result": "passed_bounded_live_auth_scope",
+      "published_code_revision": "d4ba9f0a515db0edc1a98d2150b46d47591c9531",
+      "unit_completion": "not_completed",
+      "remaining_runtime_status": "Codex unavailable; Claude Code ready; capability catalog not created. AI credentials and setup unchanged."
+    }
   },
   "affected_feature_units": ["U-01", "U-02", "U-03", "U-04", "U-05", "U-06", "U-07", "U-09"],
   "input_requests": [

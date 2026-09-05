@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "run_id": "u04-google-published-20260906",
+  "unit_id": "U-04",
+  "executor": "Codex direct runner; Node 22 local tests, HTTP and real Chrome through CUA",
+  "observed_at": "2026-09-05T21:55:26Z",
+  "code_revision": "d4ba9f0a515db0edc1a98d2150b46d47591c9531",
+  "previous_published_revision": "7d2e944f9500a6c38745ce39b414ffc3b946a37c",
+  "development_plan_hash": "f17072dc044dc12ee20039a78f856801df5121aef19922966fece2eebf17d15a",
+  "baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+  "authorization": {
+    "source": "current conversation",
+    "request": "May I merge the tested branch into this repository’s main, deploy it to the existing GoDaddy app, and verify Google login? This won’t touch HappyPro, domains, or wipe the database.",
+    "response": "yes",
+    "message_id": "not_available_in_tool_visible_context",
+    "scope": [
+      "merge tested branch to this repository main",
+      "publish existing GoDaddy app",
+      "verify Google owner login"
+    ]
+  },
+  "result": "passed_bounded_live_auth_scope",
+  "unit_completion": "not_completed",
+  "release_readiness": "not_evaluated",
+  "deployment": {
+    "project_id": "wy2v0putg6",
+    "origin": "https://wy2v0putg6.c35.airoapp.ai",
+    "initial_published_revision": "ae357a1c01c0b50542cb5262c864db6ce955f2a2",
+    "published_revision": "d4ba9f0a515db0edc1a98d2150b46d47591c9531",
+    "published_revision_confirmed_in_dashboard": true,
+    "infrastructure": "OK",
+    "website": "OK",
+    "publication_notice": "Сайт успішно опубліковано!",
+    "preview_stateful": false,
+    "preview_evidence": "Preview does not have the published database role or Google auth configuration. Code requires production mode AND the published role before constructing MySQL storage.",
+    "secrets_values_read": false,
+    "secrets_changed": false,
+    "database_ddl_or_cleanup": false,
+    "domain_changes": false,
+    "happypro_changes": false
+  },
+  "regression": {
+    "initial_live_result": "Google повертав браузер на /auth/sign-in/denied.",
+    "confirmed_defect": "Callback allowlist відхиляв RFC 9207 iss до token exchange; позитивний тест відтворив відмову. Google discovery рекламує authorization_response_iss_parameter_supported=true.",
+    "observation_limit": "Raw callback query не зберігався; присутність iss у першій невдалій спробі не була безпосередньо зафіксована. Після єдиної зміни allowlist/точної issuer-перевірки, без зміни credentials, дві живі авторизації пройшли.",
+    "change": "Дозволено один iss лише з точним https://accounts.google.com. Інші issuer, дублікати, oversize та недовірена identity залишаються відхиленими. Відповіді без iss сумісні з попередньою поведінкою одного фіксованого provider.",
+    "red_test": {
+      "command": "node --experimental-strip-types --test --test-name-pattern='RFC 9207' test/godaddy-owner-google-auth.test.ts",
+      "result": "failed_before_fix",
+      "expected": true,
+      "actual": false
+    },
+    "targeted_tests": {
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0
+    },
+    "full_check": {
+      "command": "npm run check",
+      "node_version": "22.23.2",
+      "tests": 531,
+      "passed": 531,
+      "failed": 0,
+      "skipped": 0,
+      "build": "passed",
+      "typecheck": "passed",
+      "environment_policy": "passed"
+    },
+    "sdd_checks": [
+      "before architecture: passed",
+      "after architecture: passed",
+      "after implementation: passed"
+    ],
+    "source_hashes": {
+      "src/godaddy/owner-google-auth.ts": "2eb9e5e6ef6e6a61d04aaf48a269f006cfbcc330c4cdec83ab8e2c9ced131b6b",
+      "test/godaddy-owner-google-auth.test.ts": "317490bf1e5f0e6b69ee595697d3a69316a1fd929f3a228b368eaf97d21edabc"
+    },
+    "sources": [
+      "https://accounts.google.com/.well-known/openid-configuration",
+      "https://www.rfc-editor.org/rfc/rfc9207.html#section-2.4"
+    ]
+  },
+  "live_checks": [
+    {
+      "check": "GET /healthz",
+      "result": "passed",
+      "http_status": 200,
+      "body": {
+        "status": "alive",
+        "runtime": "godaddy-node22"
+      }
+    },
+    {
+      "check": "GET /auth/sign-in",
+      "result": "passed",
+      "http_status": 200,
+      "google_button": true,
+      "password_field": false
+    },
+    {
+      "check": "Real Google owner account selection and callback",
+      "result": "passed",
+      "destination": "/operations/runtime"
+    },
+    {
+      "check": "Protected page after browser reload",
+      "result": "passed",
+      "destination": "/operations/runtime"
+    },
+    {
+      "check": "Explicit logout from this browser only",
+      "result": "passed",
+      "destination": "/auth/sign-in"
+    },
+    {
+      "check": "Direct protected runtime navigation after logout",
+      "result": "passed",
+      "destination": "/auth/sign-in",
+      "protected_content_visible": false
+    },
+    {
+      "check": "Second real Google sign-in after logout",
+      "result": "passed",
+      "destination": "/operations/runtime"
+    }
+  ],
+  "actual_runtime_status": {
+    "codex": "unavailable",
+    "claude_code": "ready",
+    "capability_catalog": "not_created",
+    "ai_credentials_changed": false,
+    "ai_setup_or_catalog_refresh_started": false
+  },
+  "evidence_handling": "Збережено лише результати та чисті local paths. Немає cookie/token values, callback query, authorization code, Google identity claims або secrets.",
+  "limitations": [
+    "Живий позитивний auth шлях використовує Published MySQL; окремі MySQL concurrency/restart/negative tests не виконувалися.",
+    "Не виконано повну U-04 visual/accessibility/representative-user перевірку.",
+    "Matrix product integration і готовність Codex не перевірялися.",
+    "Жодна попередня вимога release чи наступний Unit не позначені завершеними."
+  ]
+}
