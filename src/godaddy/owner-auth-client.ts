@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 /**
  * Deliberately a same-origin external script: CSP never needs unsafe-inline.
  * Fetch Standard §3.2 preserves Origin for mode=cors under no-referrer, unlike
@@ -85,3 +87,8 @@ export const ownerAuthClientJavaScript = String.raw`(() => {
     }
   });
 })();`;
+
+// Bind HTML to its exact handler bytes. A cached legacy script must not control
+// a newer Matrix form (whose named action control shadows form.action).
+export const OWNER_AUTH_SCRIPT_PATH = `/assets/owner-auth.${createHash("sha256").update(ownerAuthClientJavaScript).digest("hex")}.js`;
+export const isOwnerAuthScriptPath = (path: string): boolean => path === OWNER_AUTH_SCRIPT_PATH || path === "/assets/owner-auth.js";

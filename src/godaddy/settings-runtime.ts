@@ -13,7 +13,7 @@ import { parseRuntimeEnvironment } from "../runtime/environment.ts";
 import type { RuntimeCapabilityCatalogResult } from "../runtime/capability-catalog.ts";
 import { createOwnerGoogleService, parseOwnerGoogleConfiguration } from "./owner-google-auth.ts";
 import type { GoogleIdentityProvider } from "./google-identity-provider.ts";
-import { ownerAuthClientJavaScript } from "./owner-auth-client.ts";
+import { ownerAuthClientJavaScript, OWNER_AUTH_SCRIPT_PATH, isOwnerAuthScriptPath } from "./owner-auth-client.ts";
 import {
   MySqlKeyValueStorage,
   parseGodaddyDatabaseConfiguration,
@@ -209,7 +209,7 @@ const loginDocument = (formToken: string, denied = false, rateLimited = false): 
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Вхід власника — Personal Consultant</title>
-    <script src="/assets/owner-auth.js" defer></script>
+    <script src="${OWNER_AUTH_SCRIPT_PATH}" defer></script>
   </head>
   <body>
     <main>
@@ -290,7 +290,7 @@ function operationDocument(input: Readonly<{
     : input.catalogResult === "unavailable" ? `<p role="alert">Каталог не оновлено. ${catalogFailureMessages[failureCode]} Код: <code>${failureCode}</code>.</p>` : "";
   return `<!doctype html>
 <html lang="uk">
-  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Підготовка runtime — Personal Consultant</title><script src="/assets/owner-auth.js" defer></script></head>
+  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Підготовка runtime — Personal Consultant</title><script src="${OWNER_AUTH_SCRIPT_PATH}" defer></script></head>
   <body>
     <main>
       <h1>Підготовка runtime</h1>
@@ -340,7 +340,7 @@ export function createGoDaddySettingsRuntime(
     return Object.freeze({
       configured: false,
       async handle(request: Request): Promise<Response | undefined> {
-        return isManagedPath(new URL(request.url).pathname) || new URL(request.url).pathname.startsWith("/auth/") || new URL(request.url).pathname === "/assets/owner-auth.js"
+        return isManagedPath(new URL(request.url).pathname) || new URL(request.url).pathname.startsWith("/auth/") || isOwnerAuthScriptPath(new URL(request.url).pathname)
           ? plain("Settings are temporarily unavailable.", 503)
           : undefined;
       },
@@ -403,7 +403,7 @@ export function createGoDaddySettingsRuntime(
       getCapabilityReceipt: currentReceipt,
       csrf: createCsrfTokenService({ key, now }),
       csrfBinding: { principal: "owner", audience: grant.csrfAudience, origin: grant.origin },
-      ...(includeOwnerActions ? { ownerActionTokens } : {}),
+      ...(includeOwnerActions ? { ownerActionTokens, ownerAuthScriptPath: OWNER_AUTH_SCRIPT_PATH } : {}),
       now
     });
   };
@@ -430,7 +430,7 @@ export function createGoDaddySettingsRuntime(
       const url = new URL(request.url);
       const cookieHeader = request.headers.get("cookie");
 
-      if (url.pathname === "/assets/owner-auth.js") {
+      if (isOwnerAuthScriptPath(url.pathname)) {
         return request.method === "GET"
           ? new Response(ownerAuthClientJavaScript, { headers: securityHeaders({ "content-type": "application/javascript; charset=utf-8" }) })
           : plain("Method not allowed.", 405, { allow: "GET" });

@@ -11,6 +11,8 @@ import type { RuntimeCapabilityCatalogResult } from "../src/runtime/capability-c
 import { activeNow, createCapabilityReceipt } from "./fixtures/capability-receipt.ts";
 import { OwnerAuthPool } from "./fixtures/owner-auth-pool.ts";
 import { browser, Form } from "./fixtures/owner-action-browser.ts";
+import { createHash } from "node:crypto";
+import { OWNER_AUTH_SCRIPT_PATH, ownerAuthClientJavaScript } from "../src/godaddy/owner-auth-client.ts";
 
 const origin = "https://settings.example.test";
 const configuredEnvironment = Object.freeze({
@@ -136,6 +138,53 @@ function fixture(options: { pool?: OwnerAuthPool; runtime?: RuntimeBootstrap; go
   });
   return { runtime, pool };
 }
+
+test("every owner surface binds its script URL to the exact current handler bytes", async () => {
+  const { runtime } = fixture({ pool: new SettingsPool() });
+  const digest = createHash("sha256").update(ownerAuthClientJavaScript).digest("hex");
+  assert.equal(OWNER_AUTH_SCRIPT_PATH, `/assets/owner-auth.${digest}.js`);
+  const { jar } = await login(runtime);
+  for (const path of ["/auth/sign-in", "/settings", "/operations/runtime", "/operations/matrix"]) {
+    const page = await runtime.handle(request(path, jar));
+    assert.equal(page?.status, 200, path);
+    const document = await page!.text();
+    assert.ok(document.includes(`src="${OWNER_AUTH_SCRIPT_PATH}"`), path);
+    assert.ok(!document.includes('src="/assets/owner-auth.js"'), path);
+  }
+  const script = await runtime.handle(request(OWNER_AUTH_SCRIPT_PATH));
+  assert.equal(script?.status, 200);
+  assert.equal(script?.headers.get("cache-control"), "no-store");
+  assert.equal(await script!.text(), ownerAuthClientJavaScript);
+  assert.equal((await runtime.handle(request(OWNER_AUTH_SCRIPT_PATH, undefined, { method: "POST" })))?.status, 405);
+  assert.equal(await runtime.handle(request(`/assets/owner-auth.${"0".repeat(64)}.js`)), undefined);
+  await runtime.close();
+});
+
+test("Matrix prepare uses the HTML-selected versioned handler even when the legacy URL has an obsolete cached handler", async () => {
+  const calls: string[] = [];
+  const { runtime } = fixture({ matrixSetup: { view: () => ({ state: "unprepared" }), close: async () => {},
+    action: async action => { calls.push(action); return { state: "prepared" }; } } });
+  const { jar } = await login(runtime);
+  const page = await runtime.handle(request("/operations/matrix", jar));
+  const document = await page!.text();
+  const path = /<script src="([^"]+)"/u.exec(document)?.[1];
+  assert.equal(path, OWNER_AUTH_SCRIPT_PATH);
+  const cachedLegacyScript = ownerAuthClientJavaScript.replace('form.getAttribute("action") || ""', 'form.action');
+  const cached = new Map([["/assets/owner-auth.js", cachedLegacyScript]]);
+  const script = cached.get(path!) ?? await (await runtime.handle(request(path!)))!.text();
+  const client = browser(async (actionPath, init) => {
+    const headers = new Headers(init.headers);
+    headers.set("origin", origin); headers.set("sec-fetch-site", "same-origin");
+    return (await runtime.handle(request(actionPath, jar, { ...init, headers })))!;
+  }, script);
+  const form = new Form("/operations/matrix/action");
+  form.token = formToken(document, "/operations/matrix/action"); form.fields = { action: "prepare" };
+  await client.submit(form);
+  assert.deepEqual(calls, ["prepare"]);
+  assert.equal(client.state().replaced, true);
+  assert.equal(client.state().message, "");
+  await runtime.close();
+});
 
 test("Matrix setup page and all setup effects require the same exact owner session and purpose-bound CSRF", async () => {
   const actions: unknown[] = [];
@@ -330,7 +379,7 @@ test("entry and GET start cannot exchange tokens or touch durable auth/applicati
   assert.match(document, /Увійти через Google/u);
   assert.doesNotMatch(document, /password|Ключ входу/u);
   assert.match(document, /data-owner-action/u);
-  assert.match(document, /src="\/assets\/owner-auth.js"/u);
+  assert.ok(document.includes(`src="${OWNER_AUTH_SCRIPT_PATH}"`));
   assert.equal(entry?.headers.get("referrer-policy"), "no-referrer");
   assert.match(entry!.headers.getSetCookie()[0]!, /Secure; HttpOnly; SameSite=Lax/u);
   assert.equal(pool.values.size, 0);

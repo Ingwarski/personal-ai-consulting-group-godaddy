@@ -1,10 +1,10 @@
 // Synthetic local browser fixture. Never connects to Matrix, MySQL, or a provider.
 import { createServer } from "node:http";
 import { matrixSetupDocument } from "../../src/godaddy/matrix-setup-page.ts";
-import { ownerAuthClientJavaScript } from "../../src/godaddy/owner-auth-client.ts";
+import { ownerAuthClientJavaScript, isOwnerAuthScriptPath } from "../../src/godaddy/owner-auth-client.ts";
 import { securityHeaders } from "../../src/http/security-headers.ts";
 const server = createServer((request, response) => {
-  const script = request.url === "/assets/owner-auth.js";
+  const script = isOwnerAuthScriptPath(request.url ?? "");
   const headers = securityHeaders(new Headers({ "content-type": script ? "application/javascript" : "text/html; charset=utf-8" }));
   response.writeHead(200, Object.fromEntries(headers.entries()));
   response.end(script ? ownerAuthClientJavaScript : matrixSetupDocument({ state: "verifying", status: {

@@ -10,6 +10,7 @@ export type SettingsPageModel = Readonly<{
   draft?: OwnerSettings;
   now: Date;
   ownerActionTokens?: Readonly<Record<string, string>>;
+  ownerAuthScriptPath?: string;
 }>;
 
 const SPEEDS: ReadonlyArray<Readonly<{ value: SpeedPreset; title: string; description: string }>> = [
@@ -152,6 +153,8 @@ export function renderAccessDeniedDocument(): string {
 }
 
 export function renderSettingsDocument(model: SettingsPageModel): string {
+  const ownerScriptPath = model.ownerAuthScriptPath ?? "/assets/owner-auth.js";
+  if (!/^\/assets\/owner-auth(?:\.[a-f0-9]{64})?\.js$/u.test(ownerScriptPath)) throw new Error("Invalid owner action script path.");
   const current = model.read.document.settings;
   const draft = model.draft ?? current;
   const formState = deriveSettingsFormState(draft, current, model.capabilityReceipt, model.now);
@@ -197,7 +200,7 @@ export function renderSettingsDocument(model: SettingsPageModel): string {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light" />
     <meta name="settings-csrf-token" content="${escapeHtml(model.csrfToken)}" />
-    ${model.ownerActionTokens === undefined ? "" : `<meta name="owner-csrf-refresh-token" content="${escapeHtml(model.ownerActionTokens["/api/settings/csrf"] ?? "")}" /><script src="/assets/owner-auth.js" defer></script>`}
+    ${model.ownerActionTokens === undefined ? "" : `<meta name="owner-csrf-refresh-token" content="${escapeHtml(model.ownerActionTokens["/api/settings/csrf"] ?? "")}" /><script src="${ownerScriptPath}" defer></script>`}
     <title>Налаштування власника</title>
     <link rel="stylesheet" href="/assets/settings.css" />
     <script id="settings-catalog" type="application/json">${clientCatalog}</script>
