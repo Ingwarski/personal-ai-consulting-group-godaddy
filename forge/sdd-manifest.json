@@ -16930,10 +16930,13 @@
     }
   ],
   "next_ready_nodes": [],
-  "pause_reason": "Scoped production Matrix setup is authorized and committed/pushed at ca68054. Local Node 22 checks pass 745 tests and native checks pass 93 tests. Replacement Linux run 34056704369 passes Node verification and is building the immutable Rust artifact. Production artifact pin, Published configuration, existing-bot trust handoff and live consultation delivery are still outstanding. A new Element access attempt reports the Mac locked; the user has been asked to unlock it and confirm existing-bot session/recovery availability without disclosing secrets. Historical preflight limitations remain in their original receipt; setup authority is no longer missing. See forge/runs/U-08/matrix-production-setup-20260906/progress.md. This is not Product V1 release readiness.",
+  "pause_reason": "Scoped production Matrix setup continues. Linux run 34056704369 passes Node verification and is building the immutable Rust artifact. The Mac is accessible; the user identified Safari and live Element inspection confirms the existing bot session is Verified with encrypted backup enabled. The authorized existing-room history setting is now joined; invite-only access and encryption were rechecked unchanged. Artifact pin, Published deployment/configuration, separate GoDaddy device verification and live consultation delivery remain outstanding. See forge/runs/U-08/matrix-production-setup-20260906/live-room-setup.md and progress.md. This is not Product V1 release readiness.",
   "matrix_production_setup_progress": {
     "authorization_ref": "forge/matrix-production-setup-authorization-20260906.json",
     "evidence_ref": "forge/runs/U-08/matrix-production-setup-20260906/progress.md",
+    "live_room_evidence_ref": "forge/runs/U-08/matrix-production-setup-20260906/live-room-setup.md",
+    "existing_bot_session_verified_in_ui": true,
+    "room_history_visibility_joined_verified": true,
     "status": "implementation-verified-locally-awaiting-linux-artifact-and-live-setup",
     "published_changes_performed": false,
     "live_consultation_verified": false
