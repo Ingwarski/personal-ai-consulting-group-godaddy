@@ -1,0 +1,831 @@
+{
+  "run_id": "matrix-publication-preflight-20260906",
+  "observed_at": "2026-09-06T13:59:10Z",
+  "authorization": {
+    "message": "Go",
+    "in_reply_to": "May I proceed with deployment checks, publication to the existing GoDaddy app, and one harmless live Matrix consultation test?",
+    "original_message_id": null,
+    "original_message_timestamp": null,
+    "basis": "Original text visible in the active conversation. Observation time is not a recovered user-message timestamp.",
+    "scope": "Check the reviewed revision, publish if prerequisites pass, and run one harmless existing-room consultation test; no credential, domain, schema or HappyPro changes."
+  },
+  "candidate_revision": "cdbb601db5d3fe7d67ae9382d0121f4ee64c387f",
+  "candidate_branch": "codex/matrix-connection-20260906",
+  "result": "blocked_before_push_and_publication",
+  "checks": {
+    "source_integrity": {
+      "result": "passed",
+      "source_hashes": 33,
+      "basis": "Recomputed all evaluated_source_hashes from the immutable preceding verification record; all match."
+    },
+    "repository": {
+      "remote": "https://github.com/Ingwarski/personal-ai-consulting-group-godaddy.git",
+      "origin_main": "50b8edfbe956d5a7eb3771809d590cc0a080651f",
+      "candidate_relation": "Exactly one local commit ahead; no remote changes on fetch."
+    },
+    "target": {
+      "project_id": "wy2v0putg6",
+      "project_name": "Personal AI Consulting Group",
+      "source_repository": "Ingwarski/personal-ai-consulting-group-godaddy",
+      "source_branch": "main",
+      "runtime": "Node.js 22",
+      "published_revision_shown": "50b8edfbe956d5a7eb3771809d590cc0a080651f",
+      "source": "Existing authenticated GoDaddy project overview, Published tab. Delayed status labels are not treated as code proof."
+    },
+    "liveness": {
+      "url": "https://wy2v0putg6.c35.airoapp.ai/healthz",
+      "http_status": 200,
+      "body": {
+        "status": "alive",
+        "runtime": "godaddy-node22"
+      },
+      "scope": "Web process liveness only; not Matrix or consultation readiness."
+    },
+    "owner_login": {
+      "result": "passed_bounded_observation",
+      "source": "Reload required login; existing confirmed Google account returned to owner Settings.",
+      "credential_values_read": false,
+      "configuration_changed": false
+    },
+    "saved_settings": {
+      "codex_agents": {
+        "model": "GPT-6 Astra",
+        "reasoning": "Extra High"
+      },
+      "critic": {
+        "provider": "Codex",
+        "model": "GPT-6 Astra",
+        "reasoning": "ultra"
+      },
+      "speed": "balanced",
+      "active_session": false,
+      "ui_result": "Saved Current combination and selected Critic are confirmed.",
+      "changed": false
+    },
+    "matrix_configuration": {
+      "result": "missing_published_configuration",
+      "source": "GoDaddy Settings -> Secrets -> Published; existing secret-name fields only, no values revealed.",
+      "matrix_names_observed": [],
+      "required_names": [
+        "MATRIX_SIDECAR_PATH",
+        "MATRIX_SIDECAR_SHA256",
+        "MATRIX_PROTOCOL_VERSION",
+        "MATRIX_STORE_DIR",
+        "MATRIX_STORE_PASSPHRASE",
+        "MATRIX_MEDIA_SPOOL_DIR",
+        "MATRIX_HOMESERVER_URL",
+        "MATRIX_ALLOWED_HTTPS_ORIGINS",
+        "MATRIX_BOT_MXID",
+        "MATRIX_BOT_DEVICE_ID",
+        "MATRIX_ACCESS_TOKEN",
+        "MATRIX_ROOM_ID",
+        "MATRIX_OWNER_MXID"
+      ],
+      "source_contract": "src/godaddy/matrix-service-config.ts",
+      "consequence": "Publishing the application code alone does not configure or start the real Matrix transport. Secret values were not read."
+    },
+    "rust_release": {
+      "result": "production_artifact_not_established",
+      "source": ".github/workflows/matrix-sidecar.yml",
+      "observations": [
+        "Only tracked workflow is Matrix sidecar non-deployable verification.",
+        "Artifact includes NON_DEPLOYABLE_VERIFICATION_ONLY.txt and an explicit instruction to rebuild in an approved immutable release environment before publication.",
+        "No current production-binary checksum/provenance or final path/store/device binding was established in this run."
+      ],
+      "prohibition": "Do not rename a verification artifact into a release binary.",
+      "authority_source": "docs/development-plan.md U-06 items 2 and 12"
+    },
+    "sdd_release": {
+      "exit_code": 1,
+      "result": "blocked",
+      "issue_count": 139,
+      "issues_by_code": {
+        "required_check_incomplete": 138,
+        "promotion_receipt": 1
+      },
+      "issues": [
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-SS-001"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-SS-008"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-EVD-001"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-EVD-002"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-EVD-004"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-LIM-001"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-LIM-004"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-PA-006"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-SS-009"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-DEV-006"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-PA-005"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-SS-002"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-EVD-006"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-REG-001"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-004"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-PA-001"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-PA-002"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-SS-003"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-002"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-LIM-003"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-REG-003"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-CRT-002"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-PA-003"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-WF-003"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-003"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-EVD-003"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-REG-002"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-005"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-PA-004"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-SS-004"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-006"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-REG-004"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-PA-007"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-PA-011"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-JRN-004"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-SS-005"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-WF-004"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-UX-004"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-PA-008"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-SS-006"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-007"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-REG-005"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-PA-009"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-008"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-PA-010"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-UX-005"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-RSP-003"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-A11Y-002"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-A11Y-003"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-A11Y-004"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-A11Y-005"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-DEV-001"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-DEV-002"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-DEV-003"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-DEV-004"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-DEV-005"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-LIM-002"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-001"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-019"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-020"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-021"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-022"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-023"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-024"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-REG-010"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-JRN-001"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-JRN-002"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-JRN-003"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-EVD-005"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-RR-001"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-SS-007"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-WF-001"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-WF-002"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-UX-001"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-UX-002"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-UX-003"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-VIS-001"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-VIS-002"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-VIS-003"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-RSP-001"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-RSP-002"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-A11Y-001"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-REG-006"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-SS-010"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-009"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-010"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-011"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-012"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-REG-007"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-PA-012"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-SS-011"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-AUTH-001"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-AUTH-002"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-AUTH-003"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-AUTH-004"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-AUTH-005"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-AUTH-006"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-AUTH-007"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-AUTH-008"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-013"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-014"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-015"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-REG-008"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-PA-013"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-PA-014"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-PA-015"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-SS-012"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-SS-013"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-016"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-017"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-INT-018"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-REG-009"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-CRT-001"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-CRT-004"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-PA-016"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-JRN-005"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-JRN-006"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-SS-014"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-WF-005"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-UX-006"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-A11Y-006"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-A11Y-007"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-DEV-007"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-HEU-001"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-HEU-002"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-HEU-003"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-HEU-004"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-HEU-005"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-HEU-006"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-HEU-007"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-HEU-008"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-HEU-009"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-HEU-010"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-USER-001"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-USER-002"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-USER-003"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-SEC-001"
+        },
+        {
+          "code": "required_check_incomplete",
+          "target": "qa-checklist",
+          "detail": "QA-CRT-003"
+        },
+        {
+          "code": "promotion_receipt",
+          "target": "implementation",
+          "detail": "promotion verification is not complete"
+        }
+      ],
+      "warnings": []
+    }
+  },
+  "external_effects": {
+    "git_push": "not_performed",
+    "publication": "not_performed",
+    "matrix_test_message": "not_sent",
+    "live_model_calls": "not_performed",
+    "credentials": "unchanged",
+    "database_data_or_schema": "not_modified_by_this_run_except_normal_owner_login_session",
+    "domain": "untouched",
+    "happypro": "untouched",
+    "preview": "unchanged"
+  },
+  "finding": {
+    "severity": "P1",
+    "release_effect": "blocking",
+    "cause": "Missing actual Matrix deployment prerequisite, not a model-selection problem.",
+    "next_required_work": [
+      "Prepare a deployable, pinned Rust sidecar and release provenance; verify the final private runtime paths before credentials.",
+      "Identify the intended existing bot/device and room. Configure Published-only binding and any missing secrets with explicit setup authority and user credential entry.",
+      "Re-evaluate readiness, publish the reviewed application revision through the existing GoDaddy path, then run the bounded harmless live consultation and record actual delivery."
+    ],
+    "user_input_boundary": "Current publication scope explicitly preserved credentials. Bot/device/room/secret setup is additional authority and must not be silently inferred."
+  },
+  "unit_completion": "not_claimed",
+  "full_release_readiness": "blocked",
+  "prior_claim_correction": "The prior turn established a local application-level connection with simulated external adapters, not an installed/configured production Matrix connection. Publication was offered before confirming this prerequisite."
+}

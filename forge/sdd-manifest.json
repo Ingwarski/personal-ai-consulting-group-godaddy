@@ -12391,7 +12391,7 @@
   "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
   "verification": {
     "definition_status": "prepared",
-    "release_readiness": "not_evaluated",
+    "release_readiness": "blocked",
     "source_hashes": {
       "docs/qa-checklist.md": "c96d2289f079ea0b12d10c99c24b5246a66773bf9b48fa85390fd98c80b8ed77",
       "docs/dod-evals.md": "fa98adf293b0d445ea579f7434e5e7eb26e750db3457fb7e6bca1caf3c9fec1c"
@@ -16572,6 +16572,20 @@
     }
   ],
   "implementation": {
+    "matrix_publication_preflight": {
+      "run_id": "matrix-publication-preflight-20260906",
+      "path": "forge/runs/U-08/matrix-publication-preflight-20260906/verification.json",
+      "content_hash": "dc952a1a35f669f3bc113c01507a60eb70babf0455e1e9b3d7a7598950a40131",
+      "candidate_revision": "cdbb601db5d3fe7d67ae9382d0121f4ee64c387f",
+      "status": "blocked_before_push_and_publication",
+      "authorization": "Go in reply to publication checks, existing GoDaddy publication and one harmless live Matrix test.",
+      "blockers": [
+        "Published secret-name inventory contains none of the 13 required MATRIX_* configuration names.",
+        "Only the non-deployable Rust verification workflow is present; a production sidecar/checksum/provenance and final store/device/room binding are not established.",
+        "SDD release precheck reports 138 required checks incomplete and one incomplete promotion verification; these are not 139 observed runtime bugs."
+      ],
+      "preserved": "Existing Google login and compatible saved Astra agents/Codex Critic settings; no publication, push, credential/schema/domain/HappyPro changes."
+    },
     "catalog_button_repair": {
       "run_id": "catalog-button-fix-20260906",
       "path": "forge/runs/U-04/catalog-button-fix-20260906/verification.json",
@@ -16916,7 +16930,7 @@
     }
   ],
   "next_ready_nodes": [],
-  "pause_reason": "Local Matrix consultation connection verified with 678 passing tests. Separate publication approval and bounded live MySQL/provider/Matrix delivery evidence are still required. No production changes or full Unit/release completion are claimed.",
+  "pause_reason": "Publication and one harmless live consultation test were authorized by Go. Preflight stopped before push/publication: Published lacks MATRIX_* configuration, production Rust release artifact and final binding are not established, and release evidence is incomplete. Local 678-test result remains valid, not live readiness. Existing Element room inspection additionally requires the user to unlock the Mac; credential or identity setup needs separate authority.",
   "current_reconciliation_blockers": [
     {
       "id": "sdd-render-precheck-20260905",
