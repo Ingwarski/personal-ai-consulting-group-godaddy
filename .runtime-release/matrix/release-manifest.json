@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "kind": "matrix-production-release",
+  "sourceCommit": "271bcb8ec973e34fe0e53a0f260991ed1a4a5373",
+  "sidecarVersion": "0.1.0",
+  "protocolVersion": 1,
+  "builder": {
+    "image": "docker.io/library/rust:1.93.0-alpine3.23@sha256:6f37c2b56fde862a67116c4bddbb6014c0a758b24944f8650c8ff8c735f96f06",
+    "imageConfigDigest": "sha256:6336bf7b311135c893a4a930b0920892b5e596ccdc374777290fa91bb59ae818",
+    "platform": "linux/amd64",
+    "rustToolchain": "1.93.0-x86_64-unknown-linux-musl",
+    "target": "x86_64-unknown-linux-musl",
+    "systemHeaders": {
+      "url": "https://dl-cdn.alpinelinux.org/alpine/v3.23/main/x86_64/linux-headers-6.16.12-r0.apk",
+      "sha256": "fc83eea0ee6c438b6ca5fd5ee67a64728a6f23580584b19c522fcbff550af80b",
+      "sizeBytes": 1706807,
+      "regularHeaderFiles": 987,
+      "licenseExpression": "GPL-2.0-only",
+      "purpose": "Pinned read-only Linux UAPI header overlay required by locked aws-lc-sys. No package manager runs and no image or compiler is modified."
+    }
+  },
+  "artifacts": [
+    {
+      "path": "build-provenance.json",
+      "role": "evidence",
+      "sha256": "0100c260140d27e23381468a6e629e04d6c9fd2d6052cdc3d80a44e2ab92e0e6",
+      "sizeBytes": 8551
+    },
+    {
+      "path": "cc.txt",
+      "role": "evidence",
+      "sha256": "26a61ac72afc022fca79cd7cca401f0fdd36399aa7fb0e5be04184baa42b6c7b",
+      "sizeBytes": 228
+    },
+    {
+      "path": "licenses.json",
+      "role": "evidence",
+      "sha256": "22f138ab2c0959521dbcab61f571bbea97b8ead3d495473d60d26eb7de481133",
+      "sizeBytes": 96351
+    },
+    {
+      "path": "personal-consultant-matrix-setup",
+      "role": "setup",
+      "sha256": "c7d03e02dff339df1098f246893cdd8b4ce814880078f346e9ac4b696cb4cb0d",
+      "sizeBytes": 32682416
+    },
+    {
+      "path": "personal-consultant-matrix-sidecar",
+      "role": "sidecar",
+      "sha256": "516a8bba8ffe4d286e0d6d2240d55737cf5e8195bc271d521c466077b657709b",
+      "sizeBytes": 38674960
+    },
+    {
+      "path": "personal-consultant-matrix-sidecar.cdx.json",
+      "role": "evidence",
+      "sha256": "9a9019c70468d5d4fcd8ec61bb1b8d8db3b60912e8aea5d5243ea4419932b047",
+      "sizeBytes": 223240
+    },
+    {
+      "path": "RELEASE_CANDIDATE.txt",
+      "role": "evidence",
+      "sha256": "fb7950e5f10bef3cca8349959209a5fb6bce642ae173b7204e1f228d90c2eb94",
+      "sizeBytes": 227
+    },
+    {
+      "path": "rustc.txt",
+      "role": "evidence",
+      "sha256": "874e456279af034c2b617c187e017f0a202518b43c32cd0e58cbb724961872e9",
+      "sizeBytes": 197
+    }
+  ]
+}

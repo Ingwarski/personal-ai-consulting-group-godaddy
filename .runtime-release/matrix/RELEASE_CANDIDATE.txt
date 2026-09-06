@@ -1,0 +1,1 @@
+Production-build candidate from two independent locked offline builds. Not deployment or product acceptance proof. Preserve the manifest, source/run provenance and GitHub artifact digest; verify final paths before credentials.

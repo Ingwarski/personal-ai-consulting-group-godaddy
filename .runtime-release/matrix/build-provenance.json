@@ -1,0 +1,190 @@
+{
+  "schemaVersion": 1,
+  "kind": "matrix-production-build-provenance",
+  "source": {
+    "repository": "Ingwarski/personal-ai-consulting-group-godaddy",
+    "commit": "271bcb8ec973e34fe0e53a0f260991ed1a4a5373",
+    "workflowCommit": "271bcb8ec973e34fe0e53a0f260991ed1a4a5373",
+    "workflowRef": "Ingwarski/personal-ai-consulting-group-godaddy/.github/workflows/matrix-sidecar-release.yml@refs/heads/codex/matrix-connection-20260906",
+    "runId": "34060973791",
+    "runAttempt": "1",
+    "runUrl": "https://github.com/Ingwarski/personal-ai-consulting-group-godaddy/actions/runs/34060973791/attempts/1",
+    "nativeTree": "2cd817b7a8ace6a627a4045539588b5732dab78b",
+    "inputs": [
+      {
+        "path": ".github/workflows/matrix-sidecar-release.yml",
+        "sha256": "07cea909829a428120ccdbeb5fc9d4fa4d6ea8b241cb54f02f1b8a0e8aed8765"
+      },
+      {
+        "path": "native/matrix-sidecar/.gitignore",
+        "sha256": "7cafcdfb11e9cba6dd75c68cad0af541a706ea6c55bd223c276842ae7d482d6a"
+      },
+      {
+        "path": "native/matrix-sidecar/Cargo.lock",
+        "sha256": "4a0469995afd74cd03b3095a180cef059ae0feb57008bb7cf6d000e007d55db7"
+      },
+      {
+        "path": "native/matrix-sidecar/Cargo.toml",
+        "sha256": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1"
+      },
+      {
+        "path": "native/matrix-sidecar/rust-toolchain.toml",
+        "sha256": "f8cb5f5b34273068107666c995e8e5a8703ad9657ca5c151ebc3ab373f1aaf5e"
+      },
+      {
+        "path": "native/matrix-sidecar/src/bin/personal-consultant-matrix-setup.rs",
+        "sha256": "224c11d8f8be50caa84cc27beaf1b7260f2f7ee317a5b1ecf3bd27bdbb235273"
+      },
+      {
+        "path": "native/matrix-sidecar/src/client.rs",
+        "sha256": "8b2c487d375bce0c684a4593cd6881ff76070329dc98d3aa4be47152f45eddb1"
+      },
+      {
+        "path": "native/matrix-sidecar/src/client_sdk_tests.rs",
+        "sha256": "61967420e14b92ab30573ed075813c9ef0f4d7818d29914dcb4a839aafbbe131"
+      },
+      {
+        "path": "native/matrix-sidecar/src/config.rs",
+        "sha256": "43ca2202daffcf5fbc1ebe948149a54cacef8c911800a6468f11160b684257ac"
+      },
+      {
+        "path": "native/matrix-sidecar/src/egress.rs",
+        "sha256": "3df710cc25ce774475c0bd9ddc99af61780103514d35b53ae82f0c4c190f43d5"
+      },
+      {
+        "path": "native/matrix-sidecar/src/ingress.rs",
+        "sha256": "152be5698943f9c9e5272a64d1478dbcfd09f1667fc75a1de660cf44f9991e67"
+      },
+      {
+        "path": "native/matrix-sidecar/src/lib.rs",
+        "sha256": "bee723d1378c7c9213043b5fd6b09c97d0677beb3474ff53ad7bf14d7fa11662"
+      },
+      {
+        "path": "native/matrix-sidecar/src/live_policy.rs",
+        "sha256": "10a2c7a00777afb118ab07ff33b1c3ffeb5ef3d84bbbebb152c5684ba73f5c7e"
+      },
+      {
+        "path": "native/matrix-sidecar/src/lock.rs",
+        "sha256": "45ea88c0796bb456f79f46f1248a53c0d527a825a38f4f4c4fe6af65b3e44c06"
+      },
+      {
+        "path": "native/matrix-sidecar/src/main.rs",
+        "sha256": "01be7a477291704fa6f6538f274922c3e006db0556aa5ba3e93772eda7524546"
+      },
+      {
+        "path": "native/matrix-sidecar/src/media_spool.rs",
+        "sha256": "2238f061f76c24effd5d999c031e0f7ff7120b3e044905d8c5f3f4353402a932"
+      },
+      {
+        "path": "native/matrix-sidecar/src/protocol.rs",
+        "sha256": "02926cb646761d2a3bdc28a66a434bfd9c82f1c0e87a634c6529c1aa44c93060"
+      },
+      {
+        "path": "native/matrix-sidecar/src/room_policy.rs",
+        "sha256": "9c67c3e35c67effda9c26f1a7627841b4ea5890764fb0d1b7a5516c72f844dd9"
+      },
+      {
+        "path": "native/matrix-sidecar/src/setup.rs",
+        "sha256": "3a054e117e742037a078e43784782e5d53d310573f558609bc35df8f7a93615f"
+      },
+      {
+        "path": "native/matrix-sidecar/src/state.rs",
+        "sha256": "f6c5d49ec07b22aa76760cf93a759771c18be2312911454969c952ec4b4ce9bf"
+      },
+      {
+        "path": "native/matrix-sidecar/src/store.rs",
+        "sha256": "1a30c719e09a2ddec57a8ede5a32daa7a9b91c9a5b46dd6342ec155c285d3629"
+      },
+      {
+        "path": "native/matrix-sidecar/src/sync_checkpoint.rs",
+        "sha256": "c6aaf10c4211f01e99d9499185ccfd9921f99719691212d8a5c25cc62ffbfa0b"
+      },
+      {
+        "path": "native/matrix-sidecar/src/telemetry.rs",
+        "sha256": "a44e013177d94dcfde5ab4794d6f9109981ff193c3668f46e82b7441113f1fa3"
+      },
+      {
+        "path": "scripts/build-matrix-release.mjs",
+        "sha256": "72599ff74c125eeb62ff85b0863f35bc92abca8ef7739a57b6558a05aaf26286"
+      },
+      {
+        "path": "scripts/matrix-release-builder.json",
+        "sha256": "8f2eff653c88b670e3e0bd18c65370466a6f7409295f19b479a149a73ea64f87"
+      },
+      {
+        "path": "scripts/matrix-release-container.sh",
+        "sha256": "eab5bc29f7571becae45b0bef1d6ff838707e1b6766b1dbea68488f8e3fc4173"
+      },
+      {
+        "path": "scripts/matrix-release-package.mjs",
+        "sha256": "aa0337cbec2fd910d9fa02cdc6ff4b0116db367371cb6e079aec8b676e09a859"
+      },
+      {
+        "path": "test/fixtures/matrix-invalid-media.json",
+        "sha256": "d5a5cdb4a9c0c108c3d4dac892f76e0fa3caae155d62ee5dea90dc1a2ce6826f"
+      },
+      {
+        "path": "test/matrix-release-package.test.mjs",
+        "sha256": "f209e261d52a3fae43c3bc0a301af655b2303eeaa4b1cb2389d856173011fdaa"
+      }
+    ]
+  },
+  "builder": {
+    "schemaVersion": 1,
+    "image": "docker.io/library/rust:1.93.0-alpine3.23@sha256:6f37c2b56fde862a67116c4bddbb6014c0a758b24944f8650c8ff8c735f96f06",
+    "imageConfigDigest": "sha256:6336bf7b311135c893a4a930b0920892b5e596ccdc374777290fa91bb59ae818",
+    "platform": "linux/amd64",
+    "rustToolchain": "1.93.0-x86_64-unknown-linux-musl",
+    "target": "x86_64-unknown-linux-musl",
+    "nodeVersion": "22.23.2",
+    "binaryName": "personal-consultant-matrix-sidecar",
+    "setupBinaryName": "personal-consultant-matrix-setup",
+    "sidecarVersion": "0.1.0",
+    "protocolVersion": 1,
+    "systemHeaders": {
+      "url": "https://dl-cdn.alpinelinux.org/alpine/v3.23/main/x86_64/linux-headers-6.16.12-r0.apk",
+      "sha256": "fc83eea0ee6c438b6ca5fd5ee67a64728a6f23580584b19c522fcbff550af80b",
+      "sizeBytes": 1706807,
+      "regularHeaderFiles": 987,
+      "licenseExpression": "GPL-2.0-only",
+      "purpose": "Pinned read-only Linux UAPI header overlay required by locked aws-lc-sys. No package manager runs and no image or compiler is modified."
+    },
+    "upstreamDockerfile": "https://github.com/rust-lang/docker-rust/blob/37d9b1d21b5332c4ca4013bb492e18f68971594c/stable/alpine3.23/Dockerfile",
+    "registryVerifiedOn": "2026-09-06",
+    "registryVerification": "The amd64 manifest bytes were SHA-256 checked against the digest; its config pins Rust 1.93.0, gcc and musl-dev. Build steps may not install OS packages or toolchains. The separately hash-pinned UAPI header input is acquired before compilation and mounted read-only.",
+    "observedImageConfigDigest": "sha256:6336bf7b311135c893a4a930b0920892b5e596ccdc374777290fa91bb59ae818"
+  },
+  "build": {
+    "startedAt": "2026-09-06T21:25:20.811Z",
+    "completedAt": "2026-09-06T22:52:18.959Z",
+    "sourceDateEpoch": "1788729861",
+    "command": "cargo build --release --locked --frozen --target x86_64-unknown-linux-musl",
+    "networkDuringCompilation": "none",
+    "cleanBuildCount": 2,
+    "binaryByteEquality": "passed",
+    "staticStrippedElfCheck": "passed",
+    "credentialFreeMuslTests": "passed",
+    "sourceMountedReadOnly": true,
+    "sharedCompiledObjectCache": false,
+    "dependencyAcquisition": "cargo fetch --locked in the same pinned image and exact-hash UAPI archive acquisition before network-disabled builds"
+  },
+  "subjects": [
+    {
+      "path": "personal-consultant-matrix-sidecar",
+      "role": "sidecar",
+      "sha256": "516a8bba8ffe4d286e0d6d2240d55737cf5e8195bc271d521c466077b657709b",
+      "sizeBytes": 38674960
+    },
+    {
+      "path": "personal-consultant-matrix-setup",
+      "role": "setup",
+      "sha256": "c7d03e02dff339df1098f246893cdd8b4ce814880078f346e9ac4b696cb4cb0d",
+      "sizeBytes": 32682416
+    }
+  ],
+  "trust": {
+    "kind": "GitHub Actions source-bound provenance record; not a signed attestation",
+    "verifyAgainst": "Authenticate to GitHub, verify this exact repository/workflow/commit/run attempt succeeded, compare the immutable artifact digest from that run, then independently pin release-manifest.json SHA-256 before installation.",
+    "publication": "This workflow performs no deployment. Real-host path/permissions/readiness and explicit promotion authority remain separate gates."
+  }
+}

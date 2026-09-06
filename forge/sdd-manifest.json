@@ -16930,7 +16930,7 @@
     }
   ],
   "next_ready_nodes": [],
-  "pause_reason": "Scoped production Matrix setup continues. Run 34056704369 completed both matching optimized Rust builds but failed native tests because the build container omitted a shared fixture; no artifact was uploaded. The corrected source 271bcb8ec973e34fe0e53a0f260991ed1a4a5373 is running as 34060973791, with native tests before the two optimized builds. Current local checks pass 748 tests. A failed repeat preparation now revokes stale passed UI state without weakening the privacy gate. Preliminary Preview probes show authentication before some routes, which is not exact-file isolation proof. Existing Safari bot verification and joined room policy remain recorded. Artifact pin, exact-file isolation, Published deployment/configuration, new GoDaddy device verification and live consultation delivery remain outstanding. See forge/runs/U-08/matrix-production-setup-20260906/preflight-followup.md. This is not Product V1 release readiness.",
+  "pause_reason": "Scoped production Matrix setup continues. Run 34060973791 attempt 1 succeeded; its ten-file release archive, both static Linux executables and all 29 source inputs were independently verified. The exact artifact is bundled and pinned; current local checks pass 748 tests. Only the Published MATRIX_SETUP_MODE=provision flag has been added. Exact-file isolation, setup-only deployment verification, user-entered new device credentials, human device comparison and live consultation delivery remain outstanding. Preliminary Preview authentication responses are not exact-file isolation proof. See the release-verification.json and preflight-followup.md evidence. This is not Product V1 release readiness.",
   "matrix_production_setup_progress": {
     "authorization_ref": "forge/matrix-production-setup-authorization-20260906.json",
     "evidence_ref": "forge/runs/U-08/matrix-production-setup-20260906/progress.md",
@@ -16938,6 +16938,8 @@
     "preflight_followup_ref": "forge/runs/U-08/matrix-production-setup-20260906/preflight-followup.md",
     "replacement_build_run": 34060973791,
     "replacement_build_source": "271bcb8ec973e34fe0e53a0f260991ed1a4a5373",
+    "release_verification_ref": "forge/runs/U-08/matrix-production-setup-20260906/release-verification.json",
+    "replacement_build_result": "passed",
     "temporary_followup": {
       "automation_id": "finish-matrix-build-verification",
       "interval_minutes": 10,
@@ -16946,8 +16948,9 @@
     },
     "existing_bot_session_verified_in_ui": true,
     "room_history_visibility_joined_verified": true,
-    "status": "implementation-verified-locally-awaiting-linux-artifact-and-live-setup",
-    "published_changes_performed": false,
+    "status": "artifact-verified-pinned-awaiting-live-setup-proof",
+    "published_changes_performed": true,
+    "published_changes_scope": "Added only MATRIX_SETUP_MODE=provision; code deployment not yet verified.",
     "live_consultation_verified": false
   },
   "current_reconciliation_blockers": [

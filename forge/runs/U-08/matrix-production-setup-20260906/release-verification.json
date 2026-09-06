@@ -1,0 +1,21 @@
+{
+  "verifiedAt": "2026-09-06T23:01:18.121Z",
+  "executor": "Codex operator using authenticated GitHub CLI and local checksum verification",
+  "verificationScript": "forge/runs/U-08/matrix-production-setup-20260906/verify-release.mjs",
+  "runId": 34060973791,
+  "runAttempt": 1,
+  "sourceCommit": "271bcb8ec973e34fe0e53a0f260991ed1a4a5373",
+  "artifactId": 9998728398,
+  "archiveSha256": "676a5d7a850dcead677580f45b7bae222e4e224d24d1ae22c2795f0e7b8eb891",
+  "archiveSizeBytes": 29286042,
+  "fileCount": 10,
+  "manifestSha256": "a5e2f7cb1c7668cd4bce752a7a91a8e6a651c03306926a3751d9f93ff7e33c05",
+  "verifiedSourceInputCount": 29,
+  "binaries": [
+    { "path": "personal-consultant-matrix-sidecar", "sha256": "516a8bba8ffe4d286e0d6d2240d55737cf5e8195bc271d521c466077b657709b", "sizeBytes": 38674960 },
+    { "path": "personal-consultant-matrix-setup", "sha256": "c7d03e02dff339df1098f246893cdd8b4ce814880078f346e9ac4b696cb4cb0d", "sizeBytes": 32682416 }
+  ],
+  "checks": ["Exact repository, workflow, commit and successful run attempt", "Immutable GitHub archive digest", "Every manifest file hash and byte size", "SHA256SUMS including manifest", "All 29 source inputs at the build commit and current checkout", "Pinned builder identity", "Stripped static Linux x86_64 ELF structure with no dynamic library dependencies", "Both independently built executables byte-identical in verified workflow"],
+  "result": "passed",
+  "limitation": "Source-bound build provenance, not a signed attestation, GoDaddy execution, storage isolation, Matrix authentication or product acceptance proof."
+}
