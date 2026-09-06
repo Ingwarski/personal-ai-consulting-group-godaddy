@@ -8,6 +8,7 @@ on:
       - "native/matrix-sidecar/**"
       - "scripts/*matrix-release*"
       - "test/matrix-release-package.test.mjs"
+      - "test/fixtures/matrix-invalid-media.json"
       - ".github/workflows/matrix-sidecar-release.yml"
 
 # No production credentials, package publishing, deployment, or writable token.

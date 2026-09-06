@@ -3,6 +3,13 @@ import { gunzipSync } from "node:zlib";
 
 export const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
+// Preserve the crate-relative include_str! path used by both Node and Rust tests.
+// These exact external inputs are also included in the source provenance below.
+export const matrixReleaseSourceMounts = Object.freeze([
+  Object.freeze({ source: "native/matrix-sidecar", target: "/source" }),
+  Object.freeze({ source: "test/fixtures/matrix-invalid-media.json", target: "/test/fixtures/matrix-invalid-media.json" })
+]);
+
 export function validateBuilder(builder) {
   if (builder.schemaVersion !== 1
     || !/^docker\.io\/library\/rust:1\.93\.0-alpine3\.23@sha256:[a-f0-9]{64}$/.test(builder.image)

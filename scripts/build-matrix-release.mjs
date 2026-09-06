@@ -1,9 +1,9 @@
 import { spawnSync } from "node:child_process";
-import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, copyFileSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { assertReproducible, createDependencyEvidence, extractPinnedHeaders, sha256, validateBuilder, validateRun } from "./matrix-release-package.mjs";
+import { assertReproducible, createDependencyEvidence, extractPinnedHeaders, matrixReleaseSourceMounts, sha256, validateBuilder, validateRun } from "./matrix-release-package.mjs";
 
 // This is an offline binary builder, never a GoDaddy runtime installer.
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -22,6 +22,10 @@ const assertUnchanged = () => {
   if (git("rev-parse", "HEAD") !== run.commit) throw new Error("Source commit changed during the release build.");
 };
 assertUnchanged();
+for (const mount of matrixReleaseSourceMounts) {
+  const source = lstatSync(join(root, mount.source));
+  if (source.isSymbolicLink() || (!source.isFile() && !source.isDirectory())) throw new Error("Release source mount is missing or unsafe.");
+}
 const outputDirectory = join(root, "dist/matrix-release");
 if (existsSync(outputDirectory)) throw new Error("Release output directory already exists; use a fresh checkout.");
 const scratch = mkdtempSync(join(tmpdir(), "matrix-release-build-"));
@@ -54,7 +58,7 @@ function container(phase, buildDirectory) {
     "--network", phase === "fetch" ? "bridge" : "none",
     "--user", `${process.getuid()}:${process.getgid()}`, "--cap-drop=ALL", "--security-opt=no-new-privileges",
     "--read-only", "--tmpfs", "/tmp:rw,nosuid,nodev,size=1g",
-    "--mount", `type=bind,source=${join(root, "native/matrix-sidecar")},target=/source,readonly`,
+    ...matrixReleaseSourceMounts.flatMap(({ source, target }) => ["--mount", `type=bind,source=${join(root, source)},target=${target},readonly`]),
     "--mount", `type=bind,source=${join(root, "scripts/matrix-release-container.sh")},target=/release-build.sh,readonly`,
     "--mount", `type=bind,source=${cache},target=/cache`,
     "--mount", `type=bind,source=${buildDirectory},target=/build`,
@@ -70,6 +74,8 @@ function container(phase, buildDirectory) {
   ]);
 }
 container("fetch", builds[0]);
+// Fail on test/source problems before spending time on two optimized builds.
+container("test", builds[0]);
 container("build", builds[0]);
 container("build", builds[1]);
 const subjects = [
@@ -81,13 +87,12 @@ const subjects = [
   const second = readFileSync(artifactPath(builds[1]));
   return { path, role, sha256: assertReproducible(first, second), sizeBytes: first.length, originalPath: artifactPath(builds[0]) };
 });
-container("test", builds[0]);
 assertUnchanged();
 
 const metadata = JSON.parse(readFileSync(join(builds[0], "cargo-metadata.json"), "utf8"));
 const { sbom, licenses } = createDependencyEvidence(metadata, builder);
 licenses.buildSystemInputs = [{ name: "linux-headers", version: "6.16.12-r0", ...builder.systemHeaders }];
-const sourceInputs = git("ls-files", "-z", "--", "native/matrix-sidecar", ".github/workflows/matrix-sidecar-release.yml", "scripts/matrix-release-builder.json", "scripts/matrix-release-container.sh", "scripts/matrix-release-package.mjs", "scripts/build-matrix-release.mjs", "test/matrix-release-package.test.mjs")
+const sourceInputs = git("ls-files", "-z", "--", ...matrixReleaseSourceMounts.map(({ source }) => source), ".github/workflows/matrix-sidecar-release.yml", "scripts/matrix-release-builder.json", "scripts/matrix-release-container.sh", "scripts/matrix-release-package.mjs", "scripts/build-matrix-release.mjs", "test/matrix-release-package.test.mjs")
   .split("\0").filter(Boolean).sort().map((path) => ({ path, sha256: sha256(readFileSync(join(root, path))) }));
 const completedAt = new Date().toISOString();
 const provenance = {

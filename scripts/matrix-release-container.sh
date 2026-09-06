@@ -4,6 +4,7 @@ set -eu
 cd /source
 test "$(rustc --version | cut -d ' ' -f 2)" = "1.93.0"
 test "$(rustc -vV | sed -n 's/^host: //p')" = "x86_64-unknown-linux-musl"
+test -r /test/fixtures/matrix-invalid-media.json
 case "${1:-}" in
   fetch)
     # The only network-enabled phase. Cargo verifies registry checksums from Cargo.lock.

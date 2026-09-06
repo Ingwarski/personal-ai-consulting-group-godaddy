@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { posix } from "node:path";
 import test from "node:test";
 import { gzipSync } from "node:zlib";
-import { assertReproducible, assertStaticStrippedElf, createDependencyEvidence, extractPinnedHeaders, sha256, validateBuilder, validateRun } from "../scripts/matrix-release-package.mjs";
+import { assertReproducible, assertStaticStrippedElf, createDependencyEvidence, extractPinnedHeaders, matrixReleaseSourceMounts, sha256, validateBuilder, validateRun } from "../scripts/matrix-release-package.mjs";
 
 const builder = JSON.parse(readFileSync(new URL("../scripts/matrix-release-builder.json", import.meta.url), "utf8"));
 const commit = "a".repeat(40);
@@ -132,6 +133,27 @@ test("release workflow remains separate from non-deployable verification and can
   assert.match(build, /container\("build", builds\[0\]\)/);
   assert.match(build, /container\("build", builds\[1\]\)/);
   assert.doesNotMatch(build, /apt-get|apk add|rustup toolchain install/);
+});
+
+test("the actual shared Rust test includes resolve inside read-only provenance-bound release mounts", () => {
+  const source = readFileSync(new URL("../native/matrix-sidecar/src/client.rs", import.meta.url), "utf8");
+  const includes = [...source.matchAll(/include_str!\(\s*"([^"]+)"\s*\)/g)].map(match => match[1]);
+  assert.equal(includes.length, 2, "keep the regression bound to the actual native test includes");
+  for (const relative of includes) {
+    const target = posix.resolve("/source/src", relative);
+    const mount = matrixReleaseSourceMounts.find(entry => entry.target === target);
+    assert.ok(mount, `missing container source mount for ${target}`);
+    const hostRelative = posix.normalize(posix.join("native/matrix-sidecar/src", relative));
+    assert.equal(mount.source, hostRelative);
+    assert.deepEqual(JSON.parse(readFileSync(new URL(`../${mount.source}`, import.meta.url), "utf8")),
+      JSON.parse(readFileSync(new URL(`../${hostRelative}`, import.meta.url), "utf8")));
+    const workflow = readFileSync(new URL("../.github/workflows/matrix-sidecar-release.yml", import.meta.url), "utf8");
+    assert.ok(workflow.includes(`- "${mount.source}"`));
+  }
+  const build = readFileSync(new URL("../scripts/build-matrix-release.mjs", import.meta.url), "utf8");
+  assert.match(build, /matrixReleaseSourceMounts\.flatMap\([\s\S]*?target=\$\{target\},readonly/);
+  assert.match(build, /const sourceInputs = git\([^\n]*matrixReleaseSourceMounts\.map/);
+  assert.ok(build.indexOf('container("test", builds[0])') < build.indexOf('container("build", builds[0])'));
 });
 
 test("header overlay verifies exact archive bytes and refuses path escapes, symlinks and missing entries", () => {
