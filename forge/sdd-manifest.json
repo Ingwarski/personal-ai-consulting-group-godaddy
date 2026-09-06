@@ -16930,7 +16930,7 @@
     }
   ],
   "next_ready_nodes": [],
-  "pause_reason": "Scoped production Matrix setup continues. Run 34060973791 attempt 1 succeeded; its ten-file release archive, both static Linux executables and all 29 source inputs were independently verified. The exact artifact is bundled and pinned; current local checks pass 748 tests. Only the Published MATRIX_SETUP_MODE=provision flag has been added. Exact-file isolation, setup-only deployment verification, user-entered new device credentials, human device comparison and live consultation delivery remain outstanding. Preliminary Preview authentication responses are not exact-file isolation proof. See the release-verification.json and preflight-followup.md evidence. This is not Product V1 release readiness.",
+  "pause_reason": "Awaiting owner Google sign-in in Safari. Verified Matrix release is bundled and pinned in setup-only Published commit 466d7268afe886047d64ea5c5fb6984efcc7cf81; the selected Published dashboard confirms the commit, live healthz is 200, and the new Matrix route redirects unauthenticated users to owner sign-in. Both Safari and Chrome require sign-in. Temporary follow-up is paused. No Matrix credentials or trust confirmations were performed. Server-side installation/privacy preparation, the known anonymous Preview 401 evidence limitation, new device setup and live consultation delivery remain outstanding. See release-verification.json and preflight-followup.md. This is not Product V1 release readiness.",
   "matrix_production_setup_progress": {
     "authorization_ref": "forge/matrix-production-setup-authorization-20260906.json",
     "evidence_ref": "forge/runs/U-08/matrix-production-setup-20260906/progress.md",
@@ -16944,13 +16944,17 @@
       "automation_id": "finish-matrix-build-verification",
       "interval_minutes": 10,
       "created_at": "2026-09-06T21:30:12Z",
+      "status": "PAUSED",
+      "paused_at": "2026-09-06T23:10:16Z",
+      "pause_reason": "Owner sign-in required in both existing Safari and Chrome sessions before protected Matrix preparation.",
       "stop_condition": "Build failure, required user action, or credential/device-comparison handoff; no automatic build retries or trust confirmations."
     },
     "existing_bot_session_verified_in_ui": true,
     "room_history_visibility_joined_verified": true,
-    "status": "artifact-verified-pinned-awaiting-live-setup-proof",
+    "status": "setup-deployed-awaiting-owner-login-and-live-setup-proof",
     "published_changes_performed": true,
-    "published_changes_scope": "Added only MATRIX_SETUP_MODE=provision; code deployment not yet verified.",
+    "published_changes_scope": "Added only MATRIX_SETUP_MODE=provision and published verified setup-only commit 466d7268afe886047d64ea5c5fb6984efcc7cf81; no Matrix credentials, runtime provisioning or trust confirmation.",
+    "published_commit": "466d7268afe886047d64ea5c5fb6984efcc7cf81",
     "live_consultation_verified": false
   },
   "current_reconciliation_blockers": [
