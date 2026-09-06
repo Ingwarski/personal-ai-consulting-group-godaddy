@@ -862,8 +862,8 @@
   "traceability_version": 1,
   "checker_contract_version": 1,
   "pipeline_version": "1.1.0",
-  "state": "awaiting-implementation-prompt",
-  "updated_at": "2026-09-05T23:38:24.056Z",
+  "state": "implementing",
+  "updated_at": "2026-09-06T00:20:11.161Z",
   "language": {
     "working_language": "uk",
     "selection_source": "recorded-preference",
@@ -16459,51 +16459,65 @@
     ]
   },
   "implementation_gate": {
-    "state": "awaiting-implementation-prompt",
+    "state": "authorized_for_phase3",
     "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
     "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
     "awaiting_at": "2026-09-05T23:38:24.056Z",
-    "reason": "Critic-provider scope was reconciled across owned SDD artifacts. A separate later explicit implementation prompt is required for this new plan; earlier Google/U-06 authorization is preserved but does not release this scope.",
+    "reason": "Explicit later implementation prompt matches unchanged current plan and baseline; scoped local implementation only.",
     "supersedes": {
-      "state": "invalidated",
-      "reason": "PI-CRITIC-20260906 changes the selected critic provider and readiness/isolation contracts; old authorization does not cover the revised plan.",
-      "invalidated_at": "2026-09-05T23:12:04.223Z",
+      "state": "awaiting-implementation-prompt",
+      "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
+      "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+      "awaiting_at": "2026-09-05T23:38:24.056Z",
+      "reason": "Critic-provider scope was reconciled across owned SDD artifacts. A separate later explicit implementation prompt is required for this new plan; earlier Google/U-06 authorization is preserved but does not release this scope.",
       "supersedes": {
-        "state": "authorized_for_phase3",
-        "development_plan_hash": "f17072dc044dc12ee20039a78f856801df5121aef19922966fece2eebf17d15a",
-        "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
-        "awaiting_at": "2026-09-05T17:35:39.845Z",
-        "prompt_id": "implementation-u04-google-20260905-01",
-        "prompt_received_at": "2026-09-05T17:38:07.954Z",
-        "released_at": "2026-09-05T17:40:02.645Z",
-        "prompt_receipt": {
-          "path": "forge/implementation-prompt-u04-google-20260905.json",
-          "content_hash": "9dcd385d98a55682f1b58c0bce4ae3cc06a465db5b0774ca04af49c206ee2b18"
-        },
-        "reason": "Explicit development request after completed-plan pause, revalidated unchanged sources/baseline. Scoped U-04 host execution only; no new external/high-risk authority.",
+        "state": "invalidated",
+        "reason": "PI-CRITIC-20260906 changes the selected critic provider and readiness/isolation contracts; old authorization does not cover the revised plan.",
+        "invalidated_at": "2026-09-05T23:12:04.223Z",
         "supersedes": {
-          "state": "awaiting-implementation-prompt",
+          "state": "authorized_for_phase3",
           "development_plan_hash": "f17072dc044dc12ee20039a78f856801df5121aef19922966fece2eebf17d15a",
           "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
           "awaiting_at": "2026-09-05T17:35:39.845Z",
-          "reason": "Current SDD migration authorizes documentation only. A separate later explicit implementation prompt must bind this plan and baseline. Prior U-06 authorization is invalidated and retained below.",
+          "prompt_id": "implementation-u04-google-20260905-01",
+          "prompt_received_at": "2026-09-05T17:38:07.954Z",
+          "released_at": "2026-09-05T17:40:02.645Z",
+          "prompt_receipt": {
+            "path": "forge/implementation-prompt-u04-google-20260905.json",
+            "content_hash": "9dcd385d98a55682f1b58c0bce4ae3cc06a465db5b0774ca04af49c206ee2b18"
+          },
+          "reason": "Explicit development request after completed-plan pause, revalidated unchanged sources/baseline. Scoped U-04 host execution only; no new external/high-risk authority.",
           "supersedes": {
-            "state": "invalidated",
-            "development_plan_hash": "a38919e0a84c61b081661227bd5ee936744bb9781dba2286ecc25d7d7e3974ca",
+            "state": "awaiting-implementation-prompt",
+            "development_plan_hash": "f17072dc044dc12ee20039a78f856801df5121aef19922966fece2eebf17d15a",
             "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
-            "prompt_id": "implementation-prompt-u06-20260904-go-01",
-            "awaiting_at": "2026-09-04T20:55:01+03:00",
-            "prompt_received_at": "2026-09-04T21:43:42+03:00",
-            "released_at": "2026-09-04T22:55:31+03:00",
-            "prompt_receipt": {
-              "path": "forge/implementation-prompt-u06-20260904.json",
-              "content_hash": "ec8a4a216b37c7edc6e37d921f102c80714cf8224e884e25b85a9de8e341441c"
-            },
-            "reason": "Exact-plan provenance contradicted by retained original events; see forge/authorization-correction-20260905.json. This historical receipt cannot authorize a later plan. Current explicit remediation remains in scope; no next-unit authorization is inferred.",
-            "correction_ref": "forge/authorization-correction-20260905.json"
+            "awaiting_at": "2026-09-05T17:35:39.845Z",
+            "reason": "Current SDD migration authorizes documentation only. A separate later explicit implementation prompt must bind this plan and baseline. Prior U-06 authorization is invalidated and retained below.",
+            "supersedes": {
+              "state": "invalidated",
+              "development_plan_hash": "a38919e0a84c61b081661227bd5ee936744bb9781dba2286ecc25d7d7e3974ca",
+              "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+              "prompt_id": "implementation-prompt-u06-20260904-go-01",
+              "awaiting_at": "2026-09-04T20:55:01+03:00",
+              "prompt_received_at": "2026-09-04T21:43:42+03:00",
+              "released_at": "2026-09-04T22:55:31+03:00",
+              "prompt_receipt": {
+                "path": "forge/implementation-prompt-u06-20260904.json",
+                "content_hash": "ec8a4a216b37c7edc6e37d921f102c80714cf8224e884e25b85a9de8e341441c"
+              },
+              "reason": "Exact-plan provenance contradicted by retained original events; see forge/authorization-correction-20260905.json. This historical receipt cannot authorize a later plan. Current explicit remediation remains in scope; no next-unit authorization is inferred.",
+              "correction_ref": "forge/authorization-correction-20260905.json"
+            }
           }
         }
       }
+    },
+    "prompt_id": "implementation-critic-router-20260906-01",
+    "prompt_received_at": "2026-09-05T23:44:05.744Z",
+    "released_at": "2026-09-05T23:44:05.920Z",
+    "prompt_receipt": {
+      "path": "forge/implementation-prompt-critic-router-20260906.json",
+      "content_hash": "51a226066be61255dac63f1fd595434f3acd87dbbae5396ff985f186f639b534"
     }
   },
   "prototype_promotions": [
@@ -16531,30 +16545,21 @@
           "strategy": "reimplement"
         }
       ],
-      "started_at": "2026-09-05T17:56:09.425Z",
-      "receipt": {
-        "path": "forge/runs/U-04/u04-google-20260905/prototype-promotion.json",
-        "content_hash": "6902fa0a541f94abd4e44b05bb3e2f95e8e3da05c12da3eb9e1a7a228173ef7f"
-      },
       "base_commit": "7d2e944f9500a6c38745ce39b414ffc3b946a37c",
-      "provenance_status": "current_git_diff_verified_historical_origin_not_certified",
-      "inspection": {
-        "checked_at": "2026-09-05T17:32:12.551Z",
-        "destinations_exist": true,
-        "historical_receipt_found": false,
-        "latest_destination_commit": "31fdf9e51e18174c892265c5f6792c241a0f3aaa",
-        "scope": "No new promotion started. Current files do not prove historical promotion. G-16 provenance claim remains unsupported until actual evidence; never reconstruct a historical receipt. New runner must register actual base/start before edits."
+      "planned_checkout_base_commit": "0f979067458ff369ce2118a8355f2db22289870a",
+      "started_at": "2026-09-05T23:44:05.744Z",
+      "receipt": {
+        "path": "forge/runs/U-04/critic-router-20260906/prototype-promotion.json",
+        "content_hash": "cda426e20ad950ea9a633d314672f187f885aa17236adacfb2c355a0f728a480"
       },
-      "run_id": "u04-google-20260905",
-      "runner": "direct-codex-phase3",
-      "actual_checkout_base_commit": "a402199ec528b237659f77d98aa41b2f017a5984",
+      "provenance_status": "actual_git_diff_verified_full_fidelity_pending",
       "historical_limitation": "No historical promotion receipt exists. This run records only a new inspected adaptation; the planned Git comparison anchor is preserved, and prior destination origin is not retroactively certified.",
-      "verification_status": "blocked_pending_full_ui_and_live_evidence"
+      "started_at_basis": "Implementation kickoff observed in immutable prompt receipt before source edits; this operational index was updated during the run, not pre-registered as a separate promotion event."
     }
   ],
   "implementation": {
-    "status": "awaiting_critic_router_implementation_prompt",
-    "owner_invocation_id": "990d3f67-1e4a-460d-8722-0292ddf2570b",
+    "status": "critic_router_local_verified_pending_live_evidence",
+    "owner_invocation_id": "implementation-critic-router-20260906-01",
     "completed_local_contracts": [],
     "partial_local_contracts": [
       "U-01",
@@ -16567,43 +16572,48 @@
       "U-08",
       "U-09"
     ],
-    "completion_projection_note": "Prior Google implementation and live receipts remain historical evidence for their exact commit/scope. This invocation changed SDD only. Existing U-01–U-09 partial statuses remain; none is newly accepted. Critic router code and all new QA-CRT checks are not_run pending a new implementation prompt.",
-    "in_progress_unit": null,
-    "next_unit": "U-02",
+    "completion_projection_note": "Explicit Critic router implemented and credential-free local checks passed. Actual GoDaddy application execution entry calls the runner/launcher for an already-authorized active generation; it does not implement the still-missing broader Matrix intake/consent/media dispatcher or approve unresolved speed policy. No unit newly accepted and no live/production release pass claimed.",
+    "in_progress_unit": "U-04",
+    "next_unit": "U-04",
     "local_verification": {
       "node": {
         "result": "passed",
-        "tests": "531/531",
+        "tests": "597/597",
         "runtime": "Node.js 22.23.2, Darwin arm64",
         "command": "npm run check",
         "build": "passed",
         "typecheck": "passed",
         "environment_policy": "passed",
-        "diff_check": "passed",
-        "scope": "Credential-free local provider, durable-state simulation, HTTP and regression tests; no real Google/MySQL/GoDaddy claim."
+        "scope": "Credential-free local tests, fake provider turns, native pinned CLI protocol without authenticated model calls.",
+        "diff_check": "passed"
       },
       "browser": {
-        "status": "passed_local_scope",
-        "path": "output/playwright/u04-google-20260905/browser-results.json",
-        "content_hash": "d6c5574e85b324538fbed8666301c395a1490e5494230b84204a40daa2ff9b5e",
-        "scope": "Real Chromium + localHTTPS; natural Origin/FetchMetadata, cross-site Lax return, logout/cancel/revoke/error recovery,1440/390 partial visual. Simulated Google/AI/MySQL only."
+        "status": "passed_bounded_fixture_scope",
+        "path": "output/playwright/critic-router-20260906/browser-results.json",
+        "content_hash": "cb38d8aecb85e96c067b41e6bb3b08633fc579e4e0da5e40c593b07701a8311b",
+        "checks": 27,
+        "scope": "Real Chromium shipped UI + memory fixtures, widths 320-1440. Not full usability/fidelity or production auth."
       },
-      "real_mysql": "positive_live_auth_path_only; concurrency_restart_negative_tests_not_run",
-      "google_live": "passed_bounded_scope_see_published_verification",
-      "godaddy_deployment": "passed_see_published_verification",
+      "real_mysql": "not_run",
+      "google_live": "not_run_this_change",
+      "godaddy_deployment": "not_run_this_change",
+      "live_provider_turns": "not_run",
+      "matrix_product_integration": "not_run",
       "pipeline": {
         "command": "sdd_check.py --project . --after implementation",
         "result": "passed",
         "issues": 0,
-        "checker_revision": "408af3af8ba1d5690544796afb8dd2f5a2d06de0",
-        "checked_at": "2026-09-05T18:19:07.727Z",
-        "scope": "Source/baseline/prompt/promotion metadata consistency only; blocked promotion verification remains explicitly not a release pass."
+        "warnings": 0,
+        "checked_artifacts": 13,
+        "checked_at": "2026-09-06T00:20:11.161Z",
+        "scope": "Declared source, baseline, prompt and actual promotion receipt integrity; not a full release or semantic-quality pass."
       }
     },
     "external_effects": {
+      "scope": "Current Critic router run only; prior published observations remain in historical receipts.",
       "matrix_org": "not_run",
       "production_oauth_change": "not_performed",
-      "godaddy_deployment": "published_d4ba9f0_after_explicit_user_authorization",
+      "godaddy_deployment": "not_run",
       "legacy_cleanup": "not_authorized",
       "stateful_preview": "forbidden"
     },
@@ -16639,9 +16649,9 @@
       "rust_host_feasibility": "passed-and-retired; not product integration evidence",
       "scope_note": "Historical observations from prior runs, not rerun or refreshed in this SDD-only migration; prior artifact_ci in_progress is not a current live-status claim."
     },
-    "run_id": "u04-google-20260905",
-    "run_receipt": "forge/runs/U-04/u04-google-20260905/verification.json",
-    "run_receipt_hash": "5187d3b7a89fa37b45b3dd0871c244a54ef74b0536f018e84148b6205e1a75b6",
+    "run_id": "critic-router-20260906",
+    "run_receipt": "forge/runs/U-04/critic-router-20260906/verification.json",
+    "run_receipt_hash": "dc5cf5155cc6e84f8ad0d3b4e6e164ae0103059e01bf88c7f04967acde96a4fd",
     "published_verification": {
       "run_id": "u04-google-published-20260906",
       "path": "forge/runs/U-04/u04-google-published-20260906/verification.json",
@@ -16671,7 +16681,7 @@
     },
     "affected_change": {
       "id": "PI-CRITIC-20260906",
-      "status": "not_run",
+      "status": "local_implementation_verified",
       "units": [
         "U-01",
         "U-02",
@@ -16683,13 +16693,76 @@
         "U-09"
       ],
       "execution_sequence": "One cohesive scope: U-01/U-02/U-03/U-04 settings and migration with U-05/U-07/U-08 actual critic route and U-09 verification. U-06 transport preserved; no new crypto scope.",
-      "authorization": "awaiting a later explicit implementation prompt",
+      "authorization": "implementation-critic-router-20260906-01",
       "live_evidence_limits": [
-        "GoDaddy Astra/xhigh availability not checked in this invocation.",
-        "Claude live route cannot be called with the reported expired subscription; preserve as not_run/blocked, not passed.",
-        "No browser, provider, production deployment, database or credential mutation."
+        "GoDaddy Astra/xhigh entitlement not checked; real model availability remains subject to owner-operated exact subscription probe.",
+        "Claude live route not run with the reported expired subscription.",
+        "Local Chromium fixtures and in-memory MySQL simulations are not live Google/MySQL/Matrix proofs.",
+        "No GoDaddy publication, production credentials, HappyPro, domain, schema/DB wipe, or Matrix device/room effects."
       ]
-    }
+    },
+    "prior_local_verification": {
+      "node": {
+        "result": "passed",
+        "tests": "531/531",
+        "runtime": "Node.js 22.23.2, Darwin arm64",
+        "command": "npm run check",
+        "build": "passed",
+        "typecheck": "passed",
+        "environment_policy": "passed",
+        "diff_check": "passed",
+        "scope": "Credential-free local provider, durable-state simulation, HTTP and regression tests; no real Google/MySQL/GoDaddy claim."
+      },
+      "browser": {
+        "status": "passed_local_scope",
+        "path": "output/playwright/u04-google-20260905/browser-results.json",
+        "content_hash": "d6c5574e85b324538fbed8666301c395a1490e5494230b84204a40daa2ff9b5e",
+        "scope": "Real Chromium + localHTTPS; natural Origin/FetchMetadata, cross-site Lax return, logout/cancel/revoke/error recovery,1440/390 partial visual. Simulated Google/AI/MySQL only."
+      },
+      "real_mysql": "positive_live_auth_path_only; concurrency_restart_negative_tests_not_run",
+      "google_live": "passed_bounded_scope_see_published_verification",
+      "godaddy_deployment": "passed_see_published_verification",
+      "pipeline": {
+        "command": "sdd_check.py --project . --after implementation",
+        "result": "passed",
+        "issues": 0,
+        "checker_revision": "408af3af8ba1d5690544796afb8dd2f5a2d06de0",
+        "checked_at": "2026-09-05T18:19:07.727Z",
+        "scope": "Source/baseline/prompt/promotion metadata consistency only; blocked promotion verification remains explicitly not a release pass."
+      }
+    },
+    "prior_run": {
+      "run_id": "u04-google-20260905",
+      "run_receipt": "forge/runs/U-04/u04-google-20260905/verification.json",
+      "run_receipt_hash": "5187d3b7a89fa37b45b3dd0871c244a54ef74b0536f018e84148b6205e1a75b6",
+      "scope": "Historical Google slice; bytes preserved and not rerun as live evidence."
+    },
+    "supporting_qa_checks": [
+      {
+        "check_id": "QA-CRT-001",
+        "local_evidence": "passed_bounded_local_scope",
+        "full_check_status": "not_passed_pending_required_real_environment_evidence",
+        "evidence_ref": "forge/runs/U-04/critic-router-20260906/verification.json"
+      },
+      {
+        "check_id": "QA-CRT-002",
+        "local_evidence": "passed_bounded_local_scope",
+        "full_check_status": "not_passed_pending_required_real_environment_evidence",
+        "evidence_ref": "forge/runs/U-04/critic-router-20260906/verification.json"
+      },
+      {
+        "check_id": "QA-CRT-003",
+        "local_evidence": "passed_bounded_local_scope",
+        "full_check_status": "not_passed_pending_required_real_environment_evidence",
+        "evidence_ref": "forge/runs/U-04/critic-router-20260906/verification.json"
+      },
+      {
+        "check_id": "QA-CRT-004",
+        "local_evidence": "passed_bounded_local_scope",
+        "full_check_status": "not_passed_pending_required_real_environment_evidence",
+        "evidence_ref": "forge/runs/U-04/critic-router-20260906/verification.json"
+      }
+    ]
   },
   "affected_feature_units": [
     "U-01",
@@ -16745,7 +16818,7 @@
     }
   ],
   "next_ready_nodes": [],
-  "pause_reason": "Updated critic-provider plan is prepared; waiting for a separate explicit implementation prompt. No code, provider call, credential or deployment action occurred in this reconciliation.",
+  "pause_reason": "Local Critic router implementation verified. GoDaddy publication/entitlement and broader Matrix release work are not authorized or claimed by this run.",
   "current_reconciliation_blockers": [
     {
       "id": "sdd-render-precheck-20260905",
@@ -16973,5 +17046,53 @@
       ],
       "production_changed": false
     }
-  }
+  },
+  "prototype_promotion_history": [
+    {
+      "unit_id": "U-04",
+      "path_mappings": [
+        {
+          "source": "forge/design/candidates/candidate-b/v2/index.html",
+          "destination": "src/settings/ui/template.ts",
+          "strategy": "adapt"
+        },
+        {
+          "source": "forge/design/candidates/candidate-b/v2/styles.css",
+          "destination": "src/settings/ui/styles.css",
+          "strategy": "adapt"
+        },
+        {
+          "source": "forge/design/candidates/candidate-b/v2/app.js",
+          "destination": "src/settings/ui/controller.ts",
+          "strategy": "reimplement"
+        },
+        {
+          "source": "forge/design/candidates/candidate-b/v2/validate.mjs",
+          "destination": "test/settings-ui.test.ts",
+          "strategy": "reimplement"
+        }
+      ],
+      "started_at": "2026-09-05T17:56:09.425Z",
+      "receipt": {
+        "path": "forge/runs/U-04/u04-google-20260905/prototype-promotion.json",
+        "content_hash": "6902fa0a541f94abd4e44b05bb3e2f95e8e3da05c12da3eb9e1a7a228173ef7f"
+      },
+      "base_commit": "7d2e944f9500a6c38745ce39b414ffc3b946a37c",
+      "provenance_status": "current_git_diff_verified_historical_origin_not_certified",
+      "inspection": {
+        "checked_at": "2026-09-05T17:32:12.551Z",
+        "destinations_exist": true,
+        "historical_receipt_found": false,
+        "latest_destination_commit": "31fdf9e51e18174c892265c5f6792c241a0f3aaa",
+        "scope": "No new promotion started. Current files do not prove historical promotion. G-16 provenance claim remains unsupported until actual evidence; never reconstruct a historical receipt. New runner must register actual base/start before edits."
+      },
+      "run_id": "u04-google-20260905",
+      "runner": "direct-codex-phase3",
+      "actual_checkout_base_commit": "a402199ec528b237659f77d98aa41b2f017a5984",
+      "historical_limitation": "No historical promotion receipt exists. This run records only a new inspected adaptation; the planned Git comparison anchor is preserved, and prior destination origin is not retroactively certified.",
+      "verification_status": "blocked_pending_full_ui_and_live_evidence",
+      "superseded_for": "PI-CRITIC-20260906",
+      "preservation_reason": "Prior U-04 receipt belongs to prior Google plan; it cannot certify the new critic-router implementation. Original receipt bytes preserved."
+    }
+  ]
 }

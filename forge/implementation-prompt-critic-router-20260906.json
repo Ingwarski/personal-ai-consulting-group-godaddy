@@ -1,0 +1,36 @@
+{
+  "event": "implementation_prompt",
+  "role": "user",
+  "intent": "start_production_implementation",
+  "prompt_id": "implementation-critic-router-20260906-01",
+  "message_id": null,
+  "message": "Implement the Critic router",
+  "received_at": "2026-09-05T23:44:05.744Z",
+  "recorded_at": "2026-09-05T23:44:05.744Z",
+  "timestamp_basis": "Prompt observed in the active conversation after the completed-plan pause; original transport timestamp and message ID are not exposed.",
+  "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
+  "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+  "scope": {
+    "change": "PI-CRITIC-20260906",
+    "units": [
+      "U-01",
+      "U-02",
+      "U-03",
+      "U-04",
+      "U-05",
+      "U-07",
+      "U-08",
+      "U-09"
+    ],
+    "allowed": "Implement and verify the full explicit Claude/Codex Critic router in this checkout, including independent settings, compatible persistence, selected-provider readiness, isolated runtime, designated critic review and production integration.",
+    "excluded": [
+      "production credential mutation",
+      "live provider calls",
+      "GoDaddy publication",
+      "real Matrix room/device effects",
+      "HappyPro changes",
+      "database wipe",
+      "stateful Preview"
+    ]
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "run_id": "critic-router-20260906",
+  "unit_id": "U-04",
+  "affected_units": [
+    "U-01",
+    "U-02",
+    "U-03",
+    "U-04",
+    "U-05",
+    "U-07",
+    "U-08",
+    "U-09"
+  ],
+  "executor": "Codex Phase 3 runner with bounded settings, runtime and UI workers; root integration/review",
+  "code_revision": "dd37e418bfec388215ef78c83958880f01128bec",
+  "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
+  "baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+  "completed_at": "2026-09-06T00:18:31.515Z",
+  "local_result": "passed",
+  "unit_completion": "not_completed",
+  "release_readiness": "not_evaluated",
+  "commands": [
+    {
+      "command": "npm run check",
+      "runtime": "Node.js 22.23.2 Darwin arm64",
+      "exit_code": 0,
+      "tests": 597,
+      "passed": 597,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "build": "passed",
+      "typecheck": "passed",
+      "environment_policy": "passed"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  ],
+  "source_hashes": {
+    "package-lock.json": "41f9d784ab3a32dcac0ccee039f267034adbd7dbeb5bb79ecd20379b20465dd9",
+    "package.json": "b8f3e2b366dcbc2a717bd505d57d340b1aa66d92547ef88066178fb566f22224",
+    "src/cloudflare/registrar-durable-object.ts": "17b9c2a8f1b76281092703ec00e6b795d91be1124273f029f78486d73f696796",
+    "src/consilium/a2a.ts": "542ae54b4ccc7d7d1a1ad7984376c7f41423832209b9fbe02e1c970e992acb1e",
+    "src/consilium/final-recommendation.ts": "b4f705860d5bef533ecb04fcebbbd178e7cfe4030a8b3a8d0838e76d17084680",
+    "src/consilium/roster.ts": "790fe2ad881dae7e9545c160e6661b00888dfc69785f5fc97c007d8869ab90e4",
+    "src/consilium/router.ts": "f650473cc43c2fc43f56a0f9f63c23834a140fb83a233b38dbac0a50cda0fa5b",
+    "src/consilium/session-launcher.ts": "1894161de61d8c39318b3dda175267e4e9d45df715aa1b8f46a773fe099bf1ae",
+    "src/godaddy/application-runtime.ts": "0a3967297f9fc9cb579676373584ef2f13aa61ad8ff70a902613c81cda3711cc",
+    "src/godaddy/claude-code-process.ts": "f63c64d1d2f6208785e3a2e32c376025a084d71fc752ebe900eb5720e3c9e49e",
+    "src/godaddy/codex-app-server-process.ts": "bef0bc8401ed4d62fa0afcae4841571ef80eecb7533fbfc2ebd92d38451dfc2d",
+    "src/godaddy/consilium-runtime.ts": "b8176103e26b03141d495b6b4d12a677a1042fc374d317ddc74399222b06200b",
+    "src/godaddy/mysql-matrix-outbox.ts": "ed67b5979863f0a9539a7fc3758ad225b0182c248be877b0a4f3d7b7634e7c17",
+    "src/godaddy/runtime-bootstrap.ts": "564df5b6a6fca5211076a8543a2599cd0fb651f5e965e1d2a9efd2a3d9b43ba6",
+    "src/godaddy/settings-runtime.ts": "0b5cab173d637e46f2648f479da50cbe015cceeb8351e802825d76bc0e818c2a",
+    "src/runtime/capability-catalog.ts": "aa5b3cb810dde4deae64b83d6605c84bbf86153ab56b7e6943b01ba81b944198",
+    "src/runtime/claude-code-critic.ts": "c3318b8ae66e790a369fd42b220b4951143c4c0c8d781ef0962d3a4c3f9ba1f0",
+    "src/runtime/codex-app-server.ts": "b19969858995b61ce605497ea166999ea65d574a97f00a69f54199dd21ea908b",
+    "src/runtime/codex-consilium-agent.ts": "5df6e2dafcc87dc3b9e99a9efe1fdc4da88fd1f6bc66fbe4adac4c34ec9f4669",
+    "src/runtime/codex-head-synthesizer.ts": "c4033f2245d0d9023629447893ba669a4a7746745c437877b8ce4248a6b6bd86",
+    "src/runtime/codex-thread-client.ts": "9963515847bb2cfc11e12a4a3c4ff3d8334a7cd6bd8650a59acb2e159522a1e3",
+    "src/runtime/json-rpc-client.ts": "b5a05f4d6ad3a960caae927fa589918403913fc41aa761d482bb671bee62b3ac",
+    "src/runtime/provider-preflight.ts": "2b1d1cd6d143cae22cc217758eae22847688b315229386a44bb4a6586d8984a8",
+    "src/runtime/session-preflight.ts": "25df7b709ba2a391fee24a89d6bfd7109f6909f4e1a3a065edc40f8da9869094",
+    "src/session/registrar-do.ts": "cf6a3172974ca84c3da4653757d4a23047a512fea61d5aa372cb3a983c41aae9",
+    "src/settings/api.ts": "f672ee7416a4dc703a41fba41def4c86e898b4dd55ba75416c1818cb0f7420ee",
+    "src/settings/capability-receipt.ts": "0c0678a4ce67059008ca77487bbef0f255320c98cfe92760f34c7649d3bd4cf7",
+    "src/settings/catalog.ts": "89dde8a4a6a9710fd6f90752951bd5c7a3547f97159ffc7cbbccdeb687bede51",
+    "src/settings/owner-settings-do.ts": "aaccfabd7f6e163e7c77813453c04f69d76c6859ae35240264f71a2f6a671eb9",
+    "src/settings/schema.ts": "6f948e035d7147032878ef60541d73ef7690754357b29a55137704cc2f926258",
+    "src/settings/speed-policy.ts": "f146e9ae533e99cd63742bee6c0ad2ad7183305a18a80f5bcb8949b6e0beab28",
+    "src/settings/types.ts": "8dfe9d53bc616d63cd9765d10605629d8da5e7bfb03bf5aa361dd1bb5e5550a5",
+    "src/settings/ui/client.js": "698b239693edf1c66e159702f56cd6002d783b920a22300ddcac3886116c49dc",
+    "src/settings/ui/controller.ts": "65da2c3939fe1f55e7bbbdf4fde60e0716bec822debd3c34c80325431ef98c27",
+    "src/settings/ui/styles.css": "5cbaaec35017fb5466a6f98524266cfdcce8c9e77847f0c0fc3242dbcb6ac973",
+    "src/settings/ui/template.ts": "c619acc1731d4944bef02ba3129dea7729e520e2fa1e41bdbd94c5efecf31518"
+  },
+  "browser_evidence": {
+    "kind": "functional",
+    "path": "output/playwright/critic-router-20260906/browser-results.json",
+    "content_hash": "cb38d8aecb85e96c067b41e6bb3b08633fc579e4e0da5e40c593b07701a8311b",
+    "checks": 27,
+    "scope": "Real Chromium, shipped template/client/CSS and in-memory fixtures only",
+    "screenshots": [
+      {
+        "kind": "visual",
+        "path": "output/playwright/critic-router-20260906/settings-1440.png",
+        "content_hash": "af2fcf87c67941f6e352561a0c86948d0e64e69b408a9605c61a4d591ae59a13"
+      },
+      {
+        "kind": "visual",
+        "path": "output/playwright/critic-router-20260906/settings-390.png",
+        "content_hash": "024828d94a41a070191d8a01391112f897397383f74aecdbbfaa01981f9d1b95"
+      },
+      {
+        "kind": "visual",
+        "path": "output/playwright/critic-router-20260906/missing-claude-390.png",
+        "content_hash": "bb9844e9c488d869b87a26dc90ef5e6515cdcb2c553ff1c36375bda970d8cfb7"
+      }
+    ]
+  },
+  "supporting_qa_ids": [
+    "QA-CRT-001",
+    "QA-CRT-002",
+    "QA-CRT-003",
+    "QA-CRT-004",
+    "QA-REG-003",
+    "QA-REG-008"
+  ],
+  "full_qa_check_passes_claimed": [],
+  "fixed_findings": [
+    "Independent Critic provider/model/effort and strict v3 migration preserve legacy Claude selection and historical identity records.",
+    "Codex-only refresh, capability validation and execution never inspect or call Claude. Missing catalogs no longer hide saved recovery controls behind503.",
+    "Hidden exact Astra metadata is paginated; availability requires a successful isolated exact Astra/xhigh subscription probe, without model fallback.",
+    "Actual application execution entry loads the immutable Registrar snapshot and uses the shared managed OAuth connection for a fresh designated Critic context.",
+    "Identity-bound confirmed-message fingerprints, MySQL outbox validation and Critic review receipts reject impersonation and cross-generation replay.",
+    "Pinned0.153.1 native protocol verified: empty environments disable environment access. Unsupported readOnly.access was removed; readOnly/networkAccess:false plus disabled external tools is explicit.",
+    "Single-flight protocol handshake, cancellation/late-reply races, bounded notification buffering and process/workspace cleanup prevent stale output and orphan contexts."
+  ],
+  "limits": [
+    "No authenticated live AI model turns, live Google login, real MySQL contention/restart, GoDaddy publication or Matrix device/room effects in this run.",
+    "Actual application.runConsilium calls runner/launcher for an already-authorized active generation. Broader Matrix intake/consent/media dispatcher and full product journey remain outstanding; no synthetic speed-policy approval or automatic dispatcher enablement.",
+    "Live Astra/xhigh entitlement must still be checked in the GoDaddy runtime; native unauthenticated thread/start acceptance is not entitlement proof.",
+    "Claude live verification not run with reported expired subscription.",
+    "No full UI/usability/security/deployment gate or Unit completion is inferred from local mocks.",
+    "No HappyPro, domain, schema/DB wipe, legacy cleanup, stateful Preview or frozen candidate changes."
+  ],
+  "documentation_sources": [
+    "https://github.com/openai/codex/releases/tag/rust-v0.153.1",
+    "https://learn.chatgpt.com/docs/app-server",
+    "https://developers.openai.com/api/docs/models/gpt-6-astra",
+    "https://github.com/openai/codex/blob/rust-v0.153.1/codex-rs/core/src/tools/spec_plan.rs"
+  ]
+}
