@@ -1,0 +1,32 @@
+{
+  "event": "implementation_prompt",
+  "role": "user",
+  "intent": "start_production_implementation",
+  "prompt_id": "implementation-matrix-connection-20260906-01",
+  "message_id": null,
+  "message": "yes",
+  "received_at": "2026-09-06T12:10:02Z",
+  "recorded_at": "2026-09-06T12:10:02Z",
+  "timestamp_basis": "Observed in the active conversation; original transport timestamp and message ID are unavailable.",
+  "in_reply_to": "May I implement this remaining connection now, keeping production credentials and data intact and leaving publication for separate approval?",
+  "scope_context": [
+    "Resolve execution limits: simultaneous agents, review rounds, maximum running time.",
+    "Connect incoming Matrix messages to the right consultation/session, without duplicate runs.",
+    "Connect confirmed Critic review/final answer to Matrix delivery.",
+    "Test retries, restarts, attachments and Стоп before publication."
+  ],
+  "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
+  "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+  "scope": {
+    "allowed": "Local implementation and credential-free verification of the remaining Matrix intake, consent, media, session dispatch, Critic-reviewed response delivery and bounded execution path, reusing existing transport and approved design.",
+    "excluded": [
+      "GoDaddy publication",
+      "live provider calls",
+      "production credentials or data changes",
+      "real Matrix room/device actions",
+      "HappyPro changes",
+      "database wipe or live DDL",
+      "stateful Preview"
+    ]
+  }
+}

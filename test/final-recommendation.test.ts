@@ -112,6 +112,27 @@ test("refuses an incomplete final and never inserts a technical section unless i
   assert.doesNotMatch(formatFinalRecommendation(recommendation), /Технічна частина/);
 });
 
+test("final output rejects sensitive material in any formatted field before registrar or observers and preserves the active session", async () => {
+  const registrar = await startedRegistrar();
+  await routeA2AEnvelope(registrar, [head, finance, critic], { messageId: "safe-critic-before-sensitive-final", sessionGeneration: 1,
+    fromAgentId: critic.agentId, toAgentId: head.agentId, kind: "critique", body: "Перевірка припущень завершена." });
+  let published = 0;
+  let archived = 0;
+  const finalizer = new CriticGatedFinalizer({ registrar, head, critic, afterConfirmed: async () => { published += 1; }, beforeStop: async () => { archived += 1; } });
+  for (const [index, unsafe] of [
+    { ...recommendation, decision: "password=private-value" },
+    { ...recommendation, technicalPart: "Bearer abcdefghijklmnop" },
+    { ...recommendation, actions: [{ ...recommendation.actions[0]!, evidence: "4111 1111 1111 1111" }] },
+    { ...recommendation, reviewCondition: "паспорт: АА123456" }
+  ].entries()) {
+    assert.deepEqual(await finalizer.publish({ sessionGeneration: 1, messageId: `unsafe-final-${index}`, recommendation: unsafe }), { ok: false, code: "invalid_final_recommendation" });
+  }
+  assert.equal((await registrar.getConfirmedMessages(1)).length, 1);
+  assert.equal((await registrar.getActiveSession())?.phase, "active");
+  assert.equal(published, 0);
+  assert.equal(archived, 0);
+});
+
 test("does not let a Claude runtime impersonate the head who publishes the final", async () => {
   const registrar = await startedRegistrar();
   const finalizer = new CriticGatedFinalizer({ registrar, head: { ...head, provider: "claude_code" }, critic });
@@ -140,7 +161,7 @@ test("keeps a confirmed final retryable until the Matrix delivery observer accep
   const result = await finalizer.publish({ sessionGeneration: 1, messageId: "final-message-0006", recommendation });
   assert.equal(result.ok, true);
   assert.deepEqual(seen, [formatFinalRecommendation(recommendation)]);
-  assert.equal((await registrar.getActiveSession())?.phase, "stopped");
+  assert.equal((await registrar.getActiveSession())?.phase, "closed");
 });
 
 test("keeps the final retryable until a whole-session close observer commits its archive", async () => {
@@ -171,5 +192,5 @@ test("keeps the final retryable until a whole-session close observer commits its
     ok: true, visibleSequence: 2, replayed: true
   });
   assert.equal(attempts, 2);
-  assert.equal((await registrar.getActiveSession())?.phase, "stopped");
+  assert.equal((await registrar.getActiveSession())?.phase, "closed");
 });

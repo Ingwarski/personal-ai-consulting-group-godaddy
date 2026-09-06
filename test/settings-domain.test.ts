@@ -8,6 +8,7 @@ import {
   validateOwnerSettings
 } from "../src/settings/index.ts";
 import { activeNow, createCapabilityReceipt } from "./fixtures/capability-receipt.ts";
+import { MVP_SPEED_POLICY_CATALOG, UNAPPROVED_SPEED_POLICY_CATALOG } from "../src/settings/speed-policy.ts";
 
 test("accepts a complete settings set backed by both provider capability maps", () => {
   const result = validateOwnerSettings(createCapabilityReceipt().defaults, createCapabilityReceipt(), activeNow);
@@ -103,10 +104,9 @@ test("creates a deeply immutable snapshot that preserves its catalog version", (
   if (!resolved.ok) return;
 
   assert.equal(resolved.value.catalogVersion, "catalog-2026-08-16-r1");
-  assert.equal(resolved.value.speedPolicy.catalogVersion, "speed-policy-awaiting-production-approval-v1");
+  assert.equal(resolved.value.speedPolicy.catalogVersion, MVP_SPEED_POLICY_CATALOG.version);
   assert.deepEqual(resolved.value.speedPolicy.concurrency, {
-    status: "unresolved",
-    reason: "production_approval_required"
+    status: "resolved", value: 3
   });
   assert.equal(Object.isFrozen(resolved.value), true);
   assert.equal(Object.isFrozen(resolved.value.settings), true);
@@ -118,4 +118,15 @@ test("creates a deeply immutable snapshot that preserves its catalog version", (
   const receiptV2 = createCapabilityReceipt({ catalogVersion: "catalog-2026-08-16-r2" });
   assert.equal(receiptV2.catalogVersion, "catalog-2026-08-16-r2");
   assert.equal(resolved.value.catalogVersion, "catalog-2026-08-16-r1");
+});
+
+test("MVP presets bound specialists and time while explicitly supplied historical policies stay unresolved", () => {
+  for (const [preset, maximum] of [["швидко", 2], ["збалансовано", 3], ["ретельно", 5]] as const) {
+    const policy = resolveSpeedPolicy(preset);
+    assert.deepEqual(policy.maxOptionalSpecialists, { status: "resolved", value: maximum - 2 });
+    assert.deepEqual(policy.concurrency, { status: "resolved", value: maximum });
+    assert.deepEqual(policy.critiqueRevisionCycles, { status: "resolved", value: 1 });
+    assert.deepEqual(policy.internalBudgetMilliseconds, { status: "resolved", value: 540_000 });
+    assert.equal(resolveSpeedPolicy(preset, UNAPPROVED_SPEED_POLICY_CATALOG).concurrency.status, "unresolved");
+  }
 });

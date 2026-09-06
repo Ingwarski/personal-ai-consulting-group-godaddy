@@ -266,6 +266,7 @@ export async function shutdownGodaddyServer(server, {
   ]).then(([closeResult]) => closeResult);
   // Matrix stop is deliberately started without waiting for active HTTP
   // handlers. It blocks new ingress/publication while those handlers drain.
+  application?.consultationService?.requestStop?.();
   const matrixStop = Promise.resolve().then(() => application?.matrixService?.stop());
 
   let closeOutcome = await settleWithin(drainOperation, drainTimeout);

@@ -6,6 +6,8 @@ import type { RegistrarStorage } from "./storage.ts";
 const ACTIVE_SESSION_KEY = "registrar:active-session";
 const GENERATION_KEY = "registrar:generation";
 const sessionKey = (generation: number): string => `registrar:session:${generation}`;
+const controlSequenceKey = (generation: number): string => `registrar:control-sequence:${generation}`;
+const revisionKey = (revisionId: string): string => `registrar:revision:${revisionId}`;
 const messageKey = (generation: number, sequence: number): string =>
   `registrar:message:${generation}:${sequence}`;
 const eventKey = (eventId: string): string => `registrar:event:${eventId}`;
@@ -23,6 +25,7 @@ export type SessionGeneration = Readonly<{
   startedAt: string;
   stoppedAt?: string;
   closedAt?: string;
+  previousGeneration?: number;
   settingsSnapshot: EffectiveSessionSnapshot;
   nextSequence: number;
 }>;
@@ -74,13 +77,18 @@ export type ConfirmedMessageOutboxProjection = (
 
 export type RegistrarGenerationFence = (
   storage: RegistrarStorage,
-  input: Readonly<{ generation: number; reason: "stopped" | "new_task"; fencedAt: string }>
+  input: Readonly<{ generation: number; reason: "stopped" | "new_task" | "revision"; fencedAt: string }>
 ) => Promise<void>;
 
 type EventLedgerEntry = Readonly<{
   bodyHash: string;
   message: ConfirmedAgentMessage;
+  /** Legacy entries without a kind are ordinary confirmed agent messages. */
+  kind?: "message" | "control";
 }>;
+
+type ControlSequence = Readonly<{ generation: number; nextSequence: number }>;
+type SessionRevision = Readonly<{ sourceGeneration: number; targetGeneration: number }>;
 
 export type CriticReviewReceipt = DesignatedCriticBinding & Readonly<{
   eventId: string;
@@ -252,7 +260,7 @@ export class RegistrarDO {
       const recordedEvent = await storage.get<EventLedgerEntry>(eventKey(input.eventId));
       if (recordedEvent !== undefined) {
         if (recordedEvent.message.generation !== input.generation) return { ok: false, code: "obsolete_generation" };
-        if (recordedEvent.bodyHash !== bodyHash) return { ok: false, code: "idempotency_conflict" };
+        if (recordedEvent.kind === "control" || recordedEvent.bodyHash !== bodyHash) return { ok: false, code: "idempotency_conflict" };
         return { ok: true, value: recordedEvent.message, replayed: true };
       }
 
@@ -292,6 +300,143 @@ export class RegistrarDO {
       await storage.put(ACTIVE_SESSION_KEY, updated);
       await this.#projectConfirmedMessage(storage, outboxRecord);
       return { ok: true, value: message, replayed: false };
+    });
+  }
+
+  /**
+   * Trusted composition-only operational notices. This does not give an agent
+   * authority to publish after Stop or to satisfy a Critic review. Before the
+   * first consultation, a private sequence reserves a global generation without
+   * inventing an active session or a settings snapshot.
+   */
+  async appendControlNotice(input: Readonly<{
+    eventId: string;
+    body: string;
+    replyToEventId?: string;
+  }>): Promise<RegistrarResult<ConfirmedAgentMessage>> {
+    if (
+      !isInternalEventId(input.eventId) || typeof input.body !== "string" || input.body.length === 0 ||
+      utf8Length(input.body) > 65_536 || Object.keys(input).some((key) => !["eventId", "body", "replyToEventId"].includes(key)) ||
+      (input.replyToEventId !== undefined && !/^\$[A-Za-z0-9$:_-]{8,255}$/.test(input.replyToEventId))
+    ) return { ok: false, code: "invalid_event" };
+
+    const controlInput = {
+      role: "Система", body: input.body,
+      ...(input.replyToEventId === undefined ? {} : { replyToEventId: input.replyToEventId })
+    };
+    const bodyHash = await confirmedMessageFingerprint(controlInput);
+    return this.#storage.transaction(async (storage) => {
+      const recorded = await storage.get<EventLedgerEntry>(eventKey(input.eventId));
+      if (recorded !== undefined) return recorded.kind === "control" && recorded.bodyHash === bodyHash
+        ? { ok: true, value: recorded.message, replayed: true }
+        : { ok: false, code: "idempotency_conflict" };
+
+      const active = await storage.get<SessionGeneration>(ACTIVE_SESSION_KEY);
+      let sequence: ControlSequence;
+      if (active !== undefined) {
+        sequence = active;
+      } else {
+        const priorGeneration = (await storage.get<number>(GENERATION_KEY)) ?? 0;
+        const privateSequence = await storage.get<ControlSequence>(controlSequenceKey(priorGeneration));
+        sequence = privateSequence ?? { generation: priorGeneration + 1, nextSequence: 1 };
+        if (privateSequence === undefined) await storage.put(GENERATION_KEY, sequence.generation);
+      }
+
+      const now = this.#now();
+      const message: ConfirmedAgentMessage = deepFreeze({
+        generation: sequence.generation,
+        sequence: sequence.nextSequence,
+        internalEventId: input.eventId,
+        role: controlInput.role,
+        visibleTime: formatVisibleTime(now),
+        body: controlInput.body,
+        bodyFormat: "markdown",
+        bodyHash,
+        confirmedAt: now.toISOString()
+      });
+      const outboxRecord: MatrixOutboxRecord = deepFreeze({
+        generation: message.generation,
+        sequence: message.sequence,
+        transactionId: matrixTransactionIdFor(message),
+        state: "pending",
+        kind: "control",
+        message,
+        ...(input.replyToEventId === undefined ? {} : { replyToEventId: input.replyToEventId }),
+        createdAt: now.toISOString()
+      });
+      await storage.put(messageKey(message.generation, message.sequence), message);
+      await storage.put(eventKey(input.eventId), { kind: "control", bodyHash, message });
+      if (active !== undefined) {
+        const updated = Object.freeze({ ...active, nextSequence: active.nextSequence + 1 });
+        await storage.put(sessionKey(active.generation), updated);
+        await storage.put(ACTIVE_SESSION_KEY, updated);
+      } else {
+        await storage.put(controlSequenceKey(sequence.generation), { ...sequence, nextSequence: sequence.nextSequence + 1 });
+      }
+      await this.#projectConfirmedMessage(storage, outboxRecord);
+      return { ok: true, value: message, replayed: false };
+    });
+  }
+
+  /** Normal completion rejects late appends but preserves already-confirmed delivery. */
+  async closeSession(generation: number): Promise<RegistrarResult<SessionGeneration>> {
+    return this.#storage.transaction(async (storage) => {
+      const active = await storage.get<SessionGeneration>(ACTIVE_SESSION_KEY);
+      if (active === undefined) return { ok: false, code: "no_active_session" };
+      if (active.generation !== generation) return { ok: false, code: "obsolete_generation" };
+      if (active.phase === "closed") return { ok: true, value: active, replayed: true };
+      if (active.phase !== "active") return { ok: false, code: "session_not_active" };
+      const closed = Object.freeze({ ...active, phase: "closed" as const, closedAt: this.#now().toISOString() });
+      await storage.put(sessionKey(generation), closed);
+      await storage.put(ACTIVE_SESSION_KEY, closed);
+      return { ok: true, value: closed, replayed: false };
+    });
+  }
+
+  /**
+   * An owner-authorized clarification or continuation keeps its logical session
+   * and immutable settings, but fences old runtime output. Composition must
+   * abort/drain the old runner before calling this. Stop is never undone here.
+   */
+  async reviseSession(input: Readonly<{
+    generation: number;
+    revisionId: string;
+  }>): Promise<RegistrarResult<SessionGeneration>> {
+    if (!Number.isSafeInteger(input.generation) || input.generation < 1 || !isInternalEventId(input.revisionId)) {
+      return { ok: false, code: "invalid_event" };
+    }
+    return this.#storage.transaction(async (storage) => {
+      const recorded = await storage.get<SessionRevision>(revisionKey(input.revisionId));
+      if (recorded !== undefined) {
+        if (recorded.sourceGeneration !== input.generation) return { ok: false, code: "idempotency_conflict" };
+        const replacement = await storage.get<SessionGeneration>(sessionKey(recorded.targetGeneration));
+        if (replacement === undefined) throw new Error("Registrar revision session is missing.");
+        return { ok: true, value: replacement, replayed: true };
+      }
+      const active = await storage.get<SessionGeneration>(ACTIVE_SESSION_KEY);
+      if (active === undefined) return { ok: false, code: "no_active_session" };
+      if (active.generation !== input.generation) return { ok: false, code: "obsolete_generation" };
+      if (active.phase !== "active" && active.phase !== "closed") return { ok: false, code: "session_not_active" };
+
+      const now = this.#now().toISOString();
+      await this.#fenceGeneration(storage, { generation: active.generation, reason: "revision", fencedAt: now });
+      const priorGeneration = (await storage.get<number>(GENERATION_KEY)) ?? active.generation;
+      const replacement: SessionGeneration = deepFreeze({
+        sessionId: active.sessionId,
+        generation: priorGeneration + 1,
+        previousGeneration: active.generation,
+        phase: "active",
+        startedAt: active.startedAt,
+        settingsSnapshot: immutableSnapshot(active.settingsSnapshot),
+        nextSequence: 1
+      });
+      const closed = Object.freeze({ ...active, phase: "closed" as const, closedAt: active.closedAt ?? now });
+      await storage.put(sessionKey(active.generation), closed);
+      await storage.put(GENERATION_KEY, replacement.generation);
+      await storage.put(sessionKey(replacement.generation), replacement);
+      await storage.put(ACTIVE_SESSION_KEY, replacement);
+      await storage.put(revisionKey(input.revisionId), { sourceGeneration: active.generation, targetGeneration: replacement.generation });
+      return { ok: true, value: replacement, replayed: false };
     });
   }
 
@@ -341,7 +486,7 @@ export class RegistrarDO {
           createdAt: now.toISOString()
         });
         await storage.put(messageKey(generation, controlMessage.sequence), controlMessage);
-        await storage.put(eventKey(controlMessage.internalEventId), { bodyHash, message: controlMessage });
+        await storage.put(eventKey(controlMessage.internalEventId), { kind: "control", bodyHash, message: controlMessage });
         await this.#projectConfirmedMessage(storage, controlRecord);
       }
       await storage.put(sessionKey(generation), stopped);
@@ -437,15 +582,20 @@ export class RegistrarDO {
     return this.#storage.get<SessionGeneration>(ACTIVE_SESSION_KEY);
   }
 
+  async getSession(generation: number): Promise<SessionGeneration | undefined> {
+    return this.#storage.get<SessionGeneration>(sessionKey(generation));
+  }
+
   async getConfirmedMessages(generation: number): Promise<readonly ConfirmedAgentMessage[]> {
-    const session = await this.#storage.get<SessionGeneration>(sessionKey(generation));
-    if (session === undefined) return Object.freeze([]);
+    const sequenceState = await this.#storage.get<SessionGeneration>(sessionKey(generation))
+      ?? await this.#storage.get<ControlSequence>(controlSequenceKey(generation));
+    if (sequenceState === undefined) return Object.freeze([]);
 
     // The shared database pool also serves Settings and the Matrix pumps.
     // Keep a transcript read to one outstanding query regardless of its size,
     // preserving queue capacity for those other operations and canonical order.
     const messages: ConfirmedAgentMessage[] = [];
-    for (let sequence = 1; sequence < session.nextSequence; sequence += 1) {
+    for (let sequence = 1; sequence < sequenceState.nextSequence; sequence += 1) {
       const message = await this.#storage.get<ConfirmedAgentMessage>(messageKey(generation, sequence));
       if (message !== undefined) messages.push(message);
     }

@@ -47,6 +47,7 @@ const catalogFailureMessages: Readonly<Record<CatalogFailureCode, string>> = Obj
 export type GoDaddySettingsRuntime = Readonly<{
   configured: boolean;
   consilium?: GoDaddyConsiliumRuntime;
+  prepareConsultationSnapshot?: (sessionId: string) => Promise<import("../settings/types.ts").EffectiveSessionSnapshot | undefined>;
   handle: (request: Request) => Promise<Response | undefined>;
   close: () => Promise<void>;
 }>;
@@ -576,6 +577,21 @@ export function createGoDaddySettingsRuntime(
   return Object.freeze({
     configured: true,
     consilium,
+    async prepareConsultationSnapshot(sessionId: string) {
+      // Read the owner's saved selection and existing catalog. A Matrix input
+      // must never refresh a subscription, silently reset preferences or accept
+      // settings supplied by a message.
+      const current = await loadReceipt();
+      if (current === undefined) return undefined;
+      const document = await ownerSettings.read();
+      if (document?.effectiveForNextSession === null || document === undefined) return undefined;
+      const { resolveEffectiveSessionSnapshot } = await import("../settings/snapshot.ts");
+      const resolved = resolveEffectiveSessionSnapshot({
+        sessionId, settingsRevision: document.document.revision,
+        settings: document.document.settings, capabilityReceipt: current
+      }, now());
+      return resolved.ok ? resolved.value : undefined;
+    },
     close,
     async handle(request: Request): Promise<Response | undefined> {
       try { return await handle(request); } catch {

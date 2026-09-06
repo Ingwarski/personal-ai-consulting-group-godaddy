@@ -31,6 +31,9 @@ test("pinned native CLI accepts analysis-only empty environments and its generat
     assert.match(turnSchema.properties.environments.description, /Empty disables environment access/);
     const readOnly = turnSchema.definitions.SandboxPolicy.oneOf.find((branch: { properties: { type: { enum: string[] } } }) => branch.properties.type.enum.includes("readOnly"));
     assert.deepEqual(Object.keys(readOnly.properties).sort(), ["networkAccess", "type"]);
+    const localImage = turnSchema.definitions.UserInput.oneOf.find((branch: { properties: { type: { enum: string[] } } }) => branch.properties.type.enum.includes("localImage"));
+    assert.deepEqual(localImage.required.slice().sort(), ["path", "type"]);
+    assert.equal(localImage.properties.path.type, "string");
     child = spawn(process.execPath, [executable, "app-server", "--stdio"], { env: environment, stdio: ["pipe", "pipe", "ignore"] });
     const lines = createInterface({ input: child.stdout! });
     const methods: string[] = [];

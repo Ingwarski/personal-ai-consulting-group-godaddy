@@ -2,7 +2,8 @@ import type { ProviderReasoningEffort } from "../settings/types.ts";
 import type { CodexAppServerTransport } from "./codex-app-server.ts";
 import { JsonRpcClient, type JsonRpcNotification } from "./json-rpc-client.ts";
 import { isExternalRuntimeId } from "../identity/ids.ts";
-import { chmod, mkdtemp, rm } from "node:fs/promises";
+import { chmod, mkdtemp, rm, open } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -11,6 +12,21 @@ export type CodexThreadLease = Readonly<{
   modelId: string;
   cwd?: string;
 }>;
+export type CodexTurnImage = Readonly<{ mime: "image/png" | "image/jpeg"; bytes: Uint8Array }>;
+
+function validImages(images: readonly CodexTurnImage[]): boolean {
+  if (!Array.isArray(images) || images.length > 4) return false;
+  let total = 0;
+  return images.every(image => {
+    if (image === null || typeof image !== "object" || !(image.bytes instanceof Uint8Array) ||
+      image.bytes.byteLength > 20 * 1024 * 1024 || image.bytes.byteLength < 8) return false;
+    total += image.bytes.byteLength;
+    const bytes = image.bytes;
+    return total <= 64 * 1024 * 1024 && (image.mime === "image/png"
+      ? [137, 80, 78, 71, 13, 10, 26, 10].every((byte, index) => bytes[index] === byte)
+      : image.mime === "image/jpeg" && bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255);
+  });
+}
 
 export type CodexThreadResult =
   | Readonly<{ ok: true; value: CodexThreadLease }>
@@ -167,11 +183,15 @@ export class CodexAppServerThreadClient {
     body: string;
     reasoningEffort: ProviderReasoningEffort | null;
     outputSchema?: unknown;
+    images?: readonly CodexTurnImage[];
     timeoutMilliseconds?: number;
     signal?: AbortSignal;
   }>): Promise<CodexTurnResult> {
     const threadId = input.lease.threadId;
     if (!nonEmpty(input.body) || this.#released.has(threadId) || this.#busyThreads.has(threadId)) return { ok: false, code: "invalid_turn_response" };
+    const images = input.images ?? [];
+    const ownedWorkspace = this.#workspaces.get(threadId);
+    if (!validImages(images) || (images.length > 0 && (ownedWorkspace === undefined || ownedWorkspace !== input.lease.cwd))) return { ok: false, code: "invalid_turn_response" };
     if (input.signal?.aborted) return { ok: false, code: "turn_cancelled" };
     this.#busyThreads.add(threadId);
     const timeoutMilliseconds = input.timeoutMilliseconds ?? 10 * 60_000;
@@ -181,6 +201,7 @@ export class CodexAppServerThreadClient {
     let turnId: string | undefined;
     let interruptRequest: Promise<void> | undefined;
     let settlePending: ((result: CodexTurnResult) => void) | undefined;
+    const stagedImages: string[] = [];
     const interrupt = async (code: "turn_cancelled" | "turn_timeout"): Promise<void> => {
       cancellation ??= code;
       if (turnId === undefined) return;
@@ -197,6 +218,19 @@ export class CodexAppServerThreadClient {
       await this.#rpc.initialize(this.#clientInfo);
       if (input.signal?.aborted || this.#released.has(threadId)) cancellation ??= "turn_cancelled";
       if (cancellation !== undefined) return { ok: false, code: cancellation };
+      // Only the client-owned private lease directory is writable. Filenames
+      // and paths never come from message content, Matrix URLs or the caller.
+      for (const image of images) {
+        const path = join(ownedWorkspace!, `input-image-${randomUUID()}.${image.mime === "image/png" ? "png" : "jpg"}`);
+        const bytes = Buffer.from(image.bytes);
+        try {
+          if (!validImages([{ mime: image.mime, bytes }])) return { ok: false, code: "invalid_turn_response" };
+          const file = await open(path, "wx", 0o600);
+          stagedImages.push(path);
+          try { await file.writeFile(bytes); } finally { await file.close(); }
+        } finally { bytes.fill(0); }
+        if (input.signal?.aborted || this.#released.has(threadId)) return { ok: false, code: "turn_cancelled" };
+      }
       const bufferedNotifications: JsonRpcNotification[] = [];
       let bufferedBytes = 0;
       let bufferOverflow = false;
@@ -220,7 +254,7 @@ export class CodexAppServerThreadClient {
       });
       const response = await this.#rpc.request("turn/start", {
         threadId,
-        input: [{ type: "text", text: input.body, text_elements: [] }],
+        input: [{ type: "text", text: input.body, text_elements: [] }, ...stagedImages.map(path => ({ type: "localImage", path }))],
         model: input.lease.modelId,
         approvalPolicy: "never",
         sandboxPolicy: { type: "readOnly", networkAccess: false },
@@ -286,6 +320,7 @@ export class CodexAppServerThreadClient {
       await interruptRequest;
       this.#activeTurns.delete(threadId);
       this.#busyThreads.delete(threadId);
+      await Promise.all(stagedImages.map(path => rm(path, { force: true })));
     }
   }
 }

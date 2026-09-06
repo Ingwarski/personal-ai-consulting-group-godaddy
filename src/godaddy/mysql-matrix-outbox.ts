@@ -283,7 +283,7 @@ export class MySqlAtomicRegistrarStorage implements RegistrarStorage {
     ]);
   }
 
-  async fenceGeneration(generation: number, reason: "stopped" | "new_task", fencedAt: string): Promise<void> {
+  async fenceGeneration(generation: number, reason: "stopped" | "new_task" | "revision", fencedAt: string): Promise<void> {
     await this.#executor.execute(FENCE_GENERATION, [reason, fencedAt, generation]);
   }
 }
@@ -297,7 +297,7 @@ export const projectConfirmedMessageToMySqlOutbox: ConfirmedMessageOutboxProject
 
 export async function fenceMySqlOutboxGeneration(
   storage: RegistrarStorage,
-  input: Readonly<{ generation: number; reason: "stopped" | "new_task"; fencedAt: string }>
+  input: Readonly<{ generation: number; reason: "stopped" | "new_task" | "revision"; fencedAt: string }>
 ): Promise<void> {
   if (!(storage instanceof MySqlAtomicRegistrarStorage)) {
     throw new Error("Matrix outbox fencing requires the registrar transaction connection.");
@@ -426,6 +426,20 @@ export class MySqlMatrixOutbox {
     )) throw new Error("Invalid Matrix delivery evidence policy.");
     this.#pool = pool;
     this.#deliveryEvidencePolicy = deliveryEvidencePolicy;
+  }
+
+  /** Resolve only an actually accepted outbound event, never a caller's claimed
+   * session ID. Native Matrix replies may target the bot's question. */
+  async resolveAcceptedGeneration(matrixEventId: string): Promise<number | undefined> {
+    if (!/^\$[A-Za-z0-9$:_-]{8,255}$/.test(matrixEventId)) return undefined;
+    const [raw] = await this.#pool.execute(
+      `SELECT generation FROM ${GODADDY_MATRIX_OUTBOX_TABLE}
+       WHERE matrix_event_id = ? AND state IN ('accepted', 'device_delivered', 'read') LIMIT 2`,
+      [matrixEventId]
+    );
+    const rows = rowsOf(raw);
+    const generation = rows.length === 1 ? asNumber(rows[0]?.generation) : undefined;
+    return generation !== undefined && Number.isSafeInteger(generation) && generation > 0 ? generation : undefined;
   }
 
   async inspectHead(now: Date): Promise<"idle" | "available" | "waiting" | "blocked" | "corrupt"> {

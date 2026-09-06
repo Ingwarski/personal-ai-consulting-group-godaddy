@@ -7,6 +7,7 @@ import {
   formatConfirmedMessageForMatrix,
   MatrixOrderedOutboxDrainer,
   validateMatrixIngress,
+  isSecretLikeMatrixContent,
   type MatrixDeviceTrust,
   type MatrixDeviceTrustResolver
 } from "../src/matrix/bridge.ts";
@@ -54,6 +55,23 @@ const ingress = (overrides: Partial<Parameters<typeof validateMatrixIngress>[2]>
   encrypted: true,
   body: "Текст",
   ...overrides
+});
+
+test("whole-message privacy gate recognizes assigned secrets and labeled identifiers without treating ordinary business numbers as credentials", () => {
+  for (const body of [
+    "password=abc", "GOOGLE_CLIENT_SECRET = private-value", '"refresh_token": "a-real-token"',
+    "SETTINGS_OWNER_PASSWORD: owner-private", "access-token: access-private", "API key: key-private",
+    "пароль: мійСекрет", "секрет клієнта = дужеТаємно", "токен доступу: мійТокен", "ключ доступу: приватний",
+    "Bearer abcdefghijklmnop", "-----BEGIN RSA PRIVATE KEY-----", "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature12345",
+    "Картка: 4111 1111 1111 1111", "Картка: 5555-5555-5555-4444", "Номер: 378282246310005", "Картка 2221000000000009", "Картка 6011111111111117",
+    "GB82WEST12345698765432", "Реквізити gb82 west 1234 5698 7654 32 Updated details", "IBAN: UA111111111111111111111111111",
+    "паспорт: АА123456", "РНОКПП: 1234567890", "tax_id=123456789", "SSN: 123-45-6789"
+  ]) assert.equal(isSecretLikeMatrixContent(body), true, body);
+  for (const body of [
+    "Як змінити пароль? Не надсилайте його в чат.", "Де налаштувати GOOGLE_CLIENT_SECRET?", "API keys and access tokens are confidential.",
+    "Виручка 12000000000000, витрати 11000000000000.", "PDF offset: 0000000000000000", "Order: 12345678901234567890",
+    "Sequence 4111111111111112 has an invalid card checksum.", "IBAN is a bank-account identifier.", "Паспорт потрібний лише для підтвердження особи."
+  ]) assert.equal(isSecretLikeMatrixContent(body), false, body);
 });
 
 test("accepts only an encrypted event from a crypto-store-verified owner device in the exact private room", async () => {

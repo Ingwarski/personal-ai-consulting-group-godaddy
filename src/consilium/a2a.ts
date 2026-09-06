@@ -2,6 +2,7 @@ import { criticBindingMatches, type RegistrarDO, type ConfirmedAgentMessage } fr
 import { isAgentId, isInternalEventId } from "../identity/ids.ts";
 import type { AgentRegistration } from "./roster.ts";
 import type { ConsiliumFailureCause } from "./failures.ts";
+import { isSecretLikeMatrixContent } from "../matrix/bridge.ts";
 
 export type A2AEnvelope = Readonly<{
   messageId: string;
@@ -32,6 +33,7 @@ export async function routeA2AEnvelope(
   if (!isAgentId(envelope.fromAgentId)) return { ok: false, code: "invalid_envelope", cause: "invalid_sender_id" };
   if (!isAgentId(envelope.toAgentId)) return { ok: false, code: "invalid_envelope", cause: "invalid_recipient_id" };
   if (envelope.body.length === 0) return { ok: false, code: "invalid_envelope", cause: "empty_body" };
+  if (isSecretLikeMatrixContent(envelope.body)) return { ok: false, code: "invalid_envelope", cause: "invalid_runtime_emission" };
   const sender = roster.find((agent) => agent.agentId === envelope.fromAgentId);
   const recipient = roster.find((agent) => agent.agentId === envelope.toAgentId);
   if (sender === undefined) return { ok: false, code: "agent_not_registered", cause: "sender_not_registered" };

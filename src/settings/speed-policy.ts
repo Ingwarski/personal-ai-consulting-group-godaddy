@@ -54,9 +54,30 @@ export const UNAPPROVED_SPEED_POLICY_CATALOG: SpeedPolicyCatalog = Object.freeze
   policies
 });
 
+// Bounded MVP implementation policy. The transport's ten-minute continuation
+// gate owns wall time; this nine-minute provider budget leaves time to stop and
+// publish the permission request. Existing snapshots are never rewritten.
+const MVP_CATALOG_VERSION = "speed-policy-matrix-mvp-20260906-v1";
+const mvpPolicy = (preset: SpeedPreset, maximumSpecialists: number): SpeedPolicy => Object.freeze({
+  ...policies[preset], catalogVersion: MVP_CATALOG_VERSION,
+  maxOptionalSpecialists: resolved(maximumSpecialists - 2),
+  concurrency: resolved(maximumSpecialists),
+  critiqueRevisionCycles: resolved(1),
+  internalBudgetMilliseconds: resolved(540_000)
+});
+
+export const MVP_SPEED_POLICY_CATALOG: SpeedPolicyCatalog = Object.freeze({
+  version: MVP_CATALOG_VERSION,
+  policies: Object.freeze({
+    швидко: mvpPolicy("швидко", 2),
+    збалансовано: mvpPolicy("збалансовано", 3),
+    ретельно: mvpPolicy("ретельно", 5)
+  })
+});
+
 export function resolveSpeedPolicy(
   preset: SpeedPreset,
-  catalog: SpeedPolicyCatalog = UNAPPROVED_SPEED_POLICY_CATALOG
+  catalog: SpeedPolicyCatalog = MVP_SPEED_POLICY_CATALOG
 ): SpeedPolicy {
   return catalog.policies[preset];
 }

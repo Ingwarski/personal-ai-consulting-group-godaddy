@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { access, readFile, stat } from "node:fs/promises";
+import { dirname } from "node:path";
 
 import { CodexConsiliumAgentRuntime } from "../src/runtime/codex-consilium-agent.ts";
 import { CODEX_ANALYSIS_CONFIG, CodexAppServerThreadClient } from "../src/runtime/codex-thread-client.ts";
@@ -82,6 +84,69 @@ test("starts one real Codex thread and preserves only the completed agent messag
       effort: "high"
     }
   });
+  await client.releaseThread(thread.value);
+  harness.rpc.close();
+});
+
+test("approved images use only private owned localImage paths and are erased when the turn ends", async () => {
+  const png = Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10, 1, 2, 3]);
+  let imagePath = "";
+  const harness = appServerHarness({ onTurnStart: async (respond, message) => {
+    const params = message.params as { input: { type: string; path?: string }[]; sandboxPolicy: unknown; environments: unknown };
+    assert.equal(params.input[1]?.type, "localImage");
+    imagePath = params.input[1]!.path!;
+    assert.match(imagePath, /input-image-[a-f0-9-]+\.png$/u);
+    assert.deepEqual([...await readFile(imagePath)], [...png]);
+    assert.equal((await stat(imagePath)).mode & 0o777, 0o600);
+    assert.equal((await stat(dirname(imagePath))).mode & 0o777, 0o700);
+    assert.deepEqual(params.sandboxPolicy, { type: "readOnly", networkAccess: false });
+    assert.deepEqual(params.environments, []);
+    respond({ id: message.id, result: { turn: { id: "turn-image-1", status: "completed", items: [{ type: "agentMessage", text: "Фактичний зміст." }] } } });
+  } });
+  const client = new CodexAppServerThreadClient({ rpc: harness.rpc, clientInfo: { name: "test", title: "Test", version: "1" } });
+  const thread = await client.startIsolatedThread({ modelId: "gpt-6-astra" });
+  if (!thread.ok) throw new Error("Expected thread");
+  const result = await client.runTextTurn({ lease: thread.value, body: "Read the approved image.", reasoningEffort: "xhigh", images: [{ mime: "image/png", bytes: png }] });
+  assert.equal(result.ok, true);
+  assert.equal(dirname(imagePath), thread.value.cwd);
+  await assert.rejects(access(imagePath));
+  assert.equal(png[0], 137); // The caller owns its input; only internal copies are zeroed.
+  await client.releaseThread(thread.value);
+  harness.rpc.close();
+});
+
+test("images fail closed on wrong magic, limits, or a non-owned workspace before turn/start", async () => {
+  const harness = appServerHarness();
+  const client = new CodexAppServerThreadClient({ rpc: harness.rpc, clientInfo: { name: "test", title: "Test", version: "1" } });
+  const thread = await client.startIsolatedThread({ modelId: "gpt-6-astra" });
+  if (!thread.ok) throw new Error("Expected thread");
+  const png = Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10]);
+  const large = new Uint8Array(17 * 1024 * 1024); large.set(png);
+  for (const images of [
+    [{ mime: "image/jpeg" as const, bytes: png }], [{ mime: "image/png" as const, bytes: new Uint8Array(20 * 1024 * 1024 + 1) }],
+    Array.from({ length: 5 }, () => ({ mime: "image/png" as const, bytes: png })),
+    Array.from({ length: 4 }, () => ({ mime: "image/png" as const, bytes: large }))
+  ]) assert.deepEqual(await client.runTextTurn({ lease: thread.value, body: "No image turn.", reasoningEffort: "high", images }), { ok: false, code: "invalid_turn_response" });
+  assert.deepEqual(await client.runTextTurn({ lease: { ...thread.value, cwd: "/tmp" }, body: "Not an owned path.", reasoningEffort: "high", images: [{ mime: "image/png", bytes: png }] }), { ok: false, code: "invalid_turn_response" });
+  assert.equal(harness.messages.some(message => message.method === "turn/start"), false);
+  await client.releaseThread(thread.value);
+  harness.rpc.close();
+});
+
+test("cancelled image turns erase staged files and do not accept late image output", async () => {
+  let imagePath = "";
+  const controller = new AbortController();
+  const harness = appServerHarness({ onTurnStart: (respond, message) => {
+    imagePath = (message.params as { input: { path?: string }[] }).input[1]!.path!;
+    controller.abort();
+    respond({ id: message.id, result: { turn: { id: "turn-image-cancelled", status: "completed", items: [{ type: "agentMessage", text: "Late image output" }] } } });
+  } });
+  const client = new CodexAppServerThreadClient({ rpc: harness.rpc, clientInfo: { name: "test", title: "Test", version: "1" } });
+  const thread = await client.startIsolatedThread({ modelId: "gpt-6-astra" });
+  if (!thread.ok) throw new Error("Expected thread");
+  assert.deepEqual(await client.runTextTurn({ lease: thread.value, body: "Approved image.", reasoningEffort: "xhigh", signal: controller.signal,
+    images: [{ mime: "image/jpeg", bytes: Uint8Array.from([255, 216, 255, 224, 0, 0, 0, 0]) }] }), { ok: false, code: "turn_cancelled" });
+  await assert.rejects(access(imagePath));
   await client.releaseThread(thread.value);
   harness.rpc.close();
 });

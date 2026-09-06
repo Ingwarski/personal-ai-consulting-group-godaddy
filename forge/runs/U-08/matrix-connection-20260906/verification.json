@@ -1,0 +1,215 @@
+{
+  "run_id": "matrix-connection-20260906",
+  "observed_at": "2026-09-06T12:49:35Z",
+  "timestamp_basis": "Verification observations recorded during this run; not a historical user-message timestamp.",
+  "authorization": "implementation-matrix-connection-20260906-01",
+  "prompt_receipt": "forge/implementation-prompt-matrix-connection-20260906.json",
+  "prompt_sha256": "70634797eefe54e94ce7497da2c86ccff5fa054a6d532bb8a949ade701cbd24e",
+  "baseline_commit": "50b8edfbe956d5a7eb3771809d590cc0a080651f",
+  "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
+  "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+  "scope": "Local production-code composition for remaining Matrix intake, consent, attachment preparation, session dispatch, existing provider router/Critic, durable final-delivery intent, bounded work, retries, restart and Stop. Existing transport, design and canonical SDD artifacts preserved.",
+  "fixes": [
+    {
+      "id": "MC-01",
+      "result": "Durable leased Matrix ingress dispatches the actual application planner/consultation executor after consent; an accepted event is deduplicated before subscription work.",
+      "evidence": [
+        "test/godaddy-consilium-runtime.test.ts",
+        "test/matrix-consultation-races.test.ts"
+      ]
+    },
+    {
+      "id": "MC-02",
+      "result": "A connection-owned MySQL lock prevents concurrent workers. Uncertain attempts require explicit continuation; normal committed completion is not rerun after restart. Old leaders cannot cancel a replacement generation.",
+      "evidence": [
+        "test/consultation-database-boundaries.test.ts",
+        "test/matrix-consultation-races.test.ts"
+      ]
+    },
+    {
+      "id": "MC-03",
+      "result": "Clarification/native replies retain logical session, complete prior discussion and immutable settings. Only replies to the current session's original inputs or accepted outbound events may join it.",
+      "evidence": [
+        "test/matrix-consultation-races.test.ts",
+        "test/consultation-database-boundaries.test.ts",
+        "test/registrar-controls.test.ts"
+      ]
+    },
+    {
+      "id": "MC-04",
+      "result": "Normal finalization uses closeSession instead of stopSession, preserving the already committed final outbox item. Explicit Stop still fences late output and queued delivery.",
+      "evidence": [
+        "test/final-recommendation.test.ts",
+        "test/godaddy-consilium-runtime.test.ts",
+        "test/registrar-controls.test.ts"
+      ]
+    },
+    {
+      "id": "MC-05",
+      "result": "Unconfirmed attachment bytes are encrypted in existing MySQL KV rows before ACK, expire after 15 minutes and require event-bound consent. The adapter supplies private native Codex image inputs or bounded text-layer PDF extraction. Unsafe/expired bytes are not substituted by metadata.",
+      "evidence": [
+        "test/matrix-consultation-media.test.ts",
+        "test/consultation-media-adapter.test.ts",
+        "test/codex-thread-client.test.ts"
+      ]
+    },
+    {
+      "id": "MC-06",
+      "result": "Whole unsafe inputs/provider outputs are rejected before canonical recording or delivery. Confirmation does not enable runtime secrets, external actions or arbitrary tools.",
+      "evidence": [
+        "test/matrix-bridge.test.ts",
+        "test/consilium-a2a.test.ts",
+        "test/final-recommendation.test.ts"
+      ]
+    },
+    {
+      "id": "MC-07",
+      "result": "Fast/balanced/thorough policies bound specialists to 2/3/5 with one mandatory critique-revision cycle. A 540-second attempt limit asks for explicit continuation before the 10-minute boundary; no automatic additional subscription run.",
+      "evidence": [
+        "test/settings-domain.test.ts",
+        "test/matrix-consultation-races.test.ts"
+      ]
+    },
+    {
+      "id": "MC-08",
+      "result": "Publication and input decisions are serialized without holding provider network calls under a DB transaction. Costs cannot swallow a final answer; Stop during snapshot preparation cannot orphan a session; readiness loss becomes an explicit interruption.",
+      "evidence": [
+        "test/matrix-consultation-races.test.ts"
+      ]
+    },
+    {
+      "id": "MC-09",
+      "result": "Cross-message aggregate attachment bytes are checked before persistence; state mutations are validated before commit. Oversized amendments are discarded without poisoning the job, and Stop remains usable.",
+      "evidence": [
+        "test/matrix-consultation-races.test.ts"
+      ]
+    }
+  ],
+  "execution_policy": {
+    "version": "speed-policy-matrix-mvp-20260906-v1",
+    "specialist_limits": {
+      "fast": 2,
+      "balanced": 3,
+      "thorough": 5
+    },
+    "mandatory_critique_revision_cycles": 1,
+    "maximum_attempt_ms": 540000,
+    "progress_notice_ms": 45000,
+    "legacy_snapshots": "unchanged",
+    "basis": "Bounded implementation defaults within explicitly authorized resolution of execution limits. This is not a new owner-approved canonical SDD/design baseline."
+  },
+  "evaluated_source_hashes": {
+    "package-lock.json": "081ff5efe326e78a6d2bf5bcd3db467ece8890f54e42b12764024c099eafb37b",
+    "package.json": "0db0497844947e2e4985a62eaf988a0f7a7eff6417e05881b85bcdd328882bab",
+    "src/consilium/a2a.ts": "7c821a83678ff44e1bdd43a8cc10c3808b556f028b01ec15ebeaf414afb8cd7b",
+    "src/consilium/final-recommendation.ts": "fe8a557644c2c458210c009888ba89c4ad53654132d8d2343ae201af24de204b",
+    "src/godaddy/application-runtime.ts": "005f62b5912de3b653039fa9d3eb2c5831f63c314efc2a99ea291388a8042fb5",
+    "src/godaddy/consilium-runtime.ts": "ea03d38458e4075f6a139f9166d5201af91c1ca3ee503b346ad6f83abdb92039",
+    "src/godaddy/consultation-leadership.ts": "5f81a3ef5bee61decb30b584a2548bceb050909a011cdcb5c1388bd075fb63d7",
+    "src/godaddy/consultation-media-adapter.ts": "c85db199dc4df7850113684cf5061bfa86794cec7a18bbfa466057235f8f152b",
+    "src/godaddy/matrix-consultation-media.ts": "7089243bade0fa77edcb903f94101d6c0deea4cf1132b9921b65f66533170275",
+    "src/godaddy/matrix-consultation-service.ts": "43649298142b559e26a48d182ac5a71efd86fa78100e6a4145415a5bf062e464",
+    "src/godaddy/mysql-matrix-outbox.ts": "6976fd18f7d066e9789a134e8e8aa53a12c2f3453ab3f4cca32f0b40c655d7b6",
+    "src/godaddy/server.mjs": "e0fa576b2e58cac3d7511b1e5b827141e9557be170f0544b10cb203c89ba7e0d",
+    "src/godaddy/settings-runtime.ts": "4eddda916446914bcf5d579bdb31b90e5cb6a7f6ac701e709644b8027140a8cc",
+    "src/matrix/bridge.ts": "fe087d4ecef97d15a9b240ce52bfa9722c84083dc9e16b083437fa55803aaddd",
+    "src/runtime/codex-thread-client.ts": "b3de3cbc852d5b9453283d71f9f04ef526080e8e8adbd6450631724a78256ab1",
+    "src/runtime/consultation-intake.ts": "09fe54e6d12899a9fbac93156891a912b3843baa813a0e9e4bdac1aac879614e",
+    "src/session/registrar-do.ts": "9d69403403171bed064028ccb13a7f51cf22aad8b2a38fbb61e87eaae5be5321",
+    "src/settings/speed-policy.ts": "ffcbf0093469a2060fc7ac5a4520b4de5ed3e7d9ad99762ad4dc348f2e5d24e8",
+    "test/codex-analysis-protocol.test.ts": "dd813e346d66ee371c179442933cb0459e25d975142d92dc9e904cb9e7aa8b9a",
+    "test/codex-thread-client.test.ts": "7a3468b709b1926ddce3c2c91c7c8cfc8f88822450c58c0baa6f6856e3d8db88",
+    "test/consilium-a2a.test.ts": "1190b9dce7f255d613f37c44ccb04b91032124987a1f180176d96731d03550b4",
+    "test/consilium-router.test.ts": "358cdd7269e258beadc7779c8b93ecd5bdd48a325957f52ff7e15f6e04d755dd",
+    "test/consilium-session-launcher.test.ts": "bf8b55be35a9f73687bc5a9809d926cfbc31d641b71419793805e7f78b4862c5",
+    "test/consultation-database-boundaries.test.ts": "6696e692ae22e818f0dd4c7684f0f4730eebeb5941b2f8148aba7ef53346bb80",
+    "test/consultation-intake.test.ts": "e6eec9a8d43d80d6a3458d1d7c7835c1b29e24c81c2420ce6715f050168d4e64",
+    "test/consultation-media-adapter.test.ts": "d60cfa0ed29f654fef52e99e49913f4d576daa7d3c848fa60c35fb936cfa2a79",
+    "test/final-recommendation.test.ts": "5f08b1d4156388284b7c585e53b912f9eaca8240d66673886895010bbc101363",
+    "test/godaddy-consilium-runtime.test.ts": "bdca04bd9afe49a519b5551b0c80c1c1376c51440d4dd32c58bc61cf574bc436",
+    "test/matrix-bridge.test.ts": "ae0b3bd69a00feb36a553092634976cc965e16d5d4746a06c3a39dc70a65092a",
+    "test/matrix-consultation-media.test.ts": "15b72865fe7e490159605890910ac9f6cfba158a1f03fc2e0af527a8c5774fa0",
+    "test/matrix-consultation-races.test.ts": "df54db41db8e4cef18c74ea1ad84b10cbb8c341ea968a2c150c6150046614bd0",
+    "test/registrar-controls.test.ts": "f3bb61c6a49356994ec7093594df5850e2d27297d9489b6eee41f1cffb8780d7",
+    "test/settings-domain.test.ts": "bf2ecc7eede749d6b632b9632f3e1110120ae5c3f7d495aa4501946c7784866f"
+  },
+  "verification": {
+    "full": {
+      "command": "npm run check",
+      "runtime": "Node.js 22.23.2",
+      "platform": "Darwin arm64",
+      "tests": 678,
+      "passed": 678,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "build": "passed",
+      "typecheck": "passed",
+      "environment_policy": "passed",
+      "diff_check": "passed"
+    },
+    "workflow_and_database": {
+      "tests": 21,
+      "passed": 21,
+      "scope": "15 durable-worker/reply/control regression tests plus 6 parameterized outbox and MySQL connection-lock boundary tests; in-memory/scripted adapters."
+    },
+    "production_composition": {
+      "result": "passed_bounded_local_scope",
+      "test_file": "test/godaddy-consilium-runtime.test.ts",
+      "observations": [
+        "Real production application worker invokes the actual head intake, consultation runner, specialists, selected Astra/xhigh Critic and head synthesis using fake RPC and simulated DB/transport.",
+        "No provider turn before consent; 7 expected turns across 5 isolated contexts; no Claude acquisition when Codex is selected.",
+        "Final registrar session is closed, final message remains pending for the existing durable Matrix sender and replay does not add provider turns."
+      ]
+    },
+    "pdf_and_image": {
+      "result": "passed_bounded_local_scope",
+      "scope": "Real unpdf extraction and pinned Codex 0.153.1 schema/private-file handling without authenticated model calls. No live model interpretation evidence."
+    },
+    "pipeline": {
+      "command": "sdd_check.py --project . --after implementation",
+      "result": "passed",
+      "checked_artifacts": 13,
+      "issues": 0,
+      "warnings": 0,
+      "scope": "Declared source, prompt, baseline and reference integrity; not full semantic quality or release acceptance."
+    }
+  },
+  "research": [
+    {
+      "url": "https://developers.openai.com/codex/app-server",
+      "use": "Primary documentation for turn image/localImage inputs; supported fields additionally verified against pinned 0.153.1 generated native schema."
+    },
+    {
+      "url": "https://github.com/unjs/unpdf",
+      "use": "Primary library documentation for pure-JS bounded text extraction; dependency pinned to 1.8.1."
+    },
+    {
+      "url": "https://mozilla.github.io/pdf.js/api/draft/api.js.html",
+      "use": "Primary PDF.js API documentation for text extraction and document inspection."
+    }
+  ],
+  "known_limits": [
+    "No Published GoDaddy end-to-end test, real MySQL concurrency/restart test, live model call or actual Matrix delivery/read receipt was run in this change. Local final-delivery intent is not live receipt proof.",
+    "Scanned/image-only PDFs, OCR, charts requiring visual PDF interpretation and protected/active PDFs are unsupported and rejected. Text-layer extraction is not full ordinary-PDF acceptance.",
+    "Per-document owner confirmation and heuristic secret detection cannot prove arbitrary image/text data contains no sensitive information. Full sensitive-document handling acceptance is not claimed.",
+    "The 45-second system waiting notice is not a guaranteed first specialist reply within 30 seconds or a 90-second automatic specialist replacement protocol. Full timing and usability gates remain unverified.",
+    "Expired/unreadable attachment recovery requires New task and resending safe source files; no silent refetch, indefinite media retention or automatic replacement.",
+    "Historical archive, JIT credential, private-path artifact and broader release evidence gaps remain outside this local slice. No unit is newly accepted."
+  ],
+  "external_effects": {
+    "publication": "not_performed",
+    "git_main_push": "not_performed",
+    "real_matrix": "not_performed",
+    "live_provider_calls": "not_performed",
+    "production_credentials": "unchanged",
+    "production_data": "unchanged",
+    "schema_changes": "none",
+    "stateful_preview": "forbidden_unchanged",
+    "happypro": "untouched",
+    "domain": "untouched"
+  },
+  "result": "local_connection_verified_pending_separate_publication_approval_and_live_evidence",
+  "unit_completion": "not_claimed",
+  "release_readiness": "not_claimed"
+}

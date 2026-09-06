@@ -170,7 +170,7 @@ test("executes the whole prepared path through finalization after the registered
   const messages = await registrar.getConfirmedMessages(1);
   assert.equal(messages.length, 11);
   assert.match(messages[10]?.body ?? "", /Синтезоване рішення/);
-  assert.equal((await registrar.getActiveSession())?.phase, "stopped");
+  assert.equal((await registrar.getActiveSession())?.phase, "closed");
 });
 
 function astraReceipt() {

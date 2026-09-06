@@ -84,3 +84,21 @@ test("preserves a safe Registrar failure cause instead of flattening it", async 
   });
   assert.deepEqual(result, { ok: false, code: "registrar_rejected", cause: "no_active_session" });
 });
+
+test("unsafe generated A2A bodies are rejected whole before append, Critic receipt, or publication", async () => {
+  const registrar = await startedRegistrar();
+  await registrar.designateCritic({ generation: 1, critic });
+  const roster = [...specialists, critic];
+  let delivered = 0;
+  for (const [index, body] of ["password=private-value", "IBAN: GB82WEST12345698765432", "SSN: 123-45-6789"].entries()) {
+    const result = await routeA2AEnvelope(registrar, roster, {
+      messageId: `unsafe-critic-${index}`, sessionGeneration: 1, fromAgentId: critic.agentId,
+      toAgentId: specialists[0]!.agentId, kind: "critique", body
+    }, async () => { delivered += 1; });
+    assert.deepEqual(result, { ok: false, code: "invalid_envelope", cause: "invalid_runtime_emission" });
+    assert.equal(JSON.stringify(result).includes(body), false);
+  }
+  assert.deepEqual(await registrar.getConfirmedMessages(1), []);
+  assert.equal(await registrar.getCriticReview(1), undefined);
+  assert.equal(delivered, 0);
+});

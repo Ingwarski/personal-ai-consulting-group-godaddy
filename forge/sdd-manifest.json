@@ -16463,6 +16463,19 @@
     "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
     "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
     "awaiting_at": "2026-09-05T23:38:24.056Z",
+    "prompt_id": "implementation-matrix-connection-20260906-01",
+    "prompt_received_at": "2026-09-06T12:10:02Z",
+    "released_at": "2026-09-06T12:10:02Z",
+    "prompt_receipt": {
+      "path": "forge/implementation-prompt-matrix-connection-20260906.json",
+      "content_hash": "70634797eefe54e94ce7497da2c86ccff5fa054a6d532bb8a949ade701cbd24e"
+    },
+    "reason": "Explicit yes to the retained Matrix connection implementation question; unchanged plan and baseline. Local code and credential-free tests only; publication and production effects excluded.",
+    "supersedes": {
+    "state": "authorized_for_phase3",
+    "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
+    "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+    "awaiting_at": "2026-09-05T23:38:24.056Z",
     "reason": "Explicit later implementation prompt matches unchanged current plan and baseline; scoped local implementation only.",
     "supersedes": {
       "state": "awaiting-implementation-prompt",
@@ -16519,6 +16532,7 @@
       "path": "forge/implementation-prompt-critic-router-20260906.json",
       "content_hash": "51a226066be61255dac63f1fd595434f3acd87dbbae5396ff985f186f639b534"
     }
+    }
   },
   "prototype_promotions": [
     {
@@ -16569,8 +16583,73 @@
       "deployment": "not_performed",
       "scope": "Existing U-04/U-07 catalog action contract regression; prior receipts preserved, no new Unit or release acceptance."
     },
-    "status": "critic_router_local_verified_pending_live_evidence",
-    "owner_invocation_id": "implementation-critic-router-20260906-01",
+    "status": "matrix_connection_local_verified_pending_live_evidence",
+    "owner_invocation_id": "implementation-matrix-connection-20260906-01",
+    "matrix_connection": {
+      "run_id": "matrix-connection-20260906",
+      "authorization": "implementation-matrix-connection-20260906-01",
+      "status": "local_connection_verified_pending_separate_publication_approval_and_live_evidence",
+      "report": "forge/runs/U-08/matrix-connection-20260906/implementation-report.md",
+      "report_hash": "f40384c3f668dc855e0a932dee691238cff5dc3336fb7b8182ff6573bbcd5b54",
+      "recorded_at": "2026-09-06T12:49:35Z",
+      "scope": "Explicitly authorized cross-unit Matrix intake, consent, media, bounded consultation and Critic-reviewed durable final-delivery connection. No new unit acceptance; previous partial-unit evidence remains partial.",
+      "limits": ["No Published GoDaddy end-to-end test, real MySQL concurrency/restart test, live model call or actual Matrix delivery/read receipt was run in this change. Local final-delivery intent is not live receipt proof.","Scanned/image-only PDFs, OCR, charts requiring visual PDF interpretation and protected/active PDFs are unsupported and rejected. Text-layer extraction is not full ordinary-PDF acceptance.","Per-document owner confirmation and heuristic secret detection cannot prove arbitrary image/text data contains no sensitive information. Full sensitive-document handling acceptance is not claimed.","The 45-second system waiting notice is not a guaranteed first specialist reply within 30 seconds or a 90-second automatic specialist replacement protocol. Full timing and usability gates remain unverified.","Expired/unreadable attachment recovery requires New task and resending safe source files; no silent refetch, indefinite media retention or automatic replacement.","Historical archive, JIT credential, private-path artifact and broader release evidence gaps remain outside this local slice. No unit is newly accepted."]
+    },
+    "local_verification": {
+      "node": {
+        "command": "npm run check",
+        "runtime": "Node.js 22.23.2",
+        "platform": "Darwin arm64",
+        "tests": 678,
+        "passed": 678,
+        "failed": 0,
+        "skipped": 0,
+        "cancelled": 0,
+        "build": "passed",
+        "typecheck": "passed",
+        "environment_policy": "passed",
+        "diff_check": "passed"
+      },
+      "workflow_and_database": {
+        "tests": 21,
+        "passed": 21,
+        "scope": "15 durable-worker/reply/control regression tests plus 6 parameterized outbox and MySQL connection-lock boundary tests; in-memory/scripted adapters."
+      },
+      "production_composition": {
+        "result": "passed_bounded_local_scope",
+        "test_file": "test/godaddy-consilium-runtime.test.ts",
+        "observations": [
+          "Real production application worker invokes the actual head intake, consultation runner, specialists, selected Astra/xhigh Critic and head synthesis using fake RPC and simulated DB/transport.",
+          "No provider turn before consent; 7 expected turns across 5 isolated contexts; no Claude acquisition when Codex is selected.",
+          "Final registrar session is closed, final message remains pending for the existing durable Matrix sender and replay does not add provider turns."
+        ]
+      },
+      "pipeline": {
+        "command": "sdd_check.py --project . --after implementation",
+        "result": "passed",
+        "checked_artifacts": 13,
+        "issues": 0,
+        "warnings": 0,
+        "scope": "Declared source, prompt, baseline and reference integrity; not full semantic quality or release acceptance."
+      },
+      "real_mysql": "not_run",
+      "live_provider_turns": "not_run",
+      "live_matrix_delivery": "not_run",
+      "godaddy_deployment": "not_performed",
+      "browser": "not_run_this_change_no_UI_change"
+    },
+    "external_effects": {
+      "publication": "not_performed",
+      "git_main_push": "not_performed",
+      "real_matrix": "not_performed",
+      "live_provider_calls": "not_performed",
+      "production_credentials": "unchanged",
+      "production_data": "unchanged",
+      "schema_changes": "none",
+      "stateful_preview": "forbidden_unchanged",
+      "happypro": "untouched",
+      "domain": "untouched"
+    },
     "completed_local_contracts": [],
     "partial_local_contracts": [
       "U-01",
@@ -16583,10 +16662,10 @@
       "U-08",
       "U-09"
     ],
-    "completion_projection_note": "Explicit Critic router implemented and credential-free local checks passed. Actual GoDaddy application execution entry calls the runner/launcher for an already-authorized active generation; it does not implement the still-missing broader Matrix intake/consent/media dispatcher or approve unresolved speed policy. No unit newly accepted and no live/production release pass claimed.",
+    "completion_projection_note": "The explicitly authorized Matrix connection now composes durable intake, consent, bounded media processing, session dispatch, selected Critic and preserved final-delivery intent. All 678 local tests pass with simulated external systems. Execution defaults are versioned, historical snapshots preserved. No unit newly accepted; real MySQL/provider/Matrix/GoDaddy and full timing/media/release evidence remain open. Prior Critic router projections and receipts below are historical.",
     "in_progress_unit": "U-04",
     "next_unit": "U-04",
-    "local_verification": {
+    "prior_critic_router_local_verification": {
       "node": {
         "result": "passed",
         "tests": "597/597",
@@ -16620,7 +16699,7 @@
         "scope": "Declared source, baseline, prompt and actual promotion receipt integrity; not a full release or semantic-quality pass."
       }
     },
-    "external_effects": {
+    "prior_critic_router_external_effects": {
       "scope": "Current Critic router run only; prior published observations remain in historical receipts.",
       "matrix_org": "not_run",
       "production_oauth_change": "not_performed",
@@ -16660,9 +16739,17 @@
       "rust_host_feasibility": "passed-and-retired; not product integration evidence",
       "scope_note": "Historical observations from prior runs, not rerun or refreshed in this SDD-only migration; prior artifact_ci in_progress is not a current live-status claim."
     },
-    "run_id": "critic-router-20260906",
-    "run_receipt": "forge/runs/U-04/critic-router-20260906/verification.json",
-    "run_receipt_hash": "dc5cf5155cc6e84f8ad0d3b4e6e164ae0103059e01bf88c7f04967acde96a4fd",
+    "run_id": "matrix-connection-20260906",
+    "run_receipt": "forge/runs/U-08/matrix-connection-20260906/verification.json",
+    "run_receipt_hash": "9a8a3e82ca7b5821034fb5233b82f27bc7e7fa82bfbafe45b5dd66144283abd4",
+    "prior_critic_router_run": {
+      "run_id": "critic-router-20260906",
+      "run_receipt": "forge/runs/U-04/critic-router-20260906/verification.json",
+      "run_receipt_hash": "dc5cf5155cc6e84f8ad0d3b4e6e164ae0103059e01bf88c7f04967acde96a4fd",
+      "status": "critic_router_local_verified_pending_live_evidence",
+      "owner_invocation_id": "implementation-critic-router-20260906-01",
+      "completion_projection_note": "Explicit Critic router implemented and credential-free local checks passed. Actual GoDaddy application execution entry calls the runner/launcher for an already-authorized active generation; it does not implement the still-missing broader Matrix intake/consent/media dispatcher or approve unresolved speed policy. No unit newly accepted and no live/production release pass claimed."
+    },
     "published_verification": {
       "run_id": "u04-google-published-20260906",
       "path": "forge/runs/U-04/u04-google-published-20260906/verification.json",
@@ -16690,7 +16777,7 @@
       "next_unit": "U-04",
       "completion_projection_note": "Google-вхід перевірено на Published GoDaddy: два успішні входи, reload, logout і відмова protected route після logout. Локально 531/531; повна U-04 перевірка MySQL concurrency/restart та UI/user evidence ще не завершена. Наступний Unit не розпочато. Попередній локальний run receipt збережено незмінним; нові докази у published_verification."
     },
-    "affected_change": {
+    "prior_critic_router_affected_change": {
       "id": "PI-CRITIC-20260906",
       "status": "local_implementation_verified",
       "units": [
@@ -16829,7 +16916,7 @@
     }
   ],
   "next_ready_nodes": [],
-  "pause_reason": "Local Critic router implementation verified. GoDaddy publication/entitlement and broader Matrix release work are not authorized or claimed by this run.",
+  "pause_reason": "Local Matrix consultation connection verified with 678 passing tests. Separate publication approval and bounded live MySQL/provider/Matrix delivery evidence are still required. No production changes or full Unit/release completion are claimed.",
   "current_reconciliation_blockers": [
     {
       "id": "sdd-render-precheck-20260905",

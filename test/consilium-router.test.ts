@@ -7,6 +7,7 @@ import { resolveEffectiveSessionSnapshot } from "../src/settings/snapshot.ts";
 import { RegistrarDO } from "../src/session/registrar-do.ts";
 import { activeNow, createCapabilityReceipt, createResolvedTestSpeedPolicyCatalog } from "./fixtures/capability-receipt.ts";
 import { MemoryRegistrarStorage } from "./fixtures/memory-registrar-storage.ts";
+import { UNAPPROVED_SPEED_POLICY_CATALOG } from "../src/settings/speed-policy.ts";
 
 const head: AgentRegistration = { agentId: "head", role: "Головний консультант", provider: "codex", runtimeSessionRef: "codex-head-thread" };
 const finance: AgentRegistration = { agentId: "finance", role: "Фінансовий консультант", provider: "codex", runtimeSessionRef: "codex-finance-thread" };
@@ -171,13 +172,14 @@ test("rejects a duplicate specialist emission before it reaches the Registrar or
   assert.equal(deliveredBodies.includes("Друга заборонена позиція."), false);
 });
 
-test("fails closed before runtime work when the production speed-policy numbers remain unapproved", async () => {
+test("fails closed before runtime work when a historical speed-policy snapshot remains unapproved", async () => {
   const receipt = createCapabilityReceipt();
   const snapshot = resolveEffectiveSessionSnapshot({
     sessionId: "unresolved-speed-settings",
     settingsRevision: 1,
     settings: receipt.defaults,
-    capabilityReceipt: receipt
+    capabilityReceipt: receipt,
+    speedPolicyCatalog: UNAPPROVED_SPEED_POLICY_CATALOG
   }, activeNow);
   if (!snapshot.ok) throw new Error("Expected snapshot.");
   const registrar = new RegistrarDO({ storage: new MemoryRegistrarStorage(), now: () => activeNow });

@@ -3,6 +3,7 @@ import type { ConfirmedMessageObserver } from "./a2a.ts";
 import type { AgentRegistration } from "./roster.ts";
 import type { ConfirmedAgentMessage, RegistrarDO, SessionGeneration } from "../session/registrar-do.ts";
 import { criticReceiptMatches } from "../session/registrar-do.ts";
+import { isSecretLikeMatrixContent } from "../matrix/bridge.ts";
 
 export type FinalAction = Readonly<{
   action: string;
@@ -99,6 +100,8 @@ export class CriticGatedFinalizer {
   }>): Promise<FinalRecommendationResult> {
     if (!this.validatesHead(this.#head)) return { ok: false, code: "invalid_final_sender" };
     if (!isValidFinalRecommendation(input.recommendation)) return { ok: false, code: "invalid_final_recommendation" };
+    const body = formatFinalRecommendation(input.recommendation);
+    if (isSecretLikeMatrixContent(body)) return { ok: false, code: "invalid_final_recommendation" };
 
     const criticReview = await this.#registrar.getCriticReview(input.sessionGeneration);
     if (!criticReceiptMatches(criticReview, this.#critic, input.sessionGeneration)) {
@@ -109,7 +112,7 @@ export class CriticGatedFinalizer {
       generation: input.sessionGeneration,
       eventId: input.messageId,
       role: this.#head.role,
-      body: formatFinalRecommendation(input.recommendation)
+      body
     });
     if (!appended.ok) return { ok: false, code: "registrar_rejected" };
     if (this.#afterConfirmed !== undefined) {
@@ -138,8 +141,10 @@ export class CriticGatedFinalizer {
       }
     }
 
-    const stopped = await this.#registrar.stopSession(input.sessionGeneration);
-    if (!stopped.ok && stopped.code !== "session_not_active") return { ok: false, code: "registrar_rejected" };
+    // Normal completion must not use cancellation: the durable final is often
+    // still pending in the outbox when this call runs.
+    const closed = await this.#registrar.closeSession(input.sessionGeneration);
+    if (!closed.ok) return { ok: false, code: "registrar_rejected" };
     return { ok: true, visibleSequence: appended.value.sequence, replayed: appended.replayed };
   }
 
