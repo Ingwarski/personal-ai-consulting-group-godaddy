@@ -438,7 +438,9 @@ export async function verifyMatrixHttpIsolation(
       }
       const parent = await directory(path, uid, true);
       if ((await readdir(path)).length !== 0) throw new ReleaseFailure("matrix_release_conflict");
-      const name = `.private-path-check-${Buffer.from(randomBytes(16)).toString("hex")}`;
+      // A normal filename tests the private directory, not just a blanket
+      // dotfile rule that might still expose ordinary SQLite/media filenames.
+      const name = `private-path-check-${Buffer.from(randomBytes(16)).toString("hex")}`;
       const bytes = Buffer.from(`matrix-private-path-canary:${Buffer.from(randomBytes(16)).toString("hex")}`, "ascii");
       const target = join(path, name);
       const handle = await open(target, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);

@@ -71,7 +71,7 @@ const bootstrap = String.raw`
   window.addEventListener("message", async event => {
     if (event.origin !== published || event.source !== openerWindow || used) return;
     const c = event.data;
-    const privatePath = /^\/(?:assets|public\/assets)\/\.personal-consultant-matrix-v1\/(?:crypto-store|media-spool)\/(?:\.private-path-check-[a-f0-9]{32}|device-binding\.json|provisioning-intent\.json)$/;
+    const privatePath = /^\/(?:assets|public\/assets)\/\.personal-consultant-matrix-v1\/(?:crypto-store|media-spool)\/(?:private-path-check-[a-f0-9]{32}|device-binding\.json|provisioning-intent\.json)$/;
     const binaryPath = /^\/\.runtime\/matrix\/personal-consultant-matrix-(?:sidecar|setup)$/;
     if (!c || c.nonce !== nonce || c.verifierHash !== VERIFIER_HASH || !Number.isSafeInteger(c.expiresAt)
       || c.expiresAt <= Date.now() || c.expiresAt > Date.now() + 300000 || !Array.isArray(c.paths)

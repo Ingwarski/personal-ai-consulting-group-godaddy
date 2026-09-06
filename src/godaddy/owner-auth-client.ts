@@ -28,7 +28,9 @@ export const ownerAuthClientJavaScript = String.raw`(() => {
     }
     // Fixed origin, no credentials in URL. An opener is required only for this
     // nonce-bound, GET-only verifier; neither side receives the other's cookies.
-    previewWindow = window.open("https://wy2v0putg6.preview.c35.airoapp.ai/operations/matrix/preview-isolation#" + previewChallenge.nonce, "matrix-preview-isolation");
+    // A fresh context is required: reusing a named window with only a new hash
+    // would retain the previous one-use verifier rather than execute it again.
+    previewWindow = window.open("https://wy2v0putg6.preview.c35.airoapp.ai/operations/matrix/preview-isolation#" + previewChallenge.nonce, "_blank");
     if (!previewWindow) showError("Дозвольте нове вікно для перевірки Preview та повторіть дію.");
   });
   window.addEventListener("message", event => {

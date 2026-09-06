@@ -5,7 +5,7 @@ import { MATRIX_VERIFIER_HASH, matrixVerifierJavaScript, runMatrixBrowserChecks,
   matrixPreviewVerifierResponse, MATRIX_PREVIEW_VERIFIER, MATRIX_VERIFIER_SCRIPT_PATH, type MatrixBrowserChallenge } from "../src/godaddy/matrix-browser-isolation.ts";
 
 const challenge = (): MatrixBrowserChallenge => ({ nonce: "1".repeat(32), expiresAt: Date.now() + 60000, verifierHash: MATRIX_VERIFIER_HASH,
-  paths: ["/assets", "/public/assets"].flatMap(prefix => ["crypto-store", "media-spool"].map(dir => `${prefix}/.personal-consultant-matrix-v1/${dir}/.private-path-check-${"2".repeat(32)}`))
+  paths: ["/assets", "/public/assets"].flatMap(prefix => ["crypto-store", "media-spool"].map(dir => `${prefix}/.personal-consultant-matrix-v1/${dir}/private-path-check-${"2".repeat(32)}`))
     .concat(["/.runtime/matrix/personal-consultant-matrix-sidecar", "/.runtime/matrix/personal-consultant-matrix-setup"]),
   canaries: [`matrix-private-path-canary:${"3".repeat(32)}`],
   positivePath: `/assets/matrix-isolation-positive-${"4".repeat(32)}.txt`, positiveBody: `matrix-isolation-positive:${"5".repeat(32)}` });

@@ -242,7 +242,7 @@ test("isolation proof resumes through the existing binding without touching cryp
     ok: true, checkedPaths: 12, credentialReadiness: "http_isolation_verified"
   });
   assert.equal(urls.filter((url) => url.endsWith("/crypto-store/device-binding.json")).length, 4);
-  assert.equal(urls.filter((url) => url.includes("/crypto-store/.private-path-check-")).length, 0);
+  assert.equal(urls.filter((url) => url.includes("/crypto-store/private-path-check-")).length, 0);
   const after = [await lstat(bindingPath), await lstat(cryptoPath)];
   for (let index = 0; index < before.length; index += 1) {
     assert.equal(after[index]!.ino, before[index]!.ino);
@@ -290,7 +290,7 @@ test("partial fresh provisioning is classified only from its private intent mark
     ok: true, checkedPaths: 12, credentialReadiness: "http_isolation_verified"
   });
   assert.equal(urls.filter((url) => url.endsWith("/crypto-store/provisioning-intent.json")).length, 4);
-  assert.equal(urls.some((url) => url.includes("/crypto-store/.private-path-check-")), false);
+  assert.equal(urls.some((url) => url.includes("/crypto-store/private-path-check-")), false);
   const after = [await lstat(intentPath), await lstat(cryptoPath)];
   for (let index = 0; index < before.length; index += 1) {
     assert.equal(after[index]!.ino, before[index]!.ino);
@@ -390,6 +390,8 @@ test("authenticated browser proof retains exact files, proves shared public moun
   let challenges = 0;
   const result = await verifyMatrixHttpIsolation(f.root, f.expected, anonymous, {}, async challenge => {
     challenges++;
+    assert.ok(challenge.paths.filter(path => path.includes("/crypto-store/") || path.includes("/media-spool/"))
+      .every(path => !path.split("/").at(-1)!.startsWith(".")));
     assert.equal((await readdir(f.store)).length, 1); assert.equal((await readdir(f.spool)).length, 1);
     return runMatrixBrowserChecks(challenge, async path => String(path) === challenge.positivePath
       ? new Response(new Uint8Array(await readFile(join(f.root, "public", challenge.positivePath))))
