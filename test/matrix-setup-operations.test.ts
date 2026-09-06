@@ -79,9 +79,33 @@ test("fresh initialization requires verified release and separate successful HTT
 });
 test("failed isolation never unlocks credential-bearing child execution", async () => {
   const { setup, calls } = fixture({ isolation: false });
-  assert.ok((await setup.action("prepare", {})).error);
+  assert.equal((await setup.action("prepare", {})).error, "matrix_http_isolation_failed");
   assert.equal((await setup.action("start_fresh", {})).error, "matrix_setup_not_prepared");
   assert.deepEqual(calls, ["prepare", "isolation"]);
+});
+test("a failed repeat preparation revokes the previous successful view and keeps exact isolation errors", async () => {
+  for (const code of ["matrix_http_isolation_failed", "matrix_http_isolation_cleanup_failed"] as const) {
+    let fail = false;
+    let spawns = 0;
+    const setup = createMatrixSetupOperations(env(), {
+      releasePin: { manifestSha256: "d".repeat(64), sourceCommit: "e".repeat(40) }, applicationRoot: root,
+      prepare: async () => ({ ok: true, value: inspection() }),
+      isolation: async () => fail ? { ok: false, code }
+        : { ok: true, checkedPaths: 12, credentialReadiness: "http_isolation_verified" },
+      spawn: () => { spawns += 1; throw new Error("must not spawn"); }
+    });
+    assert.equal((await setup.action("prepare", {})).state, "prepared");
+    fail = true;
+    const failed = await setup.action("prepare", {});
+    assert.deepEqual(failed, { state: "unprepared", error: code });
+    const html = matrixSetupDocument(failed, "synthetic-csrf");
+    assert.ok(!html.includes("перевірка HTTP-доступу пройдена"));
+    assert.ok(!html.includes('value="start_fresh"'));
+    assert.ok(html.includes(code));
+    assert.equal((await setup.action("start_fresh", {})).error, "matrix_setup_not_prepared");
+    assert.equal(spawns, 0);
+    await setup.close();
+  }
 });
 test("existing state cannot be freshly initialized; exact incomplete intent selects native recovery, bound state does not", async () => {
   for (const provisioning of ["bound", "incomplete"] as const) {

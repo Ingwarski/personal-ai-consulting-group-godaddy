@@ -18,6 +18,7 @@ const nativeSetupErrors = new Set(["configuration_invalid", "input_unavailable",
   "policy_not_ready", "self_verification_required", "setup_expired", "stale_comparison", "store_locked",
   "store_or_device_quarantined", "too_many_devices", "transport_or_store_unavailable", "transport_unavailable",
   "verification_already_active", "verification_peer_changed"]);
+const isolationErrors = new Set(["matrix_http_isolation_failed", "matrix_http_isolation_cleanup_failed"]);
 export const matrixSetupEnabled = (environment: Record<string, unknown>): boolean =>
   environment.RUNTIME_MODE === "production" && environment.GODADDY_STATE_DATABASE_ROLE === "published"
   && environment.MATRIX_SETUP_MODE === "provision";
@@ -44,6 +45,7 @@ export function createMatrixSetupOperations(environment: Record<string, unknown>
     if (action === "prepare") {
       if (process !== undefined) throw new Error("matrix_setup_busy");
       isolationConfirmed = false;
+      view = { state: "unprepared" };
       const prepared = await (dependencies.prepare ?? prepareMatrixRelease)(root, pin);
       if (!prepared.ok) throw new Error(prepared.code);
       const isolation = await (dependencies.isolation ?? verifyMatrixHttpIsolation)(root, pin);
@@ -101,7 +103,7 @@ export function createMatrixSetupOperations(environment: Record<string, unknown>
         const message = error instanceof Error ? error.message : "";
         // Only stable content-free codes; never child/library error details.
         const allowed = /^(?:matrix_(?:setup|release|configuration|store)_[a-z_]{1,48}|policy_not_ready|verification_[a-z_]{1,40}|isolation_[a-z_]{1,48})$/u;
-        view = { ...view, error: allowed.test(message) || nativeSetupErrors.has(message) ? message : "matrix_setup_failed" };
+        view = { ...view, error: allowed.test(message) || nativeSetupErrors.has(message) || isolationErrors.has(message) ? message : "matrix_setup_failed" };
         return view;
       } finally { busy = false; }
     },
