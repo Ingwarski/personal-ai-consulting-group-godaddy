@@ -16563,8 +16563,8 @@
       "planned_checkout_base_commit": "0f979067458ff369ce2118a8355f2db22289870a",
       "started_at": "2026-09-05T23:44:05.744Z",
       "receipt": {
-        "path": "forge/runs/U-04/critic-router-20260906/prototype-promotion.json",
-        "content_hash": "cda426e20ad950ea9a633d314672f187f885aa17236adacfb2c355a0f728a480"
+        "path": "forge/runs/U-04/owner-script-version-20260907/prototype-promotion.json",
+        "content_hash": "ad5a44edfe3c02231a7d188d917ab0116c27984f0a7ecf56ec5ada5fcb9a983a"
       },
       "provenance_status": "actual_git_diff_verified_full_fidelity_pending",
       "historical_limitation": "No historical promotion receipt exists. This run records only a new inspected adaptation; the planned Git comparison anchor is preserved, and prior destination origin is not retroactively certified.",

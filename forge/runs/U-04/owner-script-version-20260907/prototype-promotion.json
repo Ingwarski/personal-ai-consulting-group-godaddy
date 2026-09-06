@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "promotion_id": "owner-script-version-adaptation-20260907",
+  "unit_id": "U-04",
+  "run_id": "owner-script-version-20260907",
+  "development_plan_ref": "docs/development-plan.md",
+  "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
+  "baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+  "visual_target_hash": "07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6",
+  "candidate_id": "candidate-b",
+  "version": "v2",
+  "prototype_source_root": "forge/design/candidates/candidate-b/v2",
+  "prototype_tree_hash": "57d103c5ed17bcc9a9d95a58718f83c33b8257229fc825b756367321eaa33199",
+  "hash_algorithm": "sdd-render-sha256-v2",
+  "render_dependencies": [
+    "forge/design/candidate-sets/whatsapp-consultant/v1/shared/scenario-fixture.js",
+    "forge/design/candidate-sets/matrix-consultant/v2/shared/scenario-fixture.js"
+  ],
+  "path_mappings": [
+    {
+      "source": "forge/design/candidates/candidate-b/v2/index.html",
+      "destination": "src/settings/ui/template.ts",
+      "strategy": "adapt",
+      "source_hash": "07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6",
+      "destination_hash": "ee7ee3720c0e8c4f2c70616811475e50d892fbf203d4cf63392fa92398f5f0b5"
+    },
+    {
+      "source": "forge/design/candidates/candidate-b/v2/styles.css",
+      "destination": "src/settings/ui/styles.css",
+      "strategy": "adapt",
+      "source_hash": "e79543dfcc1cd297e4904caa2944a790d581499025353fffb913f30b4fed7cb8",
+      "destination_hash": "5cbaaec35017fb5466a6f98524266cfdcce8c9e77847f0c0fc3242dbcb6ac973"
+    },
+    {
+      "source": "forge/design/candidates/candidate-b/v2/app.js",
+      "destination": "src/settings/ui/controller.ts",
+      "strategy": "reimplement",
+      "source_hash": "5446f6a4a987b6d71cd6ddb4fa0a46c409d4c69c0a7083c31f043101ef9bcd95",
+      "destination_hash": "65da2c3939fe1f55e7bbbdf4fde60e0716bec822debd3c34c80325431ef98c27"
+    },
+    {
+      "source": "forge/design/candidates/candidate-b/v2/validate.mjs",
+      "destination": "test/settings-ui.test.ts",
+      "strategy": "reimplement",
+      "source_hash": "baeafb315ee1891885e00ef81561620b35b29ca27d55646b07012c9820920440",
+      "destination_hash": "373f446dd97645b9e33290fd44e114434c11e74fbdd74bd6c69a14f6a28cc4b2"
+    }
+  ],
+  "base_commit": "7d2e944f9500a6c38745ce39b414ffc3b946a37c",
+  "actual_checkout_base_commit": "0f979067458ff369ce2118a8355f2db22289870a",
+  "head_commit": "6856593db28ca9980a97ec7d18efd41dab369762",
+  "changed_paths": [
+    "src/settings/ui/controller.ts",
+    "src/settings/ui/styles.css",
+    "src/settings/ui/template.ts",
+    "test/settings-ui.test.ts"
+  ],
+  "patch_hash": "369f35065da6f363b5ab9bdaea3b3502e69c25d46f5700dea9b6f629fc264d9b",
+  "adaptations": [
+    "DB-D20: explicit Critic provider selector with independent model/effort and inactive preferences; existing approved palette and three groups retained.",
+    "Protected recovery, strict save/reset and immutable current/default/active distinction remain bound to the real Settings domain.",
+    "Renderer/controller/tests adapted within the declared source/destination map; frozen candidate bytes unchanged.",
+    "Content-addressed owner action script URL passed through the existing settings renderer; fixes retained Safari form.action handler without changing visible design or trust boundaries."
+  ],
+  "variances": [
+    "Original historical promotion origin is not certified; this receipt proves only actual compared Git bytes and this new adaptation.",
+    "Separate promotion index start was recorded during implementation; kickoff time is anchored to the immutable prompt receipt written before code edits, not a fabricated pre-edit promotion receipt.",
+    "27 Chromium fixture checks and inspected screenshots are partial UI evidence, not a full baseline, accessibility or representative-user fidelity pass.",
+    "Visual files below are preserved historical evidence for dd37e418bfec388215ef78c83958880f01128bec, not new screenshots or a new full-fidelity pass. This incremental script-URL-only change does not claim to close outstanding visual QA."
+  ],
+  "qa_ids": [
+    "QA-CRT-001",
+    "QA-CRT-004",
+    "QA-VIS-001",
+    "QA-VIS-002",
+    "QA-VIS-003",
+    "QA-WF-005"
+  ],
+  "visual_evidence": [
+    {
+      "kind": "visual",
+      "path": "output/playwright/critic-router-20260906/settings-1440.png",
+      "content_hash": "af2fcf87c67941f6e352561a0c86948d0e64e69b408a9605c61a4d591ae59a13"
+    },
+    {
+      "kind": "visual",
+      "path": "output/playwright/critic-router-20260906/settings-390.png",
+      "content_hash": "024828d94a41a070191d8a01391112f897397383f74aecdbbfaa01981f9d1b95"
+    },
+    {
+      "kind": "visual",
+      "path": "output/playwright/critic-router-20260906/missing-claude-390.png",
+      "content_hash": "bb9844e9c488d869b87a26dc90ef5e6515cdcb2c553ff1c36375bda970d8cfb7"
+    }
+  ],
+  "verification_status": "blocked",
+  "provenance_status": "actual_git_diff_verified_full_fidelity_pending",
+  "completed_at": "2026-09-06T23:24:16.397Z",
+  "supersedes": {
+    "path": "forge/runs/U-04/critic-router-20260906/prototype-promotion.json",
+    "content_hash": "cda426e20ad950ea9a633d314672f187f885aa17236adacfb2c355a0f728a480",
+    "head_commit": "dd37e418bfec388215ef78c83958880f01128bec"
+  },
+  "incremental_adaptation": {
+    "base_commit": "396e47d24b83aceac4c1fc3d40cf991f1ad19113",
+    "head_commit": "6856593db28ca9980a97ec7d18efd41dab369762",
+    "changed_paths": [
+      "src/settings/ui/template.ts"
+    ],
+    "patch_hash": "e7ddea15a13b44f97e686176695236eeac62e26b8ef884958a3bd2fe71a521ec",
+    "evidence": "750 local tests passed, including cached legacy handler regression. Visual layout markup/styles unchanged; only validated script URL configuration added."
+  }
+}
