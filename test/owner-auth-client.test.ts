@@ -1,46 +1,51 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { runInNewContext } from "node:vm";
-import { ownerAuthClientJavaScript } from "../src/godaddy/owner-auth-client.ts";
+import { browser, Form } from "./fixtures/owner-action-browser.ts";
 
-class Form {
-  action: string;
-  token = "local-purpose-token";
-  dataset: Record<string, string> = {};
-  button = { disabled: false };
-  attributes = new Map<string, string>();
-  constructor(action: string) { this.action = action; }
-  hasAttribute(name: string) { return name === "data-owner-action"; }
-  setAttribute(name: string, value: string) { this.attributes.set(name, value); }
-  removeAttribute(name: string) { this.attributes.delete(name); }
-  querySelectorAll() { return [this.button]; }
-}
+test("catalog actions submit the selected provider unchanged, including the legacy Codex-default URL", async () => {
+  for (const query of ["?provider=codex", "?provider=claude_code", ""]) {
+    const path = "/operations/runtime/catalog" + query;
+    const seen: { path: string; init: RequestInit }[] = [];
+    const app = browser(async (actual, init) => {
+      seen.push({ path: actual, init });
+      return new Response("<main><h1>Updated</h1></main>", { headers: { "content-type": "text/html" } });
+    });
+    await app.submit(new Form(path));
+    assert.equal(seen.length, 1, path);
+    assert.equal(seen[0]?.path, path, "must not silently drop Claude and dispatch the default Codex route");
+    assert.equal(String(seen[0]?.init.body), "formToken=local-purpose-token");
+    assert.equal(seen[0]?.init.credentials, "same-origin");
+    assert.equal(seen[0]?.init.redirect, "error");
+    assert.equal(app.state().replaced, true);
+    assert.equal(app.state().headingFocused, true);
+  }
+});
 
-function browser(fetcher: (path: string, init: RequestInit) => Promise<Response>) {
-  let submit!: (event: { target: Form; preventDefault: () => void }) => Promise<void>;
-  let destination: string | undefined;
-  let statusFocused = false;
-  let headingFocused = false;
-  let replaced = false;
-  const output = { textContent: "", focus: () => { statusFocused = true; } };
-  const main = { replaceWith: () => { replaced = true; } };
-  const next = { querySelector: () => ({ setAttribute: () => {}, focus: () => { headingFocused = true; } }) };
-  runInNewContext(ownerAuthClientJavaScript, {
-    URL, URLSearchParams, HTMLFormElement: Form,
-    FormData: class { form: Form; constructor(form: Form) { this.form = form; } get() { return this.form.token; } },
-    DOMParser: class { parseFromString() { return { querySelector: () => next }; } },
-    document: {
-      addEventListener: (_name: string, listener: typeof submit) => { submit = listener; },
-      querySelector: (selector: string) => selector === "main" ? main : output
-    },
-    location: { href: "https://settings.example.test/auth/sign-in", origin: "https://settings.example.test", assign: (url: string) => { destination = url; } },
-    fetch: fetcher
-  });
-  return {
-    submit: (form: Form) => submit({ target: form, preventDefault: () => {} }),
-    state: () => ({ destination, message: output.textContent, statusFocused, headingFocused, replaced })
-  };
-}
+test("invalid catalog actions fail closed with visible feedback, not a silent ignored click", async () => {
+  let calls = 0;
+  const app = browser(async () => { calls++; return new Response(); });
+  for (const action of [
+    "/operations/runtime/catalog?provider=other",
+    "/operations/runtime/catalog?provider=",
+    "/operations/runtime/catalog?provider=codex&provider=claude_code",
+    "/operations/runtime/catalog?provider=codex&provider=codex",
+    "/operations/runtime/catalog?provider=codex&next=elsewhere",
+    "/operations/runtime/catalog?next=elsewhere",
+    "/operations/runtime/catalog?provider=claude_code#fragment",
+    "/operations/runtime/codex?provider=codex",
+    "/auth/google/start?provider=codex",
+    "https://attacker.test/operations/runtime/catalog?provider=codex",
+    "https://user:pass@settings.example.test/operations/runtime/catalog?provider=codex"
+  ]) {
+    const form = new Form(action);
+    await app.submit(form);
+    assert.equal(calls, 0, action);
+    assert.equal(app.state().statusFocused, true);
+    assert.ok(app.state().message);
+    assert.doesNotMatch(app.state().message, /attacker|user:pass/u);
+    assert.equal(form.button.disabled, false);
+  }
+});
 
 test("explicit Google action uses cors with no-referrer, credentials and no automatic redirects, then navigates this tab", async () => {
   const seen: { path: string; init: RequestInit }[] = [];

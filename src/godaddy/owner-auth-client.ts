@@ -20,7 +20,15 @@ export const ownerAuthClientJavaScript = String.raw`(() => {
     event.preventDefault();
     if (form.dataset.pending === "true") return;
     const action = new URL(form.action, location.href);
-    if (action.origin !== location.origin || !actions.has(action.pathname) || action.search || action.hash) return;
+    const parameters = Array.from(action.searchParams.entries());
+    const catalogProviderQuery = action.pathname === "/operations/runtime/catalog"
+      && parameters.length === 1 && parameters[0][0] === "provider"
+      && ["codex", "claude_code"].includes(parameters[0][1]);
+    if (action.origin !== location.origin || action.username || action.password
+      || !actions.has(action.pathname) || (action.search && !catalogProviderQuery) || action.hash) {
+      showError("Дію не виконано: адреса запиту недійсна. Оновіть сторінку й повторіть дію.");
+      return;
+    }
     const token = new FormData(form).get("formToken");
     if (typeof token !== "string" || !token) return;
     form.dataset.pending = "true";
@@ -28,7 +36,7 @@ export const ownerAuthClientJavaScript = String.raw`(() => {
     const buttons = Array.from(form.querySelectorAll("button"));
     for (const button of buttons) button.disabled = true;
     try {
-      const response = await fetch(action.pathname, {
+      const response = await fetch(action.pathname + action.search, {
         method: "POST", mode: "cors", credentials: "same-origin",
         redirect: "error", cache: "no-store", referrerPolicy: "no-referrer",
         headers: { "content-type": "application/x-www-form-urlencoded" },

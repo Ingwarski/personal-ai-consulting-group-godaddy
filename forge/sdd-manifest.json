@@ -16558,6 +16558,17 @@
     }
   ],
   "implementation": {
+    "catalog_button_repair": {
+      "run_id": "catalog-button-fix-20260906",
+      "path": "forge/runs/U-04/catalog-button-fix-20260906/verification.json",
+      "content_hash": "9639ef637287d9369e0b95038e47cd9500f25c908c7562c0b1424e5469845391",
+      "observed_at": "2026-09-06T11:15:44.160Z",
+      "result": "passed_local_regression_pending_publication",
+      "tests": "600/600",
+      "browser": "Two real local browser clicks; no external providers",
+      "deployment": "not_performed",
+      "scope": "Existing U-04/U-07 catalog action contract regression; prior receipts preserved, no new Unit or release acceptance."
+    },
     "status": "critic_router_local_verified_pending_live_evidence",
     "owner_invocation_id": "implementation-critic-router-20260906-01",
     "completed_local_contracts": [],

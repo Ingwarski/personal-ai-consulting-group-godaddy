@@ -1,0 +1,82 @@
+{
+  "run_id": "catalog-button-fix-20260906",
+  "observed_at": "2026-09-06T11:15:44.160Z",
+  "scope": "Repair the existing Critic router catalog buttons; no product/design/provider contract expansion.",
+  "user_report": "button Оновити каталог Codex doesn't do anything.",
+  "authorization": "Scoped regression repair within implementation-critic-router-20260906-01; current plan/baseline unchanged.",
+  "baseline_commit": "f71b2860d6820793908f9398b14cfe9cc25df4c7",
+  "finding": {
+    "severity": "P1",
+    "release_effect": "blocking_catalog_refresh",
+    "cause": "Both provider-specific form actions contain a query, but the browser handler rejected every query before fetch. Its fetch also discarded the query, which would silently choose Codex for Claude if only the guard were removed.",
+    "prior_evidence_gap": "HTTP tests bypassed the browser handler; Settings fixture checks did not submit runtime catalog forms."
+  },
+  "fix": [
+    "Allow a single provider=codex or provider=claude_code query only on /operations/runtime/catalog; preserve legacy no-query route.",
+    "Send the validated path and query unchanged.",
+    "Continue rejecting external origins, URL credentials, fragments, unknown or duplicate parameters; show bounded error feedback on rejected actions."
+  ],
+  "evaluated_source_hashes": {
+    "src/godaddy/owner-auth-client.ts": "35b80f39ef863fb9fa075d8b9085dd75652ef5fa39eeab39108e202b94becfa5",
+    "test/owner-auth-client.test.ts": "a32c9bbb20dc04fe15ebf13ce106c3a06137cd151e1f02101accee3b05ba7fbd",
+    "test/godaddy-settings-runtime.test.ts": "d30bc1e96f9272fb62edf3abd98e72107b2385e0adf5041a2aa5ce3ab6c7e79f",
+    "test/fixtures/owner-action-browser.ts": "fecb722329eb28af1a7be961b1f074b7ea18fe3b1c215cebfc960ac5a05796b9",
+    "test/fixtures/catalog-action-server.mts": "062bf2358b6cfa0e3a3d8dd1ac3f3880f5a8885d46b006aa18d20064567dc5b4"
+  },
+  "verification": {
+    "before_fix": {
+      "command": "node --experimental-strip-types --test test/owner-auth-client.test.ts test/godaddy-settings-runtime.test.ts",
+      "tests": 27,
+      "passed": 24,
+      "failed": 3,
+      "observation": "New regression tests reproduce zero outgoing requests and missing validation feedback."
+    },
+    "after_fix_targeted": {
+      "tests": 27,
+      "passed": 27,
+      "failed": 0,
+      "scope": "Executed shipped JS with minimal DOM harness; includes real rendered forms, served JS, owner grant/CSRF and protected handler with fake Google/provider/DB."
+    },
+    "full": {
+      "command": "npm run check",
+      "node": "22.23.2",
+      "platform": "Darwin arm64",
+      "tests": 600,
+      "passed": 600,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "build": "passed",
+      "typecheck": "passed",
+      "environment": "passed",
+      "diff_check": "passed"
+    },
+    "browser": {
+      "executor": "Codex CUA",
+      "browser": "Codex in-app browser",
+      "url": "http://127.0.0.1:4322/",
+      "fixture": "test/fixtures/catalog-action-server.mts",
+      "observations": [
+        "Initial state: Codex requests 0; Claude requests 0.",
+        "Clicked Оновити каталог Codex: success text for codex; Codex requests 1; Claude requests 0; heading focused.",
+        "Clicked Claude button in replaced main: success text for claude_code; Codex requests 1; Claude requests 1; heading focused."
+      ],
+      "scope": "Real browser, shipped handler, fixture forms and simulated catalog responses. No real auth, DB or provider calls. Not full UI, accessibility, user study or release verification.",
+      "cleanup": "Owned test tab and loopback fixture server closed."
+    },
+    "published_before_repair": {
+      "url": "https://wy2v0putg6.c35.airoapp.ai/assets/owner-auth.js",
+      "sha256": "578b50489b0ac88f52c630ccd3ac14998bd631c64535649e8889ea57cb8dce2a",
+      "blanket_query_rejection": true,
+      "preserves_provider_query": false,
+      "scope": "Read-only public script observation; no authenticated catalog refresh or deployment."
+    }
+  },
+  "result": "passed_local_regression_pending_publication",
+  "deployment": "not_performed",
+  "live_provider_calls": "not_performed",
+  "credential_changes": "not_performed",
+  "unit_completion": "not_claimed",
+  "release_readiness": "not_evaluated"
+}
+

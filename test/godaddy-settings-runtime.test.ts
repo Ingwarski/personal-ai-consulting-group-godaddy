@@ -9,6 +9,7 @@ import type { RuntimeBootstrap } from "../src/godaddy/runtime-bootstrap.ts";
 import type { RuntimeCapabilityCatalogResult } from "../src/runtime/capability-catalog.ts";
 import { activeNow, createCapabilityReceipt } from "./fixtures/capability-receipt.ts";
 import { OwnerAuthPool } from "./fixtures/owner-auth-pool.ts";
+import { browser, Form } from "./fixtures/owner-action-browser.ts";
 
 const origin = "https://settings.example.test";
 const configuredEnvironment = Object.freeze({
@@ -150,6 +151,41 @@ test("provider-specific catalog actions preserve Google auth and dispatch only t
   const page = await runtime.handle(request("/operations/runtime", jar));
   const token = formToken(await page!.text(), "/operations/runtime/catalog?provider=codex");
   assert.equal((await runtime.handle(actionRequest("/operations/runtime/catalog?provider=other", token, jar)))?.status, 400);
+  assert.deepEqual(calls, ["codex", "claude_code"]);
+});
+
+test("served catalog forms pass through the served browser script to the exact protected provider route", async () => {
+  const calls: string[] = [];
+  const { runtime } = fixture({ runtime: bootstrap({ refreshCatalog: async (selected) => {
+    calls.push(selected!); return { ok: true, receipt: createCapabilityReceipt() };
+  } }) });
+  const { jar } = await login(runtime);
+  const script = await runtime.handle(request("/assets/owner-auth.js", jar));
+  assert.equal(script?.status, 200);
+  const client = await script!.text();
+  for (const selected of ["codex", "claude_code"] as const) {
+    const page = await runtime.handle(request("/operations/runtime", jar));
+    const html = await page!.text();
+    const path = `/operations/runtime/catalog?provider=${selected}`;
+    assert.ok(html.includes(`action="${path}"`));
+    const form = new Form(path);
+    form.token = formToken(html, path);
+    const requests: string[] = [];
+    const app = browser(async (actual, init) => {
+      requests.push(actual);
+      const headers = new Headers(init.headers);
+      headers.set("origin", origin);
+      headers.set("sec-fetch-site", "same-origin");
+      const response = await runtime.handle(request(actual, jar, { ...init, headers }));
+      assert.equal(response?.status, 200);
+      assert.match(await response!.clone().text(), /Каталог можливостей оновлено/u);
+      return response!;
+    }, client);
+    await app.submit(form);
+    assert.deepEqual(requests, [path]);
+    assert.equal(app.state().replaced, true);
+    assert.equal(app.state().headingFocused, true);
+  }
   assert.deepEqual(calls, ["codex", "claude_code"]);
 });
 
