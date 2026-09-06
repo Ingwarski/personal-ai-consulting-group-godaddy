@@ -177,6 +177,23 @@ impl MatrixClient {
         Ok(())
     }
 
+    /// Validate the exact production policy after setup-only synchronization.
+    /// Unlike normal ingress synchronization, this deliberately never advances
+    /// the durable application cursor: setup must not consume user messages.
+    pub async fn validate_setup_policy(&self) -> Result<(), TransportError> {
+        let _guard = self.sdk_send_barrier.lock().await;
+        tokio::time::timeout(
+            Duration::from_secs(15),
+            self.inner
+                .sync_once(SyncSettings::new().timeout(Duration::ZERO)),
+        )
+        .await
+        .map_err(|_| TransportError::TransportFailed)?
+        .map_err(|_| TransportError::TransportFailed)?;
+        self.last_sync_ms.store(now_ms(), Ordering::Release);
+        self.revalidate_current_guarded().await
+    }
+
     pub fn is_ready(&self) -> bool {
         self.sync_ready.load(Ordering::Acquire)
             && now_ms().saturating_sub(self.last_sync_ms.load(Ordering::Acquire)) <= 60_000

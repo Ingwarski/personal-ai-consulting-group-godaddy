@@ -1,0 +1,22 @@
+{
+  "event": "scoped_production_setup_authorization",
+  "role": "user",
+  "original_message": "go",
+  "question_answered": "May I perform this setup while preserving existing messages and sessions? Any new secrets would be entered directly into GoDaddy—not this chat.",
+  "source": "active Codex conversation; retained context identifies the immediately preceding numbered setup scope",
+  "original_transport_message_id": null,
+  "original_transport_received_at": null,
+  "recorded_at": "2026-09-06T19:36:13Z",
+  "provenance_limit": "Recording time is not asserted to be the original message receipt time. No unavailable transport identifier is invented.",
+  "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
+  "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+  "scope": [
+    "Build and install the production Rust component on the existing GoDaddy application.",
+    "Reuse the existing Matrix bot account and room; correct history visibility to joined and verify a dedicated bot device.",
+    "Add Published-only configuration, publish the scoped changes and run one harmless consultation test.",
+    "Implement missing setup-only verification and immutable release packaging needed for those steps."
+  ],
+  "preserve": ["Existing messages and sessions", "Existing Matrix accounts, room and encryption state", "Stateless Preview", "Other repositories, domains and database schemas"],
+  "excluded": ["Reset, delete or replace existing crypto state", "Paid services or local production runtimes", "Automatic trust/SAS confirmation", "Product V1 release or unrun QA pass claims"],
+  "jit_handoffs": ["User enters new authentication credentials outside chat", "User compares and confirms exact device verification codes"]
+}

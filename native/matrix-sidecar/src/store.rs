@@ -73,6 +73,16 @@ fn private_client_builder() -> matrix_sdk::ClientBuilder {
 }
 
 pub async fn open(config: &Config) -> Result<OpenStore, StoreError> {
+    open_internal(config, false).await
+}
+
+/// Setup must establish that the supplied token owns the configured device and
+/// may never replace encryption keys belonging to an existing Element session.
+pub async fn open_for_setup(config: &Config) -> Result<OpenStore, StoreError> {
+    open_internal(config, true).await
+}
+
+async fn open_internal(config: &Config, setup_preflight: bool) -> Result<OpenStore, StoreError> {
     if !config.store_root.exists() {
         return Err(StoreError::Quarantined);
     }
@@ -80,6 +90,9 @@ pub async fn open(config: &Config) -> Result<OpenStore, StoreError> {
         LockError::Contended => StoreError::LockContended,
         LockError::UnsafeRoot | LockError::Io => StoreError::Quarantined,
     })?;
+    if setup_preflight {
+        crate::setup::verify_session_binding(config).await?;
+    }
     let scenario = validate_scenario(config)?;
     if scenario.fresh {
         let bootstrap_state =

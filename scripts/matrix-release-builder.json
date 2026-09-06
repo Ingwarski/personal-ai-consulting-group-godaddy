@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "image": "docker.io/library/rust:1.93.0-alpine3.23@sha256:6f37c2b56fde862a67116c4bddbb6014c0a758b24944f8650c8ff8c735f96f06",
+  "imageConfigDigest": "sha256:6336bf7b311135c893a4a930b0920892b5e596ccdc374777290fa91bb59ae818",
+  "platform": "linux/amd64",
+  "rustToolchain": "1.93.0-x86_64-unknown-linux-musl",
+  "target": "x86_64-unknown-linux-musl",
+  "nodeVersion": "22.23.2",
+  "binaryName": "personal-consultant-matrix-sidecar",
+  "setupBinaryName": "personal-consultant-matrix-setup",
+  "sidecarVersion": "0.1.0",
+  "protocolVersion": 1,
+  "systemHeaders": {
+    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.23/main/x86_64/linux-headers-6.16.12-r0.apk",
+    "sha256": "fc83eea0ee6c438b6ca5fd5ee67a64728a6f23580584b19c522fcbff550af80b",
+    "sizeBytes": 1706807,
+    "regularHeaderFiles": 987,
+    "licenseExpression": "GPL-2.0-only",
+    "purpose": "Pinned read-only Linux UAPI header overlay required by locked aws-lc-sys. No package manager runs and no image or compiler is modified."
+  },
+  "upstreamDockerfile": "https://github.com/rust-lang/docker-rust/blob/37d9b1d21b5332c4ca4013bb492e18f68971594c/stable/alpine3.23/Dockerfile",
+  "registryVerifiedOn": "2026-09-06",
+  "registryVerification": "The amd64 manifest bytes were SHA-256 checked against the digest; its config pins Rust 1.93.0, gcc and musl-dev. Build steps may not install OS packages or toolchains. The separately hash-pinned UAPI header input is acquired before compilation and mounted read-only."
+}

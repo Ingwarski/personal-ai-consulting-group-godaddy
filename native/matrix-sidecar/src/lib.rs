@@ -7,6 +7,7 @@ pub mod lock;
 pub mod media_spool;
 pub mod protocol;
 pub mod room_policy;
+pub mod setup;
 pub mod state;
 pub mod store;
 pub mod sync_checkpoint;
