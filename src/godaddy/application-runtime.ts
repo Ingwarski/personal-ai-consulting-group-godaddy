@@ -4,6 +4,7 @@ import { createMatrixConsultationService, type MatrixConsultationService } from 
 import { createConsultationLeadership } from "./consultation-leadership.ts";
 import { createMySqlMatrixConsultationMediaStore, type MatrixConsultationMediaStore } from "./matrix-consultation-media.ts";
 import { createConsultationMediaAdapter } from "./consultation-media-adapter.ts";
+import { matrixSetupEnabled } from "./matrix-setup-operations.ts";
 import { parseRuntimeEnvironment } from "../runtime/environment.ts";
 import {
   createGoDaddyMatrixService,
@@ -181,7 +182,11 @@ export function createGoDaddyApplicationRuntime(
   const configured = settings.configured && createdMatrixService.configured;
 
   const start = (): Promise<void> => {
-    if (stopping || !createdMatrixService.configured) return Promise.resolve();
+    // Explicit Published provisioning mode never starts transport/consultation
+    // workers against a device whose trust is still being established.
+    if (stopping || matrixSetupEnabled(environment)
+      || (environment.MATRIX_SETUP_MODE !== undefined && environment.MATRIX_SETUP_MODE !== "disabled")
+      || !createdMatrixService.configured) return Promise.resolve();
     startPromise ??= (async () => {
       await createdMatrixService.start();
       await consultationService?.start();

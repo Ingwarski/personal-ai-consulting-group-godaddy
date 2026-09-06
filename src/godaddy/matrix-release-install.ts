@@ -1,0 +1,475 @@
+import { createHash, randomBytes } from "node:crypto";
+import { constants, type Stats } from "node:fs";
+import { link, lstat, mkdir, open, readdir, realpath, unlink, type FileHandle } from "node:fs/promises";
+import { dirname, isAbsolute, join, resolve } from "node:path";
+
+const SIDECAR = "personal-consultant-matrix-sidecar";
+const SETUP = "personal-consultant-matrix-setup";
+const SHA256 = /^[a-f0-9]{64}$/u;
+const COMMIT = /^[a-f0-9]{40}$/u;
+const MAX_BINARY_BYTES = 256 * 1024 * 1024;
+const MAX_MANIFEST_BYTES = 1024 * 1024;
+
+/** This pin must come from reviewed, committed release metadata, never a request or environment override. */
+export type MatrixReleaseExpectation = Readonly<{
+  manifestSha256: string;
+  sourceCommit: string;
+}>;
+
+export type MatrixReleaseOptions = Readonly<{ expectedOwnerUid?: number }>;
+
+export type MatrixReleaseInspection = Readonly<{
+  sidecarPath: string;
+  setupPath: string;
+  sidecarSha256: string;
+  setupSha256: string;
+  storeDir: string;
+  mediaSpoolDir: string;
+  storeState: "empty" | "contains_state";
+  // Marker metadata is a routing hint only; Rust validates its exact contents and recovery scenario.
+  storeProvisioning: "empty" | "bound" | "incomplete";
+  mediaSpoolState: "empty" | "contains_state";
+  // Local filesystem checks are not proof that GoDaddy refuses public HTTP access.
+  credentialReadiness: "requires_http_isolation";
+}>;
+
+export type MatrixReleaseResult =
+  | Readonly<{ ok: true; value: MatrixReleaseInspection }>
+  | Readonly<{ ok: false; code: MatrixReleaseErrorCode }>;
+
+type MatrixReleaseErrorCode =
+  | "matrix_release_invalid"
+  | "matrix_release_unavailable"
+  | "matrix_release_unsafe_path"
+  | "matrix_release_checksum_mismatch"
+  | "matrix_release_unrecognized_state"
+  | "matrix_release_conflict";
+
+class ReleaseFailure extends Error {
+  readonly code: MatrixReleaseErrorCode;
+  constructor(code: MatrixReleaseErrorCode) { super(code); this.code = code; }
+}
+
+type BinaryEntry = Readonly<{ sha256: string; size: number }>;
+type VerifiedRelease = Readonly<{ sidecar: BinaryEntry; setup: BinaryEntry }>;
+type Layout = Readonly<{
+  applicationRoot: string;
+  bundleDir: string;
+  runtimeRoot: string;
+  runtimeDir: string;
+  persistentRoot: string;
+  storeDir: string;
+  mediaSpoolDir: string;
+}>;
+
+function layout(applicationRoot: string): Layout {
+  if (!isAbsolute(applicationRoot) || resolve(applicationRoot) !== applicationRoot || applicationRoot === "/") {
+    throw new ReleaseFailure("matrix_release_invalid");
+  }
+  const persistentRoot = join(applicationRoot, "public", "assets", ".personal-consultant-matrix-v1");
+  return {
+    applicationRoot,
+    bundleDir: join(applicationRoot, ".runtime-release", "matrix"),
+    runtimeRoot: join(applicationRoot, ".runtime"),
+    runtimeDir: join(applicationRoot, ".runtime", "matrix"),
+    persistentRoot,
+    storeDir: join(persistentRoot, "crypto-store"),
+    mediaSpoolDir: join(persistentRoot, "media-spool")
+  };
+}
+
+function currentUid(options: MatrixReleaseOptions): number {
+  const uid = options.expectedOwnerUid ?? (typeof process.getuid === "function" ? process.getuid() : -1);
+  if (!Number.isSafeInteger(uid) || uid < 0) throw new ReleaseFailure("matrix_release_invalid");
+  return uid;
+}
+
+function identity(left: Stats, right: Stats): boolean {
+  return left.dev === right.dev && left.ino === right.ino && left.uid === right.uid && left.mode === right.mode;
+}
+
+function sameFile(left: Stats, right: Stats): boolean {
+  return identity(left, right) && left.size === right.size && left.nlink === right.nlink
+    && left.mtimeMs === right.mtimeMs && left.ctimeMs === right.ctimeMs;
+}
+
+async function directory(path: string, uid: number, privateMode: boolean): Promise<Stats> {
+  const stat = await lstat(path);
+  if (!stat.isDirectory() || stat.isSymbolicLink() || stat.uid !== uid || (stat.mode & 0o7000) !== 0
+    || (stat.mode & 0o022) !== 0 || (privateMode && (stat.mode & 0o777) !== 0o700)
+    || await realpath(path) !== path) throw new ReleaseFailure("matrix_release_unsafe_path");
+  return stat;
+}
+
+async function missing(path: string): Promise<boolean> {
+  try { await lstat(path); return false; }
+  catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return true;
+    throw error;
+  }
+}
+
+async function dedicatedDirectory(path: string, uid: number, create: boolean): Promise<void> {
+  const parent = await directory(dirname(path), uid, false);
+  if (await missing(path)) {
+    if (!create) throw new ReleaseFailure("matrix_release_unavailable");
+    try { await mkdir(path, { mode: 0o700 }); }
+    catch (error) { if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error; }
+  }
+  // Existing permissions are never "repaired" by broad chmod/chown.
+  await directory(path, uid, true);
+  if (!identity(parent, await directory(dirname(path), uid, false))) {
+    throw new ReleaseFailure("matrix_release_unsafe_path");
+  }
+}
+
+async function boundedFile(path: string, uid: number, limit: number, installed: boolean): Promise<Buffer> {
+  const before = await lstat(path);
+  const acceptableMode = installed
+    ? [0o500, 0o700].includes(before.mode & 0o777)
+    : (before.mode & 0o022) === 0;
+  if (!before.isFile() || before.isSymbolicLink() || before.uid !== uid || before.nlink !== 1
+    || !acceptableMode || (before.mode & 0o7000) !== 0 || before.size < 1 || before.size > limit
+    || await realpath(path) !== path) throw new ReleaseFailure("matrix_release_unsafe_path");
+  const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+  try {
+    const opened = await handle.stat();
+    if (!sameFile(before, opened)) throw new ReleaseFailure("matrix_release_unsafe_path");
+    const bytes = Buffer.alloc(opened.size + 1);
+    let offset = 0;
+    while (offset < bytes.length) {
+      const { bytesRead } = await handle.read(bytes, offset, bytes.length - offset, offset);
+      if (bytesRead === 0) break;
+      offset += bytesRead;
+    }
+    if (offset !== opened.size || !sameFile(opened, await handle.stat()) || !sameFile(opened, await lstat(path))) {
+      throw new ReleaseFailure("matrix_release_unsafe_path");
+    }
+    return bytes.subarray(0, offset);
+  } finally { await handle.close(); }
+}
+
+function digest(bytes: Buffer): string { return createHash("sha256").update(bytes).digest("hex"); }
+
+function record(value: unknown): Record<string, unknown> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) throw new ReleaseFailure("matrix_release_invalid");
+  return value as Record<string, unknown>;
+}
+
+function binaryEntry(value: unknown): BinaryEntry {
+  const entry = record(value);
+  if (typeof entry.sha256 !== "string" || !SHA256.test(entry.sha256)
+    || typeof entry.sizeBytes !== "number" || !Number.isSafeInteger(entry.sizeBytes) || entry.sizeBytes < 1 || entry.sizeBytes > MAX_BINARY_BYTES) {
+    throw new ReleaseFailure("matrix_release_invalid");
+  }
+  return { sha256: entry.sha256, size: entry.sizeBytes };
+}
+
+async function release(layout: Layout, expected: MatrixReleaseExpectation, uid: number): Promise<VerifiedRelease> {
+  if (!SHA256.test(expected.manifestSha256) || !COMMIT.test(expected.sourceCommit)) {
+    throw new ReleaseFailure("matrix_release_invalid");
+  }
+  await directory(layout.applicationRoot, uid, false);
+  await directory(dirname(layout.bundleDir), uid, false);
+  await directory(layout.bundleDir, uid, false);
+  const bytes = await boundedFile(join(layout.bundleDir, "release-manifest.json"), uid, MAX_MANIFEST_BYTES, false);
+  if (digest(bytes) !== expected.manifestSha256) throw new ReleaseFailure("matrix_release_checksum_mismatch");
+  let manifest: Record<string, unknown>;
+  try { manifest = record(JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes))); }
+  catch { throw new ReleaseFailure("matrix_release_invalid"); }
+  const builder = record(manifest.builder);
+  if (manifest.schemaVersion !== 1 || manifest.kind !== "matrix-production-release"
+    || manifest.protocolVersion !== 1 || manifest.sidecarVersion !== "0.1.0" || manifest.sourceCommit !== expected.sourceCommit
+    || typeof builder.image !== "string" || !/@sha256:[a-f0-9]{64}$/u.test(builder.image)
+    || typeof builder.imageConfigDigest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(builder.imageConfigDigest)
+    || builder.platform !== "linux/amd64" || builder.target !== "x86_64-unknown-linux-musl"
+    || builder.rustToolchain !== "1.93.0-x86_64-unknown-linux-musl"
+    || !Array.isArray(manifest.artifacts) || manifest.artifacts.length < 3 || manifest.artifacts.length > 64) {
+    throw new ReleaseFailure("matrix_release_invalid");
+  }
+  const names = new Set<string>();
+  let sidecar: BinaryEntry | undefined;
+  let setup: BinaryEntry | undefined;
+  let evidenceCount = 0;
+  for (const value of manifest.artifacts) {
+    const artifact = record(value);
+    if (typeof artifact.path !== "string" || !/^[A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*$/u.test(artifact.path)
+      || artifact.path.split("/").some((part) => part === "." || part === "..") || names.has(artifact.path)) {
+      throw new ReleaseFailure("matrix_release_invalid");
+    }
+    names.add(artifact.path);
+    const entry = binaryEntry(artifact);
+    if (artifact.role === "sidecar" && artifact.path === SIDECAR && sidecar === undefined) sidecar = entry;
+    else if (artifact.role === "setup" && artifact.path === SETUP && setup === undefined) setup = entry;
+    else if (artifact.role === "evidence" && artifact.path !== SIDECAR && artifact.path !== SETUP) {
+      evidenceCount += 1;
+      // Retain complete source-bound release evidence, not just a relabelled executable.
+      await verifiedBinary(join(layout.bundleDir, artifact.path), entry, uid, false);
+    } else throw new ReleaseFailure("matrix_release_invalid");
+  }
+  if (sidecar === undefined || setup === undefined || evidenceCount === 0) throw new ReleaseFailure("matrix_release_invalid");
+  return { sidecar, setup };
+}
+
+async function verifiedBinary(path: string, entry: BinaryEntry, uid: number, installed: boolean): Promise<Buffer> {
+  const bytes = await boundedFile(path, uid, MAX_BINARY_BYTES, installed);
+  if (bytes.length !== entry.size || digest(bytes) !== entry.sha256) {
+    throw new ReleaseFailure("matrix_release_checksum_mismatch");
+  }
+  return bytes;
+}
+
+async function installBinary(path: string, bytes: Buffer, entry: BinaryEntry, uid: number): Promise<void> {
+  if (!await missing(path)) {
+    try { await verifiedBinary(path, entry, uid, true); }
+    catch (error) {
+      if (error instanceof ReleaseFailure && error.code === "matrix_release_checksum_mismatch") {
+        throw new ReleaseFailure("matrix_release_conflict");
+      }
+      throw error;
+    }
+    return;
+  }
+  const parentPath = dirname(path);
+  const parent = await directory(parentPath, uid, true);
+  const temporary = join(parentPath, `.install-${Buffer.from(randomBytes(16)).toString("hex")}`);
+  const handle = await open(temporary, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
+  try {
+    await handle.writeFile(bytes);
+    await handle.chmod(0o500);
+    await handle.sync();
+    const created = await handle.stat();
+    if (!identity(parent, await directory(parentPath, uid, true)) || !sameFile(created, await lstat(temporary))) {
+      throw new ReleaseFailure("matrix_release_unsafe_path");
+    }
+    // link is atomic and fails if a live/previous installation appeared. rename would overwrite it.
+    try { await link(temporary, path); }
+    catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+      throw new ReleaseFailure("matrix_release_conflict");
+    }
+  } finally {
+    const owned = await handle.stat().catch(() => undefined);
+    await handle.close();
+    // Remove only this operation's temporary inode; never remove an installed binary or state.
+    const now = await lstat(temporary).catch(() => undefined);
+    if (owned !== undefined && now !== undefined && identity(owned, now)) await unlink(temporary);
+  }
+  await verifiedBinary(path, entry, uid, true);
+}
+
+async function privateState(path: string, uid: number): Promise<"empty" | "contains_state"> {
+  const root = await directory(path, uid, true);
+  const names = await readdir(path);
+  const queue = names.map((name) => ({ path: join(path, name), depth: 0 }));
+  let seen = 0;
+  while (queue.length > 0) {
+    const next = queue.pop();
+    if (next === undefined) break;
+    if (++seen > 4096 || next.depth > 32) throw new ReleaseFailure("matrix_release_unsafe_path");
+    const stat = await lstat(next.path);
+    if (stat.uid !== uid || stat.isSymbolicLink() || (stat.mode & 0o7000) !== 0 || await realpath(next.path) !== next.path) {
+      throw new ReleaseFailure("matrix_release_unsafe_path");
+    }
+    if (stat.isDirectory()) {
+      await directory(next.path, uid, true);
+      queue.push(...(await readdir(next.path)).map((name) => ({ path: join(next.path, name), depth: next.depth + 1 })));
+    } else if (!stat.isFile() || stat.nlink !== 1 || (stat.mode & 0o777) !== 0o600) {
+      throw new ReleaseFailure("matrix_release_unsafe_path");
+    }
+  }
+  if (!identity(root, await directory(path, uid, true))) throw new ReleaseFailure("matrix_release_unsafe_path");
+  return names.length === 0 ? "empty" : "contains_state";
+}
+
+async function privateMarker(path: string, uid: number): Promise<Stats | undefined> {
+  if (await missing(path)) return undefined;
+  const stat = await lstat(path);
+  if (!stat.isFile() || stat.isSymbolicLink() || stat.uid !== uid || stat.nlink !== 1
+    || (stat.mode & 0o7777) !== 0o600 || stat.size < 1 || stat.size > 4096 || await realpath(path) !== path) {
+    throw new ReleaseFailure("matrix_release_unsafe_path");
+  }
+  return stat;
+}
+
+async function provisioningState(path: string, uid: number, state: "empty" | "contains_state"): Promise<MatrixReleaseInspection["storeProvisioning"]> {
+  if (state === "empty") return "empty";
+  if (await privateMarker(join(path, "device-binding.json"), uid) !== undefined) return "bound";
+  if (await privateMarker(join(path, "provisioning-intent.json"), uid) !== undefined) return "incomplete";
+  throw new ReleaseFailure("matrix_release_unrecognized_state");
+}
+
+async function run(applicationRoot: string, expected: MatrixReleaseExpectation, options: MatrixReleaseOptions, prepare: boolean): Promise<MatrixReleaseResult> {
+  try {
+    const paths = layout(applicationRoot);
+    const uid = currentUid(options);
+    const metadata = await release(paths, expected, uid);
+    // Validate public ancestors without modifying them or their permissions.
+    await directory(join(applicationRoot, "public"), uid, false);
+    await directory(join(applicationRoot, "public", "assets"), uid, false);
+    const sourceSidecar = prepare ? await verifiedBinary(join(paths.bundleDir, SIDECAR), metadata.sidecar, uid, false) : undefined;
+    const sourceSetup = prepare ? await verifiedBinary(join(paths.bundleDir, SETUP), metadata.setup, uid, false) : undefined;
+    for (const path of [paths.runtimeRoot, paths.runtimeDir, paths.persistentRoot, paths.storeDir, paths.mediaSpoolDir]) {
+      await dedicatedDirectory(path, uid, prepare);
+    }
+    const storeState = await privateState(paths.storeDir, uid);
+    const storeProvisioning = await provisioningState(paths.storeDir, uid, storeState);
+    const mediaSpoolState = await privateState(paths.mediaSpoolDir, uid);
+    const sidecarPath = join(paths.runtimeDir, SIDECAR);
+    const setupPath = join(paths.runtimeDir, SETUP);
+    if (prepare && sourceSidecar !== undefined && sourceSetup !== undefined) {
+      await installBinary(sidecarPath, sourceSidecar, metadata.sidecar, uid);
+      await installBinary(setupPath, sourceSetup, metadata.setup, uid);
+    } else {
+      await verifiedBinary(sidecarPath, metadata.sidecar, uid, true);
+      await verifiedBinary(setupPath, metadata.setup, uid, true);
+    }
+    return { ok: true, value: {
+      sidecarPath, setupPath, sidecarSha256: metadata.sidecar.sha256, setupSha256: metadata.setup.sha256,
+      storeDir: paths.storeDir, mediaSpoolDir: paths.mediaSpoolDir, storeState, storeProvisioning, mediaSpoolState,
+      credentialReadiness: "requires_http_isolation"
+    } };
+  } catch (error) {
+    return { ok: false, code: error instanceof ReleaseFailure ? error.code : "matrix_release_unavailable" };
+  }
+}
+
+/** Explicit, credential-free owner action only. Does not execute, download, provision, replace binaries or modify existing state. */
+export async function prepareMatrixRelease(applicationRoot: string, expected: MatrixReleaseExpectation, options: MatrixReleaseOptions = {}): Promise<MatrixReleaseResult> {
+  return run(applicationRoot, expected, options, true);
+}
+
+/** Read-only validation immediately before a separately authorized provisioning/spawn operation. */
+export async function inspectMatrixRelease(applicationRoot: string, expected: MatrixReleaseExpectation, options: MatrixReleaseOptions = {}): Promise<MatrixReleaseResult> {
+  return run(applicationRoot, expected, options, false);
+}
+
+export type MatrixHttpIsolationResult =
+  | Readonly<{ ok: true; checkedPaths: 12; credentialReadiness: "http_isolation_verified" }>
+  | Readonly<{ ok: false; code: MatrixReleaseErrorCode | "isolation_probe_requires_empty_state" | "isolation_probe_requires_binding" | "matrix_http_isolation_failed" | "matrix_http_isolation_cleanup_failed" }>;
+
+type Canary = Readonly<{ path: string; name: string; bytes: Buffer; stat: Stats; handle: FileHandle }>;
+
+const HTTP_ORIGINS = Object.freeze([
+  "https://wy2v0putg6.c35.airoapp.ai",
+  "https://wy2v0putg6.preview.c35.airoapp.ai"
+]);
+
+async function deniedHttpResponse(url: string, canaries: readonly Canary[], fetchImpl: typeof fetch): Promise<boolean> {
+  let response: Response | undefined;
+  try {
+    response = await fetchImpl(url, {
+      method: "GET", credentials: "omit", redirect: "manual", cache: "no-store",
+      signal: AbortSignal.timeout(5_000), headers: { Accept: "application/octet-stream", "Cache-Control": "no-cache" }
+    });
+    // A redirect, timeout, login page or generic 200 is not private-path evidence.
+    if (response.status !== 403 && response.status !== 404) {
+      await response.body?.cancel();
+      return false;
+    }
+    const reader = response.body?.getReader();
+    if (reader === undefined) return true;
+    const chunks: Uint8Array[] = [];
+    let size = 0;
+    try {
+      while (true) {
+        const next = await reader.read();
+        if (next.done) break;
+        size += next.value.byteLength;
+        if (size > 64 * 1024) return false;
+        chunks.push(next.value);
+      }
+      const bytes = Buffer.concat(chunks);
+      return !bytes.includes(Buffer.from([0x7f, 0x45, 0x4c, 0x46]))
+        && !bytes.includes(Buffer.from('"device_id"', "ascii"))
+        && !bytes.includes(Buffer.from('"store_fingerprint"', "ascii"))
+        && !bytes.includes(Buffer.from('"bot_mxid"', "ascii"))
+        && canaries.every((canary) => !bytes.includes(canary.bytes));
+    } finally { await reader.cancel().catch(() => undefined); reader.releaseLock(); }
+  } catch { return false; }
+}
+
+/**
+ * Explicit credential-free proof for initial setup or an existing-store resume.
+ * Existing crypto is probed through its private device binding or incomplete
+ * provisioning-intent filename (the latter is only a native recovery hint):
+ * its contents are never read locally or modified, and no unknown file is added.
+ * The media spool must be empty for a temporary harmless canary. No redirects.
+ * This is not a retained readiness certificate: call immediately before fresh
+ * provisioning and repeat after a changed deployment/path-serving configuration.
+ */
+export async function verifyMatrixHttpIsolation(
+  applicationRoot: string,
+  expected: MatrixReleaseExpectation,
+  fetchImpl: typeof fetch = fetch,
+  options: MatrixReleaseOptions = {}
+): Promise<MatrixHttpIsolationResult> {
+  const inspection = await inspectMatrixRelease(applicationRoot, expected, options);
+  if (!inspection.ok) return inspection;
+  if (inspection.value.mediaSpoolState !== "empty") {
+    return { ok: false, code: "isolation_probe_requires_empty_state" };
+  }
+  const canaries: Canary[] = [];
+  const probeNames: string[] = [];
+  let existingMarker: Readonly<{ path: string; name: string; stat: Stats; parent: Stats }> | undefined;
+  if (inspection.value.storeState === "contains_state") {
+    try {
+      const uid = currentUid(options);
+      const name = inspection.value.storeProvisioning === "bound" ? "device-binding.json" : "provisioning-intent.json";
+      const path = join(inspection.value.storeDir, name);
+      const stat = await privateMarker(path, uid);
+      if (stat === undefined) {
+        return { ok: false, code: "isolation_probe_requires_binding" };
+      }
+      existingMarker = { path, name, stat, parent: await directory(inspection.value.storeDir, uid, true) };
+    } catch { return { ok: false, code: "isolation_probe_requires_binding" }; }
+  }
+  let result: MatrixHttpIsolationResult = { ok: false, code: "matrix_http_isolation_failed" };
+  try {
+    const uid = currentUid(options);
+    for (const path of [inspection.value.storeDir, inspection.value.mediaSpoolDir]) {
+      if (path === inspection.value.storeDir && existingMarker !== undefined) {
+        probeNames.push(existingMarker.name);
+        continue;
+      }
+      const parent = await directory(path, uid, true);
+      if ((await readdir(path)).length !== 0) throw new ReleaseFailure("matrix_release_conflict");
+      const name = `.private-path-check-${Buffer.from(randomBytes(16)).toString("hex")}`;
+      const bytes = Buffer.from(`matrix-private-path-canary:${Buffer.from(randomBytes(16)).toString("hex")}`, "ascii");
+      const target = join(path, name);
+      const handle = await open(target, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
+      // Register ownership before any write can fail, so even partial canaries are removed.
+      const canary: Canary = { path: target, name, bytes, stat: await handle.stat(), handle };
+      canaries.push(canary);
+      probeNames.push(name);
+      await handle.writeFile(bytes);
+      await handle.sync();
+      if (!identity(parent, await directory(path, uid, true))) throw new ReleaseFailure("matrix_release_unsafe_path");
+    }
+    const urls = HTTP_ORIGINS.flatMap((origin) => [
+      ...["/assets", "/public/assets"].flatMap((prefix) => probeNames.map((name, index) =>
+        `${origin}${prefix}/.personal-consultant-matrix-v1/${index === 0 ? "crypto-store" : "media-spool"}/${name}`)),
+      `${origin}/.runtime/matrix/${SIDECAR}`,
+      `${origin}/.runtime/matrix/${SETUP}`
+    ]);
+    const checks = await Promise.all(urls.map((url) => deniedHttpResponse(url, canaries, fetchImpl)));
+    if (existingMarker !== undefined && (!sameFile(existingMarker.stat, await lstat(existingMarker.path))
+      || !identity(existingMarker.parent, await directory(inspection.value.storeDir, uid, true)))) {
+      throw new ReleaseFailure("matrix_release_unsafe_path");
+    }
+    if (checks.length === 12 && checks.every(Boolean)) {
+      result = { ok: true, checkedPaths: 12, credentialReadiness: "http_isolation_verified" };
+    }
+  } catch { /* Report only the safe failure code; never response bodies or local paths. */ }
+  finally {
+    for (const canary of canaries) {
+      try {
+        const actual = await lstat(canary.path);
+        if (!identity(canary.stat, actual)) throw new ReleaseFailure("matrix_release_unsafe_path");
+        await unlink(canary.path);
+      } catch { result = { ok: false, code: "matrix_http_isolation_cleanup_failed" }; }
+      finally { await canary.handle.close().catch(() => { result = { ok: false, code: "matrix_http_isolation_cleanup_failed" }; }); }
+    }
+  }
+  return result;
+}

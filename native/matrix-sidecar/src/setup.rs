@@ -122,6 +122,13 @@ fn valid_comparison_token(token: &str) -> bool {
             .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
 }
 
+fn signing_subkeys_ready(status: &matrix_sdk_base::crypto::CrossSigningStatus) -> bool {
+    // The private master key is needed for identity/key replacement, which
+    // setup does not perform. Only these subkeys sign our device and owner;
+    // verified public master identity is checked separately by runtime policy.
+    status.has_self_signing && status.has_user_signing
+}
+
 fn confirmation_allowed(active: &ActiveVerification, flow_id: &str, token: &str) -> bool {
     comparison_matches(
         active.request.flow_id(),
@@ -208,7 +215,7 @@ pub(crate) async fn verify_session_binding(config: &Config) -> Result<(), StoreE
     let local_identity = if config.store_root.join("matrix-sdk-crypto.sqlite3").exists() {
         crate::lock::verify_private_path(&config.store_root.join("matrix-sdk-crypto.sqlite3"))
             .map_err(|_| StoreError::Quarantined)?;
-        Some(store::durable_account_identity(config).await?)
+        store::setup_account_identity(config).await?
     } else {
         None
     };
@@ -305,9 +312,7 @@ impl Setup {
             .encryption()
             .cross_signing_status()
             .await
-            .is_some_and(|status| {
-                status.has_master && status.has_self_signing && status.has_user_signing
-            })
+            .is_some_and(|status| signing_subkeys_ready(&status))
     }
 
     async fn identity_verified(&self, mxid: &str) -> Result<bool, &'static str> {
@@ -749,6 +754,33 @@ mod tests {
             "@bot:matrix.org",
             "NEW"
         ));
+    }
+
+    #[test]
+    fn setup_needs_signing_subkeys_but_not_unused_private_master() {
+        use matrix_sdk_base::crypto::CrossSigningStatus;
+        for has_master in [false, true] {
+            assert!(signing_subkeys_ready(&CrossSigningStatus {
+                has_master,
+                has_self_signing: true,
+                has_user_signing: true
+            }));
+            assert!(!signing_subkeys_ready(&CrossSigningStatus {
+                has_master,
+                has_self_signing: false,
+                has_user_signing: true
+            }));
+            assert!(!signing_subkeys_ready(&CrossSigningStatus {
+                has_master,
+                has_self_signing: true,
+                has_user_signing: false
+            }));
+            assert!(!signing_subkeys_ready(&CrossSigningStatus {
+                has_master,
+                has_self_signing: false,
+                has_user_signing: false
+            }));
+        }
     }
 
     #[test]

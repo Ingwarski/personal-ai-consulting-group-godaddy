@@ -7,7 +7,7 @@ export const ownerAuthClientJavaScript = String.raw`(() => {
   const actions = new Set([
     "/auth/google/start", "/auth/sign-out", "/auth/sessions/revoke",
     "/operations/runtime/codex", "/operations/runtime/codex/reconnect",
-    "/operations/runtime/catalog"
+    "/operations/runtime/catalog", "/operations/matrix/action"
   ]);
   const localDestinations = new Set(["/auth/sign-in", "/settings", "/operations/runtime"]);
   const showError = (message) => {
@@ -19,7 +19,8 @@ export const ownerAuthClientJavaScript = String.raw`(() => {
     if (!(form instanceof HTMLFormElement) || !form.hasAttribute("data-owner-action")) return;
     event.preventDefault();
     if (form.dataset.pending === "true") return;
-    const action = new URL(form.action, location.href);
+    // Named controls can shadow form.action (Matrix has an input named action).
+    const action = new URL(form.getAttribute("action") || "", location.href);
     const parameters = Array.from(action.searchParams.entries());
     const catalogProviderQuery = action.pathname === "/operations/runtime/catalog"
       && parameters.length === 1 && parameters[0][0] === "provider"
@@ -29,8 +30,16 @@ export const ownerAuthClientJavaScript = String.raw`(() => {
       showError("Дію не виконано: адреса запиту недійсна. Оновіть сторінку й повторіть дію.");
       return;
     }
-    const token = new FormData(form).get("formToken");
+    const data = new FormData(form);
+    const token = data.get("formToken");
     if (typeof token !== "string" || !token) return;
+    const body = new URLSearchParams({ formToken: token });
+    if (action.pathname === "/operations/matrix/action") {
+      for (const name of ["action", "deviceId", "flowId", "comparisonToken"]) {
+        const value = data.get(name);
+        if (typeof value === "string") body.set(name, value);
+      }
+    }
     form.dataset.pending = "true";
     form.setAttribute("aria-busy", "true");
     const buttons = Array.from(form.querySelectorAll("button"));
@@ -40,10 +49,10 @@ export const ownerAuthClientJavaScript = String.raw`(() => {
         method: "POST", mode: "cors", credentials: "same-origin",
         redirect: "error", cache: "no-store", referrerPolicy: "no-referrer",
         headers: { "content-type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ formToken: token })
+        body
       });
       const type = response.headers.get("content-type") || "";
-      if (type.startsWith("text/html") && action.pathname.startsWith("/operations/runtime/")) {
+      if (type.startsWith("text/html") && (action.pathname.startsWith("/operations/runtime/") || action.pathname === "/operations/matrix/action")) {
         const parsed = new DOMParser().parseFromString(await response.text(), "text/html");
         const next = parsed.querySelector("main");
         const current = document.querySelector("main");

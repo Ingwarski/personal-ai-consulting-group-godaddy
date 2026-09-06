@@ -6,6 +6,7 @@ import { createGoDaddySettingsRuntime, type GoDaddySettingsRuntime } from "../sr
 import { GOOGLE_SESSION_COOKIE } from "../src/godaddy/owner-google-auth.ts";
 import type { GoogleIdentityProvider } from "../src/godaddy/google-identity-provider.ts";
 import type { RuntimeBootstrap } from "../src/godaddy/runtime-bootstrap.ts";
+import type { MatrixSetupOperations } from "../src/godaddy/matrix-setup-operations.ts";
 import type { RuntimeCapabilityCatalogResult } from "../src/runtime/capability-catalog.ts";
 import { activeNow, createCapabilityReceipt } from "./fixtures/capability-receipt.ts";
 import { OwnerAuthPool } from "./fixtures/owner-auth-pool.ts";
@@ -124,16 +125,59 @@ async function login(runtime: GoDaddySettingsRuntime, jar = new CookieJar()): Pr
   jar.collect(callback);
   return { jar, callback };
 }
-function fixture(options: { pool?: OwnerAuthPool; runtime?: RuntimeBootstrap; google?: GoogleIdentityProvider; environment?: Record<string, unknown>; now?: () => Date } = {}) {
+function fixture(options: { pool?: OwnerAuthPool; runtime?: RuntimeBootstrap; google?: GoogleIdentityProvider; environment?: Record<string, unknown>; now?: () => Date; matrixSetup?: MatrixSetupOperations } = {}) {
   const pool = options.pool ?? new OwnerAuthPool();
   const runtime = createGoDaddySettingsRuntime({ ...configuredEnvironment, ...options.environment }, {
     pool, now: options.now ?? (() => activeNow),
     googleIdentityProvider: options.google ?? provider(),
+    ...(options.matrixSetup === undefined ? {} : { matrixSetupOperations: options.matrixSetup }),
     createRuntimeBootstrap: () => options.runtime ?? bootstrap(),
     readAsset: async () => new TextEncoder().encode("protected asset")
   });
   return { runtime, pool };
 }
+
+test("Matrix setup page and all setup effects require the same exact owner session and purpose-bound CSRF", async () => {
+  const actions: unknown[] = [];
+  const setup: MatrixSetupOperations = { view: () => ({ state: "prepared" }), close: async () => {},
+    action: async (action, fields) => { actions.push({ action, fields }); return { state: "prepared" }; } };
+  const { runtime } = fixture({ matrixSetup: setup });
+  assert.equal((await runtime.handle(request("/operations/matrix")))?.headers.get("location"), "/auth/sign-in");
+  assert.equal((await runtime.handle(request("/operations/matrix/action", undefined, { method: "POST" })))?.status, 403);
+  assert.deepEqual(actions, []);
+  const { jar } = await login(runtime);
+  const page = await runtime.handle(request("/operations/matrix", jar));
+  const token = formToken(await page!.text(), "/operations/matrix/action");
+  assert.deepEqual(actions, [], "GET must not provision or start any child");
+  const post = (values: URLSearchParams, extra: Record<string, string> = {}) => runtime.handle(request("/operations/matrix/action", jar,
+    { method: "POST", headers: { origin, "sec-fetch-site": "same-origin", "content-type": "application/x-www-form-urlencoded", ...extra }, body: values.toString() }));
+  assert.equal((await post(new URLSearchParams({ formToken: token, action: "prepare" }), { origin: "https://evil.test" }))?.status, 403);
+  assert.equal((await post(new URLSearchParams({ formToken: token, action: "confirm", flowId: "f" })))?.status, 400);
+  assert.equal((await post(new URLSearchParams({ formToken: token, action: "prepare", access_token: "do-not-accept" })))?.status, 403);
+  const duplicates = new URLSearchParams({ formToken: token, action: "prepare" }); duplicates.append("action", "confirm");
+  assert.equal((await post(duplicates))?.status, 403);
+  assert.deepEqual(actions, []);
+  const result = await post(new URLSearchParams({ formToken: token, action: "confirm", flowId: "flow1", comparisonToken: "c".repeat(32) }));
+  assert.equal(result?.status, 200);
+  assert.deepEqual(actions, [{ action: "confirm", fields: { action: "confirm", flowId: "flow1", comparisonToken: "c".repeat(32) } }]);
+  assert.equal(result?.headers.get("cache-control"), "no-store");
+  await runtime.close();
+});
+
+test("served owner script forwards only explicit setup fields and does not discard device/SAS confirmation data", async () => {
+  let submitted: Record<string, string> | undefined;
+  const surface = browser(async (path, init) => {
+    assert.equal(path, "/operations/matrix/action");
+    submitted = Object.fromEntries(new URLSearchParams(String(init.body)));
+    return new Response("<main><h1>Matrix</h1></main>", { headers: { "content-type": "text/html" } });
+  });
+  const form = new Form("https://settings.example.test/operations/matrix/action");
+  form.fields = { action: "confirm", flowId: "same-flow", comparisonToken: "c".repeat(32), password: "must-not-forward" };
+  await surface.submit(form);
+  assert.deepEqual(submitted, { formToken: form.token, action: "confirm", flowId: "same-flow", comparisonToken: "c".repeat(32) });
+  assert.equal(surface.state().replaced, true);
+  assert.equal(surface.state().message, "");
+});
 
 test("provider-specific catalog actions preserve Google auth and dispatch only the requested provider", async () => {
   const calls: string[] = [];

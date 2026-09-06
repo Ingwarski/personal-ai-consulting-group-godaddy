@@ -3,12 +3,16 @@ import { ownerAuthClientJavaScript } from "../../src/godaddy/owner-auth-client.t
 
 /** Minimal DOM contract harness; not a real-browser or live-auth proof. */
 export class Form {
-  action: string;
+  readonly actionAttribute: string;
   token = "local-purpose-token";
+  fields: Record<string, string> = {};
   dataset: Record<string, string> = {};
   button = { disabled: false };
   attributes = new Map<string, string>();
-  constructor(action: string) { this.action = action; }
+  constructor(action: string) { this.actionAttribute = action; }
+  // Match browser named-control shadowing, not a misleading plain property.
+  get action() { return this.fields.action === undefined ? this.actionAttribute : { value: this.fields.action }; }
+  getAttribute(name: string) { return name === "action" ? this.actionAttribute : this.attributes.get(name) ?? null; }
   hasAttribute(name: string) { return name === "data-owner-action"; }
   setAttribute(name: string, value: string) { this.attributes.set(name, value); }
   removeAttribute(name: string) { this.attributes.delete(name); }
@@ -26,7 +30,7 @@ export function browser(fetcher: (path: string, init: RequestInit) => Promise<Re
   const next = { querySelector: () => ({ setAttribute: () => {}, focus: () => { headingFocused = true; } }) };
   runInNewContext(script, {
     URL, URLSearchParams, HTMLFormElement: Form,
-    FormData: class { form: Form; constructor(form: Form) { this.form = form; } get() { return this.form.token; } },
+    FormData: class { form: Form; constructor(form: Form) { this.form = form; } get(name: string) { return name === "formToken" ? this.form.token : this.form.fields[name] ?? null; } },
     DOMParser: class { parseFromString() { return { querySelector: () => next }; } },
     document: {
       addEventListener: (_name: string, listener: typeof submit) => { submit = listener; },

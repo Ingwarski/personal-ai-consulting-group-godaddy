@@ -365,6 +365,35 @@ fn resumable_provisioning(
             .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte)))
 }
 
+/// Read-only recognition of the precise crash window before an account and
+/// binding have both been saved. Merely passing --provision-fresh is not proof:
+/// the preexisting private intent must match this user/device and every entry
+/// must belong to the already-supported provisioning snapshot allowlist.
+pub(crate) fn incomplete_provisioning_is_resumable(config: &Config) -> Result<bool, StoreError> {
+    if !config.provision_fresh {
+        return Ok(false);
+    }
+    let entries = fs::read_dir(&config.store_root)
+        .map_err(|_| StoreError::Quarantined)?
+        .map(|entry| {
+            entry
+                .map(|entry| entry.file_name())
+                .map_err(|_| StoreError::Quarantined)
+        })
+        .collect::<Result<Vec<_>, _>>()?
+        .into_iter()
+        .filter(|name| name != LOCK_FILE)
+        .collect::<Vec<_>>();
+    if entries.iter().any(|name| name == BINDING_FILE) || !resumable_provisioning(config, &entries)?
+    {
+        return Ok(false);
+    }
+    for entry in entries {
+        verify_private_path(&config.store_root.join(entry)).map_err(|_| StoreError::Quarantined)?;
+    }
+    Ok(true)
+}
+
 #[cfg(unix)]
 fn safe_owned_regular_file(path: &Path) -> bool {
     use std::os::unix::fs::MetadataExt;
@@ -439,6 +468,25 @@ pub fn write_binding_once(
 }
 
 pub async fn durable_account_identity(config: &Config) -> Result<String, StoreError> {
+    durable_account_identity_if_present(config)
+        .await?
+        .ok_or(StoreError::Quarantined)
+}
+
+pub(crate) async fn setup_account_identity(config: &Config) -> Result<Option<String>, StoreError> {
+    // Inspect the unchanged snapshot before opening SQLite. An actual load or
+    // decryption error is always an error, never interpreted as an absent key.
+    let incomplete = incomplete_provisioning_is_resumable(config)?;
+    let identity = durable_account_identity_if_present(config).await?;
+    if identity.is_none() && !incomplete {
+        return Err(StoreError::Quarantined);
+    }
+    Ok(identity)
+}
+
+async fn durable_account_identity_if_present(
+    config: &Config,
+) -> Result<Option<String>, StoreError> {
     let crypto_store =
         SqliteCryptoStore::open(&config.store_root, Some(config.store_passphrase.as_str()))
             .await
@@ -446,16 +494,26 @@ pub async fn durable_account_identity(config: &Config) -> Result<String, StoreEr
     let account = crypto_store
         .load_account()
         .await
-        .map_err(|_| StoreError::Quarantined)?
-        .ok_or(StoreError::Quarantined)?;
+        .map_err(|_| StoreError::Quarantined);
+    // Pool drops may drain on background tasks. Wait for that drain before
+    // callers inspect the exact on-disk scenario, otherwise WAL/SHM entries
+    // can disappear between the directory inventory and no-follow checks.
+    crypto_store
+        .close()
+        .await
+        .map_err(|_| StoreError::Quarantined)?;
+    let account = account?;
+    let Some(account) = account else {
+        return Ok(None);
+    };
     if account.user_id().as_str() != config.bot_mxid
         || account.device_id().as_str() != config.bot_device_id
     {
         return Err(StoreError::Quarantined);
     }
-    Ok(hex::encode(Sha256::digest(
+    Ok(Some(hex::encode(Sha256::digest(
         account.identity_keys().ed25519.to_base64().as_bytes(),
-    )))
+    ))))
 }
 
 fn validate_bound_identity(
@@ -615,6 +673,133 @@ mod tests {
         assert!(validate_scenario(&changed_fresh).is_err());
         fs::write(root.join("unexpected"), b"state").unwrap();
         assert!(validate_scenario(&fresh).is_err());
+    }
+
+    #[test]
+    fn missing_account_resume_requires_an_existing_exact_private_intent() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().join("account-not-written");
+        fs::create_dir(&root).unwrap();
+        let mut fresh = config(root.clone(), "DEVICE");
+        fresh.provision_fresh = true;
+        assert!(!incomplete_provisioning_is_resumable(&fresh).unwrap());
+        assert_eq!(
+            fs::read_dir(&root).unwrap().count(),
+            0,
+            "read-only check created state"
+        );
+        assert!(validate_scenario(&fresh).unwrap().fresh);
+        let before = fs::read(root.join(PROVISIONING_FILE)).unwrap();
+        assert!(incomplete_provisioning_is_resumable(&fresh).unwrap());
+        assert_eq!(fs::read(root.join(PROVISIONING_FILE)).unwrap(), before);
+        fresh.provision_fresh = false;
+        assert!(!incomplete_provisioning_is_resumable(&fresh).unwrap());
+        fresh.provision_fresh = true;
+        fresh.bot_device_id = "DIFFERENT".into();
+        assert!(!incomplete_provisioning_is_resumable(&fresh).unwrap());
+        fresh.bot_device_id = "DEVICE".into();
+        write_private(&root.join("unexpected-state"), b"preserve me");
+        assert!(!incomplete_provisioning_is_resumable(&fresh).unwrap());
+        assert_eq!(
+            fs::read(root.join("unexpected-state")).unwrap(),
+            b"preserve me"
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn missing_account_resume_rejects_binding_and_unsafe_intent() {
+        use std::os::unix::fs::PermissionsExt;
+        for case in ["binding", "mode", "symlink"] {
+            let temp = tempfile::tempdir().unwrap();
+            let root = temp.path().join(case);
+            fs::create_dir(&root).unwrap();
+            let mut fresh = config(root.clone(), "DEVICE");
+            fresh.provision_fresh = true;
+            assert!(validate_scenario(&fresh).unwrap().fresh);
+            match case {
+                "binding" => {
+                    write_binding_once(&root, "DEVICE", IDENTITY_A).unwrap();
+                }
+                "mode" => fs::set_permissions(
+                    root.join(PROVISIONING_FILE),
+                    fs::Permissions::from_mode(0o644),
+                )
+                .unwrap(),
+                _ => std::os::unix::fs::symlink(
+                    temp.path().join("outside"),
+                    root.join("matrix-sdk-crypto.sqlite3"),
+                )
+                .unwrap(),
+            }
+            assert!(!incomplete_provisioning_is_resumable(&fresh).unwrap_or(false));
+        }
+    }
+
+    #[tokio::test]
+    async fn interrupted_empty_crypto_database_is_not_confused_with_wrong_key_or_lost_account() {
+        use matrix_sdk_base::crypto::{olm::Account, store::types::PendingChanges};
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().join("crypto-before-account");
+        fs::create_dir(&root).unwrap();
+        let mut fresh = config(root.clone(), "DEVICE");
+        fresh.provision_fresh = true;
+        assert!(validate_scenario(&fresh).unwrap().fresh);
+        let fixture_crypto = SqliteCryptoStore::open(&root, Some(fresh.store_passphrase.as_str()))
+            .await
+            .unwrap();
+        secure_fresh_store_files(&root).unwrap();
+        assert!(
+            incomplete_provisioning_is_resumable(&fresh).unwrap(),
+            "snapshot must be recognized: {:?}",
+            fs::read_dir(&root)
+                .unwrap()
+                .map(|entry| entry.unwrap().file_name())
+                .collect::<Vec<_>>()
+        );
+        assert!(
+            durable_account_identity_if_present(&fresh)
+                .await
+                .unwrap()
+                .is_none(),
+            "successful empty account load"
+        );
+        assert!(setup_account_identity(&fresh).await.unwrap().is_none());
+        assert!(
+            durable_account_identity(&fresh).await.is_err(),
+            "normal restore must remain strict"
+        );
+        fresh.provision_fresh = false;
+        assert!(setup_account_identity(&fresh).await.is_err());
+        fresh.provision_fresh = true;
+        fresh.store_passphrase = Zeroizing::new("b".repeat(64));
+        assert!(
+            setup_account_identity(&fresh).await.is_err(),
+            "wrong key must not look like an empty account"
+        );
+        fresh.store_passphrase = Zeroizing::new("a".repeat(64));
+        assert!(setup_account_identity(&fresh).await.unwrap().is_none());
+        let user: OwnedUserId = fresh.bot_mxid.parse().unwrap();
+        let account = Account::with_device_id(&user, fresh.bot_device_id.as_str().into());
+        let expected = hex::encode(Sha256::digest(
+            account.identity_keys().ed25519.to_base64().as_bytes(),
+        ));
+        fixture_crypto
+            .save_pending_changes(PendingChanges {
+                account: Some(account),
+            })
+            .await
+            .unwrap();
+        assert_eq!(
+            setup_account_identity(&fresh).await.unwrap(),
+            Some(expected)
+        );
+        fresh.bot_device_id = "WRONG".into();
+        assert!(
+            setup_account_identity(&fresh).await.is_err(),
+            "existing identity must never be regenerated"
+        );
+        fixture_crypto.close().await.unwrap();
     }
 
     #[cfg(unix)]

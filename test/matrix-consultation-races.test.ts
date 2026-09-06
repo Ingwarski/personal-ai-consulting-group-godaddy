@@ -17,6 +17,21 @@ const deferred = <T>() => {
   return { promise, resolve };
 };
 const flush = async () => { for (let i = 0; i < 20; i++) await new Promise<void>(done => setImmediate(done)); };
+const realSetTimeout = setTimeout;
+const delay = (milliseconds: number) => new Promise<void>(resolve => realSetTimeout(resolve, milliseconds));
+async function waitFor(description: string, condition: () => Promise<boolean>): Promise<void> {
+  const deadline = performance.now() + 5_000;
+  while (!await condition()) {
+    if (performance.now() >= deadline) assert.fail(`Timed out waiting for ${description}.`);
+    await delay(5);
+  }
+}
+async function waitForJob(f: Awaited<ReturnType<typeof fixture>>, expected: string): Promise<void> {
+  // A durable status may be written before finally/media cleanup completes.
+  // Wait for both so the next manually driven tick cannot race the old attempt.
+  await waitFor(`job ${expected} and its worker to settle`, async () =>
+    (await f.state())?.job?.status === expected && !f.service.status().working);
+}
 
 class SerialMemoryStorage extends MemoryRegistrarStorage {
   #tail = Promise.resolve();
@@ -112,9 +127,8 @@ test("a non-mutating owner command cannot swallow a concurrent direct answer or 
   await flush();
   f.clearNotices(); noticeRelease.resolve();
   await controlTick;
-  await flush();
+  await waitForJob(f, "completed");
   await f.service.tick();
-  await flush();
   const session = await f.registrar.getActiveSession();
   assert.equal((await f.state())?.job?.status, "completed");
   assert.equal(session?.phase, "closed");
@@ -133,7 +147,7 @@ test("Stop while snapshot preparation waits cannot leave a new active registrar 
   f.enqueue("Стоп");
   await f.service.tick();
   prepareRelease.resolve();
-  await flush();
+  await waitForJob(f, "stopped");
   const session = await f.registrar.getActiveSession();
   assert.notEqual(session?.phase, "active", "cancelled intake must not reserve an orphan active consultation");
   assert.equal((await f.state())?.job?.status, "stopped");
@@ -150,7 +164,7 @@ test("temporary readiness loss leaves an explicit resumable interruption, not a 
   await f.service.tick();
   assert.equal(f.planSignal()?.aborted, true);
   f.plan.resolve({ ok: false, code: "runtime_unavailable" });
-  await flush();
+  await waitFor("the interrupted worker to settle", async () => !f.service.status().working);
   f.setReady(true);
   await f.service.tick();
   await flush();
@@ -192,7 +206,11 @@ test("the execution deadline asks for continuation even when the provider ignore
   await f.planEntered.promise;
   // The injected provider deliberately never reacts to AbortSignal until cleanup.
   t.mock.timers.tick(1_000);
-  await flush();
+  await waitFor("the independent continuation notice", async () => {
+    const session = await f.registrar.getActiveSession();
+    return (await f.state())?.job?.status === "awaiting_continuation" && session !== undefined
+      && (await f.registrar.getConfirmedMessages(session.generation)).some(message => message.body.includes("Напишіть «Продовжити»"));
+  });
   assert.equal(f.planSignal()?.aborted, true);
   assert.equal((await f.state())?.job?.status, "awaiting_continuation");
   const session = await f.registrar.getActiveSession();
@@ -203,6 +221,13 @@ test("the execution deadline asks for continuation even when the provider ignore
 });
 
 test("ordinary consultation requires one-time consent and does not ask again for a later task", async t => {
+  // Confirmation hashing uses the native thread pool. Keep it pending beyond
+  // a few event-loop turns so this test also exercises a slower Linux runner.
+  const digest = crypto.subtle.digest.bind(crypto.subtle);
+  t.mock.method(crypto.subtle, "digest", async (...arguments_: Parameters<typeof digest>) => {
+    await delay(25);
+    return digest(...arguments_);
+  });
   const f = await fixture();
   t.after(() => f.service.stop());
   await f.storage.transaction(async storage => {
@@ -219,11 +244,11 @@ test("ordinary consultation requires one-time consent and does not ask again for
   await f.service.tick(); await flush();
   assert.equal(f.planCalls(), 0);
   f.enqueue("Погоджуюсь на обробку");
-  await f.service.tick(); await flush();
+  await f.service.tick(); await waitForJob(f, "completed");
   assert.equal(f.planCalls(), 1);
   assert.equal((await f.state())?.job?.status, "completed");
   f.enqueue("Інше коротке питання.");
-  await f.service.tick(); await flush();
+  await f.service.tick(); await waitForJob(f, "completed");
   assert.equal(f.planCalls(), 2);
   assert.equal((await f.state())?.job?.status, "completed");
   assert.equal((await f.storage.get<{ consent: boolean }>("worker"))?.consent, true);
@@ -256,7 +281,7 @@ test("replaying the same Matrix event during and after execution invokes the hea
   await f.service.tick(); await flush();
   assert.equal(f.planCalls(), 1);
   f.plan.resolve({ ok: true, kind: "direct", answer: "Єдина відповідь." });
-  await flush();
+  await waitForJob(f, "completed");
   f.replay(original);
   await f.service.tick(); await flush();
   assert.equal(f.planCalls(), 1);
@@ -298,7 +323,7 @@ test("uncertain running checkpoint never auto-relaunches; explicit continuation 
   assert.equal((await f.state())?.job?.status, "interrupted");
   assert.equal((await f.registrar.getSession(original.generation))?.phase, "closed");
   f.enqueue("Продовжити");
-  await f.service.tick(); await flush();
+  await f.service.tick(); await waitForJob(f, "completed");
   assert.equal(f.planCalls(), 1);
   assert.equal(f.snapshotCalls(), 0, "continuation must not refresh original settings");
   assert.match(f.requests()[0]!.task, /Порівняйте інвестицію/u);
@@ -319,13 +344,13 @@ test("answering a head clarification keeps the logical session, original setting
     ? { ok: true, kind: "clarification", answer: "Який бюджет цього рішення?" }
     : { ok: true, kind: "direct", answer: "Тепер можна порівняти варіанти в межах зазначеного бюджету." });
   const initial = f.enqueue("Порівняйте два варіанти розвитку бізнесу.");
-  await f.service.tick(); await flush();
+  await f.service.tick(); await waitForJob(f, "awaiting_clarification");
   const firstSession = await f.registrar.getActiveSession();
   assert.ok(firstSession);
   assert.equal(firstSession.phase, "active");
   assert.equal((await f.state())?.job?.status, "awaiting_clarification");
   f.enqueue("Бюджет становить сто тисяч гривень.", initial.eventId);
-  await f.service.tick(); await flush();
+  await f.service.tick(); await waitForJob(f, "completed");
   const resumed = await f.registrar.getActiveSession();
   assert.ok(resumed);
   assert.equal(f.planCalls(), 2);
@@ -350,7 +375,7 @@ test("Stop prevents a late provider final even when the provider resolves succes
   await f.service.tick();
   assert.equal(f.planSignal()?.aborted, true);
   f.plan.resolve({ ok: true, kind: "direct", answer: "Ця запізніла відповідь не має бути опублікована." });
-  await flush();
+  await waitForJob(f, "stopped");
   assert.equal((await f.state())?.job?.status, "stopped");
   assert.equal((await f.registrar.getSession(session.generation))?.phase, "stopped");
   assert.equal((await f.registrar.getConfirmedMessages(session.generation)).some(m => m.body.includes("Ця запізніла відповідь")), false);
@@ -392,12 +417,12 @@ test("confirmed attachments remain available through clarification and are erase
   await f.service.tick(); await flush();
   assert.equal(f.planCalls(), 0);
   f.enqueue("Підтверджую документ без секретів", document.eventId);
-  await f.service.tick(); await flush();
+  await f.service.tick(); await waitForJob(f, "awaiting_clarification");
   assert.equal((await f.state())?.job?.status, "awaiting_clarification");
   assert.equal(f.planCalls(), 1);
   assert.deepEqual(erased, [], "clarification is not a completed consultation");
   f.enqueue("Порівняйте з попереднім роком.", document.eventId);
-  await f.service.tick(); await flush();
+  await f.service.tick(); await waitForJob(f, "completed");
   assert.equal(f.planCalls(), 2);
   assert.equal(preparations, 2);
   assert.match(f.requests()[1]!.task, /Підтверджені дані/u);
@@ -412,7 +437,7 @@ test("a native reply to the bot clarification joins only its confirmed logical s
     ? { ok: true, kind: "clarification", answer: "Якого результату потрібно досягти?" }
     : { ok: true, kind: "direct", answer: "Відповідь у контексті підтвердженої сесії." });
   f.enqueue("Потрібна порада щодо операційного процесу.");
-  await f.service.tick(); await flush();
+  await f.service.tick(); await waitForJob(f, "awaiting_clarification");
   const original = await f.registrar.getActiveSession();
   assert.ok(original);
   f.setReplySession("$bot-unrelated-session-event", "some-other-logical-session");
@@ -423,7 +448,7 @@ test("a native reply to the bot clarification joins only its confirmed logical s
   assert.equal((await f.registrar.getActiveSession())?.generation, original.generation);
   f.setReplySession("$bot-confirmed-question-event", original.sessionId);
   f.enqueue("Хочу скоротити час виконання замовлень.", "$bot-confirmed-question-event");
-  await f.service.tick(); await flush();
+  await f.service.tick(); await waitForJob(f, "completed");
   assert.equal(f.planCalls(), 2);
   assert.equal((await f.registrar.getActiveSession())?.sessionId, original.sessionId);
   assert.match(f.requests()[1]!.task, /скоротити час виконання/u);

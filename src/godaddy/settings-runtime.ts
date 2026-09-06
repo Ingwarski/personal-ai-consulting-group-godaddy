@@ -23,6 +23,8 @@ import {
 import { createGodaddyMySqlPool } from "./mysql-pool.ts";
 import { createGoDaddyRegistrarRuntime, type GoDaddyRegistrarRuntime } from "./registrar-runtime.ts";
 import { createRuntimeBootstrap, type RuntimeBootstrap } from "./runtime-bootstrap.ts";
+import { createMatrixSetupOperations, type MatrixSetupOperations } from "./matrix-setup-operations.ts";
+import { MATRIX_SETUP_ACTION, MATRIX_SETUP_ACTIONS, MATRIX_SETUP_PAGE, matrixSetupDocument, type MatrixSetupAction } from "./matrix-setup-page.ts";
 
 type SettingsAsset = "settings.css" | "settings.js";
 type CatalogFailureCode = Extract<RuntimeCapabilityCatalogResult, { ok: false }>["code"];
@@ -66,6 +68,7 @@ export type GoDaddySettingsRuntimeDependencies = Readonly<{
   }>) => RuntimeBootstrap;
   registrarRuntime?: GoDaddyRegistrarRuntime;
   googleIdentityProvider?: GoogleIdentityProvider;
+  matrixSetupOperations?: MatrixSetupOperations;
 }>;
 
 const settingsPaths = new Set([
@@ -161,7 +164,7 @@ function isOwnerNavigation(request: Request, expectedOrigin: string): boolean {
   return request.headers.get("sec-fetch-site") === "same-origin" && submittedHttpsOrigin(request) === expectedOrigin;
 }
 
-async function parseActionForm(request: Request): Promise<Readonly<{ formToken: string }> | undefined> {
+async function parseActionForm(request: Request, extraFields: readonly string[] = []): Promise<Readonly<{ formToken: string; fields: Readonly<Record<string, string>> }> | undefined> {
   const contentType = request.headers.get("content-type");
   const contentLength = request.headers.get("content-length");
   if (!/^application\/x-www-form-urlencoded(?:\s*;\s*charset=utf-8)?$/iu.test(contentType ?? "") ||
@@ -188,10 +191,16 @@ async function parseActionForm(request: Request): Promise<Readonly<{ formToken: 
   try { body = new TextDecoder("utf-8", { fatal: true }).decode(bytes); } catch { return undefined; }
   const form = new URLSearchParams(body);
   const formTokens = form.getAll("formToken");
-  if (formTokens.length !== 1 || [...form.keys()].some((key) => key !== "formToken")) return undefined;
+  if (formTokens.length !== 1 || [...form.keys()].some((key) => key !== "formToken" && !extraFields.includes(key))) return undefined;
+  const fields: Record<string, string> = {};
+  for (const key of extraFields) {
+    const values = form.getAll(key);
+    if (values.length > 1 || (values.length === 1 && (!values[0] || Buffer.byteLength(values[0]) > 255 || /[\u0000-\u001f\u007f]/u.test(values[0])))) return undefined;
+    if (values[0] !== undefined) fields[key] = values[0];
+  }
   const [formToken] = formTokens;
   if (formToken === undefined || !/^[A-Za-z0-9_.-]{32,2048}$/u.test(formToken)) return undefined;
-  return Object.freeze({ formToken });
+  return Object.freeze({ formToken, fields: Object.freeze(fields) });
 }
 
 const loginDocument = (formToken: string, denied = false, rateLimited = false): string => `<!doctype html>
@@ -236,7 +245,7 @@ async function isEmptyJsonAction(request: Request): Promise<boolean> {
 }
 
 const isSettingsPath = (pathname: string): boolean => settingsPaths.has(pathname);
-const isManagedPath = (pathname: string): boolean => isSettingsPath(pathname) || runtimeOperationPaths.has(pathname);
+const isManagedPath = (pathname: string): boolean => isSettingsPath(pathname) || runtimeOperationPaths.has(pathname) || pathname === MATRIX_SETUP_PAGE || pathname === MATRIX_SETUP_ACTION;
 
 function defaultPool(configuration: GodaddyDatabaseConfiguration): MySqlPool {
   return createGodaddyMySqlPool(configuration);
@@ -299,6 +308,7 @@ function operationDocument(input: Readonly<{
       ${form("/operations/runtime/catalog?provider=claude_code", "Перевірити Claude Code й оновити його каталог")}
       <p>Перевірка Codex не звертається до Claude Code. Доступність кожного провайдера перевіряється окремо.</p>
       <p><a href="/settings">Відкрити Налаштування власника</a></p>
+      <p><a href="/operations/matrix">Підключення та перевірка Matrix</a></p>
       <section aria-label="Сесії власника">
         ${form("/auth/sign-out", "Вийти з цього браузера")}
         ${form("/auth/sessions/revoke", "Завершити всі сесії")}
@@ -399,10 +409,12 @@ export function createGoDaddySettingsRuntime(
   };
 
   const consilium = createGoDaddyConsiliumRuntime({ bootstrap: runtime, registrarRuntime: registrar, environment, now });
+  const matrixSetup = dependencies.matrixSetupOperations ?? createMatrixSetupOperations(environment);
   let closePromise: Promise<void> | undefined;
   const close = (): Promise<void> => {
     closePromise ??= (async () => {
       try {
+        await matrixSetup.close();
         await consilium.close();
         await runtime.close();
       } finally {
@@ -466,7 +478,7 @@ export function createGoDaddySettingsRuntime(
       if (!isManagedPath(url.pathname) && !sessionAction) return undefined;
       const grant = await owner.getVerifiedOwner(cookieHeader);
       if (grant === undefined) {
-        return request.method === "GET" && (url.pathname === "/settings" || url.pathname === "/operations/runtime")
+        return request.method === "GET" && (url.pathname === "/settings" || url.pathname === "/operations/runtime" || url.pathname === MATRIX_SETUP_PAGE)
           ? redirect("/auth/sign-in", [])
           : plain("Access denied.", 403);
       }
@@ -476,6 +488,24 @@ export function createGoDaddySettingsRuntime(
         const form = await parseActionForm(request);
         return form !== undefined && await owner.verifyActionToken(cookieHeader, url.pathname, form.formToken);
       };
+      if (url.pathname === MATRIX_SETUP_PAGE || url.pathname === MATRIX_SETUP_ACTION) {
+        if (url.search) return plain("Invalid request.", 400);
+        const render = async (view = matrixSetup.view()): Promise<Response> => {
+          const token = await owner.issueActionToken(cookieHeader, MATRIX_SETUP_ACTION);
+          return token === undefined ? plain("Access denied.", 403) : html(matrixSetupDocument(view, token), 200);
+        };
+        if (url.pathname === MATRIX_SETUP_PAGE && request.method === "GET") return render();
+        if (url.pathname !== MATRIX_SETUP_ACTION || request.method !== "POST") return plain("Method not allowed.", 405);
+        if (!isOwnerNavigation(request, grant.origin)) return plain("Access denied.", 403);
+        const form = await parseActionForm(request, ["action", "deviceId", "flowId", "comparisonToken"]);
+        if (form === undefined || !await owner.verifyActionToken(cookieHeader, MATRIX_SETUP_ACTION, form.formToken)) return plain("Access denied.", 403);
+        const action = form.fields.action as MatrixSetupAction;
+        if (!MATRIX_SETUP_ACTIONS.includes(action)) return plain("Invalid request.", 400);
+        const required = action === "verify_self" || action === "verify_owner" ? ["deviceId"] : action === "confirm"
+          ? ["flowId", "comparisonToken"] : action === "cancel" ? ["flowId"] : [];
+        if (Object.keys(form.fields).length !== required.length + 1 || required.some(key => form.fields[key] === undefined)) return plain("Invalid request.", 400);
+        return render(await matrixSetup.action(action, form.fields));
+      }
       if (sessionAction) {
         if (request.method !== "POST") return plain("Method not allowed.", 405, { allow: "POST" });
         if (!await verifyAction()) return plain("Access denied.", 403);

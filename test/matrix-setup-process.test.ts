@@ -1,0 +1,90 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { EventEmitter } from "node:events";
+import { PassThrough, Writable } from "node:stream";
+import type { spawn } from "node:child_process";
+import { parseMatrixSetupStatus, spawnMatrixSetupProcess } from "../src/godaddy/matrix-setup-process.ts";
+import { matrixSetupDocument } from "../src/godaddy/matrix-setup-page.ts";
+
+const status = () => ({ own_bot_device_id: "NEW_DEVICE", own_bot_ed25519: "A".repeat(43),
+  self_identity_verified: false, owner_identity_verified: false, private_cross_signing_ready: false,
+  devices: { self: [{ device_id: "TRUSTED_DEVICE", ed25519: "B".repeat(43), verified: false,
+    blacklisted: false, cross_signed_by_owner: true, deleted: false }], owner: [] }, verification: null });
+
+test("setup status projects only public fingerprints and strict known fields", () => {
+  assert.deepEqual(parseMatrixSetupStatus(status()), status());
+  assert.equal(parseMatrixSetupStatus({ ...status(), access_token: "never reflect" }), undefined);
+  assert.equal(parseMatrixSetupStatus({ ...status(), own_bot_ed25519: "not-a-key" }), undefined);
+  const nullable = status(); nullable.devices.self[0]!.ed25519 = null as unknown as string;
+  assert.ok(parseMatrixSetupStatus(nullable));
+  const duplicate = status(); duplicate.devices.self.push(duplicate.devices.self[0]!);
+  assert.equal(parseMatrixSetupStatus(duplicate), undefined);
+});
+
+test("setup comparison has an exact flow, bounded SAS and one-time comparison token", () => {
+  const flow = { phase: "compare", target: "self", other_device_id: "TRUSTED_DEVICE", other_user_id: "@test-bot:matrix.org",
+    generation: "c".repeat(32), flow_id: "flow", comparison_token: "d".repeat(32),
+    emojis: null, decimals: [1234, 2345, 3456], confirmed: false };
+  assert.ok(parseMatrixSetupStatus({ ...status(), verification: flow }));
+  for (const bad of [{ ...flow, decimals: [1, 2, 3] }, { ...flow, decimals: null }, { ...flow, access_token: "secret" },
+    { ...flow, comparison_token: "wrong" }]) assert.equal(parseMatrixSetupStatus({ ...status(), verification: bad }), undefined);
+});
+
+function childFixture() {
+  const child = new EventEmitter() as EventEmitter & { stdout: PassThrough; stderr: PassThrough; stdin: Writable; kill: () => boolean };
+  child.stdout = new PassThrough(); child.stderr = new PassThrough();
+  const requests: Record<string, unknown>[] = [];
+  child.stdin = new Writable({ write(chunk, _encoding, callback) { requests.push(JSON.parse(String(chunk))); callback(); } });
+  let killed = false;
+  child.kill = () => { if (!killed) { killed = true; queueMicrotask(() => child.emit("exit", 0)); } return true; };
+  const frames = (value: unknown) => child.stdout.write(JSON.stringify(value) + "\n");
+  const input = { binaryPath: "/private/pinned/setup", applicationRoot: "/app", fresh: true,
+    environment: { MATRIX_ACCESS_TOKEN: "test-only-token" } };
+  let options: unknown;
+  const process = spawnMatrixSetupProcess(input, { spawn: ((_file: string, _args: string[], captured: unknown) => {
+    options = captured; return child;
+  }) as unknown as typeof spawn, requestTimeoutMs: 100 });
+  return { child, frames, process, requests, options };
+}
+
+test("setup transport requires handshake, sends exact explicit commands, and does not inherit host credentials", async () => {
+  const fixture = childFixture();
+  await assert.rejects(fixture.process.request({ type: "status" }), /starting/);
+  fixture.frames({ version: 1, type: "setup_ready" });
+  const pending = fixture.process.request({ type: "status" });
+  const request = fixture.requests[0]!;
+  assert.deepEqual(request.command, { type: "status" });
+  assert.deepEqual((fixture.options as { env: unknown }).env, { MATRIX_ACCESS_TOKEN: "test-only-token" });
+  fixture.child.stderr.write("secret raw library error must be discarded");
+  fixture.frames({ version: 1, id: request.id, ok: true, status: status() });
+  assert.deepEqual(await pending, status());
+  await fixture.process.close();
+});
+
+test("unexpected child response fields fail closed instead of leaking into owner UI", async () => {
+  const fixture = childFixture(); fixture.frames({ version: 1, type: "setup_ready" });
+  const pending = fixture.process.request({ type: "status" });
+  fixture.frames({ version: 1, id: fixture.requests[0]!.id, ok: true, status: { ...status(), token: "private" } });
+  await assert.rejects(pending, /protocol_error/);
+  await fixture.process.close();
+});
+
+test("final flushed status is accepted when child exit arrives before stdout drains", async () => {
+  const fixture = childFixture(); fixture.frames({ version: 1, type: "setup_ready" });
+  const pending = fixture.process.request({ type: "finish" });
+  fixture.child.emit("exit", 0);
+  fixture.frames({ version: 1, id: fixture.requests[0]!.id, ok: true, status: status() });
+  fixture.child.emit("close", 0);
+  assert.deepEqual(await pending, status());
+  await fixture.process.close();
+});
+
+test("owner setup markup shows codes for comparison, no secret inputs or automatic confirmation", () => {
+  const value = parseMatrixSetupStatus(status())!;
+  const document = matrixSetupDocument({ state: "verifying", status: value }, "test-form-token");
+  assert.match(document, /TRUSTED_DEVICE/);
+  assert.doesNotMatch(document, /name="(?:password|access_token|recovery_key)"/u);
+  assert.doesNotMatch(document, /name="action" value="confirm"/u);
+  const escaped = matrixSetupDocument({ state: "verifying", error: "<script>evil</script>" }, "token");
+  assert.doesNotMatch(escaped, /<script>evil/);
+});

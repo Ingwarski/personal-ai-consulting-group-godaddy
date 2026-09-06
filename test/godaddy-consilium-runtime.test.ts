@@ -18,6 +18,14 @@ import { createMatrixConsultationService } from "../src/godaddy/matrix-consultat
 import type { LeasedMatrixIngressIntent } from "../src/godaddy/mysql-matrix-outbox.ts";
 import { formatConfirmedMessageContentForMatrix } from "../src/matrix/bridge.ts";
 
+async function waitFor(description: string, condition: () => Promise<boolean>): Promise<void> {
+  const deadline = performance.now() + 5_000;
+  while (!await condition()) {
+    if (performance.now() >= deadline) assert.fail(`Timed out waiting for ${description}.`);
+    await new Promise<void>(resolve => setTimeout(resolve, 5));
+  }
+}
+
 const request: GoDaddyConsiliumRequest = {
   sessionGeneration: 1, task: "Порівняти варіанти й ухвалити практичне рішення.",
   head: { agentId: "head", role: "Головний консультант" },
@@ -203,10 +211,8 @@ test("actual application intake reaches planner, separate specialists, Astra cri
     queue.push({ ...event, eventId: "$owner-consent-integration", eventHash: "f".repeat(64),
       workIntent: { ...event.workIntent, eventId: "$owner-consent-integration", body: "Погоджуюсь на обробку" } });
     await application.consultationService.tick();
-    for (let attempts = 0; attempts < 150; attempts++) {
-      await new Promise<void>(resolve => setImmediate(resolve));
-      if (!application.consultationService.status().working) break;
-    }
+    await waitFor("the durable final close and completed consultation worker", async () =>
+      (await h.registrar.getActiveSession())?.phase === "closed" && !application.consultationService!.status().working);
     const session = await h.registrar.getActiveSession();
     assert.equal(session?.phase, "closed");
     assert.deepEqual(session?.settingsSnapshot, h.snapshot);

@@ -16930,7 +16930,14 @@
     }
   ],
   "next_ready_nodes": [],
-  "pause_reason": "Publication and one harmless live consultation test were authorized by Go. Preflight stopped before push/publication: Published lacks MATRIX_* configuration, production Rust release artifact and final binding are not established, and release evidence is incomplete. Local 678-test result remains valid, not live readiness. Existing Element room inspection additionally requires the user to unlock the Mac; credential or identity setup needs separate authority.",
+  "pause_reason": "Scoped production Matrix setup is now authorized by the user; implementation and verification continue. Local Node 22 checks pass 745 tests and native checks pass 93 tests. The first Linux build failed test timing and is being replaced after the regression repair. Production artifact pin, Published configuration, existing-bot trust handoff and live consultation delivery are still outstanding. Historical preflight limitations are preserved in their original receipt; missing setup authority and Mac unlock are not current blockers. See forge/runs/U-08/matrix-production-setup-20260906/progress.md. This is not Product V1 release readiness.",
+  "matrix_production_setup_progress": {
+    "authorization_ref": "forge/matrix-production-setup-authorization-20260906.json",
+    "evidence_ref": "forge/runs/U-08/matrix-production-setup-20260906/progress.md",
+    "status": "implementation-verified-locally-awaiting-linux-artifact-and-live-setup",
+    "published_changes_performed": false,
+    "live_consultation_verified": false
+  },
   "current_reconciliation_blockers": [
     {
       "id": "sdd-render-precheck-20260905",
