@@ -82,6 +82,7 @@ function readResponse(read: SettingsReadModel | undefined): Response {
     {
       document: read.document,
       defaults: read.defaults,
+      defaultsIncompatibility: read.defaultsIncompatibility ?? null,
       effectiveForNextSession: read.effectiveForNextSession,
       effectiveIncompatibility: read.effectiveIncompatibility,
       activeSessionSnapshot: read.activeSessionSnapshot,

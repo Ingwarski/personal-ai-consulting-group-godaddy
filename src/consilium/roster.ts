@@ -21,10 +21,12 @@ export function validateConsiliumRoster(
     return { ok: false, code: "invalid_specialist_count" };
   }
   const agents = [...specialists, critic];
-  if (critic.provider !== "claude_code") return { ok: false, code: "missing_critic" };
+  if (critic.provider !== "claude_code" && critic.provider !== "codex") return { ok: false, code: "missing_critic" };
   if (new Set(agents.map((agent) => agent.agentId)).size !== agents.length) {
     return { ok: false, code: "duplicate_agent" };
   }
+  if (new Set(agents.map((agent) => `${agent.provider}:${agent.runtimeSessionRef}`)).size !== agents.length ||
+    specialists.some((agent) => agent.provider !== "codex")) return { ok: false, code: "invalid_agent_registration" };
   if (agents.some((agent) => !isAgentId(agent.agentId) || agent.role.trim().length === 0 || agent.runtimeSessionRef.trim().length === 0)) {
     return { ok: false, code: "invalid_agent_registration" };
   }

@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { access } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
 
 import {
   createGoDaddyCodexAppServer,
+  createSubprocessCodexAppServerLauncher,
   writeCodexAppServerLine,
   type CodexAppServerLauncher
 } from "../src/godaddy/codex-app-server-process.ts";
@@ -17,6 +20,18 @@ class MemoryStorage implements RuntimeCredentialStorage {
 }
 
 const rootSecret = "a-random-root-secret-used-only-in-this-test-and-never-in-production";
+
+test("an unresponsive owned app-server is killed and its private directory removed before close resolves", async () => {
+  const launch = createSubprocessCodexAppServerLauncher({ executable: resolve("test/fixtures/ignores-term-codex.mjs"), environment: { PATH: dirname(process.execPath) + ":/usr/bin:/bin" } });
+  const connection = await launch(undefined);
+  const received = new Promise<{ pid: number; cwd: string }>(resolveMessage => connection.channel.onLine(line => resolveMessage(JSON.parse(line).result)));
+  await connection.channel.send(JSON.stringify({ id: 1 }));
+  const owned = await received;
+  assert.match(owned.cwd, /personal-consultant-codex-/);
+  await Promise.all([connection.close(), connection.close()]);
+  assert.throws(() => process.kill(owned.pid, 0));
+  await assert.rejects(access(owned.cwd));
+});
 
 function launcher(responses: Record<string, unknown>, initialAuthState = new TextEncoder().encode('{"managed":"oauth"}')): Readonly<{
   launch: CodexAppServerLauncher;
@@ -71,6 +86,26 @@ const responses = Object.freeze({
   }] },
   "account/rateLimits/read": { rateLimits: { rateLimitReachedType: null } },
   "account/login/start": { type: "chatgptDeviceCode", verificationUrl: "https://auth.openai.com/codex/device", userCode: "ABCD-1234" }
+});
+
+test("exact Astra Extra High proof shares the managed OAuth client and always releases its ephemeral thread", async () => {
+  const storage = new MemoryStorage();
+  const vault = createRuntimeCredentialVault({ storage, rootSecret })!;
+  const fake = launcher({ ...responses,
+    "thread/start": { model: "gpt-6-astra", thread: { id: "astra-proof-thread" } },
+    "turn/start": { turn: { id: "astra-proof-turn", status: "completed", items: [{ type: "agentMessage", text: "OK" }] } },
+    "thread/unsubscribe": {}
+  });
+  const runtime = createGoDaddyCodexAppServer({ environment: {}, vault, launch: fake.launch });
+  assert.equal(await runtime.verifyModelSelection!("gpt-6-astra", "high"), false);
+  assert.equal(fake.calls.length, 0);
+  assert.equal(await runtime.verifyModelSelection!("gpt-6-astra", "xhigh"), true);
+  const client = await runtime.getThreadClient!();
+  await client.transport.request("account/read", {});
+  assert.equal(fake.calls.filter(method => method === "initialize").length, 1);
+  assert.equal(fake.calls.filter(method => method === "thread/unsubscribe").length, 1);
+  assert.doesNotMatch(JSON.stringify([...storage.records.values()]), /managed/);
+  await runtime.close();
 });
 
 test("accepts Node's null child-process write callback as success", async () => {

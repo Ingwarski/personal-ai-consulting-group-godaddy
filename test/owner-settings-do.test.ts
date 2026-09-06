@@ -70,10 +70,11 @@ test("migrates a prior shared-effort document into independent provider settings
   const migrated = await store.initialize();
   assert.equal(migrated.ok, true);
   if (!migrated.ok) return;
-  assert.equal(migrated.document.schemaVersion, "2");
+  assert.equal(migrated.document.schemaVersion, "3");
   assert.equal(migrated.document.revision, 5);
   assert.equal(migrated.document.settings.codex.reasoningEffort, "xhigh");
-  assert.equal(migrated.document.settings.claude.reasoningEffort, null);
+  assert.equal(migrated.document.settings.critic.claude?.reasoningEffort, "xhigh");
+  assert.equal((await store.read())?.effectiveIncompatibility, "claude_reasoning_effort_unavailable");
   assert.equal(migrated.document.settings.speedPreset, "ретельно");
   const audit = await store.getAuditRecord(5);
   assert.equal(audit?.action, "migrate");
@@ -157,7 +158,7 @@ test("writes exactly one full validated revision with an If-Match precondition",
   const saved = await store.save(
     {
       codex: { modelId: "codex-current-primary", reasoningEffort: "medium" },
-      claude: { modelId: "claude-current-critic", reasoningEffort: "medium" },
+      critic: { provider: "claude_code", claude: { modelId: "claude-current-critic", reasoningEffort: "medium" }, codex: null },
       speedPreset: "ретельно"
     },
     '"settings-1"',
@@ -200,7 +201,7 @@ test("returns an idempotent replay, but rejects the same key with a different bo
   await store.initialize();
   const settings = {
     codex: { modelId: "codex-current-primary", reasoningEffort: "medium" },
-    claude: { modelId: "claude-current-critic", reasoningEffort: "medium" },
+    critic: { provider: "claude_code", claude: { modelId: "claude-current-critic", reasoningEffort: "medium" }, codex: null },
     speedPreset: "швидко"
   } as const;
   const first = await store.save(settings, '"settings-1"', firstKey);
@@ -222,7 +223,7 @@ test("reset is explicit, revalidates defaults and creates a single new revision"
   await store.save(
     {
       codex: { modelId: "codex-current-primary", reasoningEffort: "medium" },
-      claude: { modelId: "claude-current-critic", reasoningEffort: "medium" },
+      critic: { provider: "claude_code", claude: { modelId: "claude-current-critic", reasoningEffort: "medium" }, codex: null },
       speedPreset: "швидко"
     },
     '"settings-1"',
@@ -234,7 +235,7 @@ test("reset is explicit, revalidates defaults and creates a single new revision"
   if (!reset.ok) return;
   assert.equal(reset.document.revision, 3);
   assert.equal(reset.document.settings.codex.reasoningEffort, "high");
-  assert.equal(reset.document.settings.claude.reasoningEffort, "high");
+  assert.equal(reset.document.settings.critic.claude?.reasoningEffort, "high");
   assert.equal(reset.document.settings.speedPreset, "збалансовано");
   const audit = await store.getAuditRecord(3);
   assert.equal(audit?.action, "reset");

@@ -2,6 +2,7 @@ import type { A2AEnvelope } from "./a2a.ts";
 import type { ConfirmedMessageObserver } from "./a2a.ts";
 import type { AgentRegistration } from "./roster.ts";
 import type { ConfirmedAgentMessage, RegistrarDO, SessionGeneration } from "../session/registrar-do.ts";
+import { criticReceiptMatches } from "../session/registrar-do.ts";
 
 export type FinalAction = Readonly<{
   action: string;
@@ -100,7 +101,7 @@ export class CriticGatedFinalizer {
     if (!isValidFinalRecommendation(input.recommendation)) return { ok: false, code: "invalid_final_recommendation" };
 
     const criticReview = await this.#registrar.getCriticReview(input.sessionGeneration);
-    if (criticReview === undefined || criticReview.role !== this.#critic.role) {
+    if (!criticReceiptMatches(criticReview, this.#critic, input.sessionGeneration)) {
       return { ok: false, code: "critic_not_ready" };
     }
 

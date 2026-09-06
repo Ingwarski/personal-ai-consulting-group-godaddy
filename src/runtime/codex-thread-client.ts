@@ -2,10 +2,14 @@ import type { ProviderReasoningEffort } from "../settings/types.ts";
 import type { CodexAppServerTransport } from "./codex-app-server.ts";
 import { JsonRpcClient, type JsonRpcNotification } from "./json-rpc-client.ts";
 import { isExternalRuntimeId } from "../identity/ids.ts";
+import { chmod, mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 export type CodexThreadLease = Readonly<{
   threadId: string;
   modelId: string;
+  cwd?: string;
 }>;
 
 export type CodexThreadResult =
@@ -16,7 +20,7 @@ export type CodexTurnResult =
   | Readonly<{ ok: true; turnId: string; body: string }>
   | Readonly<{
       ok: false;
-      code: "transport_error" | "invalid_turn_response" | "turn_failed" | "missing_agent_message" | "turn_timeout";
+      code: "transport_error" | "invalid_turn_response" | "turn_failed" | "missing_agent_message" | "turn_timeout" | "turn_cancelled";
     }>;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -25,8 +29,25 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const nonEmpty = (value: unknown, max = 32_000): value is string =>
   typeof value === "string" && value.trim().length > 0 && value.length <= max;
 
+// Pinned 0.153.1 feature keys plus its experimental empty-environments
+// contract. ReadOnly alone does NOT restrict reads of credential files; no
+// environment removes filesystem tools, and these flags remove other external
+// tool channels. Harmless core utilities (for example clock) may remain.
+export const CODEX_ANALYSIS_CONFIG = Object.freeze({
+  web_search: "disabled",
+  features: Object.freeze({
+    shell_tool: false, unified_exec: false, view_image: false, shell_snapshot: false,
+    apps: false, plugins: false, hooks: false, memories: false,
+    browser_use: false, browser_use_external: false, browser_use_full_cdp_access: false,
+    computer_use: false, image_generation: false, workspace_dependencies: false,
+    code_mode: false, code_mode_host: false, multi_agent: false, multi_agent_v2: false,
+    skill_search: false, tool_suggest: false, request_permissions_tool: false
+  })
+});
+
 function parseThreadStart(value: unknown, modelId: string): CodexThreadLease | undefined {
   if (!isRecord(value) || !isRecord(value.thread) || !isExternalRuntimeId(value.thread.id)) return undefined;
+  if ((value.model !== undefined && value.model !== modelId) || (value.thread.model !== undefined && value.thread.model !== modelId)) return undefined;
   return Object.freeze({ threadId: value.thread.id, modelId });
 }
 
@@ -64,13 +85,20 @@ function completedAgentItem(notification: JsonRpcNotification, threadId: string,
 export class CodexAppServerThreadClient {
   readonly #rpc: JsonRpcClient;
   readonly #clientInfo: Readonly<{ name: string; title: string; version: string }>;
+  readonly #workspaces = new Map<string, string>();
+  readonly #activeTurns = new Map<string, string>();
+  readonly #busyThreads = new Set<string>();
+  readonly #released = new Set<string>();
+  readonly #onUnresponsive: (() => Promise<void>) | undefined;
 
   constructor(input: Readonly<{
     rpc: JsonRpcClient;
     clientInfo: Readonly<{ name: string; title: string; version: string }>;
+    onUnresponsive?: () => Promise<void>;
   }>) {
     this.#rpc = input.rpc;
     this.#clientInfo = input.clientInfo;
+    this.#onUnresponsive = input.onUnresponsive;
   }
 
   /** The preflight path shares this initialized managed-OAuth connection. */
@@ -85,17 +113,52 @@ export class CodexAppServerThreadClient {
 
   async startIsolatedThread(input: Readonly<{ modelId: string; cwd?: string }>): Promise<CodexThreadResult> {
     if (!nonEmpty(input.modelId, 512)) return { ok: false, code: "invalid_thread_response" };
+    let ownedWorkspace: string | undefined;
     try {
+      const cwd = input.cwd ?? (ownedWorkspace = await mkdtemp(join(tmpdir(), "personal-consilium-")));
+      if (ownedWorkspace !== undefined) await chmod(ownedWorkspace, 0o700);
       await this.#rpc.initialize(this.#clientInfo);
       const result = await this.#rpc.request("thread/start", {
         model: input.modelId,
         ephemeral: true,
-        ...(input.cwd === undefined ? {} : { cwd: input.cwd })
+        cwd,
+        sandbox: "read-only",
+        approvalPolicy: "never",
+        environments: [],
+        config: CODEX_ANALYSIS_CONFIG
       });
       const thread = parseThreadStart(result, input.modelId);
-      return thread === undefined ? { ok: false, code: "invalid_thread_response" } : { ok: true, value: thread };
+      if (thread === undefined) {
+        if (isRecord(result) && isRecord(result.thread) && isExternalRuntimeId(result.thread.id)) {
+          await this.#rpc.request("thread/unsubscribe", { threadId: result.thread.id }).catch(() => undefined);
+        }
+        if (ownedWorkspace !== undefined) await rm(ownedWorkspace, { recursive: true, force: true });
+        return { ok: false, code: "invalid_thread_response" };
+      }
+      if (ownedWorkspace !== undefined) this.#workspaces.set(thread.threadId, ownedWorkspace);
+      return { ok: true, value: Object.freeze({ ...thread, cwd }) };
     } catch {
+      await this.#onUnresponsive?.().catch(() => undefined);
+      if (ownedWorkspace !== undefined) await rm(ownedWorkspace, { recursive: true, force: true });
       return { ok: false, code: "transport_error" };
+    }
+  }
+
+  async releaseThread(lease: CodexThreadLease): Promise<void> {
+    if (this.#released.has(lease.threadId)) return;
+    this.#released.add(lease.threadId);
+    const turnId = this.#activeTurns.get(lease.threadId);
+    try {
+      if (turnId !== undefined) await this.#rpc.request("turn/interrupt", { threadId: lease.threadId, turnId }).catch(async () => this.#onUnresponsive?.());
+      await this.#rpc.request("thread/unsubscribe", { threadId: lease.threadId });
+    } catch {
+      // The managed process may already be stopped. Workspace ownership is
+      // local and still must be released; never delete an externally supplied cwd.
+    } finally {
+      const workspace = this.#workspaces.get(lease.threadId);
+      this.#workspaces.delete(lease.threadId);
+      this.#activeTurns.delete(lease.threadId);
+      if (workspace !== undefined) await rm(workspace, { recursive: true, force: true });
     }
   }
 
@@ -105,34 +168,82 @@ export class CodexAppServerThreadClient {
     reasoningEffort: ProviderReasoningEffort | null;
     outputSchema?: unknown;
     timeoutMilliseconds?: number;
+    signal?: AbortSignal;
   }>): Promise<CodexTurnResult> {
-    if (!nonEmpty(input.body)) return { ok: false, code: "invalid_turn_response" };
+    const threadId = input.lease.threadId;
+    if (!nonEmpty(input.body) || this.#released.has(threadId) || this.#busyThreads.has(threadId)) return { ok: false, code: "invalid_turn_response" };
+    if (input.signal?.aborted) return { ok: false, code: "turn_cancelled" };
+    this.#busyThreads.add(threadId);
     const timeoutMilliseconds = input.timeoutMilliseconds ?? 10 * 60_000;
     let releaseListener: (() => void) | undefined;
     let timeout: ReturnType<typeof setTimeout> | undefined;
+    let cancellation: "turn_cancelled" | "turn_timeout" | undefined;
+    let turnId: string | undefined;
+    let interruptRequest: Promise<void> | undefined;
+    let settlePending: ((result: CodexTurnResult) => void) | undefined;
+    const interrupt = async (code: "turn_cancelled" | "turn_timeout"): Promise<void> => {
+      cancellation ??= code;
+      if (turnId === undefined) return;
+      interruptRequest ??= this.#rpc.request("turn/interrupt", { threadId, turnId })
+        .then(() => undefined)
+        .catch(async () => { await this.#onUnresponsive?.().catch(() => undefined); });
+      await interruptRequest;
+      settlePending?.({ ok: false, code: cancellation });
+    };
+    const onAbort = (): void => { void interrupt("turn_cancelled"); };
+    input.signal?.addEventListener("abort", onAbort, { once: true });
+    timeout = setTimeout(() => { void interrupt("turn_timeout"); }, timeoutMilliseconds);
     try {
       await this.#rpc.initialize(this.#clientInfo);
+      if (input.signal?.aborted || this.#released.has(threadId)) cancellation ??= "turn_cancelled";
+      if (cancellation !== undefined) return { ok: false, code: cancellation };
       const bufferedNotifications: JsonRpcNotification[] = [];
+      let bufferedBytes = 0;
+      let bufferOverflow = false;
       let notificationHandler: ((notification: JsonRpcNotification) => void) | undefined;
       releaseListener = this.#rpc.onNotification((notification) => {
-        if (notificationHandler === undefined) {
-          bufferedNotifications.push(notification);
+        // Parallel specialist traffic and auth/tool notifications are not ours.
+        if (!isRecord(notification.params) || notification.params.threadId !== threadId ||
+          (notification.method !== "item/completed" && notification.method !== "turn/completed")) return;
+        if (notificationHandler !== undefined) {
+          notificationHandler(notification);
           return;
         }
-        notificationHandler(notification);
+        if (bufferOverflow) return;
+        bufferedBytes += new TextEncoder().encode(JSON.stringify(notification)).byteLength;
+        if (bufferedNotifications.length >= 256 || bufferedBytes > 262_144) {
+          bufferOverflow = true;
+          bufferedNotifications.length = 0;
+          return;
+        }
+        bufferedNotifications.push(notification);
       });
       const response = await this.#rpc.request("turn/start", {
-        threadId: input.lease.threadId,
+        threadId,
         input: [{ type: "text", text: input.body, text_elements: [] }],
         model: input.lease.modelId,
+        approvalPolicy: "never",
+        sandboxPolicy: { type: "readOnly", networkAccess: false },
+        environments: [],
         ...(input.reasoningEffort === null ? {} : { effort: input.reasoningEffort }),
         ...(input.outputSchema === undefined ? {} : { outputSchema: input.outputSchema })
       });
       if (!isRecord(response) || !isRecord(response.turn) || !isExternalRuntimeId(response.turn.id)) {
-        return { ok: false, code: "invalid_turn_response" };
+        // An unknown started turn cannot be cancelled by ID; production closes
+        // its managed connection instead of leaving unknown work in flight.
+        await this.#onUnresponsive?.().catch(() => undefined);
+        return { ok: false, code: cancellation ?? "invalid_turn_response" };
       }
-      const turnId = response.turn.id;
+      turnId = response.turn.id;
+      this.#activeTurns.set(threadId, turnId);
+      if (input.signal?.aborted || this.#released.has(threadId)) cancellation ??= "turn_cancelled";
+      if (cancellation !== undefined || bufferOverflow) {
+        await interrupt(cancellation ?? "turn_cancelled");
+        if (this.#released.has(threadId)) await this.#rpc.request("thread/unsubscribe", { threadId }).catch(() => undefined);
+        return { ok: false, code: bufferOverflow ? "invalid_turn_response" : cancellation! };
+      }
       const initialBodies = collectAgentMessages(response.turn);
+      if (response.turn.status === "failed" || response.turn.status === "interrupted") return { ok: false, code: "turn_failed" };
       if (response.turn.status === "completed") {
         return initialBodies.length === 0
           ? { ok: false, code: "missing_agent_message" }
@@ -141,32 +252,40 @@ export class CodexAppServerThreadClient {
 
       return await new Promise<CodexTurnResult>((resolve) => {
         const bodies = [...initialBodies];
-        const settle = (result: CodexTurnResult): void => {
+        let settled = false;
+        settlePending = (result): void => {
+          if (settled) return;
+          settled = true;
           if (timeout !== undefined) clearTimeout(timeout);
           releaseListener?.();
-          resolve(result);
+          resolve(cancellation === undefined ? result : { ok: false, code: cancellation });
         };
         notificationHandler = (notification) => {
-          const body = completedAgentItem(notification, input.lease.threadId, turnId);
+          const body = completedAgentItem(notification, threadId, turnId!);
           if (body !== undefined) bodies.push(body);
-          const completion = completedTurn(notification, input.lease.threadId, turnId);
+          const completion = completedTurn(notification, threadId, turnId!);
           if (completion === undefined) return;
           bodies.push(...completion.bodies);
           if (completion.status !== "completed") {
-            settle({ ok: false, code: "turn_failed" });
+            settlePending!({ ok: false, code: "turn_failed" });
             return;
           }
           const lastBody = bodies.at(-1);
-          settle(lastBody === undefined ? { ok: false, code: "missing_agent_message" } : { ok: true, turnId, body: lastBody });
+          settlePending!(lastBody === undefined ? { ok: false, code: "missing_agent_message" } : { ok: true, turnId: turnId!, body: lastBody });
         };
         for (const notification of bufferedNotifications) notificationHandler(notification);
-        timeout = setTimeout(() => settle({ ok: false, code: "turn_timeout" }), timeoutMilliseconds);
       });
     } catch {
-      return { ok: false, code: "transport_error" };
+      // Covers a timed-out turn/start whose ID never arrived, not a model fallback.
+      await this.#onUnresponsive?.().catch(() => undefined);
+      return { ok: false, code: cancellation ?? "transport_error" };
     } finally {
       if (timeout !== undefined) clearTimeout(timeout);
+      input.signal?.removeEventListener("abort", onAbort);
       releaseListener?.();
+      await interruptRequest;
+      this.#activeTurns.delete(threadId);
+      this.#busyThreads.delete(threadId);
     }
   }
 }

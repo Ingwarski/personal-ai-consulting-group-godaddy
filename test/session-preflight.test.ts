@@ -117,3 +117,38 @@ test("fails before launch for catalog drift, forbidden credentials, Claude Fast 
   });
   assert.deepEqual(runtimeDowngrade, { ok: false, code: "claude_effort_unavailable" });
 });
+
+test("Codex-selected preflight never calls missing, failing, or hung Claude and checks the independent critic effort", async () => {
+  const values = snapshot();
+  const selected = { ...values.snapshot, settings: { ...values.snapshot.settings, critic: {
+    provider: "codex" as const, codex: { modelId: "codex-current-primary", reasoningEffort: "xhigh" }, claude: values.snapshot.settings.critic.claude
+  } } };
+  let inactiveCalls = 0;
+  for (const mode of ["missing", "error", "hung"] as const) {
+    const process = mode === "missing" ? undefined : {
+      inspectSubscription: () => { inactiveCalls++; if (mode === "error") return Promise.reject(new Error("403")); return new Promise<ClaudeCodeSubscriptionStatus>(() => undefined); },
+      runCritique: async () => { throw new Error("inactive provider"); }
+    };
+    const result = await preflightSessionSubscriptions({ environment: {}, snapshot: selected,
+      capabilityReceipt: { ...values.receipt, claudeModels: [] }, codexTransport: { request: async (method) => runtimeResponses[method] },
+      ...(process === undefined ? {} : { claudeProcess: process }), privateSingleOwner: true, now: activeNow });
+    assert.equal(result.ok, true);
+  }
+  assert.equal(inactiveCalls, 0);
+  const drift = await preflightSessionSubscriptions({ environment: {}, snapshot: selected, capabilityReceipt: values.receipt,
+    codexTransport: { request: async (method) => method !== "model/list" ? runtimeResponses[method] : { data: [{
+      id: "codex-current-primary", model: "codex-runtime-primary", displayName: "Codex", isDefault: true,
+      supportedReasoningEfforts: [{ reasoningEffort: "high" }]
+    }] } }, privateSingleOwner: true, now: activeNow });
+  assert.deepEqual(drift, { ok: false, code: "codex_effort_unavailable" });
+});
+
+test("matching product labels cannot hide a runtime model substitution", async () => {
+  const values = snapshot();
+  const result = await preflightSessionSubscriptions({ environment: {}, snapshot: values.snapshot, capabilityReceipt: values.receipt,
+    codexTransport: { request: async (method) => method !== "model/list" ? runtimeResponses[method] : { data: [{
+      id: "codex-current-primary", model: "substituted-other-runtime", displayName: "Codex", isDefault: true,
+      supportedReasoningEfforts: [{ reasoningEffort: "high" }]
+    }] } }, claudeProcess: readyClaude(), privateSingleOwner: true, now: activeNow });
+  assert.deepEqual(result, { ok: false, code: "codex_model_not_available" });
+});

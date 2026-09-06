@@ -1,7 +1,7 @@
 import type { SpeedPolicy, SpeedPolicyCatalog, SpeedPolicyNumericValue, SpeedPreset } from "./types.ts";
 
 const invariants = Object.freeze({
-  claudeCriticRequired: true,
+  criticRequired: true,
   a2aRequired: true,
   matrixE2eeRequired: true,
   verbatimVisibilityRequired: true,

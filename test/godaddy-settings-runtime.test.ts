@@ -134,6 +134,56 @@ function fixture(options: { pool?: OwnerAuthPool; runtime?: RuntimeBootstrap; go
   return { runtime, pool };
 }
 
+test("provider-specific catalog actions preserve Google auth and dispatch only the requested provider", async () => {
+  const calls: string[] = [];
+  const { runtime } = fixture({ runtime: bootstrap({ refreshCatalog: async (selected) => {
+    calls.push(selected!); return { ok: true, receipt: createCapabilityReceipt() };
+  } }) });
+  const { jar } = await login(runtime);
+  for (const selected of ["codex", "claude_code"] as const) {
+    const page = await runtime.handle(request("/operations/runtime", jar));
+    const path = `/operations/runtime/catalog?provider=${selected}`;
+    const result = await runtime.handle(actionRequest(path, formToken(await page!.text(), path), jar));
+    assert.equal(result?.status, 200);
+  }
+  assert.deepEqual(calls, ["codex", "claude_code"]);
+  const page = await runtime.handle(request("/operations/runtime", jar));
+  const token = formToken(await page!.text(), "/operations/runtime/catalog?provider=codex");
+  assert.equal((await runtime.handle(actionRequest("/operations/runtime/catalog?provider=other", token, jar)))?.status, 400);
+  assert.deepEqual(calls, ["codex", "claude_code"]);
+});
+
+test("an expired or missing catalog exposes saved Critic recovery controls without enabling an unverified save", async () => {
+  const pool = new SettingsPool();
+  let available = true;
+  const { runtime } = fixture({ pool, runtime: bootstrap({ loadCatalog: async () => available ? createCapabilityReceipt() : undefined }) });
+  const { jar } = await login(runtime);
+  assert.equal((await runtime.handle(request("/settings", jar)))?.status, 200);
+  const saved = pool.settings.get("owner-settings:document");
+  assert.ok(saved);
+  available = false;
+  const page = await runtime.handle(request("/settings", jar));
+  assert.equal(page?.status, 200);
+  const body = await page!.text();
+  assert.match(body, /id="critic-provider"/);
+  assert.match(body, /href="\/operations\/runtime"/);
+  assert.equal(pool.settings.get("owner-settings:document"), saved);
+  const read = await runtime.handle(request("/api/settings", jar));
+  assert.equal(read?.status, 200);
+  const value = await read!.json();
+  assert.equal(value.effectiveForNextSession, null);
+  assert.ok(value.effectiveIncompatibility);
+  assert.equal((await runtime.handle(request("/settings")))?.status, 303);
+});
+
+test("a first-time owner with no catalog gets a protected recovery page rather than an HTTP 503", async () => {
+  const { runtime } = fixture({ pool: new SettingsPool(), runtime: bootstrap({ loadCatalog: async () => undefined }) });
+  const { jar } = await login(runtime);
+  const page = await runtime.handle(request("/settings", jar));
+  assert.equal(page?.status, 200);
+  assert.match(await page!.text(), /href="\/operations\/runtime"/);
+});
+
 test("catalog failures identify the failing step without leaking details or clearing credentials", async () => {
   const codes: Extract<RuntimeCapabilityCatalogResult, { ok: false }>["code"][] = [
     'claude_auth_rejected', 'claude_access_denied', 'claude_quota_blocked', 'claude_cli_incompatible', 'claude_process_failed',
@@ -148,8 +198,8 @@ test("catalog failures identify the failing step without leaking details or clea
     }) });
     const { jar } = await login(runtime);
     const page = await runtime.handle(request('/operations/runtime', jar));
-    const token = formToken(await page!.text(), '/operations/runtime/catalog');
-    const result = await runtime.handle(actionRequest('/operations/runtime/catalog', token, jar));
+    const token = formToken(await page!.text(), '/operations/runtime/catalog?provider=claude_code');
+    const result = await runtime.handle(actionRequest('/operations/runtime/catalog?provider=claude_code', token, jar));
     assert.equal(result?.status, 503);
     const html = await result!.text();
     assert.ok(html.includes(`<code>${code}</code>`));
@@ -167,7 +217,7 @@ test("unexpected catalog exceptions stay private and leave the Google session us
   const { runtime } = fixture({ runtime: bootstrap({ refreshCatalog: async () => { throw new Error('RAW-SECRET-MARKER'); } }) });
   const { jar } = await login(runtime);
   const page = await runtime.handle(request('/operations/runtime', jar));
-  const response = await runtime.handle(actionRequest('/operations/runtime/catalog', formToken(await page!.text(), '/operations/runtime/catalog'), jar));
+  const response = await runtime.handle(actionRequest('/operations/runtime/catalog?provider=claude_code', formToken(await page!.text(), '/operations/runtime/catalog?provider=claude_code'), jar));
   assert.equal(response?.status, 503);
   const html = await response!.text();
   assert.match(html, /catalog_refresh_failed/);

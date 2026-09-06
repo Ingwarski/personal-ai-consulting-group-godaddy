@@ -28,11 +28,12 @@ async function startedRegistrar() {
   return registrar;
 }
 
-test("requires two to five registered Codex specialists and one separate Claude critic", () => {
+test("requires two to five registered Codex specialists and one separate Claude or Codex critic", () => {
   const valid = validateConsiliumRoster(specialists, critic);
   assert.equal(valid.ok, true);
   assert.deepEqual(validateConsiliumRoster([specialists[0]], critic), { ok: false, code: "invalid_specialist_count" });
-  assert.deepEqual(validateConsiliumRoster(specialists, { ...critic, provider: "codex" }), { ok: false, code: "missing_critic" });
+  assert.equal(validateConsiliumRoster(specialists, { ...critic, provider: "codex" }).ok, true);
+  assert.deepEqual(validateConsiliumRoster(specialists, { ...critic, provider: "codex", runtimeSessionRef: specialists[0]!.runtimeSessionRef }), { ok: false, code: "invalid_agent_registration" });
 });
 
 test("routes a complete addressed A2A message through the sole registrar", async () => {

@@ -1,7 +1,7 @@
 import { isValidFinalRecommendation, type FinalRecommendation } from "../consilium/final-recommendation.ts";
 import type { AgentRegistration } from "../consilium/roster.ts";
 import type { ProviderReasoningEffort } from "../settings/types.ts";
-import type { RegistrarDO } from "../session/registrar-do.ts";
+import { criticReceiptMatches, type RegistrarDO } from "../session/registrar-do.ts";
 import { CodexAppServerThreadClient, type CodexThreadLease } from "./codex-thread-client.ts";
 
 export type HeadSynthesisResult =
@@ -81,7 +81,7 @@ function synthesisPrompt(task: string, evidence: readonly Readonly<{ role: strin
 
 /**
  * The head uses its own pre-created Codex thread only after the registrar has
- * visibly recorded the Claude critique. The model produces strict data, while
+ * visibly recorded the designated critique. The model produces strict data, while
  * the existing finalizer remains the only component that formats, appends and
  * closes the canonical session.
  */
@@ -92,6 +92,7 @@ export class CodexHeadSynthesizer {
   readonly #lease: CodexThreadLease;
   readonly #threadClient: CodexAppServerThreadClient;
   readonly #reasoningEffort: ProviderReasoningEffort | null;
+  readonly #signal: AbortSignal | undefined;
 
   constructor(input: Readonly<{
     registrar: RegistrarDO;
@@ -100,9 +101,11 @@ export class CodexHeadSynthesizer {
     lease: CodexThreadLease;
     threadClient: CodexAppServerThreadClient;
     reasoningEffort: ProviderReasoningEffort | null;
+    signal?: AbortSignal;
   }>) {
-    if (input.head.provider !== "codex" || input.head.runtimeSessionRef !== input.lease.threadId || input.critic.provider !== "claude_code") {
-      throw new Error("The final synthesizer needs the registered head thread and Claude critic.");
+    if (input.head.provider !== "codex" || input.head.runtimeSessionRef !== input.lease.threadId ||
+      input.head.agentId === input.critic.agentId || input.head.runtimeSessionRef === input.critic.runtimeSessionRef) {
+      throw new Error("The final synthesizer needs distinct head and designated critic contexts.");
     }
     this.#registrar = input.registrar;
     this.#head = input.head;
@@ -110,20 +113,22 @@ export class CodexHeadSynthesizer {
     this.#lease = input.lease;
     this.#threadClient = input.threadClient;
     this.#reasoningEffort = input.reasoningEffort;
+    this.#signal = input.signal;
   }
 
   async synthesize(input: Readonly<{ sessionGeneration: number; task: string }>): Promise<HeadSynthesisResult> {
     const criticReceipt = await this.#registrar.getCriticReview(input.sessionGeneration);
-    if (criticReceipt === undefined || criticReceipt.role !== this.#critic.role) return { ok: false, code: "critic_not_confirmed" };
+    if (!criticReceiptMatches(criticReceipt, this.#critic, input.sessionGeneration)) return { ok: false, code: "critic_not_confirmed" };
     const evidence = await this.#registrar.getConfirmedMessages(input.sessionGeneration);
-    if (evidence.length < 3 || !evidence.some((message) => message.internalEventId === criticReceipt.eventId)) {
+    if (evidence.length < 3 || !evidence.some((message) => message.internalEventId === criticReceipt!.eventId && message.bodyHash === criticReceipt!.bodyHash)) {
       return { ok: false, code: "missing_consilium_evidence" };
     }
     const result = await this.#threadClient.runTextTurn({
       lease: this.#lease,
       body: synthesisPrompt(input.task, evidence.map((message) => ({ role: message.role, body: message.body }))),
       reasoningEffort: this.#reasoningEffort,
-      outputSchema: finalSchema
+      outputSchema: finalSchema,
+      ...(this.#signal === undefined ? {} : { signal: this.#signal })
     });
     if (!result.ok) return { ok: false, code: "runtime_failed" };
     const recommendation = parseRecommendation(result.body);

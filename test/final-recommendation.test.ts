@@ -30,6 +30,7 @@ async function startedRegistrar(): Promise<RegistrarDO> {
   if (!snapshot.ok) throw new Error("Snapshot must resolve.");
   const registrar = new RegistrarDO({ storage: new MemoryRegistrarStorage(), now: () => activeNow });
   await registrar.startSession({ sessionId: "final-task", settingsSnapshot: snapshot.value });
+  await registrar.designateCritic({ generation: 1, critic });
   return registrar;
 }
 

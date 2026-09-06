@@ -7,47 +7,102 @@
 
   let catalog;
   let current;
+  let initialDraft;
   try {
     catalog = JSON.parse(catalogNode.textContent || "");
     current = JSON.parse(form.dataset.current || "");
+    initialDraft = JSON.parse(form.dataset.draft || form.dataset.current || "");
   } catch {
     return;
   }
 
   const codexModel = form.elements.namedItem("codexModelId");
-  const claudeModel = form.elements.namedItem("claudeModelId");
   const codexEffort = form.elements.namedItem("codexReasoningEffort");
-  const claudeEffort = form.elements.namedItem("claudeReasoningEffort");
+  const criticProvider = form.elements.namedItem("criticProvider");
+  const criticModel = form.elements.namedItem("criticModelId");
+  const criticEffort = form.elements.namedItem("criticReasoningEffort");
+  const criticFeedback = document.getElementById("critic-feedback");
+  const criticFeedbackText = document.getElementById("critic-feedback-text");
+  const criticRecovery = document.getElementById("critic-recovery-link");
   const saveButton = form.querySelector('button[type="submit"]');
   const resetButton = document.getElementById("reset-button");
   const cancelButton = document.getElementById("cancel-button");
-  if (!(codexModel instanceof HTMLSelectElement) || !(claudeModel instanceof HTMLSelectElement) ||
-    !(codexEffort instanceof HTMLSelectElement) || !(claudeEffort instanceof HTMLSelectElement) ||
+  if (!(codexModel instanceof HTMLSelectElement) || !(criticProvider instanceof HTMLSelectElement) ||
+    !(codexEffort instanceof HTMLSelectElement) || !(criticModel instanceof HTMLSelectElement) || !(criticEffort instanceof HTMLSelectElement) ||
     !(saveButton instanceof HTMLButtonElement)) return;
 
-  const currentValues = () => ({
-    codex: {
-      modelId: codexModel.value,
-      reasoningEffort: codexEffort.value || null
-    },
-    claude: {
-      modelId: claudeModel.value,
-      reasoningEffort: claudeEffort.value || null
-    },
-    speedPreset: form.querySelector('input[name="speedPreset"]:checked')?.value || ""
-  });
+  let activeCriticKey = criticProvider.value === "codex" ? "codex" : "claude";
+  const criticDraft = structuredClone(initialDraft.critic);
+  const rememberCriticFields = () => {
+    criticDraft[activeCriticKey] = criticModel.value ? {
+      modelId: criticModel.value,
+      reasoningEffort: criticEffort.value || null
+    } : null;
+  };
+  const currentValues = () => {
+    rememberCriticFields();
+    return {
+      codex: {
+        modelId: codexModel.value,
+        reasoningEffort: codexEffort.value || null
+      },
+      critic: {
+        provider: criticProvider.value,
+        claude: criticDraft.claude,
+        codex: criticDraft.codex
+      },
+      speedPreset: form.querySelector('input[name="speedPreset"]:checked')?.value || ""
+    };
+  };
 
   const isSame = (left, right) => JSON.stringify(left) === JSON.stringify(right);
   const selectedProvider = (models, modelId) =>
     models?.find((model) => model.id === modelId && model.availability === "available");
 
-  const syncEffortOptions = (select, provider, previous) => {
-    const efforts = provider?.efforts || [];
+  const effortLabel = (provider, effort) => provider === "codex" && effort === "xhigh" ? "Extra High" : effort;
+  const syncEffortOptions = (select, model, previous, provider) => {
+    const efforts = model?.efforts || [];
+    const missing = previous && !efforts.includes(previous) ? new Option(effortLabel(provider, previous) + " — недоступно", previous, true, true) : undefined;
+    if (missing) missing.disabled = true;
     select.replaceChildren(
       new Option("За замовчуванням моделі", ""),
-      ...efforts.map((effort) => new Option(effort, effort))
+      ...(missing ? [missing] : []),
+      ...efforts.map((effort) => new Option(effortLabel(provider, effort), effort))
     );
-    select.value = previous && efforts.includes(previous) ? previous : "";
+    // Preserve an unsupported saved effort visibly; never silently lower it.
+    select.value = previous || "";
+  };
+  const criticModels = () => activeCriticKey === "codex" ? catalog.codexModels : catalog.claudeModels;
+  const syncCriticFields = () => {
+    const models = criticModels() || [];
+    const selected = criticDraft[activeCriticKey];
+    const available = models.filter(model => model.availability === "available");
+    const options = [];
+    if (!selected) options.push(new Option("Виберіть модель", "", true, true));
+    if (selected && !available.some(model => model.id === selected.modelId)) {
+      const name = models.find(model => model.id === selected.modelId)?.displayName || "Недоступна модель";
+      const option = new Option(name + " — недоступно", selected.modelId, true, true);
+      option.disabled = true;
+      options.push(option);
+    }
+    options.push(...available.map(model => new Option(model.displayName, model.id)));
+    criticModel.replaceChildren(...options);
+    criticModel.value = selected?.modelId || "";
+    syncEffortOptions(criticEffort, selectedProvider(models, criticModel.value), selected?.reasoningEffort, activeCriticKey);
+    const name = activeCriticKey === "codex" ? "Codex" : "Claude Code";
+    const help = document.getElementById("critic-model-help");
+    if (help) help.textContent = "Провайдер: " + name + ". Лише моделі з підтвердженого каталогу.";
+    const saved = current.critic[activeCriticKey];
+    const savedText = document.getElementById("critic-saved");
+    if (savedText) savedText.textContent = saved
+      ? "Збережено: " + (models.find(model => model.id === saved.modelId)?.displayName || "Недоступна модель") + " · " + (saved.reasoningEffort === null ? "за замовчуванням моделі" : effortLabel(activeCriticKey, saved.reasoningEffort)) + "."
+      : "Для цього провайдера параметри ще не збережено.";
+  };
+  const providerFresh = (provider) => {
+    const receipt = catalog.providerReceipts?.[provider === "claude" ? "claude_code" : "codex"];
+    const at = Date.now();
+    const fresh = value => value.trusted === true && Date.parse(value.issuedAt) <= at && Date.parse(value.expiresAt) > at;
+    return fresh(catalog) && (!receipt || (receipt.status === "ready" && fresh(receipt)));
   };
 
   const setStatus = (kind, text, title) => {
@@ -61,19 +116,28 @@
 
   const refreshForm = () => {
     const codex = selectedProvider(catalog.codexModels, codexModel.value);
-    const claude = selectedProvider(catalog.claudeModels, claudeModel.value);
+    const critic = selectedProvider(criticModels(), criticModel.value);
     const values = currentValues();
-    const codexCompatible = Boolean(codex) && (values.codex.reasoningEffort === null || codex.efforts.includes(values.codex.reasoningEffort));
-    const claudeCompatible = Boolean(claude) && (values.claude.reasoningEffort === null || claude.efforts.includes(values.claude.reasoningEffort));
-    const compatible = codexCompatible && claudeCompatible;
+    const selected = values.critic[activeCriticKey];
+    const codexCompatible = providerFresh("codex") && Boolean(codex) && (values.codex.reasoningEffort === null || codex.efforts.includes(values.codex.reasoningEffort));
+    const criticCompatible = providerFresh(activeCriticKey) && Boolean(critic) && selected !== null && (selected.reasoningEffort === null || critic.efforts.includes(selected.reasoningEffort));
+    const compatible = codexCompatible && criticCompatible;
+    const criticName = activeCriticKey === "codex" ? "Codex" : "Claude Code";
+    if (criticFeedback) criticFeedback.classList.toggle("error", !criticCompatible);
+    if (criticRecovery) criticRecovery.hidden = criticCompatible;
+    if (criticFeedbackText) criticFeedbackText.textContent = criticCompatible
+      ? "Критик: " + criticName + ". Обрані параметри підтверджені. Уподобання іншого провайдера збережено."
+      : !providerFresh(activeCriticKey) || !(criticModels() || []).some(model => model.availability === "available")
+        ? "Критик: " + criticName + ". Каталог провайдера недоступний або застарів. Попередні уподобання збережено; перевірте підключення або явно виберіть іншого провайдера."
+        : "Критик: " + criticName + ". Виберіть підтверджені модель і міркування. Недоступне значення не буде замінено автоматично.";
     const dirty = !isSame(values, current);
     saveButton.disabled = !dirty || !compatible;
     if (!compatible) {
       setStatus("error", !codexCompatible
         ? "Codex: обрана модель або рівень міркування більше не підтверджені."
-        : "Claude Code: обрана модель або рівень міркування більше не підтверджені.");
+        : "Критик: обрана модель або рівень міркування більше не підтверджені. Перевірте поля у блоці Критика.");
     } else if (dirty) {
-      setStatus("success", "Незалежні налаштування Codex і Claude Code підтверджені. Збереження застосує їх лише до наступної сесії.");
+      setStatus("success", "Незалежні налаштування Codex-агентів і вибраного Критика підтверджені. Збереження застосує їх лише до наступної сесії.");
     } else {
       setStatus("success", "Набір сумісний. Змін для збереження немає.", "Набір сумісний");
     }
@@ -168,12 +232,19 @@
   };
 
   form.addEventListener("change", (event) => {
-    if (event.target === codexModel) syncEffortOptions(codexEffort, selectedProvider(catalog.codexModels, codexModel.value), codexEffort.value);
-    if (event.target === claudeModel) syncEffortOptions(claudeEffort, selectedProvider(catalog.claudeModels, claudeModel.value), claudeEffort.value);
+    if (event.target === codexModel) syncEffortOptions(codexEffort, selectedProvider(catalog.codexModels, codexModel.value), codexEffort.value, "codex");
+    if (event.target === criticProvider) {
+      rememberCriticFields();
+      activeCriticKey = criticProvider.value === "codex" ? "codex" : "claude";
+      syncCriticFields();
+      // The provider selector is not replaced or refocused: keyboard focus stays.
+    }
+    if (event.target === criticModel) syncEffortOptions(criticEffort, selectedProvider(criticModels(), criticModel.value), criticEffort.value, activeCriticKey);
     refreshForm();
   });
   form.addEventListener("submit", (event) => {
     event.preventDefault();
+    refreshForm();
     const values = currentValues();
     if (saveButton.disabled) return;
     void submit("/api/settings", values);
@@ -182,7 +253,7 @@
     if (window.confirm("Повернути стандартні значення для наступної сесії?")) void submit("/api/settings/reset", { confirmed: true });
   });
   cancelButton?.addEventListener("click", () => window.location.reload());
-  syncEffortOptions(codexEffort, selectedProvider(catalog.codexModels, codexModel.value), current.codex?.reasoningEffort);
-  syncEffortOptions(claudeEffort, selectedProvider(catalog.claudeModels, claudeModel.value), current.claude?.reasoningEffort);
+  syncEffortOptions(codexEffort, selectedProvider(catalog.codexModels, codexModel.value), initialDraft.codex?.reasoningEffort, "codex");
+  syncCriticFields();
   refreshForm();
 })();

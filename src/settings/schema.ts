@@ -8,7 +8,7 @@ import {
 
 const SETTINGS_KEYS = [
   "codex",
-  "claude",
+  "critic",
   "speedPreset"
 ] as const;
 
@@ -17,6 +17,8 @@ export type SettingsParseError =
   | "unexpected_settings_shape"
   | "invalid_model_id"
   | "invalid_reasoning_effort"
+  | "invalid_critic_provider"
+  | "critic_settings_required"
   | "invalid_speed_preset";
 
 export type SettingsParseResult =
@@ -36,7 +38,7 @@ const isReasoningEffort = (value: unknown): value is ProviderReasoningEffort =>
 const isSpeedPreset = (value: string): value is SpeedPreset =>
   SPEED_PRESETS.includes(value as SpeedPreset);
 
-function parseProviderSettings(input: unknown): ProviderSettingsParseResult {
+export function parseProviderSettings(input: unknown): ProviderSettingsParseResult {
   if (!isRecord(input) || Object.keys(input).sort().join(",") !== "modelId,reasoningEffort") {
     return { ok: false, code: "unexpected_settings_shape" };
   }
@@ -68,8 +70,20 @@ export function parseOwnerSettings(input: unknown): SettingsParseResult {
 
   const codex = parseProviderSettings(input.codex);
   if (!codex.ok) return codex;
-  const claude = parseProviderSettings(input.claude);
+  if (!isRecord(input.critic) || Object.keys(input.critic).sort().join(",") !== "claude,codex,provider") {
+    return { ok: false, code: "unexpected_settings_shape" };
+  }
+  if (input.critic.provider !== "claude_code" && input.critic.provider !== "codex") {
+    return { ok: false, code: "invalid_critic_provider" };
+  }
+  const claude = input.critic.claude === null ? { ok: true as const, value: null } : parseProviderSettings(input.critic.claude);
   if (!claude.ok) return claude;
+  const criticCodex = input.critic.codex === null ? { ok: true as const, value: null } : parseProviderSettings(input.critic.codex);
+  if (!criticCodex.ok) return criticCodex;
+  if ((input.critic.provider === "claude_code" && claude.value === null) ||
+    (input.critic.provider === "codex" && criticCodex.value === null)) {
+    return { ok: false, code: "critic_settings_required" };
+  }
 
   if (typeof input.speedPreset !== "string" || !isSpeedPreset(input.speedPreset)) {
     return { ok: false, code: "invalid_speed_preset" };
@@ -77,6 +91,29 @@ export function parseOwnerSettings(input: unknown): SettingsParseResult {
 
   return {
     ok: true,
-    value: Object.freeze({ codex: codex.value, claude: claude.value, speedPreset: input.speedPreset })
+    value: Object.freeze({
+      codex: codex.value,
+      critic: Object.freeze({ provider: input.critic.provider, claude: claude.value, codex: criticCodex.value }),
+      speedPreset: input.speedPreset
+    })
   };
+}
+
+/** Read-only compatibility projection. Never accepts legacy payloads for a new save. */
+export function parseHistoricalOwnerSettings(input: unknown): SettingsParseResult {
+  if (isRecord(input) && Object.keys(input).sort().join(",") === "claudeModelId,codexModelId,reasoningDepth,speedPreset") {
+    return parseOwnerSettings({
+      codex: { modelId: input.codexModelId, reasoningEffort: input.reasoningDepth },
+      critic: { provider: "claude_code", claude: { modelId: input.claudeModelId, reasoningEffort: input.reasoningDepth }, codex: null },
+      speedPreset: input.speedPreset
+    });
+  }
+  if (!isRecord(input) || Object.keys(input).sort().join(",") !== "claude,codex,speedPreset") {
+    return parseOwnerSettings(input);
+  }
+  return parseOwnerSettings({
+    codex: input.codex,
+    critic: { provider: "claude_code", claude: input.claude, codex: null },
+    speedPreset: input.speedPreset
+  });
 }

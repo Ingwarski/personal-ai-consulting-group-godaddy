@@ -1,6 +1,7 @@
 import { deriveSettingsFormState } from "./controller.ts";
+import { validateCatalogTiming } from "../catalog.ts";
 import type { SettingsReadModel } from "../owner-settings-do.ts";
-import type { CapabilityReceipt, OwnerSettings, ProviderModelCapability, ProviderReasoningEffort, SpeedPreset } from "../types.ts";
+import type { CapabilityReceipt, OwnerSettings, ProviderModelCapability, ProviderReasoningEffort, ProviderSettings, SpeedPreset } from "../types.ts";
 
 export type SettingsPageModel = Readonly<{
   read: SettingsReadModel;
@@ -44,16 +45,25 @@ const escapeHtml = (value: string): string =>
 const isEffortSupported = (model: ProviderModelCapability, effort: ProviderReasoningEffort): boolean =>
   model.availability === "available" &&
   model.supportedReasoningEfforts.includes(effort) &&
-  typeof model.reasoningMappings[effort] === "string";
+  typeof model.reasoningMappings[effort] === "string" && model.reasoningMappings[effort]!.length > 0;
+
+const displayName = (model: ProviderModelCapability): string =>
+  model.runtimeModelId === "gpt-6-astra" ? "GPT-6 Astra" : model.displayName;
+const effortLabel = (provider: "codex" | "claude", effort: string | null): string =>
+  effort === null ? "за замовчуванням моделі" : provider === "codex" && effort === "xhigh" ? "Extra High" : effort;
 
 function findDisplayName(models: readonly ProviderModelCapability[], id: string): string {
-  return models.find((model) => model.productId === id)?.displayName ?? "Недоступна модель";
+  const model = models.find((model) => model.productId === id);
+  return model === undefined ? "Недоступна модель" : displayName(model);
 }
 
 function formatSettings(settings: OwnerSettings, receipt: CapabilityReceipt): string {
+  const criticProvider = settings.critic.provider === "codex" ? "codex" : "claude";
+  const critic = settings.critic[criticProvider];
   return [
-    "Codex: " + findDisplayName(receipt.codexModels, settings.codex.modelId) + " (" + (settings.codex.reasoningEffort ?? "за замовчуванням моделі") + ")",
-    "Claude Code: " + findDisplayName(receipt.claudeModels, settings.claude.modelId) + " (" + (settings.claude.reasoningEffort ?? "за замовчуванням моделі") + ")",
+    "Codex-агенти: " + findDisplayName(receipt.codexModels, settings.codex.modelId) + " (" + effortLabel("codex", settings.codex.reasoningEffort) + ")",
+    "Критик · " + (criticProvider === "codex" ? "Codex" : "Claude Code") + ": " + (critic === null ? "параметри ще не вибрано" :
+      findDisplayName(criticProvider === "codex" ? receipt.codexModels : receipt.claudeModels, critic.modelId) + " (" + effortLabel(criticProvider, critic.reasoningEffort) + ")"),
     settings.speedPreset
   ]
     .map(escapeHtml)
@@ -62,7 +72,7 @@ function formatSettings(settings: OwnerSettings, receipt: CapabilityReceipt): st
 
 function renderEffectiveSettings(model: SettingsPageModel): string {
   if (model.read.effectiveForNextSession === null) {
-    return '<span class="error">Збережений набір більше не сумісний із поточним каталогом. Виберіть підтверджену комбінацію або поверніть default.</span>';
+    return '<span class="error">Збережений набір більше не сумісний із поточним каталогом. Виберіть підтверджену комбінацію або <a href="/operations/runtime">перевірте підключення провайдера</a>.</span>';
   }
   return formatSettings(model.read.effectiveForNextSession, model.capabilityReceipt);
 }
@@ -81,31 +91,38 @@ function renderActiveSession(model: SettingsPageModel): string {
 const jsonForScript = (value: unknown): string =>
   JSON.stringify(value).replaceAll("<", "\\u003c").replaceAll(">", "\\u003e").replaceAll("&", "\\u0026");
 
-function renderModelOptions(provider: "codex" | "claude", models: readonly ProviderModelCapability[], selectedId: string): string {
-  const visible = models
-    .map((model, index) => Object.freeze({ model, index }))
-    .filter(({ model }) => model.availability === "available");
+function orderedModels(provider: "codex" | "claude", models: readonly ProviderModelCapability[]): readonly ProviderModelCapability[] {
+  const indexed = models.map((model, index) => ({ model, index }));
   const ordered = provider === "claude"
-    ? visible.sort((left, right) => (CLAUDE_MODEL_ORDER.get(left.model.runtimeModelId) ?? Number.MAX_SAFE_INTEGER) -
+    ? indexed.sort((left, right) => (CLAUDE_MODEL_ORDER.get(left.model.runtimeModelId) ?? Number.MAX_SAFE_INTEGER) -
         (CLAUDE_MODEL_ORDER.get(right.model.runtimeModelId) ?? Number.MAX_SAFE_INTEGER) || left.index - right.index)
-    : visible;
-  return ordered
-    .map(({ model }) => {
-      const selected = model.productId === selectedId ? " selected" : "";
-      return `<option value="${escapeHtml(model.productId)}"${selected}>${escapeHtml(model.displayName)}</option>`;
-    })
-    .join("");
+    : indexed;
+  return ordered.map(({ model }) => model);
 }
 
-function renderEffortOptions(model: ProviderModelCapability | undefined, selected: ProviderReasoningEffort | null): string {
+function renderModelOptions(provider: "codex" | "claude", models: readonly ProviderModelCapability[], selectedId: string | null): string {
+  const visible = orderedModels(provider, models).filter((model) => model.availability === "available");
+  const unavailable = selectedId !== null && !visible.some((model) => model.productId === selectedId);
+  return [
+    ...(selectedId === null ? ['<option value="" selected>Виберіть модель</option>'] : []),
+    ...(unavailable ? [`<option value="${escapeHtml(selectedId)}" selected disabled>${escapeHtml(findDisplayName(models, selectedId))} — недоступно</option>`] : []),
+    ...visible.map((model) => {
+      const selected = model.productId === selectedId ? " selected" : "";
+      return `<option value="${escapeHtml(model.productId)}"${selected}>${escapeHtml(displayName(model))}</option>`;
+    })
+  ].join("");
+}
+
+function renderEffortOptions(provider: "codex" | "claude", model: ProviderModelCapability | undefined, selected: ProviderReasoningEffort | null): string {
   const efforts = model === undefined
     ? []
     : model.supportedReasoningEfforts.filter((effort) => isEffortSupported(model, effort));
   const defaultOption = '<option value=""' + (selected === null ? " selected" : "") + '>За замовчуванням моделі</option>';
   return [
     defaultOption,
+    ...(selected !== null && !efforts.includes(selected) ? [`<option value="${escapeHtml(selected)}" selected disabled>${escapeHtml(effortLabel(provider, selected))} — недоступно</option>`] : []),
     ...efforts.map((effort) =>
-      '<option value="' + escapeHtml(effort) + '"' + (selected === effort ? " selected" : "") + '>' + escapeHtml(effort) + "</option>"
+      '<option value="' + escapeHtml(effort) + '"' + (selected === effort ? " selected" : "") + '>' + escapeHtml(effortLabel(provider, effort)) + "</option>"
     )
   ].join("");
 }
@@ -139,19 +156,37 @@ export function renderSettingsDocument(model: SettingsPageModel): string {
   const draft = model.draft ?? current;
   const formState = deriveSettingsFormState(draft, current, model.capabilityReceipt, model.now);
   const codex = model.capabilityReceipt.codexModels.find((item) => item.productId === draft.codex.modelId);
-  const claude = model.capabilityReceipt.claudeModels.find((item) => item.productId === draft.claude.modelId);
+  const criticProvider = draft.critic.provider === "codex" ? "codex" : "claude";
+  const criticSettings = draft.critic[criticProvider];
+  const criticModels = criticProvider === "codex" ? model.capabilityReceipt.codexModels : model.capabilityReceipt.claudeModels;
+  const critic = criticModels.find((item) => item.productId === criticSettings?.modelId);
+  const criticReceipt = model.capabilityReceipt.providerReceipts?.[draft.critic.provider];
+  const criticCatalogReady = validateCatalogTiming(model.capabilityReceipt, model.now) === null &&
+    (criticReceipt === undefined || (criticReceipt.status === "ready" && validateCatalogTiming(criticReceipt, model.now) === null));
+  const criticCompatible = criticCatalogReady && criticSettings !== null && critic?.availability === "available" &&
+    (criticSettings.reasoningEffort === null || isEffortSupported(critic, criticSettings.reasoningEffort));
+  const criticName = criticProvider === "codex" ? "Codex" : "Claude Code";
+  const savedCritic = current.critic[criticProvider];
+  const criticSavedText = (settings: ProviderSettings | null): string => settings === null ? "Для цього провайдера параметри ще не збережено." :
+    "Збережено: " + findDisplayName(criticModels, settings.modelId) + " · " + effortLabel(criticProvider, settings.reasoningEffort) + ".";
   const saveDisabled = formState.canSave ? "" : " disabled";
   const changed = formState.isDirty ? '<span class="changed-label">Змінено</span>' : "";
   const clientCatalog = jsonForScript({
-    codexModels: model.capabilityReceipt.codexModels.map((item) => ({
+    issuedAt: model.capabilityReceipt.issuedAt,
+    expiresAt: model.capabilityReceipt.expiresAt,
+    trusted: model.capabilityReceipt.trusted,
+    providerReceipts: model.capabilityReceipt.providerReceipts,
+    codexModels: orderedModels("codex", model.capabilityReceipt.codexModels).map((item) => ({
       id: item.productId,
+      displayName: displayName(item),
       availability: item.availability,
-      efforts: item.supportedReasoningEfforts
+      efforts: item.supportedReasoningEfforts.filter((effort) => isEffortSupported(item, effort))
     })),
-    claudeModels: model.capabilityReceipt.claudeModels.map((item) => ({
+    claudeModels: orderedModels("claude", model.capabilityReceipt.claudeModels).map((item) => ({
       id: item.productId,
+      displayName: displayName(item),
       availability: item.availability,
-      efforts: item.supportedReasoningEfforts
+      efforts: item.supportedReasoningEfforts.filter((effort) => isEffortSupported(item, effort))
     }))
   });
 
@@ -199,29 +234,35 @@ export function renderSettingsDocument(model: SettingsPageModel): string {
         <h2 id="values-title">Які значення діють</h2>
         <dl class="values-list">
           <div><dt>Current для наступної сесії</dt><dd>${renderEffectiveSettings(model)}</dd></div>
-          <div><dt>Default</dt><dd>${formatSettings(model.read.defaults, model.capabilityReceipt)}</dd></div>
+          <div><dt>Default</dt><dd>${formatSettings(model.read.defaults, model.capabilityReceipt)}${model.read.defaultsIncompatibility ? '<p class="mapping-note">Стандартний набір зараз недоступний. Можна вручну зберегти сумісний маршрут або <a href="/operations/runtime">перевірити підключення провайдера</a>.</p>' : ""}</dd></div>
           <div class="active-value"><dt>Активна сесія</dt><dd>${renderActiveSession(model)}</dd></div>
         </dl>
         <p class="snapshot-note">Активна сесія використовує незмінний snapshot. Збереження або reset не змінять її.</p>
       </section>
 
-      <form id="settings-form" method="post" novalidate data-etag="${escapeHtml(model.read.etag)}" data-current="${escapeHtml(JSON.stringify(current))}">
+      <form id="settings-form" method="post" novalidate data-etag="${escapeHtml(model.read.etag)}" data-current="${escapeHtml(JSON.stringify(current))}" data-draft="${escapeHtml(JSON.stringify(draft))}">
         <section class="settings-group" aria-labelledby="codex-title">
           <div class="group-heading"><div><p class="group-number">1</p><h2 id="codex-title">Codex-агенти</h2></div>${changed}</div>
-          <p class="provider-description">Модель і міркування Codex налаштовуються лише для Codex. Вони не змінюють Claude Code.</p>
+          <p class="provider-description">Модель і міркування Codex-агентів не змінюють параметри Критика, навіть коли він також працює через Codex.</p>
           <div class="field-grid">
             <label for="codex-model"><span>Модель Codex</span><select id="codex-model" name="codexModelId">${renderModelOptions("codex", model.capabilityReceipt.codexModels, draft.codex.modelId)}</select><small>Лише моделі, які повернув поточний Codex runtime.</small></label>
-            <label for="codex-effort"><span>Міркування Codex</span><select id="codex-effort" name="codexReasoningEffort">${renderEffortOptions(codex, draft.codex.reasoningEffort)}</select><small>«За замовчуванням моделі» не передає окремий рівень у Codex.</small></label>
+            <label for="codex-effort"><span>Міркування Codex</span><select id="codex-effort" name="codexReasoningEffort">${renderEffortOptions("codex", codex, draft.codex.reasoningEffort)}</select><small>«За замовчуванням моделі» не передає окремий рівень у Codex.</small></label>
           </div>
         </section>
 
-        <section class="settings-group" aria-labelledby="claude-title">
-          <div class="group-heading"><div><p class="group-number">2</p><h2 id="claude-title">Claude Code-критик</h2></div>${changed}</div>
-          <p class="provider-description">Claude Code працює як незалежний критик. Його модель і рівень міркування не мають спільної шкали з Codex.</p>
+        <section class="settings-group" aria-labelledby="critic-title">
+          <div class="group-heading"><div><p class="group-number">2</p><h2 id="critic-title">Критик</h2></div>${changed}</div>
+          <p class="provider-description">Критик працює незалежно від Codex-агентів. Оберіть провайдера та його власні модель і міркування; уподобання іншого провайдера збережуться.</p>
           <div class="field-grid">
-            <label for="claude-model"><span>Модель Claude Code</span><select id="claude-model" name="claudeModelId">${renderModelOptions("claude", model.capabilityReceipt.claudeModels, draft.claude.modelId)}</select><small>Показані лише моделі, успішно перевірені в поточній Claude Code підписці.</small></label>
-            <label for="claude-effort"><span>Міркування Claude Code</span><select id="claude-effort" name="claudeReasoningEffort">${renderEffortOptions(claude, draft.claude.reasoningEffort)}</select><small>Рівні залежать від обраної Claude-моделі; однакові назви не означають однакову інтенсивність із Codex.</small></label>
+            <label for="critic-provider"><span>Провайдер Критика</span><select id="critic-provider" name="criticProvider" aria-describedby="critic-preservation"><option value="claude_code"${draft.critic.provider === "claude_code" ? " selected" : ""}>Claude Code</option><option value="codex"${draft.critic.provider === "codex" ? " selected" : ""}>Codex</option></select></label>
           </div>
+          <fieldset class="field-grid critic-fields"><legend class="sr-only">Параметри Критика</legend>
+            <label for="critic-model"><span>Модель Критика</span><select id="critic-model" name="criticModelId" aria-describedby="critic-model-help critic-feedback">${renderModelOptions(criticProvider, criticModels, criticSettings?.modelId ?? null)}</select><small id="critic-model-help">Провайдер: ${criticName}. Лише моделі з підтвердженого каталогу.</small></label>
+            <label for="critic-effort"><span>Міркування Критика</span><select id="critic-effort" name="criticReasoningEffort" aria-describedby="critic-effort-help critic-feedback">${renderEffortOptions(criticProvider, critic, criticSettings?.reasoningEffort ?? null)}</select><small id="critic-effort-help">«За замовчуванням моделі» не передає окремий рівень. Шкала належить обраному провайдеру.</small></label>
+          </fieldset>
+          <p id="critic-saved" class="mapping-note">${escapeHtml(criticSavedText(savedCritic))}</p>
+          <p id="critic-preservation" class="mapping-note">Перемикання не зберігає зміни автоматично й не змінює Codex-агентів або активну сесію.</p>
+          <p id="critic-feedback" class="critic-feedback${criticCompatible ? "" : " error"}" role="status" aria-live="polite"><span id="critic-feedback-text">${criticCompatible ? "Обрані параметри Критика підтверджені." : "Оберіть підтверджені модель і міркування Критика. Попередні уподобання не видалено."}</span> <a id="critic-recovery-link" href="/operations/runtime"${criticCompatible ? " hidden" : ""}>Перевірити підключення провайдера</a></p>
         </section>
 
         <section class="settings-group" aria-labelledby="speed-title">
@@ -230,14 +271,14 @@ export function renderSettingsDocument(model: SettingsPageModel): string {
           <p class="mapping-note">Це лише оркестрація агентів. Обов’язкові межі безпеки не змінюються.</p>
         </section>
 
-        <section id="settings-status" class="validation-status ${formState.canSave || !formState.isDirty ? "success" : "error"}" role="status" aria-live="polite">
-          <strong>${formState.canSave ? "Зміни готові до збереження" : formState.isDirty ? "Комбінація несумісна" : "Набір сумісний"}</strong>
+        <section id="settings-status" class="validation-status ${formState.isCompatible ? "success" : "error"}" role="status" aria-live="polite">
+          <strong>${!formState.isCompatible ? "Комбінація несумісна" : formState.canSave ? "Зміни готові до збереження" : "Набір сумісний"}</strong>
           <p>${escapeHtml(formState.validationMessage)}</p>
         </section>
 
         <div class="settings-actions">
           <button type="submit" class="button primary"${saveDisabled}>Зберегти весь набір</button>
-          <button type="button" id="reset-button" class="button secondary">Повернути default</button>
+          <button type="button" id="reset-button" class="button secondary"${model.read.defaultsIncompatibility ? " disabled" : ""}>Повернути default</button>
           <button type="button" id="cancel-button" class="button quiet"${formState.isDirty ? "" : " disabled"}>Скасувати зміни</button>
         </div>
       </form>

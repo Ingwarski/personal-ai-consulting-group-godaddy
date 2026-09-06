@@ -3,7 +3,7 @@ import type {
   MatrixOutboxRecord,
   MatrixOutboxState
 } from "../session/registrar-do.ts";
-import { confirmedMessageFingerprint, matrixTransactionIdFor } from "../session/registrar-do.ts";
+import { confirmedMessageFingerprint, isConfirmedAgentAuthority, matrixTransactionIdFor } from "../session/registrar-do.ts";
 import { confirmedMessageFitsMatrixRuntimeLimits } from "../matrix/bridge.ts";
 import type { RegistrarStorage } from "../session/storage.ts";
 import { GODADDY_STATE_TABLE, type MySqlConnection, type MySqlPool } from "./mysql-storage.ts";
@@ -331,7 +331,7 @@ async function jsonSha256(value: unknown): Promise<string> {
 
 const allowedConfirmedMessageKeys = new Set([
   "generation", "sequence", "internalEventId", "role", "visibleTime", "body", "bodyFormat",
-  "addressedTo", "bodyHash", "confirmedAt"
+  "addressedTo", "bodyHash", "confirmedAt", "authority"
 ]);
 
 async function matrixOutboxDeliveryFingerprint(record: Pick<
@@ -375,6 +375,7 @@ async function validLeasedRecord(input: Readonly<{
   const message = input.message;
   if (
     !isRecord(message) || !hasOnlyKeys(message, allowedConfirmedMessageKeys) ||
+    (message.authority !== undefined && !isConfirmedAgentAuthority(message.authority)) ||
     message.generation !== input.generation || message.sequence !== input.sequence ||
     message.bodyFormat !== "markdown" || typeof message.role !== "string" || message.role.trim().length === 0 || message.role.length > 160 ||
     typeof message.internalEventId !== "string" || !/^[A-Za-z0-9:_-]{8,255}$/.test(message.internalEventId) ||
@@ -395,7 +396,8 @@ async function validLeasedRecord(input: Readonly<{
     role: message.role,
     body: message.body,
     ...(message.addressedTo === undefined ? {} : { addressedTo: message.addressedTo }),
-    ...(input.replyToEventId === undefined ? {} : { replyToEventId: input.replyToEventId })
+    ...(input.replyToEventId === undefined ? {} : { replyToEventId: input.replyToEventId }),
+    ...(message.authority === undefined ? {} : { authority: message.authority })
   }) !== message.bodyHash) return false;
   return await matrixOutboxDeliveryFingerprint({
     generation: input.generation,

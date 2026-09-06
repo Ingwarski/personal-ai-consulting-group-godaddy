@@ -34,28 +34,36 @@ const clientError = (code: JsonRpcClientErrorCode): Error => {
 export class JsonRpcClient {
   readonly #channel: JsonRpcLineChannel;
   readonly #timeoutMilliseconds: number;
+  readonly #experimentalApi: boolean;
   readonly #pending = new Map<number, PendingRequest>();
   readonly #notificationListeners = new Set<(notification: JsonRpcNotification) => void>();
   readonly #unsubscribe: () => void;
   #nextId = 1;
   #initialized = false;
+  #initializing: Promise<unknown> | undefined;
   #closed = false;
 
-  constructor(input: Readonly<{ channel: JsonRpcLineChannel; timeoutMilliseconds?: number }>) {
+  constructor(input: Readonly<{ channel: JsonRpcLineChannel; timeoutMilliseconds?: number; experimentalApi?: boolean }>) {
     this.#channel = input.channel;
+    this.#experimentalApi = input.experimentalApi === true;
     this.#timeoutMilliseconds = input.timeoutMilliseconds ?? 15_000;
     this.#unsubscribe = this.#channel.onLine((line) => this.#receive(line));
   }
 
   async initialize(clientInfo: Readonly<{ name: string; title: string; version: string }>): Promise<unknown> {
     if (this.#initialized) return {};
-    const result = await this.#sendRequest("initialize", {
-      clientInfo,
-      capabilities: { experimentalApi: false }
-    });
-    await this.#sendNotification("initialized", {});
-    this.#initialized = true;
-    return result;
+    if (this.#initializing !== undefined) return this.#initializing;
+    this.#initializing = (async () => {
+      const result = await this.#sendRequest("initialize", {
+        clientInfo,
+        capabilities: { experimentalApi: this.#experimentalApi }
+      });
+      await this.#sendNotification("initialized", {});
+      this.#initialized = true;
+      return result;
+    })();
+    try { return await this.#initializing; }
+    finally { this.#initializing = undefined; }
   }
 
   async request(method: string, params: unknown): Promise<unknown> {

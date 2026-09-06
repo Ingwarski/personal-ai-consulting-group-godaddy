@@ -18,6 +18,34 @@ const readyResponses: Record<string, unknown> = {
   "account/rateLimits/read": { rateLimits: { rateLimitReachedType: null } }
 };
 
+test("discovery paginates the full runtime catalog and retains only the explicitly requested hidden Astra", async () => {
+  const modelCalls: unknown[] = [];
+  const astra = { id: "astra-option", model: "gpt-6-astra", displayName: "GPT-6 Astra", hidden: true,
+    supportedReasoningEfforts: [{ reasoningEffort: "high" }, { reasoningEffort: "xhigh" }] };
+  const result = await probeCodexAppServer({ request: async (method, params) => {
+    if (method !== "model/list") return readyResponses[method];
+    modelCalls.push(params);
+    const cursor = (params as { cursor?: string }).cursor;
+    return cursor === undefined ? { ...readyResponses[method] as object, nextCursor: "page-two" }
+      : { data: [astra, { ...astra, id: "gpt-6-astra", model: "another-hidden-model" }], nextCursor: null };
+  } }, { privateSingleOwner: true });
+  assert.equal(result.runtime.readiness, "ready");
+  assert.deepEqual(result.models.map(model => model.productId), ["runtime-selected-codex", "astra-option"]);
+  assert.equal(modelCalls.length, 2);
+  assert.ok(modelCalls.every(params => (params as { includeHidden: boolean }).includeHidden));
+});
+
+test("discovery rejects a cyclic pagination cursor instead of looping or accepting an incomplete catalog", async () => {
+  let calls = 0;
+  const result = await probeCodexAppServer({ request: async (method) => {
+    if (method !== "model/list") return readyResponses[method];
+    calls++;
+    return { ...readyResponses[method] as object, nextCursor: "repeated" };
+  } }, { privateSingleOwner: true });
+  assert.equal(result.runtime.readiness, "unavailable");
+  assert.equal(calls, 2);
+});
+
 test("Codex capability discovery accepts only managed ChatGPT OAuth and the app-server's visible model catalog", async () => {
   const calls: string[] = [];
   const result = await probeCodexAppServer({

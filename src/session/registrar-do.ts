@@ -1,5 +1,6 @@
 import type { EffectiveSessionSnapshot } from "../settings/types.ts";
-import { isInternalEventId, isSessionId } from "../identity/ids.ts";
+import { isAgentId, isExternalRuntimeId, isInternalEventId, isSessionId } from "../identity/ids.ts";
+import type { AgentRegistration } from "../consilium/roster.ts";
 import type { RegistrarStorage } from "./storage.ts";
 
 const ACTIVE_SESSION_KEY = "registrar:active-session";
@@ -9,6 +10,7 @@ const messageKey = (generation: number, sequence: number): string =>
   `registrar:message:${generation}:${sequence}`;
 const eventKey = (eventId: string): string => `registrar:event:${eventId}`;
 const criticReviewKey = (generation: number): string => `registrar:critic-review:${generation}`;
+const criticBindingKey = (generation: number): string => `registrar:critic-binding:${generation}`;
 const matrixOutboxKey = (generation: number, sequence: number): string =>
   `registrar:matrix-outbox:${generation}:${sequence}`;
 
@@ -36,6 +38,20 @@ export type ConfirmedAgentMessage = Readonly<{
   addressedTo?: string;
   bodyHash: string;
   confirmedAt: string;
+  authority?: ConfirmedAgentAuthority;
+}>;
+
+export type ConfirmedAgentAuthority = Readonly<{
+  agentId: string;
+  provider: "codex" | "claude_code";
+  runtimeSessionRef: string;
+  kind: "assignment" | "initial_position" | "question" | "answer" | "critique" | "revision";
+}>;
+
+export type DesignatedCriticBinding = AgentRegistration & Readonly<{
+  schemaVersion: "1";
+  sessionId: string;
+  generation: number;
 }>;
 
 export type MatrixOutboxState = "pending" | "leased" | "accepted" | "device_delivered" | "read" | "blocked" | "cancelled";
@@ -66,12 +82,28 @@ type EventLedgerEntry = Readonly<{
   message: ConfirmedAgentMessage;
 }>;
 
-export type CriticReviewReceipt = Readonly<{
-  generation: number;
+export type CriticReviewReceipt = DesignatedCriticBinding & Readonly<{
   eventId: string;
-  role: string;
+  bodyHash: string;
+  sequence: number;
   registeredAt: string;
 }>;
+
+export function criticBindingMatches(receipt: DesignatedCriticBinding | undefined, critic: AgentRegistration, generation: number): boolean {
+  return receipt?.schemaVersion === "1" && receipt.generation === generation &&
+    receipt.agentId === critic.agentId && receipt.role === critic.role && receipt.provider === critic.provider &&
+    receipt.runtimeSessionRef === critic.runtimeSessionRef;
+}
+
+export const criticReceiptMatches = criticBindingMatches;
+
+export function isConfirmedAgentAuthority(value: unknown): value is ConfirmedAgentAuthority {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
+  const fields = value as Record<string, unknown>;
+  return Object.keys(fields).length === 4 && Object.keys(fields).every((key) => ["agentId", "provider", "runtimeSessionRef", "kind"].includes(key)) &&
+    isAgentId(fields.agentId) && (fields.provider === "codex" || fields.provider === "claude_code") && isExternalRuntimeId(fields.runtimeSessionRef) &&
+    typeof fields.kind === "string" && ["assignment", "initial_position", "question", "answer", "critique", "revision"].includes(fields.kind);
+}
 
 export type RegistrarResult<T> =
   | Readonly<{ ok: true; value: T; replayed: boolean }>
@@ -124,12 +156,14 @@ export async function confirmedMessageFingerprint(input: Readonly<{
   body: string;
   addressedTo?: string;
   replyToEventId?: string;
+  authority?: ConfirmedAgentAuthority;
 }>): Promise<string> {
   return hashValue({
     role: input.role,
     body: input.body,
     addressedTo: input.addressedTo ?? null,
-    replyToEventId: input.replyToEventId ?? null
+    replyToEventId: input.replyToEventId ?? null,
+    ...(input.authority === undefined ? {} : { authority: input.authority })
   });
 }
 
@@ -203,10 +237,11 @@ export class RegistrarDO {
     body: string;
     addressedTo?: string;
     replyToEventId?: string;
+    authority?: ConfirmedAgentAuthority;
   }>): Promise<RegistrarResult<ConfirmedAgentMessage>> {
     if (
       !isInternalEventId(input.eventId) || !isVisibleRole(input.role) || input.body.length === 0 ||
-      utf8Length(input.body) > 65_536
+      utf8Length(input.body) > 65_536 || (input.authority !== undefined && !isConfirmedAgentAuthority(input.authority))
     ) {
       return { ok: false, code: "invalid_event" };
     }
@@ -216,6 +251,7 @@ export class RegistrarDO {
     return this.#storage.transaction(async (storage) => {
       const recordedEvent = await storage.get<EventLedgerEntry>(eventKey(input.eventId));
       if (recordedEvent !== undefined) {
+        if (recordedEvent.message.generation !== input.generation) return { ok: false, code: "obsolete_generation" };
         if (recordedEvent.bodyHash !== bodyHash) return { ok: false, code: "idempotency_conflict" };
         return { ok: true, value: recordedEvent.message, replayed: true };
       }
@@ -236,7 +272,8 @@ export class RegistrarDO {
         bodyFormat: "markdown",
         ...(input.addressedTo === undefined ? {} : { addressedTo: input.addressedTo }),
         bodyHash,
-        confirmedAt: now.toISOString()
+        confirmedAt: now.toISOString(),
+        ...(input.authority === undefined ? {} : { authority: input.authority })
       });
       const updated = Object.freeze({ ...active, nextSequence: active.nextSequence + 1 });
       const outboxRecord: MatrixOutboxRecord = deepFreeze({
@@ -313,28 +350,66 @@ export class RegistrarDO {
     });
   }
 
+  /** Trusted composition records the actual runtime identity before any critique. */
+  async designateCritic(input: Readonly<{ generation: number; critic: AgentRegistration }>): Promise<RegistrarResult<DesignatedCriticBinding>> {
+    if (!isConfirmedAgentAuthority({ agentId: input.critic.agentId, provider: input.critic.provider, runtimeSessionRef: input.critic.runtimeSessionRef, kind: "critique" }) || !isVisibleRole(input.critic.role)) return { ok: false, code: "invalid_event" };
+    return this.#storage.transaction(async (storage) => {
+      const active = await storage.get<SessionGeneration>(ACTIVE_SESSION_KEY);
+      if (active === undefined) return { ok: false, code: "no_active_session" };
+      if (active.generation !== input.generation) return { ok: false, code: "obsolete_generation" };
+      if (active.phase !== "active") return { ok: false, code: "session_not_active" };
+      // Old immutable snapshots retain their historical Claude meaning.
+      const settings = active.settingsSnapshot.settings;
+      const provider = "critic" in settings ? settings.critic.provider : "claude_code";
+      if (input.critic.provider !== provider) return { ok: false, code: "invalid_event" };
+      const binding = deepFreeze({ schemaVersion: "1" as const, sessionId: active.sessionId, generation: input.generation, ...input.critic });
+      const existing = await storage.get<DesignatedCriticBinding>(criticBindingKey(input.generation));
+      if (existing !== undefined) return JSON.stringify(existing) === JSON.stringify(binding)
+        ? { ok: true, value: existing, replayed: true } : { ok: false, code: "idempotency_conflict" };
+      await storage.put(criticBindingKey(input.generation), binding);
+      return { ok: true, value: binding, replayed: false };
+    });
+  }
+
+  async getDesignatedCritic(generation: number): Promise<DesignatedCriticBinding | undefined> {
+    return this.#storage.get<DesignatedCriticBinding>(criticBindingKey(generation));
+  }
+
   async recordCriticReview(input: Readonly<{
     generation: number;
     eventId: string;
-    role: string;
+    critic: AgentRegistration;
   }>): Promise<RegistrarResult<CriticReviewReceipt>> {
-    if (!isInternalEventId(input.eventId) || !isVisibleRole(input.role)) {
+    if (!isInternalEventId(input.eventId) || input.critic === undefined || !isVisibleRole(input.critic.role)) {
       return { ok: false, code: "invalid_event" };
     }
 
     return this.#storage.transaction(async (storage) => {
+      const active = await storage.get<SessionGeneration>(ACTIVE_SESSION_KEY);
+      if (active === undefined) return { ok: false, code: "no_active_session" };
+      if (active.generation !== input.generation) return { ok: false, code: "obsolete_generation" };
+      if (active.phase !== "active") return { ok: false, code: "session_not_active" };
+      const binding = await storage.get<DesignatedCriticBinding>(criticBindingKey(input.generation));
+      if (binding === undefined || binding.sessionId !== active.sessionId || !criticBindingMatches(binding, input.critic, input.generation)) {
+        return { ok: false, code: "invalid_event" };
+      }
       const existing = await storage.get<CriticReviewReceipt>(criticReviewKey(input.generation));
-      if (existing !== undefined) return { ok: true, value: existing, replayed: true };
+      if (existing !== undefined) return criticReceiptMatches(existing, input.critic, input.generation) && existing.eventId === input.eventId
+        ? { ok: true, value: existing, replayed: true } : { ok: false, code: "idempotency_conflict" };
 
       const event = await storage.get<EventLedgerEntry>(eventKey(input.eventId));
-      if (event === undefined || event.message.generation !== input.generation || event.message.role !== input.role) {
+      const authority = event?.message.authority;
+      if (event === undefined || event.message.generation !== input.generation || event.message.role !== input.critic.role ||
+        authority?.kind !== "critique" || authority.agentId !== binding.agentId || authority.provider !== binding.provider ||
+        authority.runtimeSessionRef !== binding.runtimeSessionRef) {
         return { ok: false, code: "invalid_event" };
       }
 
       const receipt = deepFreeze({
-        generation: input.generation,
+        ...binding,
         eventId: input.eventId,
-        role: input.role,
+        bodyHash: event.message.bodyHash,
+        sequence: event.message.sequence,
         registeredAt: this.#now().toISOString()
       });
       await storage.put(criticReviewKey(input.generation), receipt);
@@ -343,7 +418,19 @@ export class RegistrarDO {
   }
 
   async getCriticReview(generation: number): Promise<CriticReviewReceipt | undefined> {
-    return this.#storage.get<CriticReviewReceipt>(criticReviewKey(generation));
+    const active = await this.getActiveSession();
+    if (active?.generation !== generation || active.phase !== "active") return undefined;
+    const receipt = await this.#storage.get<CriticReviewReceipt>(criticReviewKey(generation));
+    const binding = await this.getDesignatedCritic(generation);
+    if (binding === undefined || receipt?.sessionId !== active.sessionId || !criticReceiptMatches(receipt, binding, generation)) return undefined;
+    const event = await this.#storage.get<EventLedgerEntry>(eventKey(receipt!.eventId));
+    const message = event?.message;
+    const canonical = await this.#storage.get<ConfirmedAgentMessage>(messageKey(generation, receipt!.sequence));
+    if (message === undefined || canonical === undefined || JSON.stringify(canonical) !== JSON.stringify(message) ||
+      message.role !== binding.role || await confirmedMessageFingerprint(message) !== message.bodyHash) return undefined;
+    return message.generation === generation && message.sequence === receipt!.sequence && message.bodyHash === receipt!.bodyHash &&
+      message.authority?.kind === "critique" && message.authority.agentId === binding.agentId &&
+      message.authority.provider === binding.provider && message.authority.runtimeSessionRef === binding.runtimeSessionRef ? receipt : undefined;
   }
 
   async getActiveSession(): Promise<SessionGeneration | undefined> {

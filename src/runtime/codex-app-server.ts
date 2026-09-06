@@ -41,7 +41,9 @@ function parseModels(value: unknown): Readonly<{ models: readonly ProviderModelC
   let defaultModelId: string | undefined;
   for (const item of value.data) {
     if (!isRecord(item)) return undefined;
-    if (item.hidden === true) continue;
+    // Astra was explicitly requested by the owner; other hidden models stay
+    // private. Issuance separately requires a successful Astra execution probe.
+    if (item.hidden === true && item.model !== "gpt-6-astra") continue;
     if (!nonEmptyString(item.id) || !nonEmptyString(item.model) ||
       !nonEmptyString(item.displayName) || !Array.isArray(item.supportedReasoningEfforts)) return undefined;
     // App Server owns this provider-specific capability list. Preserve it
@@ -110,7 +112,7 @@ export async function probeCodexAppServer(
       });
     }
     const [modelResult, limitResult] = await Promise.all([
-      transport.request("model/list", { limit: 100, includeHidden: false }),
+      readAllModels(transport),
       transport.request("account/rateLimits/read", {})
     ]);
     const parsedModels = parseModels(modelResult);
@@ -130,4 +132,21 @@ export async function probeCodexAppServer(
   } catch {
     return unavailable(input.privateSingleOwner);
   }
+}
+
+async function readAllModels(transport: CodexAppServerTransport): Promise<unknown> {
+  const data: unknown[] = [];
+  const cursors = new Set<string>();
+  let cursor: string | undefined;
+  for (let page = 0; page < 20; page += 1) {
+    const result = await transport.request("model/list", { limit: 100, includeHidden: true, ...(cursor === undefined ? {} : { cursor }) });
+    if (!isRecord(result) || !Array.isArray(result.data)) throw new Error("Invalid model catalog.");
+    data.push(...result.data);
+    if (data.length > 2_000) throw new Error("Model catalog limit exceeded.");
+    if (result.nextCursor === null || result.nextCursor === undefined) return { data };
+    if (!nonEmptyString(result.nextCursor) || cursors.has(result.nextCursor)) throw new Error("Invalid model cursor.");
+    cursors.add(result.nextCursor);
+    cursor = result.nextCursor;
+  }
+  throw new Error("Model catalog page limit exceeded.");
 }

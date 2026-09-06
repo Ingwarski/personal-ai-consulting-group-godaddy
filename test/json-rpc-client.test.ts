@@ -19,6 +19,18 @@ function channelHarness() {
   };
 }
 
+test("concurrent role clients share exactly one managed-OAuth connection initialization", async () => {
+  const harness = channelHarness();
+  const client = new JsonRpcClient({ channel: harness.channel });
+  const info = { name: "app", title: "Application", version: "1" };
+  const pending = [client.initialize(info), client.initialize(info), client.initialize(info)];
+  assert.equal(harness.sent.length, 1);
+  harness.respond({ id: 1, result: {} });
+  await Promise.all(pending);
+  assert.deepEqual(harness.sent.map((message: { method: string }) => message.method), ["initialize", "initialized"]);
+  client.close();
+});
+
 test("requires the documented initialize then initialized handshake before Codex app-server requests", async () => {
   const harness = channelHarness();
   const client = new JsonRpcClient({ channel: harness.channel });

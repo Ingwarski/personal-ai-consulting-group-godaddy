@@ -37,7 +37,7 @@ test("orders the verified Claude family by exact model capability, not alias dis
     ],
     defaults: {
       ...createCapabilityReceipt().defaults,
-      claude: { modelId: "claude-sonnet-5", reasoningEffort: "high" }
+      critic: { provider: "claude_code", claude: { modelId: "claude-sonnet-5", reasoningEffort: "high" }, codex: null }
     }
   });
   const html = renderSettingsDocument(await pageModel(receipt));
@@ -53,7 +53,9 @@ test("settings page has exactly three labelled groups and only catalog-provided 
   const html = renderSettingsDocument(model);
 
   assert.match(html, /<h2 id="codex-title">Codex-агенти<\/h2>/);
-  assert.match(html, /<h2 id="claude-title">Claude Code-критик<\/h2>/);
+  assert.match(html, /<h2 id="critic-title">Критик<\/h2>/);
+  assert.match(html, /<label for="critic-provider"><span>Провайдер Критика<\/span>/);
+  assert.match(html, /<option value="claude_code" selected>Claude Code<\/option><option value="codex">Codex<\/option>/);
   assert.match(html, /<h2 id="speed-title">Швидкість консиліуму<\/h2>/);
   assert.equal((html.match(/class="group-number"/g) ?? []).length, 3);
   assert.match(html, />Codex primary<\/option>/);
@@ -86,7 +88,7 @@ test("save is disabled without a whole valid changed set and becomes available f
   const incompatible = deriveSettingsFormState(
     {
       ...model.read.document.settings,
-      claude: { ...model.read.document.settings.claude, reasoningEffort: "xhigh" }
+      critic: { ...model.read.document.settings.critic, claude: { ...model.read.document.settings.critic.claude!, reasoningEffort: "xhigh" } }
     },
     model.read.document.settings,
     model.capabilityReceipt,
@@ -162,4 +164,72 @@ test("Google owner controls carry separate purpose tokens without altering the t
   assert.doesNotMatch(html, /name="password"|Ключ входу/);
   assert.match(html, /не вихід із Google/);
   assert.match(html, /data-owner-action-status role="status" aria-live="polite" tabindex="-1"/);
+});
+
+test("verified Astra and Extra High are labelled in each independent Codex role without inventing options", async () => {
+  const base = createCapabilityReceipt();
+  const receipt = createCapabilityReceipt({
+    codexModels: [{ ...base.codexModels[0]!, runtimeModelId: "gpt-6-astra", displayName: "GPT-6-Astra" }],
+    defaults: { ...base.defaults, critic: { ...base.defaults.critic, provider: "codex", codex: { modelId: "codex-current-primary", reasoningEffort: "xhigh" } } }
+  });
+  const html = renderSettingsDocument(await pageModel(receipt));
+  assert.match(html, /<select id="codex-model"[^>]*><option value="codex-current-primary" selected>GPT-6 Astra<\/option>/);
+  assert.match(html, /<select id="critic-model"[^>]*><option value="codex-current-primary" selected>GPT-6 Astra<\/option>/);
+  assert.match(html, /<option value="xhigh" selected>Extra High<\/option>/);
+  assert.match(html, /Codex-агенти: GPT-6 Astra \(high\).*Критик · Codex: GPT-6 Astra \(Extra High\)/);
+  assert.doesNotMatch(html, /GPT-6-Astra|<option[^>]*>Claude critic/);
+  assert.doesNotMatch(renderSettingsDocument(await pageModel()), /GPT-6 Astra/);
+});
+
+test("missing Claude does not hide the provider selector or block a manually selected valid Codex Critic", async () => {
+  const model = await pageModel();
+  const receipt = createCapabilityReceipt({ claudeModels: [] });
+  const draft = { ...model.read.document.settings, critic: {
+    ...model.read.document.settings.critic, provider: "codex" as const,
+    codex: { modelId: "codex-current-primary", reasoningEffort: "xhigh" }
+  } };
+  const html = renderSettingsDocument({ ...model, capabilityReceipt: receipt, draft,
+    read: { ...model.read, defaultsIncompatibility: "unknown_claude_model" }
+  });
+  assert.match(html, /id="critic-provider"[^>]*><option value="claude_code">Claude Code<\/option><option value="codex" selected>Codex/);
+  assert.match(html, /<button type="submit" class="button primary">Зберегти весь набір/);
+  assert.match(html, /id="reset-button" class="button secondary" disabled/);
+  assert.match(html, /href="\/operations\/runtime">перевірити підключення провайдера/);
+  assert.match(html, /id="critic-recovery-link" href="\/operations\/runtime" hidden/);
+  assert.equal(deriveSettingsFormState(draft, model.read.document.settings, receipt, activeNow).canSave, true);
+});
+
+test("unavailable saved Critic model and effort remain explicit instead of selecting defaults", async () => {
+  const model = await pageModel();
+  const receipt = createCapabilityReceipt({ claudeModels: [] });
+  const html = renderSettingsDocument({ ...model, capabilityReceipt: receipt });
+  assert.match(html, /<option value="claude-current-critic" selected disabled>Недоступна модель — недоступно/);
+  assert.match(html, /<option value="high" selected disabled>high — недоступно/);
+  assert.match(html, /id="critic-feedback" class="critic-feedback error" role="status" aria-live="polite"/);
+  assert.match(html, /id="critic-recovery-link" href="\/operations\/runtime">/);
+  assert.match(html, /id="settings-status" class="validation-status error"/);
+  assert.match(html, /<button type="submit" class="button primary" disabled/);
+  assert.doesNotMatch(html, /id="critic-provider"[^>]* disabled/);
+});
+
+test("a never-configured Critic branch requires an explicit model choice", async () => {
+  const model = await pageModel();
+  const html = renderSettingsDocument({ ...model,
+    draft: { ...model.read.document.settings, critic: { ...model.read.document.settings.critic, provider: "codex", codex: null } }
+  });
+  assert.match(html, /id="critic-model"[^>]*><option value="" selected>Виберіть модель/);
+  assert.match(html, /<button type="submit" class="button primary" disabled/);
+  assert.match(html, /Для цього провайдера параметри ще не збережено/);
+});
+
+test("server-rendered stale provider warnings agree with the form validity before JavaScript runs", async () => {
+  const model = await pageModel();
+  const receipt = createCapabilityReceipt({ providerReceipts: {
+    codex: { schemaVersion: "1", status: "ready", catalogVersion: "codex-ready", issuedAt: model.capabilityReceipt.issuedAt, expiresAt: model.capabilityReceipt.expiresAt, trusted: true },
+    claude_code: { schemaVersion: "1", status: "unavailable", catalogVersion: "claude-unavailable", issuedAt: model.capabilityReceipt.issuedAt, expiresAt: model.capabilityReceipt.expiresAt, trusted: true }
+  } });
+  const html = renderSettingsDocument({ ...model, capabilityReceipt: receipt });
+  assert.match(html, /id="critic-feedback" class="critic-feedback error"/);
+  assert.match(html, /id="critic-recovery-link" href="\/operations\/runtime">/);
+  assert.match(html, /id="settings-status" class="validation-status error"/);
 });

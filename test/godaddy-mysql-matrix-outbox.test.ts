@@ -186,6 +186,32 @@ test("leases only the strict outbox head and preserves its deterministic transac
   assert.equal(pool.connection.commits, 1);
 });
 
+test("leases identity-bound critic messages and rejects altered, malformed or stripped authority", async () => {
+  const authority = { agentId: "critic", provider: "codex" as const, runtimeSessionRef: "thread-critic-01", kind: "critique" as const };
+  const bodyHash = await confirmedMessageFingerprint({ role: message.role, body: message.body, replyToEventId, authority });
+  const identityMessage = { ...message, bodyHash, authority };
+  const transactionId = `pc-1-1-${bodyHash.slice(0, 24)}`;
+  const deliveryHash = jsonHash({ generation: 1, sequence: 1, transactionId, recordKind: "message",
+    message: { generation: 1, sequence: 1, internalEventId: identityMessage.internalEventId, role: identityMessage.role,
+      visibleTime: identityMessage.visibleTime, body: identityMessage.body, bodyFormat: identityMessage.bodyFormat,
+      addressedTo: null, bodyHash, confirmedAt: identityMessage.confirmedAt }, replyToEventId, createdAt: identityMessage.confirmedAt });
+  for (const [caseName, candidate] of [
+    ["valid", identityMessage],
+    ["changed", { ...identityMessage, authority: { ...authority, runtimeSessionRef: "thread-other" } }],
+    ["unknown-field", { ...identityMessage, authority: { ...authority, token: "must-be-rejected" } }],
+    ["stripped", { ...message, bodyHash }]
+  ] as const) {
+    const pool = new ScriptedPool({ transaction: async (statement) => {
+      if (statement.startsWith("SELECT generation")) return [[canonicalOutboxRow({ transactionId, bodyHash, deliveryHash, messageJson: JSON.stringify(candidate) })], []];
+      if (statement.startsWith("UPDATE personal_consultant_matrix_outbox")) return [{ affectedRows: 1 }, []];
+      throw new Error("Unexpected SQL");
+    } });
+    const pending = new MySqlMatrixOutbox(pool).leaseHead({ leaseOwner: "node-worker-01", now: new Date(message.confirmedAt), leaseMilliseconds: 30_000 });
+    if (caseName === "valid") assert.deepEqual((await pending)?.message.authority, authority);
+    else await assert.rejects(pending, MatrixOutboxCorruptionError);
+  }
+});
+
 test("a blocked strict head intentionally halts all later publication, as does an active head lease", async () => {
   for (const row of [
     canonicalOutboxRow({ state: "blocked", leaseEpoch: 1 }),

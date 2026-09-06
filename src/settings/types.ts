@@ -3,6 +3,7 @@ export const SPEED_PRESETS = ["швидко", "збалансовано", "ре�
 export type SpeedPreset = (typeof SPEED_PRESETS)[number];
 export type ModelAvailability = "available" | "unavailable";
 export type ProviderReasoningEffort = string;
+export type CriticProvider = "claude_code" | "codex";
 
 export type ProviderSettings = Readonly<{
   modelId: string;
@@ -15,8 +16,21 @@ export type ProviderSettings = Readonly<{
 
 export type OwnerSettings = Readonly<{
   codex: ProviderSettings;
-  claude: ProviderSettings;
+  critic: Readonly<{
+    provider: CriticProvider;
+    claude: ProviderSettings | null;
+    codex: ProviderSettings | null;
+  }>;
   speedPreset: SpeedPreset;
+}>;
+
+export type ProviderCapabilityReceipt = Readonly<{
+  schemaVersion: "1";
+  status: "ready" | "unavailable";
+  catalogVersion: string;
+  issuedAt: string;
+  expiresAt: string;
+  trusted: boolean;
 }>;
 
 export type ProviderModelCapability = Readonly<{
@@ -37,6 +51,11 @@ export type CapabilityReceipt = Readonly<{
   codexModels: readonly ProviderModelCapability[];
   claudeModels: readonly ProviderModelCapability[];
   defaults: OwnerSettings;
+  /** Older envelopes are accepted as one receipt; new receipts isolate provider freshness. */
+  providerReceipts?: Readonly<{
+    codex: ProviderCapabilityReceipt;
+    claude_code: ProviderCapabilityReceipt;
+  }>;
 }>;
 
 export type SpeedPolicy = Readonly<{
@@ -48,7 +67,7 @@ export type SpeedPolicy = Readonly<{
   critiqueRevisionCycles: SpeedPolicyNumericValue;
   internalBudgetMilliseconds: SpeedPolicyNumericValue;
   invariants: Readonly<{
-    claudeCriticRequired: true;
+    criticRequired: true;
     a2aRequired: true;
     matrixE2eeRequired: true;
     verbatimVisibilityRequired: true;

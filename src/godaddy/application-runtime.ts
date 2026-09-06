@@ -1,3 +1,4 @@
+import type { GoDaddyConsiliumRequest, GoDaddyConsiliumResult } from "./consilium-runtime.ts";
 import { parseRuntimeEnvironment } from "../runtime/environment.ts";
 import {
   createGoDaddyMatrixService,
@@ -25,6 +26,7 @@ export type GoDaddyApplicationRuntime = Readonly<{
   settings: GoDaddySettingsRuntime;
   registrarRuntime?: GoDaddyRegistrarRuntime;
   matrixService?: GoDaddyMatrixService;
+  runConsilium?: (request: GoDaddyConsiliumRequest) => Promise<GoDaddyConsiliumResult>;
   start: () => Promise<void>;
   stop: () => Promise<void>;
 }>;
@@ -168,6 +170,13 @@ export function createGoDaddyApplicationRuntime(
     settings,
     registrarRuntime,
     matrixService: createdMatrixService,
+    async runConsilium(request: GoDaddyConsiliumRequest): Promise<GoDaddyConsiliumResult> {
+      if (stopping || settings.consilium === undefined) return { ok: false, code: "runtime_unavailable" };
+      // The internal dispatcher cannot bypass E2EE/storage/media readiness.
+      try { createdMatrixService.assertReadyForNewSession(); }
+      catch { return { ok: false, code: "runtime_unavailable" }; }
+      return settings.consilium.run(request);
+    },
     start,
     stop
   });

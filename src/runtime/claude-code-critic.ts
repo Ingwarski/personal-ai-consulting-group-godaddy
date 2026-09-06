@@ -29,6 +29,7 @@ export interface ClaudeCodeSubscriptionProcess {
     runtimeModelId: string;
     reasoningEffort: ProviderReasoningEffort | null;
     prompt: string;
+    signal?: AbortSignal;
   }>): Promise<Readonly<{ turnRef: string; body: string }>>;
 }
 
@@ -38,6 +39,7 @@ export type ClaudeCodeCriticRuntimeInput = Readonly<{
   headAgentId: string;
   modelId: string;
   reasoningEffort: ProviderReasoningEffort | null;
+  signal?: AbortSignal;
 }>;
 
 const nonEmpty = (value: unknown, maximum = 32_000): value is string =>
@@ -72,6 +74,7 @@ export class ClaudeCodeCriticRuntime implements ConsiliumAgentRuntime {
   readonly #headAgentId: string;
   readonly #modelId: string;
   readonly #reasoningEffort: ProviderReasoningEffort | null;
+  readonly #signal: AbortSignal | undefined;
 
   constructor(input: ClaudeCodeCriticRuntimeInput) {
     if (input.registration.provider !== "claude_code" || !isExternalRuntimeId(input.registration.runtimeSessionRef) || !isAgentId(input.headAgentId)) {
@@ -82,6 +85,7 @@ export class ClaudeCodeCriticRuntime implements ConsiliumAgentRuntime {
     this.#headAgentId = input.headAgentId;
     this.#modelId = input.modelId;
     this.#reasoningEffort = input.reasoningEffort;
+    this.#signal = input.signal;
   }
 
   async run(input: Readonly<{
@@ -91,7 +95,7 @@ export class ClaudeCodeCriticRuntime implements ConsiliumAgentRuntime {
     assignment: string;
     evidence: readonly ConsiliumEvidence[];
   }>, emit: (message: RuntimeEmission) => Promise<void>): Promise<void> {
-    if (input.phase !== "critique" || !nonEmpty(input.task) || !nonEmpty(input.assignment) || input.evidence.length < 2) {
+    if (this.#signal?.aborted || input.phase !== "critique" || !nonEmpty(input.task) || !nonEmpty(input.assignment) || input.evidence.length < 2) {
       throw new SafeConsiliumFailure("invalid_runtime_emission");
     }
     let status: ClaudeCodeSubscriptionStatus;
@@ -110,10 +114,11 @@ export class ClaudeCodeCriticRuntime implements ConsiliumAgentRuntime {
       modelId: model.productId,
       runtimeModelId: model.runtimeModelId,
       reasoningEffort: this.#reasoningEffort,
-      prompt: criticPrompt(input.task, input.assignment, input.evidence)
+      prompt: criticPrompt(input.task, input.assignment, input.evidence),
+      ...(this.#signal === undefined ? {} : { signal: this.#signal })
     });
     const messageId = await deriveInternalEventId("claude", completed.turnRef);
-    if (messageId === undefined || !nonEmpty(completed.body)) {
+    if (this.#signal?.aborted || messageId === undefined || !nonEmpty(completed.body)) {
       throw new SafeConsiliumFailure("claude_invalid_completion");
     }
     await emit({

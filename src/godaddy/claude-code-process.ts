@@ -118,6 +118,7 @@ export type CommandRunner = (input: Readonly<{
   environment: Readonly<Record<string, string>>;
   cwd: string;
   timeoutMilliseconds: number;
+  signal?: AbortSignal;
 }>) => Promise<CommandResult>;
 
 export type GoDaddyClaudeCodeProcess = ClaudeCodeSubscriptionProcess & Readonly<{
@@ -143,6 +144,7 @@ type CritiqueInput = Readonly<{
   runtimeModelId: string;
   reasoningEffort: ProviderReasoningEffort | null;
   prompt: string;
+  signal?: AbortSignal;
 }>;
 
 const asToken = (value: unknown): string | undefined =>
@@ -212,6 +214,7 @@ function commandEnvironment(environment: Record<string, unknown>, token: string,
  * can be observed by a generated response or a tool.
  */
 export const runClaudeCommand: CommandRunner = async (input) => new Promise((resolveCommand) => {
+  if (input.signal?.aborted) { resolveCommand({ exitCode: null, stdout: "", stderr: "", termination: "signal" }); return; }
   let stdout = "";
   let stderr = "";
   let settled = false;
@@ -223,16 +226,22 @@ export const runClaudeCommand: CommandRunner = async (input) => new Promise((res
     stdio: ["ignore", "pipe", "pipe"]
   });
   let timeout: ReturnType<typeof setTimeout> | undefined;
+  let killTimeout: ReturnType<typeof setTimeout> | undefined;
+  const terminate = (): void => { child.kill("SIGTERM"); killTimeout ??= setTimeout(() => child.kill("SIGKILL"), 1_000); killTimeout.unref(); };
+  input.signal?.addEventListener("abort", terminate, { once: true });
+  if (input.signal?.aborted) terminate();
   const settle = (result: CommandResult): void => {
     if (settled) return;
     settled = true;
     if (timeout !== undefined) clearTimeout(timeout);
+    if (killTimeout !== undefined) clearTimeout(killTimeout);
+    input.signal?.removeEventListener("abort", terminate);
     resolveCommand(result);
   };
   const append = (current: string, next: Buffer): string => {
     if (Buffer.byteLength(current, "utf8") + next.byteLength > MAX_OUTPUT_BYTES) {
       exceededOutputLimit = true;
-      child.kill("SIGTERM");
+      terminate();
       return current;
     }
     return current + new TextDecoder().decode(next);
@@ -248,8 +257,7 @@ export const runClaudeCommand: CommandRunner = async (input) => new Promise((res
   }));
   timeout = setTimeout(() => {
     timedOut = true;
-    child.kill("SIGTERM");
-    setTimeout(() => child.kill("SIGKILL"), 1_000).unref();
+    terminate();
   }, input.timeoutMilliseconds);
 });
 
@@ -284,7 +292,7 @@ export function createGoDaddyClaudeCodeProcess(options: GoDaddyClaudeCodeProcess
   const timeoutMilliseconds = options.timeoutMilliseconds ?? DEFAULT_TIMEOUT_MILLISECONDS;
   const candidates = candidateModels(options.environment);
 
-  const execute = async (argumentsList: readonly string[]): Promise<CommandResult> => {
+  const execute = async (argumentsList: readonly string[], signal?: AbortSignal): Promise<CommandResult> => {
     const directory = await mkdtemp(join(tmpdir(), "personal-consultant-claude-"));
     try {
       return await run({
@@ -292,7 +300,8 @@ export function createGoDaddyClaudeCodeProcess(options: GoDaddyClaudeCodeProcess
         arguments: argumentsList,
         environment: commandEnvironment(options.environment, token, directory),
         cwd: directory,
-        timeoutMilliseconds
+        timeoutMilliseconds,
+        ...(signal === undefined ? {} : { signal })
       });
     } finally {
       await rm(directory, { recursive: true, force: true });
@@ -331,7 +340,7 @@ export function createGoDaddyClaudeCodeProcess(options: GoDaddyClaudeCodeProcess
         "--model", input.runtimeModelId,
         ...(input.reasoningEffort === null ? [] : ["--effort", input.reasoningEffort]),
         input.prompt
-      ]);
+      ], input.signal);
       if (result.exitCode !== 0) throw new SafeConsiliumFailure("claude_unavailable");
       const completion = parseCompletion(result.stdout);
       if (completion === undefined) throw new SafeConsiliumFailure("claude_invalid_completion");

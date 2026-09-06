@@ -25,7 +25,7 @@ export type SubscriptionPreflightInput = Readonly<{
   settings: OwnerSettings;
   capabilityReceipt: CapabilityReceipt;
   codex: CodexSubscriptionRuntime;
-  claude: ClaudeSubscriptionRuntime;
+  claude?: ClaudeSubscriptionRuntime;
   now: Date;
 }>;
 
@@ -72,23 +72,28 @@ export function preflightSubscriptionRuntimes(
 
   const settings = validateOwnerSettings(input.settings, input.capabilityReceipt, input.now);
   if (!settings.ok) return { ok: false, code: "settings_incompatible" };
-  if (!input.codex.privateSingleOwner || !input.claude.privateSingleOwner) {
+  const selected = input.settings.critic;
+  if (!input.codex.privateSingleOwner) {
     return { ok: false, code: "private_boundary_failed" };
   }
   if (input.codex.authMode !== "chatgpt_oauth") return { ok: false, code: "codex_auth_mode_invalid" };
-  if (input.claude.authMode !== "claude_code_oauth") return { ok: false, code: "claude_auth_mode_invalid" };
-  if (input.claude.fastModeEnabled || input.claude.extraUsageEnabled) {
-    return { ok: false, code: "claude_paid_acceleration_forbidden" };
-  }
 
   const codexFailure = readinessFailure("codex", input.codex.readiness);
   if (codexFailure !== null) return codexFailure;
-  const claudeFailure = readinessFailure("claude", input.claude.readiness);
-  if (claudeFailure !== null) return claudeFailure;
   if (!input.codex.availableModelIds.includes(input.settings.codex.modelId)) {
     return { ok: false, code: "codex_model_not_available" };
   }
-  if (!input.claude.availableModelIds.includes(input.settings.claude.modelId)) {
+  if (selected.provider === "codex") {
+    if (selected.codex === null || !input.codex.availableModelIds.includes(selected.codex.modelId)) return { ok: false, code: "codex_model_not_available" };
+    return { ok: true, catalogVersion: input.capabilityReceipt.catalogVersion };
+  }
+  if (input.claude === undefined) return { ok: false, code: "claude_unavailable" };
+  if (!input.claude.privateSingleOwner) return { ok: false, code: "private_boundary_failed" };
+  if (input.claude.authMode !== "claude_code_oauth") return { ok: false, code: "claude_auth_mode_invalid" };
+  if (input.claude.fastModeEnabled || input.claude.extraUsageEnabled) return { ok: false, code: "claude_paid_acceleration_forbidden" };
+  const claudeFailure = readinessFailure("claude", input.claude.readiness);
+  if (claudeFailure !== null) return claudeFailure;
+  if (selected.claude === null || !input.claude.availableModelIds.includes(selected.claude.modelId)) {
     return { ok: false, code: "claude_model_not_available" };
   }
 

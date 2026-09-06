@@ -42,7 +42,7 @@ export function createCapabilityReceipt(
     ],
     defaults: {
       codex: { modelId: "codex-current-primary", reasoningEffort: "high" },
-      claude: { modelId: "claude-current-critic", reasoningEffort: "high" },
+      critic: { provider: "claude_code", claude: { modelId: "claude-current-critic", reasoningEffort: "high" }, codex: null },
       speedPreset: "збалансовано"
     },
     ...overrides
@@ -53,7 +53,7 @@ export const activeNow = new Date("2026-08-16T12:00:00.000Z");
 
 export function createResolvedTestSpeedPolicyCatalog(): SpeedPolicyCatalog {
   const invariants = Object.freeze({
-    claudeCriticRequired: true,
+    criticRequired: true,
     a2aRequired: true,
     matrixE2eeRequired: true,
     verbatimVisibilityRequired: true,

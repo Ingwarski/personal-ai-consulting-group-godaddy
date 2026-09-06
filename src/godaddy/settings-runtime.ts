@@ -1,3 +1,4 @@
+import { createGoDaddyConsiliumRuntime, type GoDaddyConsiliumRuntime } from "./consilium-runtime.ts";
 import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -6,7 +7,7 @@ import { createCsrfTokenService, importCsrfHmacKey } from "../access/csrf.ts";
 import { securityHeaders } from "../http/security-headers.ts";
 import { parseCapabilityReceipt } from "../settings/capability-receipt.ts";
 import { createVerifiedSettingsGateway, type VerifiedSettingsGateway } from "../settings/gateway.ts";
-import { OwnerSettingsDO } from "../settings/owner-settings-do.ts";
+import { OwnerSettingsDO, readCompatibleSettingsDocument } from "../settings/owner-settings-do.ts";
 import type { CapabilityReceipt } from "../settings/types.ts";
 import { parseRuntimeEnvironment } from "../runtime/environment.ts";
 import type { RuntimeCapabilityCatalogResult } from "../runtime/capability-catalog.ts";
@@ -45,6 +46,7 @@ const catalogFailureMessages: Readonly<Record<CatalogFailureCode, string>> = Obj
 
 export type GoDaddySettingsRuntime = Readonly<{
   configured: boolean;
+  consilium?: GoDaddyConsiliumRuntime;
   handle: (request: Request) => Promise<Response | undefined>;
   close: () => Promise<void>;
 }>;
@@ -254,7 +256,7 @@ function operationDocument(input: Readonly<{
   catalogFailure?: CatalogFailureCode;
   actionTokens: Readonly<Record<string, string>>;
 }>): string {
-  const form = (path: string, label: string): string => `<form action="${path}" method="post" data-owner-action><input type="hidden" name="formToken" value="${escapeHtml(input.actionTokens[path] ?? "")}" /><button type="submit">${label}</button></form>`;
+  const form = (path: string, label: string): string => `<form action="${path}" method="post" data-owner-action><input type="hidden" name="formToken" value="${escapeHtml(input.actionTokens[path.split("?")[0]!] ?? "")}" /><button type="submit">${label}</button></form>`;
   const state = input.catalogReady ? "Каталог можливостей активний." : "Каталог можливостей ще не створено.";
   const device = input.deviceAuthorization === undefined ? "" : `
       <section>
@@ -282,7 +284,7 @@ function operationDocument(input: Readonly<{
   <body>
     <main>
       <h1>Підготовка runtime</h1>
-      <p>Codex: ${escapeHtml(input.codex)}${input.codexPlanType === undefined ? "" : ` (план: ${escapeHtml(input.codexPlanType)})`}. Claude Code: ${escapeHtml(input.claude)}.</p>
+      <p>Codex: ${escapeHtml(input.codex)}${input.codexPlanType === undefined ? "" : ` (план: ${escapeHtml(input.codexPlanType)})`}. Claude Code: ${escapeHtml(input.claude === "not_checked" ? "не перевірено" : input.claude)}.</p>
       <p role="alert" tabindex="-1" data-owner-action-status></p>
       <p>${state}</p>
       ${catalogResult}
@@ -292,8 +294,10 @@ function operationDocument(input: Readonly<{
       <p>Якщо показаний план відрізняється від вашої Codex-підписки або потрібна інша модель, очистіть попередній вхід перед повторною авторизацією.</p>
       ${form("/operations/runtime/codex/reconnect", "Очистити попередній вхід Codex")}
       ${form("/operations/runtime/codex", "Почати вхід Codex")}
-      ${form("/operations/runtime/catalog", "Перевірити підписки й оновити каталог")}
-      ${input.catalogReady ? '<p><a href="/settings">Відкрити Налаштування власника</a></p>' : ""}
+      ${form("/operations/runtime/catalog?provider=codex", "Оновити каталог Codex")}
+      ${form("/operations/runtime/catalog?provider=claude_code", "Перевірити Claude Code й оновити його каталог")}
+      <p>Перевірка Codex не звертається до Claude Code. Доступність кожного провайдера перевіряється окремо.</p>
+      <p><a href="/settings">Відкрити Налаштування власника</a></p>
       <section aria-label="Сесії власника">
         ${form("/auth/sign-out", "Вийти з цього браузера")}
         ${form("/auth/sessions/revoke", "Завершити всі сесії")}
@@ -354,9 +358,13 @@ export function createGoDaddySettingsRuntime(
     receipt = loaded;
     return loaded;
   };
+  let recoveryReceipt: CapabilityReceipt | undefined;
   const currentReceipt = (): CapabilityReceipt => {
     const parsed = receipt === undefined ? undefined : parseCapabilityReceipt(receipt, now());
-    if (parsed === undefined) throw new Error("Runtime capability receipt is unavailable.");
+    if (parsed === undefined) {
+      if (recoveryReceipt !== undefined) return recoveryReceipt;
+      throw new Error("Runtime capability receipt is unavailable.");
+    }
     return parsed;
   };
   const ownerSettings = new OwnerSettingsDO({
@@ -389,10 +397,12 @@ export function createGoDaddySettingsRuntime(
     });
   };
 
+  const consilium = createGoDaddyConsiliumRuntime({ bootstrap: runtime, registrarRuntime: registrar, environment, now });
   let closePromise: Promise<void> | undefined;
   const close = (): Promise<void> => {
     closePromise ??= (async () => {
       try {
+        await consilium.close();
         await runtime.close();
       } finally {
         if (ownsPool && "end" in pool && typeof pool.end === "function") {
@@ -507,11 +517,15 @@ export function createGoDaddySettingsRuntime(
             }, reset ? 200 : 503);
           }
           let refreshed: RuntimeCapabilityCatalogResult;
-          try { refreshed = await runtime.refreshCatalog(); }
+          const providers = url.searchParams.getAll("provider");
+          const provider = providers.length === 0 ? "codex" : providers.length === 1 ? providers[0] : undefined;
+          if ((provider !== "codex" && provider !== "claude_code") || [...url.searchParams.keys()].some(key => key !== "provider")) return plain("Invalid request.", 400);
+          try { refreshed = await runtime.refreshCatalog(provider); }
           catch { refreshed = { ok: false, code: "catalog_refresh_failed" }; }
           if (refreshed.ok) receipt = refreshed.receipt;
           return render({
             ...status,
+            ...(refreshed.ok && provider === "claude_code" ? { claude: "ready" as const } : {}),
             ...(!refreshed.ok && refreshed.code === "claude_auth_rejected" ? { claude: "auth_required" as const } : {}),
             ...(!refreshed.ok && refreshed.code === "claude_access_denied" ? { claude: "unavailable" as const } : {}),
             ...(!refreshed.ok && refreshed.code === "claude_quota_blocked" ? { claude: "quota_blocked" as const } : {}),
@@ -539,7 +553,20 @@ export function createGoDaddySettingsRuntime(
           !await owner.verifyActionToken(cookieHeader, url.pathname, token)) return plain("Access denied.", 403);
         if (!await isEmptyJsonAction(request)) return plain("Invalid request.", 400);
       }
-      if (await loadReceipt() === undefined) return plain("Settings are temporarily unavailable.", 503);
+      if (await loadReceipt() === undefined) {
+        // Recovery is a read-only projection of the owner's saved choices,
+        // never a synthetic trusted catalog or an implicit provider switch.
+        const stored = readCompatibleSettingsDocument(await storage.get<unknown>("owner-settings:document"));
+        if (stored === undefined) {
+          return url.pathname === "/settings" && request.method === "GET"
+            ? html('<!doctype html><html lang="uk"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Налаштування власника</title><main><h1>Налаштування власника</h1><p role="status">Каталог ще не перевірено. Оновіть лише каталог потрібного провайдера.</p><a href="/operations/runtime">Підготовка runtime</a></main></html>', 200)
+            : plain("Settings are temporarily unavailable.", 503);
+        }
+        recoveryReceipt = Object.freeze({
+          catalogVersion: "unavailable", issuedAt: now().toISOString(), expiresAt: now().toISOString(),
+          trusted: false, codexModels: [], claudeModels: [], defaults: stored.settings
+        });
+      } else recoveryReceipt = undefined;
       const verifiedGateway = await gateway(grant, cookieHeader, url.pathname === "/settings" && request.method === "GET");
       return verifiedGateway === undefined
         ? plain("Settings are temporarily unavailable.", 503)
@@ -548,6 +575,7 @@ export function createGoDaddySettingsRuntime(
 
   return Object.freeze({
     configured: true,
+    consilium,
     close,
     async handle(request: Request): Promise<Response | undefined> {
       try { return await handle(request); } catch {

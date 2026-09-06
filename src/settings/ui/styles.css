@@ -53,6 +53,10 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .group-heading > div { min-width: 0; gap: .7rem; }
 .group-number { display: grid; width: 1.8rem; height: 1.8rem; place-items: center; margin: 0; border-radius: 50%; color: var(--happypro-blue); background: #e7f1ff; font-size: .75rem; font-weight: 800; }
 .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1rem; }
+.critic-fields { min-width: 0; padding: 0; border: 0; }
+.critic-feedback { margin: .65rem 0 0; font-size: .82rem; line-height: 1.45; overflow-wrap: anywhere; color: var(--muted); }
+.critic-feedback.error { color: var(--danger); }
+.critic-feedback a { color: inherit; text-underline-offset: .15em; }
 .provider-description { max-width: 52rem; margin: .8rem 0 0; color: var(--muted); font-size: .84rem; line-height: 1.48; }
 .field-grid label > span, .field-grid label > small { display: block; }
 .field-grid label > span { margin-bottom: .38rem; font-size: .8rem; font-weight: 750; }

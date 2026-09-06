@@ -1,7 +1,8 @@
 import { preflightSubscriptionRuntimes } from "./provider-preflight.ts";
 import { probeCodexAppServer, type CodexAppServerProbe, type CodexAppServerTransport } from "./codex-app-server.ts";
 import type { ClaudeCodeSubscriptionProcess, ClaudeCodeSubscriptionStatus } from "./claude-code-critic.ts";
-import type { CapabilityReceipt, EffectiveSessionSnapshot, ProviderModelCapability, ProviderReasoningEffort } from "../settings/types.ts";
+import type { CapabilityReceipt, EffectiveSessionSnapshot, ProviderModelCapability, ProviderReasoningEffort, ProviderSettings } from "../settings/types.ts";
+import { parseHistoricalOwnerSettings } from "../settings/schema.ts";
 
 export type SessionSubscriptionPreflightFailureCode =
         | "forbidden_environment"
@@ -24,7 +25,7 @@ export type SessionSubscriptionPreflightFailureCode =
         | "claude_status_unavailable";
 
 export type SessionSubscriptionPreflightResult =
-  | Readonly<{ ok: true; codex: CodexAppServerProbe; claude: ClaudeCodeSubscriptionStatus }>
+  | Readonly<{ ok: true; codex: CodexAppServerProbe; critic: Readonly<{ provider: "codex" }> | Readonly<{ provider: "claude_code"; status: ClaudeCodeSubscriptionStatus }> }>
   | Readonly<{ ok: false; code: SessionSubscriptionPreflightFailureCode }>;
 
 const supportsSelectedEffort = (models: readonly ProviderModelCapability[], productId: string, reasoningEffort: ProviderReasoningEffort | null): boolean => {
@@ -36,18 +37,11 @@ const supportsSelectedEffort = (models: readonly ProviderModelCapability[], prod
         typeof model.reasoningMappings[reasoningEffort] === "string"));
 };
 
-function claudeUnavailable(): ClaudeCodeSubscriptionStatus {
-  return Object.freeze({
-    processRef: "unavailable",
-    authMode: "other",
-    readiness: "unavailable",
-    privateSingleOwner: false,
-    bareMode: true,
-    fastModeEnabled: true,
-    extraUsageEnabled: true,
-    models: Object.freeze([])
-  });
-}
+const currentModelMatches = (recorded: readonly ProviderModelCapability[], current: readonly ProviderModelCapability[], selected: ProviderSettings): boolean => {
+  const expected = recorded.find((model) => model.productId === selected.modelId);
+  const actual = current.find((model) => model.productId === selected.modelId);
+  return expected !== undefined && actual !== undefined && expected.runtimeModelId === actual.runtimeModelId;
+};
 
 /**
  * The sole content-free gate immediately before a new consilium session. A
@@ -60,42 +54,56 @@ export async function preflightSessionSubscriptions(input: Readonly<{
   snapshot: EffectiveSessionSnapshot;
   capabilityReceipt: CapabilityReceipt;
   codexTransport: CodexAppServerTransport;
-  claudeProcess: ClaudeCodeSubscriptionProcess;
+  claudeProcess?: ClaudeCodeSubscriptionProcess;
   privateSingleOwner: boolean;
   now: Date;
 }>): Promise<SessionSubscriptionPreflightResult> {
+  const compatible = parseHistoricalOwnerSettings(input.snapshot.settings);
+  if (!compatible.ok) return { ok: false, code: "settings_incompatible" };
+  const settings = compatible.value;
   if (input.snapshot.catalogVersion !== input.capabilityReceipt.catalogVersion) {
     return { ok: false, code: "catalog_version_mismatch" };
   }
   const codex = await probeCodexAppServer(input.codexTransport, { privateSingleOwner: input.privateSingleOwner });
-  let claude: ClaudeCodeSubscriptionStatus;
-  try {
-    claude = await input.claudeProcess.inspectSubscription();
-  } catch {
-    return { ok: false, code: "claude_status_unavailable" };
+  let claude: ClaudeCodeSubscriptionStatus | undefined;
+  const selected = settings.critic;
+  if (selected.provider === "claude_code") {
+    if (input.claudeProcess === undefined) return { ok: false, code: "claude_unavailable" };
+    try {
+      claude = await input.claudeProcess.inspectSubscription();
+    } catch {
+      return { ok: false, code: "claude_status_unavailable" };
+    }
   }
   const base = preflightSubscriptionRuntimes({
     environment: input.environment,
-    settings: input.snapshot.settings,
+    settings: settings,
     capabilityReceipt: input.capabilityReceipt,
     codex: codex.runtime,
-    claude: {
+    ...(claude === undefined ? {} : { claude: {
       authMode: claude.authMode,
       readiness: claude.readiness,
       privateSingleOwner: claude.privateSingleOwner,
       availableModelIds: Object.freeze(claude.models.map((model) => model.productId)),
       fastModeEnabled: claude.fastModeEnabled,
       extraUsageEnabled: claude.extraUsageEnabled
-    },
+    } }),
     now: input.now
   });
   if (!base.ok) return base;
-  if (claude.bareMode) return { ok: false, code: "claude_auth_mode_invalid" };
-  if (!supportsSelectedEffort(codex.models, input.snapshot.settings.codex.modelId, input.snapshot.settings.codex.reasoningEffort)) {
+  if (!currentModelMatches(input.capabilityReceipt.codexModels, codex.models, settings.codex)) return { ok: false, code: "codex_model_not_available" };
+  if (claude?.bareMode) return { ok: false, code: "claude_auth_mode_invalid" };
+  if (!supportsSelectedEffort(codex.models, settings.codex.modelId, settings.codex.reasoningEffort)) {
     return { ok: false, code: "codex_effort_unavailable" };
   }
-  if (!supportsSelectedEffort(claude.models, input.snapshot.settings.claude.modelId, input.snapshot.settings.claude.reasoningEffort)) {
+  if (selected.provider === "codex") {
+    if (selected.codex !== null && !currentModelMatches(input.capabilityReceipt.codexModels, codex.models, selected.codex)) return { ok: false, code: "codex_model_not_available" };
+    if (selected.codex === null || !supportsSelectedEffort(codex.models, selected.codex.modelId, selected.codex.reasoningEffort)) return { ok: false, code: "codex_effort_unavailable" };
+    return { ok: true, codex, critic: { provider: "codex" } };
+  }
+  if (claude !== undefined && selected.claude !== null && !currentModelMatches(input.capabilityReceipt.claudeModels, claude.models, selected.claude)) return { ok: false, code: "claude_model_not_available" };
+  if (claude === undefined || selected.claude === null || !supportsSelectedEffort(claude.models, selected.claude.modelId, selected.claude.reasoningEffort)) {
     return { ok: false, code: "claude_effort_unavailable" };
   }
-  return { ok: true, codex, claude };
+  return { ok: true, codex, critic: { provider: "claude_code", status: claude } };
 }

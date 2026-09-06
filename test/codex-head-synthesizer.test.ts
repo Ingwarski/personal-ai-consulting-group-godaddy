@@ -25,8 +25,10 @@ async function preparedRegistrar() {
   await registrar.startSession({ sessionId: "head-session", settingsSnapshot: snapshot.value });
   await registrar.appendConfirmedMessage({ generation: 1, eventId: "head-finance-0001", role: "Фінансовий консультант", body: "Перша позиція." });
   await registrar.appendConfirmedMessage({ generation: 1, eventId: "head-strategy-0001", role: "Стратег", body: "Друга позиція." });
-  await registrar.appendConfirmedMessage({ generation: 1, eventId: "head-critic-0001", role: "Критик", body: "Критика." });
-  await registrar.recordCriticReview({ generation: 1, eventId: "head-critic-0001", role: "Критик" });
+  const critic = { agentId: "critic", role: "Критик", provider: "claude_code" as const, runtimeSessionRef: "claude-critic-process-01" };
+  await registrar.designateCritic({ generation: 1, critic });
+  await registrar.appendConfirmedMessage({ generation: 1, eventId: "head-critic-0001", role: "Критик", body: "Критика.", authority: { agentId: critic.agentId, provider: critic.provider, runtimeSessionRef: critic.runtimeSessionRef, kind: "critique" } });
+  await registrar.recordCriticReview({ generation: 1, eventId: "head-critic-0001", critic });
   return registrar;
 }
 

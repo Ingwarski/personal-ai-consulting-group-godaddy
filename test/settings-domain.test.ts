@@ -15,9 +15,9 @@ test("accepts a complete settings set backed by both provider capability maps", 
   assert.equal(result.ok, true);
   if (result.ok) {
     assert.equal(result.value.codex.reasoningEffort, "high");
-    assert.equal(result.value.claude.reasoningEffort, "high");
+    assert.equal(result.value.critic.claude?.reasoningEffort, "high");
     assert.equal(result.codex.runtimeModelId, "codex-runtime-primary");
-    assert.equal(result.claude.runtimeModelId, "claude-runtime-critic");
+    assert.equal(result.critic.runtimeModelId, "claude-runtime-critic");
   }
 });
 
@@ -41,7 +41,7 @@ test("rejects arbitrary model text and partial settings objects", () => {
 test("blocks an unavailable effort for its own provider rather than silently changing it", () => {
   const receipt = createCapabilityReceipt();
   const result = validateOwnerSettings(
-    { ...receipt.defaults, claude: { ...receipt.defaults.claude, reasoningEffort: "xhigh" } },
+    { ...receipt.defaults, critic: { ...receipt.defaults.critic, claude: { ...receipt.defaults.critic.claude, reasoningEffort: "xhigh" } } },
     receipt,
     activeNow
   );
@@ -66,7 +66,7 @@ test("validates catalog defaults through the same whole-set guard", () => {
   const receipt = createCapabilityReceipt();
   assert.equal(getValidatedDefaults(receipt, activeNow).ok, true);
 
-  const brokenDefaults = { ...receipt, defaults: { ...receipt.defaults, claude: { ...receipt.defaults.claude, reasoningEffort: "xhigh" as const } } };
+  const brokenDefaults = { ...receipt, defaults: { ...receipt.defaults, critic: { ...receipt.defaults.critic, claude: { ...receipt.defaults.critic.claude!, reasoningEffort: "xhigh" as const } } } };
   assert.deepEqual(getValidatedDefaults(brokenDefaults, activeNow), {
     ok: false,
     code: "claude_reasoning_effort_unavailable"
@@ -78,7 +78,7 @@ test("all speed presets retain the non-negotiable consilium invariants and forbi
     const policy = resolveSpeedPolicy(preset);
     assert.equal(policy.preset, preset);
     assert.equal(policy.paidAcceleration, "forbidden");
-    assert.equal(policy.invariants.claudeCriticRequired, true);
+    assert.equal(policy.invariants.criticRequired, true);
     assert.equal(policy.invariants.a2aRequired, true);
     assert.equal(policy.invariants.matrixE2eeRequired, true);
     assert.equal(policy.invariants.verbatimVisibilityRequired, true);

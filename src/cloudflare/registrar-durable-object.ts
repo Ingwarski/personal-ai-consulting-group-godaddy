@@ -1,6 +1,7 @@
 import type {
   ConfirmedAgentMessage,
   CriticReviewReceipt,
+  DesignatedCriticBinding,
   RegistrarResult,
   SessionGeneration
 } from "../session/registrar-do.ts";
@@ -11,19 +12,11 @@ import { DurableObjectKeyValueStorage } from "./durable-object-storage.ts";
 export type RegistrarDurableObjectRpc = Readonly<{
   startSession: (input: Readonly<{ sessionId: string; settingsSnapshot: EffectiveSessionSnapshot }>) => Promise<RegistrarResult<SessionGeneration>>;
   startNewTask: (input: Readonly<{ sessionId: string; settingsSnapshot: EffectiveSessionSnapshot }>) => Promise<RegistrarResult<SessionGeneration>>;
-  appendConfirmedMessage: (input: Readonly<{
-    generation: number;
-    eventId: string;
-    role: string;
-    body: string;
-    addressedTo?: string;
-  }>) => Promise<RegistrarResult<ConfirmedAgentMessage>>;
+  appendConfirmedMessage: (input: Parameters<RegistrarDO["appendConfirmedMessage"]>[0]) => Promise<RegistrarResult<ConfirmedAgentMessage>>;
   stopSession: (generation: number) => Promise<RegistrarResult<SessionGeneration>>;
-  recordCriticReview: (input: Readonly<{
-    generation: number;
-    eventId: string;
-    role: string;
-  }>) => Promise<RegistrarResult<CriticReviewReceipt>>;
+  designateCritic: (input: Parameters<RegistrarDO["designateCritic"]>[0]) => Promise<RegistrarResult<DesignatedCriticBinding>>;
+  getDesignatedCritic: (generation: number) => Promise<DesignatedCriticBinding | undefined>;
+  recordCriticReview: (input: Parameters<RegistrarDO["recordCriticReview"]>[0]) => Promise<RegistrarResult<CriticReviewReceipt>>;
   getCriticReview: (generation: number) => Promise<CriticReviewReceipt | undefined>;
   getActiveSession: () => Promise<SessionGeneration | undefined>;
   getConfirmedMessages: (generation: number) => Promise<readonly ConfirmedAgentMessage[]>;
@@ -56,13 +49,7 @@ export class RegistrarDurableObject implements RegistrarDurableObjectRpc {
     return this.#registrar.startNewTask(input);
   }
 
-  appendConfirmedMessage(input: Readonly<{
-    generation: number;
-    eventId: string;
-    role: string;
-    body: string;
-    addressedTo?: string;
-  }>) {
+  appendConfirmedMessage(input: Parameters<RegistrarDO["appendConfirmedMessage"]>[0]) {
     return this.#registrar.appendConfirmedMessage(input);
   }
 
@@ -70,11 +57,15 @@ export class RegistrarDurableObject implements RegistrarDurableObjectRpc {
     return this.#registrar.stopSession(generation);
   }
 
-  recordCriticReview(input: Readonly<{
-    generation: number;
-    eventId: string;
-    role: string;
-  }>) {
+  designateCritic(input: Parameters<RegistrarDO["designateCritic"]>[0]) {
+    return this.#registrar.designateCritic(input);
+  }
+
+  getDesignatedCritic(generation: number) {
+    return this.#registrar.getDesignatedCritic(generation);
+  }
+
+  recordCriticReview(input: Parameters<RegistrarDO["recordCriticReview"]>[0]) {
     return this.#registrar.recordCriticReview(input);
   }
 

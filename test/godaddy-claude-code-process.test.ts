@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { ClaudeDiscoveryFailure, createGoDaddyClaudeCodeProcess, type CommandRunner } from "../src/godaddy/claude-code-process.ts";
+import { runClaudeCommand, ClaudeDiscoveryFailure, createGoDaddyClaudeCodeProcess, type CommandRunner } from "../src/godaddy/claude-code-process.ts";
 import { SafeConsiliumFailure } from "../src/consilium/failures.ts";
 import { createCapabilityReceipt } from "./fixtures/capability-receipt.ts";
 
@@ -14,6 +14,21 @@ const secretEnvironment = Object.freeze({
 
 const models = () => createCapabilityReceipt().claudeModels;
 const authenticatedStatus = JSON.stringify({ loggedIn: true, authMethod: "oauth_token", apiProvider: "firstParty" });
+
+test("cancellation terminates only the owned child and is forwarded through the Claude adapter", async () => {
+  const abort = new AbortController();
+  const result = runClaudeCommand({ executable: process.execPath, arguments: ["-e", "setInterval(() => {}, 1000)"],
+    environment: {}, cwd: process.cwd(), timeoutMilliseconds: 5_000, signal: abort.signal });
+  abort.abort();
+  assert.equal((await result).termination, "signal");
+  let received: AbortSignal | undefined;
+  const adapter = createGoDaddyClaudeCodeProcess({ environment: secretEnvironment, getModels: models, run: async input => {
+    received = input.signal;
+    return { exitCode: null, stdout: "", stderr: "", termination: "signal" };
+  } })!;
+  await assert.rejects(adapter.runCritique({ modelId: "claude-current-critic", runtimeModelId: "sonnet", reasoningEffort: "high", prompt: "Review.", signal: abort.signal }));
+  assert.equal(received, abort.signal);
+});
 
 test("does not create a Claude process without a locally injected subscription token", () => {
   assert.equal(createGoDaddyClaudeCodeProcess({ environment: {}, getModels: models }), undefined);

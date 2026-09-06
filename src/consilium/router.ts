@@ -62,7 +62,7 @@ function assignmentBody(phase: ConsiliumPhase, task: string, recipientRole: stri
 }
 
 /**
- * Coordinates independent initial positions, a separate Claude critic and a
+ * Coordinates independent initial positions, a separate designated critic and a
  * mandatory specialist revision cycle. Every emission is a complete body,
  * written immediately through the only Registrar before a later phase can
  * consume it. This is deliberately not token streaming and never synthesizes
@@ -98,12 +98,18 @@ export class ConsiliumRouter {
       return { ok: false, code: "invalid_roster", cause: "runtime_identity_mismatch" };
     }
     const roster = Object.freeze([this.#head, ...rosterResult.agents]);
+    if (new Set(roster.map((agent) => agent.agentId)).size !== roster.length ||
+      new Set(roster.map((agent) => `${agent.provider}:${agent.runtimeSessionRef}`)).size !== roster.length) {
+      return { ok: false, code: "invalid_roster", cause: "runtime_identity_mismatch" };
+    }
     const runtimes = this.#runtimesFor(roster);
     if (!runtimes.ok) return runtimes;
 
     const activeSession = await this.#registrar.getActiveSession();
     if (activeSession === undefined) return { ok: false, code: "speed_policy_failed", cause: "no_active_session" };
     if (activeSession.generation !== input.sessionGeneration) return { ok: false, code: "speed_policy_failed", cause: "obsolete_generation" };
+    const designated = await this.#registrar.designateCritic({ generation: input.sessionGeneration, critic: this.#critic });
+    if (!designated.ok) return { ok: false, code: "runtime_identity_mismatch", cause: designated.code };
     const policy = activeSession.settingsSnapshot.speedPolicy;
     const invariantValues = Object.values(policy.invariants);
     if (policy.paidAcceleration !== "forbidden" || invariantValues.some((value) => value !== true)) {
@@ -259,7 +265,11 @@ export class ConsiliumRouter {
 
   async #runBatches<T>(items: readonly T[], concurrency: number, operation: (item: T) => Promise<void>): Promise<void> {
     for (let index = 0; index < items.length; index += concurrency) {
-      await Promise.all(items.slice(index, index + concurrency).map(operation));
+      // Drain the whole in-flight batch before cleanup; Promise.all would leave
+      // the other provider turns orphaned when one specialist rejects early.
+      const outcomes = await Promise.allSettled(items.slice(index, index + concurrency).map(operation));
+      const rejected = outcomes.find((outcome) => outcome.status === "rejected");
+      if (rejected?.status === "rejected") throw rejected.reason;
     }
   }
 

@@ -5,6 +5,7 @@ import { join, resolve } from "node:path";
 import { createInterface } from "node:readline";
 
 import { JsonRpcClient, type JsonRpcLineChannel } from "../runtime/json-rpc-client.ts";
+import { CodexAppServerThreadClient } from "../runtime/codex-thread-client.ts";
 import { probeCodexAppServer, type CodexAppServerProbe } from "../runtime/codex-app-server.ts";
 import type { RuntimeCredentialVault } from "./runtime-credential-vault.ts";
 
@@ -26,6 +27,8 @@ export type CodexDeviceAuthorization = Readonly<{
 
 export type GoDaddyCodexAppServer = Readonly<{
   inspectSubscription: () => Promise<CodexAppServerProbe>;
+  getThreadClient?: () => Promise<CodexAppServerThreadClient>;
+  verifyModelSelection?: (modelId: string, effort: string) => Promise<boolean>;
   startDeviceAuthorization: () => Promise<CodexDeviceAuthorization | undefined>;
   resetAuthorization: () => Promise<boolean>;
   close: () => Promise<void>;
@@ -130,15 +133,15 @@ export function createSubprocessCodexAppServerLauncher(input: Readonly<{
         return undefined;
       }
     };
-    const close = async (): Promise<void> => {
-      if (closed) return;
+    let closePromise: Promise<void> | undefined;
+    const close = (): Promise<void> => closePromise ??= (async () => {
       closed = true;
       reader.close();
-      if (!child.killed) child.kill("SIGTERM");
-      await new Promise<void>((resolveClose) => {
+      const exited = (): boolean => child.exitCode !== null || child.signalCode !== null;
+      if (!exited()) child.kill("SIGTERM");
+      if (!exited()) await new Promise<void>((resolveClose) => {
         const timer = setTimeout(() => {
-          if (!child.killed) child.kill("SIGKILL");
-          resolveClose();
+          if (!exited()) child.kill("SIGKILL");
         }, 1_000);
         child.once("close", () => {
           clearTimeout(timer);
@@ -146,7 +149,7 @@ export function createSubprocessCodexAppServerLauncher(input: Readonly<{
         });
       });
       await rm(directory, { recursive: true, force: true });
-    };
+    })();
     return Object.freeze({ channel, readAuthState, close });
   };
 }
@@ -184,9 +187,11 @@ export function createGoDaddyCodexAppServer(options: GoDaddyCodexAppServerOption
     if (current === undefined) return;
     try {
       const resolved = await current;
-      if (persistState) await persist(resolved.connection, resolved.authEpoch);
-      resolved.client.close();
-      await resolved.connection.close();
+      try { if (persistState) await persist(resolved.connection, resolved.authEpoch); }
+      finally {
+        resolved.client.close();
+        await resolved.connection.close();
+      }
     } catch {
       return;
     }
@@ -197,7 +202,7 @@ export function createGoDaddyCodexAppServer(options: GoDaddyCodexAppServerOption
       active = (async () => {
         const connectionEpoch = authEpoch;
         const connection = await launch(await options.vault.read(CODEX_AUTH_STORAGE_KEY));
-        const client = new JsonRpcClient({ channel: connection.channel });
+        const client = new JsonRpcClient({ channel: connection.channel, experimentalApi: true });
         try {
           await client.initialize({ name: "personal-consultant-godaddy", title: "Personal Consultant", version: "1" });
           client.onNotification((notification) => {
@@ -215,7 +220,36 @@ export function createGoDaddyCodexAppServer(options: GoDaddyCodexAppServerOption
     return active;
   };
 
+  const getThreadClient = async (): Promise<CodexAppServerThreadClient> => {
+    const owner = await getActive();
+    return new CodexAppServerThreadClient({
+      rpc: owner.client,
+      clientInfo: { name: "personal-consultant-godaddy", title: "Personal Consultant", version: "1" },
+      onUnresponsive: async () => {
+        // Never stop a replacement login/process on behalf of an obsolete lease.
+        if (active !== undefined && await active.catch(() => undefined) === owner) await closeActive(true);
+      }
+    });
+  };
+
   return Object.freeze({
+    getThreadClient,
+    async verifyModelSelection(modelId: string, effort: string): Promise<boolean> {
+      if (modelId !== "gpt-6-astra" || effort !== "xhigh") return false;
+      const client = await getThreadClient();
+      const thread = await client.startIsolatedThread({ modelId });
+      if (!thread.ok) return false;
+      try {
+        const result = await client.runTextTurn({ lease: thread.value, body: "Reply with the word OK. Do not use tools.", reasoningEffort: effort, timeoutMilliseconds: 60_000 });
+        // Successful execution is the availability proof; punctuation in a
+        // harmless reply must not incorrectly hide an available model.
+        return result.ok;
+      } finally {
+        await client.releaseThread(thread.value);
+        const current = await getActive();
+        await persist(current.connection, current.authEpoch);
+      }
+    },
     async inspectSubscription(): Promise<CodexAppServerProbe> {
       try {
         const current = await getActive();

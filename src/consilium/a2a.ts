@@ -1,4 +1,4 @@
-import type { RegistrarDO, ConfirmedAgentMessage } from "../session/registrar-do.ts";
+import { criticBindingMatches, type RegistrarDO, type ConfirmedAgentMessage } from "../session/registrar-do.ts";
 import { isAgentId, isInternalEventId } from "../identity/ids.ts";
 import type { AgentRegistration } from "./roster.ts";
 import type { ConsiliumFailureCause } from "./failures.ts";
@@ -36,20 +36,27 @@ export async function routeA2AEnvelope(
   const recipient = roster.find((agent) => agent.agentId === envelope.toAgentId);
   if (sender === undefined) return { ok: false, code: "agent_not_registered", cause: "sender_not_registered" };
   if (recipient === undefined) return { ok: false, code: "agent_not_registered", cause: "recipient_not_registered" };
+  if (envelope.kind === "critique") {
+    const designated = await registrar.getDesignatedCritic(envelope.sessionGeneration);
+    if (!criticBindingMatches(designated, sender, envelope.sessionGeneration)) {
+      return { ok: false, code: "registrar_rejected", cause: "runtime_identity_mismatch" };
+    }
+  }
 
   const registered = await registrar.appendConfirmedMessage({
     generation: envelope.sessionGeneration,
     eventId: envelope.messageId,
     role: sender.role,
     body: envelope.body,
-    addressedTo: recipient.role
+    addressedTo: recipient.role,
+    authority: { agentId: sender.agentId, provider: sender.provider, runtimeSessionRef: sender.runtimeSessionRef, kind: envelope.kind }
   });
   if (!registered.ok) return { ok: false, code: "registrar_rejected", cause: registered.code };
-  if (envelope.kind === "critique" && sender.provider === "claude_code") {
+  if (envelope.kind === "critique") {
     const criticReview = await registrar.recordCriticReview({
       generation: envelope.sessionGeneration,
       eventId: envelope.messageId,
-      role: sender.role
+      critic: sender
     });
     if (!criticReview.ok) return { ok: false, code: "registrar_rejected", cause: criticReview.code };
   }

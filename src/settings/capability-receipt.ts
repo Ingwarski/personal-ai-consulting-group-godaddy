@@ -1,6 +1,6 @@
-import { validateOwnerSettings } from "./catalog.ts";
-import { parseOwnerSettings } from "./schema.ts";
-import { SPEED_PRESETS, type CapabilityReceipt, type ModelAvailability, type ProviderModelCapability, type ProviderReasoningEffort } from "./types.ts";
+import { validateCatalogTiming } from "./catalog.ts";
+import { parseHistoricalOwnerSettings } from "./schema.ts";
+import { SPEED_PRESETS, type CapabilityReceipt, type ModelAvailability, type ProviderCapabilityReceipt, type ProviderModelCapability, type ProviderReasoningEffort } from "./types.ts";
 
 const RECEIPT_HEADER = "x-settings-capability-receipt";
 const MAX_RECEIPT_BYTES = 16_384;
@@ -60,6 +60,16 @@ function parseModel(value: unknown): ProviderModelCapability | undefined {
  * service. This parser deliberately has no default model and no recovery
  * value: malformed, untrusted or stale input remains unavailable.
  */
+function parseProviderReceipt(value: unknown): ProviderCapabilityReceipt | undefined {
+  if (!isRecord(value) || value.schemaVersion !== "1" ||
+    (value.status !== "ready" && value.status !== "unavailable") ||
+    !nonEmptyString(value.catalogVersion) || !nonEmptyString(value.issuedAt) || !nonEmptyString(value.expiresAt) ||
+    typeof value.trusted !== "boolean" || !Number.isFinite(Date.parse(value.issuedAt)) ||
+    !Number.isFinite(Date.parse(value.expiresAt)) || Date.parse(value.issuedAt) > Date.parse(value.expiresAt)) return undefined;
+  return Object.freeze({ schemaVersion: "1", status: value.status, catalogVersion: value.catalogVersion,
+    issuedAt: value.issuedAt, expiresAt: value.expiresAt, trusted: value.trusted });
+}
+
 export function parseCapabilityReceipt(value: unknown, now: Date): CapabilityReceipt | undefined {
   if (!isRecord(value) || value.trusted !== true || !nonEmptyString(value.catalogVersion) ||
     !nonEmptyString(value.issuedAt) || !nonEmptyString(value.expiresAt) ||
@@ -73,8 +83,16 @@ export function parseCapabilityReceipt(value: unknown, now: Date): CapabilityRec
   const parsedClaudeModels = claudeModels as ProviderModelCapability[];
   if (new Set(parsedCodexModels.map((model) => model.productId)).size !== parsedCodexModels.length ||
     new Set(parsedClaudeModels.map((model) => model.productId)).size !== parsedClaudeModels.length) return undefined;
-  const defaults = parseOwnerSettings(value.defaults);
+  const defaults = parseHistoricalOwnerSettings(value.defaults);
   if (!defaults.ok || !SPEED_PRESETS.includes(defaults.value.speedPreset)) return undefined;
+  let providerReceipts: CapabilityReceipt["providerReceipts"];
+  if (value.providerReceipts !== undefined) {
+    if (!isRecord(value.providerReceipts) || Object.keys(value.providerReceipts).sort().join(",") !== "claude_code,codex") return undefined;
+    const codex = parseProviderReceipt(value.providerReceipts.codex);
+    const claude_code = parseProviderReceipt(value.providerReceipts.claude_code);
+    if (codex === undefined || claude_code === undefined) return undefined;
+    providerReceipts = Object.freeze({ codex, claude_code });
+  }
 
   const receipt: CapabilityReceipt = Object.freeze({
     catalogVersion: value.catalogVersion,
@@ -83,9 +101,12 @@ export function parseCapabilityReceipt(value: unknown, now: Date): CapabilityRec
     trusted: true,
     codexModels: Object.freeze(parsedCodexModels),
     claudeModels: Object.freeze(parsedClaudeModels),
-    defaults: defaults.value
+    defaults: defaults.value,
+    ...(providerReceipts === undefined ? {} : { providerReceipts })
   });
-  return validateOwnerSettings(receipt.defaults, receipt, now).ok ? receipt : undefined;
+  // Catalog authenticity/freshness is independent from the default route.
+  // A historical Claude default remains visible even when only Codex is ready.
+  return validateCatalogTiming(receipt, now) === null ? receipt : undefined;
 }
 
 const base64Url = (value: Uint8Array): string =>
