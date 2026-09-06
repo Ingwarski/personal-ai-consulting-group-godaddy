@@ -16938,6 +16938,12 @@
     "preflight_followup_ref": "forge/runs/U-08/matrix-production-setup-20260906/preflight-followup.md",
     "replacement_build_run": 34060973791,
     "replacement_build_source": "271bcb8ec973e34fe0e53a0f260991ed1a4a5373",
+    "temporary_followup": {
+      "automation_id": "finish-matrix-build-verification",
+      "interval_minutes": 10,
+      "created_at": "2026-09-06T21:30:12Z",
+      "stop_condition": "Build failure, required user action, or credential/device-comparison handoff; no automatic build retries or trust confirmations."
+    },
     "existing_bot_session_verified_in_ui": true,
     "room_history_visibility_joined_verified": true,
     "status": "implementation-verified-locally-awaiting-linux-artifact-and-live-setup",
