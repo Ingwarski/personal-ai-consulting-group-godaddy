@@ -24,6 +24,8 @@ The user authorized the existing application's production Matrix setup in `forge
 - `git diff --check`: passed.
 - Real in-app browser, synthetic loopback-only setup fixture: rendered device/SAS information, keyboard submission, DOM replacement and focus return to heading verified. Initial form destination failure reproduced before repair, and the same action passed after repair. No real credential, Matrix session, or trust action was used. This is not live E2EE proof or full accessibility acceptance.
 - First GitHub Linux run `34055863579`, source `077c4d797cbedd47c001aff3997ce40298dd0c44`: failed three timing-sensitive Node tests before the Rust build. It is not a release artifact. The timing repair is included in the subsequent candidate.
+- Replacement run [34056704369](https://github.com/Ingwarski/personal-ai-consulting-group-godaddy/actions/runs/34056704369), source `ca68054232227788194d2d5e13a8a5beb4724da4`: Linux Node verification passed; immutable Rust build in progress at this observation. No successful artifact or digest is claimed yet. The setup source and tests are committed and pushed on `codex/matrix-connection-20260906`.
+- SDD `--before implementation`: 13 artifacts checked, passed with no issues or warnings. This metadata/integrity result does not convert unrun live or full-product checks into passes.
 - Matrix.org's public login discovery currently advertises `m.login.password`, SSO and token login. No credential-bearing login request was made.
 
 ## Still required before operation
@@ -32,5 +34,7 @@ The user authorized the existing application's production Matrix setup in `forge
 2. Scoped Published setup deployment and live directory-isolation check.
 3. User-only credential entry and access to the bot's existing trusted Element session or recovery material; explicit device-code comparison. Keep existing devices, room, messages and crypto state.
 4. Confirm `joined` room history visibility, final native policy, disable setup mode, publish normal workers, and observe one harmless message through consultation, Critic review and encrypted delivery.
+
+Current live-tool handoff: opening the existing Element application returned that the Mac is locked and automatic unlock failed. The user has been asked to unlock it and identify whether the existing bot session or recovery material is available, without sending any credentials. This is a new current lock observation, not a claim that the earlier historical lock persisted unchanged.
 
 No production deployment, room change, token creation, database change, crypto reset, or delivered live consultation is claimed by this record. Other repository and domain boundaries remain unchanged. Full release checks and previously unrun QA remain unrun.

@@ -16930,7 +16930,7 @@
     }
   ],
   "next_ready_nodes": [],
-  "pause_reason": "Scoped production Matrix setup is now authorized by the user; implementation and verification continue. Local Node 22 checks pass 745 tests and native checks pass 93 tests. The first Linux build failed test timing and is being replaced after the regression repair. Production artifact pin, Published configuration, existing-bot trust handoff and live consultation delivery are still outstanding. Historical preflight limitations are preserved in their original receipt; missing setup authority and Mac unlock are not current blockers. See forge/runs/U-08/matrix-production-setup-20260906/progress.md. This is not Product V1 release readiness.",
+  "pause_reason": "Scoped production Matrix setup is authorized and committed/pushed at ca68054. Local Node 22 checks pass 745 tests and native checks pass 93 tests. Replacement Linux run 34056704369 passes Node verification and is building the immutable Rust artifact. Production artifact pin, Published configuration, existing-bot trust handoff and live consultation delivery are still outstanding. A new Element access attempt reports the Mac locked; the user has been asked to unlock it and confirm existing-bot session/recovery availability without disclosing secrets. Historical preflight limitations remain in their original receipt; setup authority is no longer missing. See forge/runs/U-08/matrix-production-setup-20260906/progress.md. This is not Product V1 release readiness.",
   "matrix_production_setup_progress": {
     "authorization_ref": "forge/matrix-production-setup-authorization-20260906.json",
     "evidence_ref": "forge/runs/U-08/matrix-production-setup-20260906/progress.md",
