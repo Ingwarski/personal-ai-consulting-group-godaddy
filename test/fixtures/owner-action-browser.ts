@@ -30,10 +30,11 @@ export function browser(fetcher: (path: string, init: RequestInit) => Promise<Re
   const next = { querySelector: () => ({ setAttribute: () => {}, focus: () => { headingFocused = true; } }) };
   runInNewContext(script, {
     URL, URLSearchParams, HTMLFormElement: Form,
+    window: { addEventListener: () => {} },
     FormData: class { form: Form; constructor(form: Form) { this.form = form; } get(name: string) { return name === "formToken" ? this.form.token : this.form.fields[name] ?? null; } },
     DOMParser: class { parseFromString() { return { querySelector: () => next }; } },
     document: {
-      addEventListener: (_name: string, listener: typeof submit) => { submit = listener; },
+      addEventListener: (name: string, listener: typeof submit) => { if (name === "submit") submit = listener; },
       querySelector: (selector: string) => selector === "main" ? main : output
     },
     location: { href: "https://settings.example.test/auth/sign-in", origin: "https://settings.example.test", assign: (url: string) => { destination = url; } },

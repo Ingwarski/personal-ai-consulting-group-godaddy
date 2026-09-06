@@ -6,6 +6,7 @@ import { createMatrixSetupOperations, matrixSetupEnabled } from "../src/godaddy/
 import type { MatrixReleaseInspection } from "../src/godaddy/matrix-release-install.ts";
 import type { MatrixSetupCommand } from "../src/godaddy/matrix-setup-process.ts";
 import { matrixSetupDocument } from "../src/godaddy/matrix-setup-page.ts";
+import type { MatrixBrowserChallenge } from "../src/godaddy/matrix-browser-isolation.ts";
 
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const inspection = (provisioning: MatrixReleaseInspection["storeProvisioning"] = "empty"): MatrixReleaseInspection => ({
@@ -116,5 +117,49 @@ test("existing state cannot be freshly initialized; exact incomplete intent sele
     const spawned = calls.at(-1) as { fresh: boolean };
     assert.equal(spawned.fresh, provisioning === "incomplete");
     await setup.close();
+  }
+});
+
+const browserChallenge = (): MatrixBrowserChallenge => ({ nonce: "a".repeat(32), expiresAt: Date.now() + 180000,
+  verifierHash: "b".repeat(64), paths: [], canaries: [], positivePath: "/assets/test.txt", positiveBody: "test" });
+test("pending browser check is bound to the initiating owner session and cannot start a child or replay", async () => {
+  let cleanup = false;
+  const setup = createMatrixSetupOperations(env(), {
+    releasePin: { manifestSha256: "d".repeat(64), sourceCommit: "e".repeat(40) }, applicationRoot: root,
+    prepare: async () => ({ ok: true, value: inspection() }),
+    isolation: async (_root, _pin, _fetch, _options, browser) => {
+      const report = await browser!(browserChallenge()); cleanup = true;
+      return report === true ? { ok: true, checkedPaths: 12, credentialReadiness: "http_isolation_verified", evidenceKind: "browser_assisted_http_isolation" }
+        : { ok: false, code: "matrix_http_isolation_failed" };
+    },
+    spawn: () => { throw Error("must not start"); }
+  });
+  assert.equal((await setup.action("prepare", {}, "session-one")).state, "awaiting_preview");
+  assert.equal((await setup.action("start_fresh", {}, "session-one")).error, "matrix_setup_not_prepared");
+  assert.equal((await setup.action("complete_preview", { previewReport: "true" }, "other-session")).error, "matrix_setup_invalid_request");
+  assert.equal(cleanup, false);
+  assert.equal((await setup.action("complete_preview", { previewReport: "true" }, "session-one")).state, "prepared");
+  assert.equal(cleanup, true); assert.equal(setup.view().isolationEvidence, "browser_assisted_http_isolation");
+  assert.equal((await setup.action("complete_preview", { previewReport: "true" }, "session-one")).error, "matrix_setup_invalid_request");
+  await setup.close();
+});
+test("shutdown during either preparation or initial probes cannot create a later browser challenge", async () => {
+  for (const stage of ["prepare", "probes"] as const) {
+    let release!: () => void; let entered!: () => void; let done = false;
+    const reached = new Promise<void>(resolve => { entered = resolve; });
+    const pending = new Promise<void>(resolve => { release = resolve; });
+    const setup = createMatrixSetupOperations(env(), {
+      releasePin: { manifestSha256: "d".repeat(64), sourceCommit: "e".repeat(40) }, applicationRoot: root,
+      prepare: async () => { if (stage === "prepare") { entered(); await pending; } return { ok: true, value: inspection() }; },
+      isolation: async (_root, _pin, _fetch, _options, browser) => {
+        entered(); await pending; assert.equal(await browser!(browserChallenge()), undefined);
+        return { ok: false, code: "matrix_http_isolation_failed" };
+      }
+    });
+    const preparing = setup.action("prepare", {}, "owner"); await reached;
+    const closing = setup.close().then(() => { done = true; });
+    await Promise.resolve(); assert.equal(done, false); release();
+    await Promise.all([preparing, closing]); assert.equal(done, true);
+    assert.notEqual(setup.view().state, "awaiting_preview"); assert.equal(setup.view().browserChallenge, undefined);
   }
 });

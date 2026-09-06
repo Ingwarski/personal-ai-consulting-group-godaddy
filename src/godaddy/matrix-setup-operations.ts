@@ -4,13 +4,14 @@ import { parseGoDaddyMatrixConfiguration } from "./matrix-service-config.ts";
 import { inspectMatrixRelease, prepareMatrixRelease, verifyMatrixHttpIsolation,
   type MatrixReleaseExpectation } from "./matrix-release-install.ts";
 import { MATRIX_RELEASE_PIN } from "./matrix-release-pin.ts";
+import type { MatrixBrowserChallenge } from "./matrix-browser-isolation.ts";
 import { spawnMatrixSetupProcess, type MatrixSetupProcess, type MatrixSetupCommand } from "./matrix-setup-process.ts";
 import type { MatrixSetupAction, MatrixSetupView } from "./matrix-setup-page.ts";
 
-export type MatrixSetupFields = Readonly<{ deviceId?: string; flowId?: string; comparisonToken?: string }>;
+export type MatrixSetupFields = Readonly<{ deviceId?: string; flowId?: string; comparisonToken?: string; previewReport?: string }>;
 export type MatrixSetupOperations = Readonly<{
   view: () => MatrixSetupView;
-  action: (action: MatrixSetupAction, fields: MatrixSetupFields) => Promise<MatrixSetupView>;
+  action: (action: MatrixSetupAction, fields: MatrixSetupFields, ownerBinding?: string) => Promise<MatrixSetupView>;
   close: () => Promise<void>;
 }>;
 const nativeSetupErrors = new Set(["configuration_invalid", "input_unavailable", "invalid_options", "invalid_request",
@@ -39,25 +40,60 @@ export function createMatrixSetupOperations(environment: Record<string, unknown>
   let busy = false;
   let isolationConfirmed = false;
   let closed = false;
-  const run = async (action: MatrixSetupAction, fields: MatrixSetupFields): Promise<MatrixSetupView> => {
+  let browserPending: { challenge: MatrixBrowserChallenge; ownerBinding: string; resolve: (report: unknown) => void } | undefined;
+  let isolationRun: Promise<MatrixSetupView> | undefined;
+  let activeAction: Promise<MatrixSetupView> | undefined;
+  let isolationExpiresAt = 0;
+  const run = async (action: MatrixSetupAction, fields: MatrixSetupFields, ownerBinding?: string): Promise<MatrixSetupView> => {
     if (!enabled || closed) throw new Error("matrix_setup_disabled");
     if (pin === undefined) throw new Error("matrix_release_unavailable");
     if (action === "prepare") {
       if (process !== undefined) throw new Error("matrix_setup_busy");
+      if (browserPending !== undefined) { browserPending.resolve(undefined); await isolationRun; }
       isolationConfirmed = false;
       view = { state: "unprepared" };
       const prepared = await (dependencies.prepare ?? prepareMatrixRelease)(root, pin);
+      if (closed) throw new Error("matrix_setup_disabled");
       if (!prepared.ok) throw new Error(prepared.code);
-      const isolation = await (dependencies.isolation ?? verifyMatrixHttpIsolation)(root, pin);
-      if (!isolation.ok) throw new Error(isolation.code);
-      isolationConfirmed = true;
-      view = { state: "prepared" }; return view;
+      let announce: (view: MatrixSetupView) => void = () => {};
+      const awaitingBrowser = new Promise<MatrixSetupView>(resolve => { announce = resolve; });
+      const browserCheck = ownerBinding === undefined ? undefined : (challenge: MatrixBrowserChallenge): Promise<unknown> =>
+        new Promise(resolve => {
+          if (closed) { resolve(undefined); return; }
+          browserPending = { challenge, ownerBinding, resolve };
+          view = { state: "awaiting_preview", browserChallenge: challenge };
+          announce(view);
+        });
+      isolationRun = (dependencies.isolation ?? verifyMatrixHttpIsolation)(root, pin, fetch, {}, browserCheck)
+        .then(isolation => {
+          browserPending = undefined;
+          if (closed) return view;
+          if (!isolation.ok) { view = { state: "unprepared", error: isolation.code }; return view; }
+          isolationConfirmed = true; isolationExpiresAt = Date.now() + 300_000;
+          view = { state: "prepared", ...(isolation.evidenceKind === undefined ? {} : { isolationEvidence: isolation.evidenceKind }) };
+          return view;
+        }).catch(() => { browserPending = undefined; view = { state: "unprepared", error: "matrix_http_isolation_failed" }; return view; });
+      return Promise.race([isolationRun, awaitingBrowser]);
+    }
+    if (action === "complete_preview") {
+      if (browserPending === undefined || ownerBinding === undefined || ownerBinding !== browserPending.ownerBinding
+        || fields.previewReport === undefined) throw new Error("matrix_setup_invalid_request");
+      let report: unknown;
+      try { report = JSON.parse(fields.previewReport); } catch { report = undefined; }
+      browserPending.resolve(report);
+      return await isolationRun!;
+    }
+    if (action === "stop" && browserPending !== undefined) {
+      if (ownerBinding !== browserPending.ownerBinding) throw new Error("matrix_setup_invalid_request");
+      browserPending.resolve(undefined); await isolationRun;
+      view = { state: "stopped" }; return view;
     }
     if (action === "start_fresh" || action === "resume") {
-      if (!isolationConfirmed || process !== undefined) throw new Error("matrix_setup_not_prepared");
+      if (!isolationConfirmed || Date.now() >= isolationExpiresAt || process !== undefined) throw new Error("matrix_setup_not_prepared");
       const configuration = parseGoDaddyMatrixConfiguration(environment);
       if (!configuration.ok) throw new Error(configuration.code);
       const inspection = await (dependencies.inspect ?? inspectMatrixRelease)(root, pin);
+      if (closed) throw new Error("matrix_setup_disabled");
       if (!inspection.ok) throw new Error(inspection.code);
       if (configuration.value.binaryPath !== inspection.value.sidecarPath
         || configuration.value.expectedSha256 !== inspection.value.sidecarSha256
@@ -95,20 +131,23 @@ export function createMatrixSetupOperations(environment: Record<string, unknown>
   };
   return Object.freeze({
     view: () => view,
-    async action(action: MatrixSetupAction, fields: MatrixSetupFields): Promise<MatrixSetupView> {
+    async action(action: MatrixSetupAction, fields: MatrixSetupFields, ownerBinding?: string): Promise<MatrixSetupView> {
       if (busy) return { ...view, error: "matrix_setup_busy" };
       busy = true;
-      try { return await run(action, fields); }
+      try { activeAction = run(action, fields, ownerBinding); return await activeAction; }
       catch (error) {
         const message = error instanceof Error ? error.message : "";
         // Only stable content-free codes; never child/library error details.
         const allowed = /^(?:matrix_(?:setup|release|configuration|store)_[a-z_]{1,48}|policy_not_ready|verification_[a-z_]{1,40}|isolation_[a-z_]{1,48})$/u;
         view = { ...view, error: allowed.test(message) || nativeSetupErrors.has(message) || isolationErrors.has(message) ? message : "matrix_setup_failed" };
         return view;
-      } finally { busy = false; }
+      } finally { busy = false; activeAction = undefined; }
     },
     async close(): Promise<void> {
       closed = true; isolationConfirmed = false;
+      // action() owns safe error projection. A shutdown-triggered rejection must
+      // not skip the remaining isolation and child cleanup here.
+      browserPending?.resolve(undefined); await activeAction?.catch(() => undefined); await isolationRun;
       await process?.close(); process = undefined;
     }
   });

@@ -25,6 +25,7 @@ import { createGoDaddyRegistrarRuntime, type GoDaddyRegistrarRuntime } from "./r
 import { createRuntimeBootstrap, type RuntimeBootstrap } from "./runtime-bootstrap.ts";
 import { createMatrixSetupOperations, type MatrixSetupOperations } from "./matrix-setup-operations.ts";
 import { MATRIX_SETUP_ACTION, MATRIX_SETUP_ACTIONS, MATRIX_SETUP_PAGE, matrixSetupDocument, type MatrixSetupAction } from "./matrix-setup-page.ts";
+import { matrixPreviewVerifierResponse } from "./matrix-browser-isolation.ts";
 
 type SettingsAsset = "settings.css" | "settings.js";
 type CatalogFailureCode = Extract<RuntimeCapabilityCatalogResult, { ok: false }>["code"];
@@ -195,7 +196,7 @@ async function parseActionForm(request: Request, extraFields: readonly string[] 
   const fields: Record<string, string> = {};
   for (const key of extraFields) {
     const values = form.getAll(key);
-    if (values.length > 1 || (values.length === 1 && (!values[0] || Buffer.byteLength(values[0]) > 255 || /[\u0000-\u001f\u007f]/u.test(values[0])))) return undefined;
+    if (values.length > 1 || (values.length === 1 && (!values[0] || Buffer.byteLength(values[0]) > (key === "previewReport" ? 2000 : 255) || /[\u0000-\u001f\u007f]/u.test(values[0])))) return undefined;
     if (values[0] !== undefined) fields[key] = values[0];
   }
   const [formToken] = formTokens;
@@ -340,6 +341,9 @@ export function createGoDaddySettingsRuntime(
     return Object.freeze({
       configured: false,
       async handle(request: Request): Promise<Response | undefined> {
+        // Static, read-only verifier: no pool, owner session, state or credentials.
+        const verifier = matrixPreviewVerifierResponse(request);
+        if (verifier !== undefined) return verifier;
         return isManagedPath(new URL(request.url).pathname) || new URL(request.url).pathname.startsWith("/auth/") || isOwnerAuthScriptPath(new URL(request.url).pathname)
           ? plain("Settings are temporarily unavailable.", 503)
           : undefined;
@@ -428,6 +432,8 @@ export function createGoDaddySettingsRuntime(
 
   const handle = async (request: Request): Promise<Response | undefined> => {
       const url = new URL(request.url);
+      const verifier = matrixPreviewVerifierResponse(request);
+      if (verifier !== undefined) return verifier;
       const cookieHeader = request.headers.get("cookie");
 
       if (isOwnerAuthScriptPath(url.pathname)) {
@@ -497,14 +503,14 @@ export function createGoDaddySettingsRuntime(
         if (url.pathname === MATRIX_SETUP_PAGE && request.method === "GET") return render();
         if (url.pathname !== MATRIX_SETUP_ACTION || request.method !== "POST") return plain("Method not allowed.", 405);
         if (!isOwnerNavigation(request, grant.origin)) return plain("Access denied.", 403);
-        const form = await parseActionForm(request, ["action", "deviceId", "flowId", "comparisonToken"]);
+        const form = await parseActionForm(request, ["action", "deviceId", "flowId", "comparisonToken", "previewReport"]);
         if (form === undefined || !await owner.verifyActionToken(cookieHeader, MATRIX_SETUP_ACTION, form.formToken)) return plain("Access denied.", 403);
         const action = form.fields.action as MatrixSetupAction;
         if (!MATRIX_SETUP_ACTIONS.includes(action)) return plain("Invalid request.", 400);
         const required = action === "verify_self" || action === "verify_owner" ? ["deviceId"] : action === "confirm"
-          ? ["flowId", "comparisonToken"] : action === "cancel" ? ["flowId"] : [];
+          ? ["flowId", "comparisonToken"] : action === "cancel" ? ["flowId"] : action === "complete_preview" ? ["previewReport"] : [];
         if (Object.keys(form.fields).length !== required.length + 1 || required.some(key => form.fields[key] === undefined)) return plain("Invalid request.", 400);
-        return render(await matrixSetup.action(action, form.fields));
+        return render(await matrixSetup.action(action, form.fields, grant.csrfAudience));
       }
       if (sessionAction) {
         if (request.method !== "POST") return plain("Method not allowed.", 405, { allow: "POST" });

@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { inspectMatrixRelease, prepareMatrixRelease, verifyMatrixHttpIsolation, type MatrixReleaseExpectation } from "../src/godaddy/matrix-release-install.ts";
+import { runMatrixBrowserChecks } from "../src/godaddy/matrix-browser-isolation.ts";
 
 const SIDECAR = "personal-consultant-matrix-sidecar";
 const SETUP = "personal-consultant-matrix-setup";
@@ -381,6 +382,45 @@ test("a misleading 404 containing the actual harmless canary is rejected", async
   assert.deepEqual(await verifyMatrixHttpIsolation(f.root, f.expected, fakeFetch), { ok: false, code: "matrix_http_isolation_failed" });
   assert.deepEqual(await readdir(f.store), []);
   assert.deepEqual(await readdir(f.spool), []);
+});
+
+test("authenticated browser proof retains exact files, proves shared public mount and cleans all owned probes", async (t) => {
+  const f = await fixture(t); await prepareMatrixRelease(f.root, f.expected);
+  const anonymous: typeof fetch = async input => new Response("Denied", { status: String(input).includes(".preview.") ? 401 : 404 });
+  let challenges = 0;
+  const result = await verifyMatrixHttpIsolation(f.root, f.expected, anonymous, {}, async challenge => {
+    challenges++;
+    assert.equal((await readdir(f.store)).length, 1); assert.equal((await readdir(f.spool)).length, 1);
+    return runMatrixBrowserChecks(challenge, async path => String(path) === challenge.positivePath
+      ? new Response(new Uint8Array(await readFile(join(f.root, "public", challenge.positivePath))))
+      : new Response("Not found", { status: 404 }));
+  });
+  assert.deepEqual(result, { ok: true, checkedPaths: 12, credentialReadiness: "http_isolation_verified", evidenceKind: "browser_assisted_http_isolation" });
+  assert.equal(challenges, 1); assert.deepEqual(await readdir(f.store), []); assert.deepEqual(await readdir(f.spool), []);
+  assert.deepEqual(await readdir(join(f.root, "public", "assets")), [".personal-consultant-matrix-v1"]);
+});
+
+test("browser fallback cannot override Published denial failure, Preview leakage, redirects or server errors", async (t) => {
+  for (const [published, preview, body] of [[200, 401, "login"], [404, 500, "error"], [404, 302, "redirect"],
+    [404, 404, "\u007fELF"], [404, 404, '{"device_id":"private"}']] as const) {
+    const f = await fixture(t); await prepareMatrixRelease(f.root, f.expected); let called = false;
+    const result = await verifyMatrixHttpIsolation(f.root, f.expected, async input => new Response(String(input).includes(".preview.") ? body : "not found",
+      { status: String(input).includes(".preview.") ? preview : published }), {}, async () => { called = true; return {}; });
+    assert.equal(result.ok, false); assert.equal(called, false); assert.deepEqual(await readdir(f.store), []);
+  }
+});
+
+test("browser abort, mismatched challenge and tampered retained canary never grant readiness", async (t) => {
+  for (const kind of ["abort", "nonce", "canary"] as const) {
+    const f = await fixture(t); await prepareMatrixRelease(f.root, f.expected);
+    const result = await verifyMatrixHttpIsolation(f.root, f.expected, async input => new Response("denied", { status: String(input).includes(".preview.") ? 401 : 404 }), {}, async challenge => {
+      if (kind === "abort") return undefined;
+      const report = await runMatrixBrowserChecks(challenge, async path => new Response(String(path) === challenge.positivePath ? challenge.positiveBody : "not found", { status: String(path) === challenge.positivePath ? 200 : 404 }));
+      if (kind === "nonce") return { ...report, nonce: "stale" };
+      await writeFile(join(f.store, (await readdir(f.store))[0]!), "changed"); return report;
+    });
+    assert.equal(result.ok, false); assert.deepEqual(await readdir(f.store), []); assert.deepEqual(await readdir(f.spool), []);
+  }
 });
 
 test("canary cleanup refuses to delete a replacement inode and reports the failure", async (t) => {

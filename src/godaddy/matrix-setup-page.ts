@@ -1,11 +1,13 @@
 import type { MatrixSetupStatus } from "./matrix-setup-process.ts";
 import { OWNER_AUTH_SCRIPT_PATH } from "./owner-auth-client.ts";
+import { MATRIX_PREVIEW_ORIGIN, MATRIX_PREVIEW_VERIFIER, type MatrixBrowserChallenge } from "./matrix-browser-isolation.ts";
 
 export const MATRIX_SETUP_PAGE = "/operations/matrix";
 export const MATRIX_SETUP_ACTION = "/operations/matrix/action";
-export const MATRIX_SETUP_ACTIONS = ["prepare", "start_fresh", "resume", "status", "verify_self", "verify_owner", "confirm", "cancel", "finish", "stop"] as const;
+export const MATRIX_SETUP_ACTIONS = ["prepare", "complete_preview", "start_fresh", "resume", "status", "verify_self", "verify_owner", "confirm", "cancel", "finish", "stop"] as const;
 export type MatrixSetupAction = typeof MATRIX_SETUP_ACTIONS[number];
-export type MatrixSetupView = Readonly<{ state: string; status?: MatrixSetupStatus; error?: string }>;
+export type MatrixSetupView = Readonly<{ state: string; status?: MatrixSetupStatus; error?: string;
+  browserChallenge?: MatrixBrowserChallenge; isolationEvidence?: "browser_assisted_http_isolation" }>;
 const escape = (value: string): string => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
   .replaceAll('"', "&quot;").replaceAll("'", "&#39;");
 const errorGuidance: Readonly<Record<string, string>> = {
@@ -32,6 +34,7 @@ export function matrixSetupDocument(view: MatrixSetupView, token: string): strin
   const stateLabels: Record<string, string> = {
     disabled: "Режим налаштування вимкнено. Консультації не перемикаються автоматично.",
     unprepared: "Файли runtime ще не перевірено на цьому сервері.",
+    awaiting_preview: "Програми встановлено й перевірено. Published відхиляє доступ до приватних шляхів. Потрібна окрема перевірка через авторизований Preview.",
     prepared: "Обидві програми перевірено. Приватні каталоги підготовлено; перевірка HTTP-доступу пройдена.",
     starting: "Програма налаштування запускається. Натисніть «Оновити стан перевірки» за кілька секунд.",
     verifying: "Режим перевірки пристроїв. Консультації не запускаються.",
@@ -48,6 +51,8 @@ export function matrixSetupDocument(view: MatrixSetupView, token: string): strin
   ${view.error === undefined ? "" : `<p role="alert">Дію не завершено. Секрети й наявні дані не видалялися. Код: <code>${escape(view.error)}</code>. ${escape(errorGuidance[view.error] ?? "Перевірте конфігурацію Published та оновіть стан; не створюйте заміну наявного сховища.")}</p>`}
   <p>Ця сторінка не приймає паролів, токенів або ключів відновлення. Секретні значення вводяться лише в GoDaddy → Published → Секрети.</p>
   ${["unprepared", "stopped", "prepared"].includes(view.state) ? form("prepare", "1. Перевірити програми й приватність каталогів") : ""}
+  ${view.state !== "awaiting_preview" || view.browserChallenge === undefined ? "" : `<section><h2>Перевірка через Preview</h2><p>Відкрийте Preview через GoDaddy в цьому самому браузері, щоб увійти. Потім натисніть кнопку нижче. Cookies залишаються в Preview. Перевірка діє три хвилини; прострочена спроба не дозволяє створювати пристрій.</p><script type="application/json" id="matrix-preview-challenge">${JSON.stringify(view.browserChallenge).replaceAll("<", "\\u003c")}</script><button type="button" data-matrix-preview-verifier="${MATRIX_PREVIEW_ORIGIN}${MATRIX_PREVIEW_VERIFIER}">Перевірити авторизований Preview</button><div hidden data-matrix-preview-result>${form("complete_preview", "Передати результат перевірки", { previewReport: "pending" })}</div>${form("stop", "Скасувати перевірку й прибрати контрольні файли")}</section>`}
+  ${view.isolationEvidence === undefined ? "" : `<p>Доказ приватності: Published перевірив сервер; Preview перевірив браузер через авторизований HTTP-доступ. Це браузерна перевірка, не серверна атестація Preview.</p>`}
   ${view.state === "prepared" ? `<p>Новий пристрій має бути окремою сесією бота без попередніх ключів шифрування. Порожнє сховище для наявного пристрою не допускається.</p>${form("start_fresh", "2. Підготувати новий окремий пристрій бота")}${form("resume", "Продовжити з наявним сховищем цього пристрою")}` : ""}
   ${["starting", "verifying"].includes(view.state) ? form("status", "Оновити стан перевірки") : ""}
   ${status === undefined ? "" : `<p>Пристрій бота: <code>${escape(status.own_bot_device_id)}</code>. Відбиток: <code>${escape(status.own_bot_ed25519 ?? "очікування ключа")}</code>.</p><p>Довіра до бота: ${yes(status.self_identity_verified)}. Ключі перехресного підписування: ${yes(status.private_cross_signing_ready)}. Довіра до Власника: ${yes(status.owner_identity_verified)}.</p>${comparison}${devices}${form("finish", "Завершити перевірку всіх умов Matrix")}`}

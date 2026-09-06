@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { constants, type Stats } from "node:fs";
 import { link, lstat, mkdir, open, readdir, realpath, unlink, type FileHandle } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
+import { MATRIX_VERIFIER_HASH, validMatrixBrowserReport, type MatrixBrowserChallenge } from "./matrix-browser-isolation.ts";
 
 const SIDECAR = "personal-consultant-matrix-sidecar";
 const SETUP = "personal-consultant-matrix-setup";
@@ -345,7 +346,7 @@ export async function inspectMatrixRelease(applicationRoot: string, expected: Ma
 }
 
 export type MatrixHttpIsolationResult =
-  | Readonly<{ ok: true; checkedPaths: 12; credentialReadiness: "http_isolation_verified" }>
+  | Readonly<{ ok: true; checkedPaths: 12; credentialReadiness: "http_isolation_verified"; evidenceKind?: "browser_assisted_http_isolation" }>
   | Readonly<{ ok: false; code: MatrixReleaseErrorCode | "isolation_probe_requires_empty_state" | "isolation_probe_requires_binding" | "matrix_http_isolation_failed" | "matrix_http_isolation_cleanup_failed" }>;
 
 type Canary = Readonly<{ path: string; name: string; bytes: Buffer; stat: Stats; handle: FileHandle }>;
@@ -355,13 +356,14 @@ const HTTP_ORIGINS = Object.freeze([
   "https://wy2v0putg6.preview.c35.airoapp.ai"
 ]);
 
-async function deniedHttpResponse(url: string, canaries: readonly Canary[], fetchImpl: typeof fetch): Promise<boolean> {
+async function deniedHttpResponse(url: string, canaries: readonly Canary[], fetchImpl: typeof fetch, statuses?: Map<string, number>): Promise<boolean> {
   let response: Response | undefined;
   try {
     response = await fetchImpl(url, {
       method: "GET", credentials: "omit", redirect: "manual", cache: "no-store",
       signal: AbortSignal.timeout(5_000), headers: { Accept: "application/octet-stream", "Cache-Control": "no-cache" }
     });
+    statuses?.set(url, response.status);
     // A redirect, timeout, login page or generic 200 is not private-path evidence.
     if (response.status !== 403 && response.status !== 404) {
       await response.body?.cancel();
@@ -402,7 +404,8 @@ export async function verifyMatrixHttpIsolation(
   applicationRoot: string,
   expected: MatrixReleaseExpectation,
   fetchImpl: typeof fetch = fetch,
-  options: MatrixReleaseOptions = {}
+  options: MatrixReleaseOptions = {},
+  browserCheck?: (challenge: MatrixBrowserChallenge) => Promise<unknown>
 ): Promise<MatrixHttpIsolationResult> {
   const inspection = await inspectMatrixRelease(applicationRoot, expected, options);
   if (!inspection.ok) return inspection;
@@ -411,6 +414,7 @@ export async function verifyMatrixHttpIsolation(
   }
   const canaries: Canary[] = [];
   const probeNames: string[] = [];
+  const snapshots = new Map<string, Stats>();
   let existingMarker: Readonly<{ path: string; name: string; stat: Stats; parent: Stats }> | undefined;
   if (inspection.value.storeState === "contains_state") {
     try {
@@ -444,6 +448,7 @@ export async function verifyMatrixHttpIsolation(
       probeNames.push(name);
       await handle.writeFile(bytes);
       await handle.sync();
+      snapshots.set(target, await handle.stat());
       if (!identity(parent, await directory(path, uid, true))) throw new ReleaseFailure("matrix_release_unsafe_path");
     }
     const urls = HTTP_ORIGINS.flatMap((origin) => [
@@ -452,13 +457,50 @@ export async function verifyMatrixHttpIsolation(
       `${origin}/.runtime/matrix/${SIDECAR}`,
       `${origin}/.runtime/matrix/${SETUP}`
     ]);
-    const checks = await Promise.all(urls.map((url) => deniedHttpResponse(url, canaries, fetchImpl)));
+    const statuses = new Map<string, number>();
+    const checks = await Promise.all(urls.map((url) => deniedHttpResponse(url, canaries, fetchImpl, statuses)));
+    let browserPassed = false;
+    // Never use browser evidence to override a leak, a Published failure, a
+    // redirect or an upstream error. Only the Preview 401 login boundary qualifies.
+    if (browserCheck !== undefined && checks.slice(0, 6).every(Boolean) && !checks.slice(6).every(Boolean)
+      && checks.slice(6).every((denied, index) => denied || statuses.get(urls[index + 6]!) === 401)) {
+      const privateCanaries = canaries.map(canary => new TextDecoder().decode(canary.bytes));
+      const name = `matrix-isolation-positive-${Buffer.from(randomBytes(16)).toString("hex")}.txt`;
+      const parentPath = join(applicationRoot, "public", "assets");
+      const parent = await directory(parentPath, uid, false);
+      const path = join(parentPath, name);
+      const bytes = Buffer.from(`matrix-isolation-positive:${Buffer.from(randomBytes(16)).toString("hex")}`, "ascii");
+      const handle = await open(path, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o644);
+      canaries.push({ path, name, bytes, stat: await handle.stat(), handle });
+      await handle.writeFile(bytes); await handle.sync();
+      snapshots.set(path, await handle.stat());
+      if (!identity(parent, await directory(parentPath, uid, false))) throw new ReleaseFailure("matrix_release_unsafe_path");
+      const challenge: MatrixBrowserChallenge = Object.freeze({ nonce: Buffer.from(randomBytes(16)).toString("hex"),
+        expiresAt: Date.now() + 180_000, verifierHash: MATRIX_VERIFIER_HASH,
+        paths: urls.slice(6).map(url => new URL(url).pathname), canaries: privateCanaries,
+        positivePath: `/assets/${name}`, positiveBody: bytes.toString("ascii") });
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        const report = await Promise.race([browserCheck(challenge), new Promise(resolve => {
+          timer = setTimeout(() => resolve(undefined), 180_000); timer.unref();
+        })]);
+        browserPassed = Date.now() < challenge.expiresAt && validMatrixBrowserReport(report, challenge);
+        for (const canary of canaries) {
+          if (!sameFile(snapshots.get(canary.path)!, await lstat(canary.path))
+            || !sameFile(snapshots.get(canary.path)!, await canary.handle.stat())) browserPassed = false;
+        }
+        // Recheck the machine-observed half while the exact files still exist.
+        if (browserPassed) browserPassed = (await Promise.all(urls.slice(0, 6)
+          .map(url => deniedHttpResponse(url, canaries, fetchImpl)))).every(Boolean);
+      } finally { if (timer !== undefined) clearTimeout(timer); }
+    }
     if (existingMarker !== undefined && (!sameFile(existingMarker.stat, await lstat(existingMarker.path))
       || !identity(existingMarker.parent, await directory(inspection.value.storeDir, uid, true)))) {
       throw new ReleaseFailure("matrix_release_unsafe_path");
     }
-    if (checks.length === 12 && checks.every(Boolean)) {
-      result = { ok: true, checkedPaths: 12, credentialReadiness: "http_isolation_verified" };
+    if (checks.length === 12 && (checks.every(Boolean) || browserPassed)) {
+      result = { ok: true, checkedPaths: 12, credentialReadiness: "http_isolation_verified",
+        ...(browserPassed ? { evidenceKind: "browser_assisted_http_isolation" as const } : {}) };
     }
   } catch { /* Report only the safe failure code; never response bodies or local paths. */ }
   finally {
@@ -470,6 +512,10 @@ export async function verifyMatrixHttpIsolation(
       } catch { result = { ok: false, code: "matrix_http_isolation_cleanup_failed" }; }
       finally { await canary.handle.close().catch(() => { result = { ok: false, code: "matrix_http_isolation_cleanup_failed" }; }); }
     }
+  }
+  if (result.ok) {
+    const current = await inspectMatrixRelease(applicationRoot, expected, options);
+    if (!current.ok) return current;
   }
   return result;
 }

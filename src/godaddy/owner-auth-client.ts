@@ -16,6 +16,37 @@ export const ownerAuthClientJavaScript = String.raw`(() => {
     const output = document.querySelector("[data-owner-action-status]");
     if (output) { output.textContent = message; output.focus(); }
   };
+  let previewWindow;
+  let previewChallenge;
+  document.addEventListener("click", event => {
+    const button = event.target instanceof Element ? event.target.closest("[data-matrix-preview-verifier]") : null;
+    if (!button) return;
+    const data = document.querySelector("#matrix-preview-challenge");
+    try { previewChallenge = JSON.parse(data?.textContent || ""); } catch { return; }
+    if (!/^[a-f0-9]{32}$/.test(previewChallenge.nonce) || Date.now() >= previewChallenge.expiresAt) {
+      showError("Перевірка прострочена. Скасуйте її та почніть знову."); return;
+    }
+    // Fixed origin, no credentials in URL. An opener is required only for this
+    // nonce-bound, GET-only verifier; neither side receives the other's cookies.
+    previewWindow = window.open("https://wy2v0putg6.preview.c35.airoapp.ai/operations/matrix/preview-isolation#" + previewChallenge.nonce, "matrix-preview-isolation");
+    if (!previewWindow) showError("Дозвольте нове вікно для перевірки Preview та повторіть дію.");
+  });
+  window.addEventListener("message", event => {
+    if (event.origin !== "https://wy2v0putg6.preview.c35.airoapp.ai" || event.source !== previewWindow
+      || !previewChallenge || Date.now() >= previewChallenge.expiresAt || !event.data
+      || event.data.nonce !== previewChallenge.nonce || event.data.verifierHash !== previewChallenge.verifierHash) return;
+    if (event.data.type === "matrix-preview-ready") { previewWindow.postMessage(previewChallenge, event.origin); return; }
+    const report = event.data;
+    if (typeof report.positive !== "boolean" || !Array.isArray(report.results) || report.results.length !== previewChallenge.paths.length
+      || report.results.some((r, i) => !r || r.path !== previewChallenge.paths[i] || !Number.isInteger(r.status) || typeof r.denied !== "boolean")) return;
+    const form = document.querySelector("[data-matrix-preview-result] form");
+    const field = form?.querySelector('[name="previewReport"]');
+    if (!form || !field) return;
+    const serialized = JSON.stringify(report);
+    if (serialized.length > 2000) return;
+    field.value = serialized; previewChallenge = undefined;
+    form.requestSubmit();
+  });
   document.addEventListener("submit", async (event) => {
     const form = event.target;
     if (!(form instanceof HTMLFormElement) || !form.hasAttribute("data-owner-action")) return;
@@ -37,7 +68,7 @@ export const ownerAuthClientJavaScript = String.raw`(() => {
     if (typeof token !== "string" || !token) return;
     const body = new URLSearchParams({ formToken: token });
     if (action.pathname === "/operations/matrix/action") {
-      for (const name of ["action", "deviceId", "flowId", "comparisonToken"]) {
+      for (const name of ["action", "deviceId", "flowId", "comparisonToken", "previewReport"]) {
         const value = data.get(name);
         if (typeof value === "string") body.set(name, value);
       }
