@@ -16930,7 +16930,7 @@
     }
   ],
   "next_ready_nodes": [],
-  "pause_reason": "Awaiting owner Google sign-in in Safari. Verified Matrix release is bundled and pinned in setup-only Published commit 466d7268afe886047d64ea5c5fb6984efcc7cf81; the selected Published dashboard confirms the commit, live healthz is 200, and the new Matrix route redirects unauthenticated users to owner sign-in. Both Safari and Chrome require sign-in. Temporary follow-up is paused. No Matrix credentials or trust confirmations were performed. Server-side installation/privacy preparation, the known anonymous Preview 401 evidence limitation, new device setup and live consultation delivery remain outstanding. See release-verification.json and preflight-followup.md. This is not Product V1 release readiness.",
+  "pause_reason": "Owner sign-in confirmed in Safari. Content-addressed script repair is live in Published ddce36375b99b5af25be7f387c4d98fa223cad47 and the real prepare button now reaches the server. Binary installation/hash/permission checks precede the observed matrix_http_isolation_failed result. Preview's 401 authentication boundary prevents the required exact-file non-retrievability proof; it is neither a privacy pass nor evidence of exposure. Need authenticated exact-path verification without extracting credentials, stateful Preview or weakened privacy gates before new Matrix credentials/device trust. No new credentials or trust confirmations performed. See preflight-followup.md. This is not Product V1 release readiness.",
   "matrix_production_setup_progress": {
     "authorization_ref": "forge/matrix-production-setup-authorization-20260906.json",
     "evidence_ref": "forge/runs/U-08/matrix-production-setup-20260906/progress.md",
@@ -16951,10 +16951,10 @@
     },
     "existing_bot_session_verified_in_ui": true,
     "room_history_visibility_joined_verified": true,
-    "status": "setup-deployed-awaiting-owner-login-and-live-setup-proof",
+    "status": "setup-installed-blocked-on-authenticated-preview-isolation-proof",
     "published_changes_performed": true,
-    "published_changes_scope": "Added only MATRIX_SETUP_MODE=provision and published verified setup-only commit 466d7268afe886047d64ea5c5fb6984efcc7cf81; no Matrix credentials, runtime provisioning or trust confirmation.",
-    "published_commit": "466d7268afe886047d64ea5c5fb6984efcc7cf81",
+    "published_changes_scope": "MATRIX_SETUP_MODE=provision retained; deployed content-addressed owner script fix, then successful binary installation/validation followed by failed HTTP isolation. No Matrix credentials, native provisioning or trust confirmation.",
+    "published_commit": "ddce36375b99b5af25be7f387c4d98fa223cad47",
     "live_consultation_verified": false
   },
   "current_reconciliation_blockers": [
