@@ -16930,7 +16930,7 @@
     }
   ],
   "next_ready_nodes": [],
-  "pause_reason": "User explicitly selected Chrome for GoDaddy. Both GoDaddy and consulting-app owner login are now confirmed in Chrome; the earlier Safari platform-login handoff is superseded. Two preparation attempts on Published be0f407 returned matrix_http_isolation_failed before a browser challenge. Separate local HTTP checks observed one Preview 503 but do not establish the server-side failure cause. Content-free owner diagnostics are locally verified (762 tests) and awaiting deployment so the exact failing stage/probe can be identified. No Matrix credentials, device creation or trust confirmation; authenticated privacy proof remains unpassed. See chrome-isolation-followup.md. This is not Product V1 release readiness.",
+  "pause_reason": "Chrome is the user-selected GoDaddy browser; both GoDaddy and consulting-app owner login work there. Published and Preview run 7fc02642b0dc4b547ce512929dffd3529e9eee57, including content-free owner diagnostics and the repaired bounded positive-control route (765 tests passed). Real checks passed the six Published private URLs. Authenticated Preview loaded the correct verifier/route but returned 404 for the same fresh control that Published returned as 200. Shared-file visibility is not established; missing route is fixed, but absent/shared-inaccessible file is not a privacy pass. The controlled attempt was explicitly cancelled; the owner page returned stopped. No credentials, Matrix device initialization or trust confirmation occurred. Next investigate actual variant storage visibility and reconcile the setup verifier with evidence, without accepting generic 404 or weakening the production-path gate. See chrome-isolation-followup.md. This is not Product V1 release readiness.",
   "matrix_production_setup_progress": {
     "authorization_ref": "forge/matrix-production-setup-authorization-20260906.json",
     "evidence_ref": "forge/runs/U-08/matrix-production-setup-20260906/progress.md",
@@ -16951,12 +16951,12 @@
     },
     "existing_bot_session_verified_in_ui": true,
     "room_history_visibility_joined_verified": true,
-    "status": "chrome-owner-ready-isolation-diagnostics-pending-deployment",
+    "status": "chrome-authenticated-preview-control-visibility-unresolved",
     "godaddy_browser": "chrome",
     "chrome_followup_ref": "forge/runs/U-08/matrix-production-setup-20260906/chrome-isolation-followup.md",
     "published_changes_performed": true,
-    "published_changes_scope": "MATRIX_SETUP_MODE=provision retained; deployed fixed read-only Preview verifier and owner-session-bound expiring browser-assisted proof flow. Preview stays stateless; native bundle unchanged; no Matrix credentials, provisioning or trust confirmation.",
-    "published_commit": "be0f4077aa60f28f61066c6278143caeee8bfe11",
+    "published_changes_scope": "MATRIX_SETUP_MODE=provision retained; deployed content-free owner diagnostics and a bounded read-only handler for harmless temporary positive controls. Preview stays stateless; native bundle unchanged; no secret synchronization, Matrix credentials, provisioning or trust confirmation.",
+    "published_commit": "7fc02642b0dc4b547ce512929dffd3529e9eee57",
     "browser_isolation_repair_ref": "forge/runs/U-08/matrix-production-setup-20260906/browser-isolation-repair.md",
     "live_consultation_verified": false
   },
