@@ -351,6 +351,15 @@ export type MatrixHttpIsolationResult =
 
 type Canary = Readonly<{ path: string; name: string; bytes: Buffer; stat: Stats; handle: FileHandle }>;
 
+/** Content-free owner diagnostics. Never include URLs, filenames, bodies or exception messages. */
+export type MatrixIsolationDiagnostics = Readonly<{
+  stage: "private_canaries" | "anonymous_http" | "public_control" | "browser_proof" | "published_recheck" | "file_identity";
+  probes: readonly Readonly<{ environment: "published" | "preview";
+    target: "store_assets" | "spool_assets" | "store_public_assets" | "spool_public_assets" | "sidecar" | "setup";
+    status: number | null; denied: boolean }>[];
+}>;
+const PROBE_TARGETS = ["store_assets", "spool_assets", "store_public_assets", "spool_public_assets", "sidecar", "setup"] as const;
+
 const HTTP_ORIGINS = Object.freeze([
   "https://wy2v0putg6.c35.airoapp.ai",
   "https://wy2v0putg6.preview.c35.airoapp.ai"
@@ -405,7 +414,8 @@ export async function verifyMatrixHttpIsolation(
   expected: MatrixReleaseExpectation,
   fetchImpl: typeof fetch = fetch,
   options: MatrixReleaseOptions = {},
-  browserCheck?: (challenge: MatrixBrowserChallenge) => Promise<unknown>
+  browserCheck?: (challenge: MatrixBrowserChallenge) => Promise<unknown>,
+  observe?: (diagnostics: MatrixIsolationDiagnostics) => void
 ): Promise<MatrixHttpIsolationResult> {
   const inspection = await inspectMatrixRelease(applicationRoot, expected, options);
   if (!inspection.ok) return inspection;
@@ -429,7 +439,10 @@ export async function verifyMatrixHttpIsolation(
     } catch { return { ok: false, code: "isolation_probe_requires_binding" }; }
   }
   let result: MatrixHttpIsolationResult = { ok: false, code: "matrix_http_isolation_failed" };
+  let probes: MatrixIsolationDiagnostics["probes"] = [];
+  const stage = (value: MatrixIsolationDiagnostics["stage"]): void => { observe?.({ stage: value, probes }); };
   try {
+    stage("private_canaries");
     const uid = currentUid(options);
     for (const path of [inspection.value.storeDir, inspection.value.mediaSpoolDir]) {
       if (path === inspection.value.storeDir && existingMarker !== undefined) {
@@ -460,12 +473,17 @@ export async function verifyMatrixHttpIsolation(
       `${origin}/.runtime/matrix/${SETUP}`
     ]);
     const statuses = new Map<string, number>();
+    stage("anonymous_http");
     const checks = await Promise.all(urls.map((url) => deniedHttpResponse(url, canaries, fetchImpl, statuses)));
+    probes = checks.map((denied, index) => ({ environment: index < 6 ? "published" : "preview",
+      target: PROBE_TARGETS[index % 6]!, status: statuses.get(urls[index]!) ?? null, denied }));
+    stage("anonymous_http");
     let browserPassed = false;
     // Never use browser evidence to override a leak, a Published failure, a
     // redirect or an upstream error. Only the Preview 401 login boundary qualifies.
     if (browserCheck !== undefined && checks.slice(0, 6).every(Boolean) && !checks.slice(6).every(Boolean)
       && checks.slice(6).every((denied, index) => denied || statuses.get(urls[index + 6]!) === 401)) {
+      stage("public_control");
       const privateCanaries = canaries.map(canary => new TextDecoder().decode(canary.bytes));
       const name = `matrix-isolation-positive-${Buffer.from(randomBytes(16)).toString("hex")}.txt`;
       const parentPath = join(applicationRoot, "public", "assets");
@@ -483,6 +501,7 @@ export async function verifyMatrixHttpIsolation(
         positivePath: `/assets/${name}`, positiveBody: bytes.toString("ascii") });
       let timer: ReturnType<typeof setTimeout> | undefined;
       try {
+        stage("browser_proof");
         const report = await Promise.race([browserCheck(challenge), new Promise(resolve => {
           timer = setTimeout(() => resolve(undefined), 180_000); timer.unref();
         })]);
@@ -492,10 +511,19 @@ export async function verifyMatrixHttpIsolation(
             || !sameFile(snapshots.get(canary.path)!, await canary.handle.stat())) browserPassed = false;
         }
         // Recheck the machine-observed half while the exact files still exist.
-        if (browserPassed) browserPassed = (await Promise.all(urls.slice(0, 6)
-          .map(url => deniedHttpResponse(url, canaries, fetchImpl)))).every(Boolean);
+        if (browserPassed) {
+          stage("published_recheck");
+          const repeatStatuses = new Map<string, number>();
+          const repeat = await Promise.all(urls.slice(0, 6)
+            .map(url => deniedHttpResponse(url, canaries, fetchImpl, repeatStatuses)));
+          probes = [...repeat.map((denied, index) => ({ environment: "published" as const,
+            target: PROBE_TARGETS[index]!, status: repeatStatuses.get(urls[index]!) ?? null, denied })), ...probes.slice(6)];
+          stage("published_recheck");
+          browserPassed = repeat.every(Boolean);
+        }
       } finally { if (timer !== undefined) clearTimeout(timer); }
     }
+    if (existingMarker !== undefined) stage("file_identity");
     if (existingMarker !== undefined && (!sameFile(existingMarker.stat, await lstat(existingMarker.path))
       || !identity(existingMarker.parent, await directory(inspection.value.storeDir, uid, true)))) {
       throw new ReleaseFailure("matrix_release_unsafe_path");

@@ -4,7 +4,7 @@ import { chmod, link, lstat, mkdir, mkdtemp, readFile, readdir, realpath, rename
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { inspectMatrixRelease, prepareMatrixRelease, verifyMatrixHttpIsolation, type MatrixReleaseExpectation } from "../src/godaddy/matrix-release-install.ts";
+import { inspectMatrixRelease, prepareMatrixRelease, verifyMatrixHttpIsolation, type MatrixReleaseExpectation, type MatrixIsolationDiagnostics } from "../src/godaddy/matrix-release-install.ts";
 import { runMatrixBrowserChecks } from "../src/godaddy/matrix-browser-isolation.ts";
 
 const SIDECAR = "personal-consultant-matrix-sidecar";
@@ -410,6 +410,25 @@ test("browser fallback cannot override Published denial failure, Preview leakage
       { status: String(input).includes(".preview.") ? preview : published }), {}, async () => { called = true; return {}; });
     assert.equal(result.ok, false); assert.equal(called, false); assert.deepEqual(await readdir(f.store), []);
   }
+});
+
+test("owner diagnostics identify a failed probe without returning URL, canary, response or network error text", async (t) => {
+  const f = await fixture(t); await prepareMatrixRelease(f.root, f.expected);
+  const observations: MatrixIsolationDiagnostics[] = [];
+  const result = await verifyMatrixHttpIsolation(f.root, f.expected, async input => {
+    const url = String(input);
+    if (!url.includes(".preview.")) return new Response("not found", { status: 404 });
+    if (url.endsWith(SIDECAR)) throw new Error("PRIVATE_NETWORK_DETAIL");
+    return new Response("PRIVATE_RESPONSE_DETAIL", { status: 503 });
+  }, {}, () => { assert.fail("503 cannot enter browser fallback"); }, value => { observations.push(value); });
+  assert.equal(result.ok, false);
+  const last = observations.at(-1)!;
+  assert.equal(last.stage, "anonymous_http"); assert.equal(last.probes.length, 12);
+  assert.deepEqual(last.probes[6], { environment: "preview", target: "store_assets", status: 503, denied: false });
+  assert.deepEqual(last.probes[10], { environment: "preview", target: "sidecar", status: null, denied: false });
+  assert.deepEqual(last.probes[0], { environment: "published", target: "store_assets", status: 404, denied: true });
+  assert.doesNotMatch(JSON.stringify(observations), /PRIVATE_|https:|private-path-check|matrix-private-path-canary|airoapp/);
+  assert.deepEqual(await readdir(f.store), []); assert.deepEqual(await readdir(f.spool), []);
 });
 
 test("browser abort, mismatched challenge and tampered retained canary never grant readiness", async (t) => {

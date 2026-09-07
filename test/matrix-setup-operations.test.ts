@@ -84,6 +84,24 @@ test("failed isolation never unlocks credential-bearing child execution", async 
   assert.equal((await setup.action("start_fresh", {})).error, "matrix_setup_not_prepared");
   assert.deepEqual(calls, ["prepare", "isolation"]);
 });
+test("failed preparation renders content-free probe diagnostics without unlocking setup", async () => {
+  const diagnostics = { stage: "anonymous_http" as const,
+    probes: [{ environment: "preview" as const, target: "sidecar" as const, status: 503, denied: false }] };
+  const setup = createMatrixSetupOperations(env(), {
+    releasePin: { manifestSha256: "d".repeat(64), sourceCommit: "e".repeat(40) }, applicationRoot: root,
+    prepare: async () => ({ ok: true, value: inspection() }),
+    isolation: async (_root, _pin, _fetch, _options, _browser, observe) => {
+      observe?.(diagnostics); return { ok: false, code: "matrix_http_isolation_failed" };
+    }, spawn: () => { assert.fail("failed diagnostic is not permission to spawn"); }
+  });
+  const view = await setup.action("prepare", {}, "owner-session");
+  assert.deepEqual(view.isolationDiagnostics, diagnostics);
+  const html = matrixSetupDocument(view, "synthetic-csrf");
+  assert.match(html, /preview · sidecar · HTTP 503/);
+  assert.doesNotMatch(html, /value="start_fresh"/);
+  assert.equal((await setup.action("start_fresh", {})).error, "matrix_setup_not_prepared");
+  await setup.close();
+});
 test("a failed repeat preparation revokes the previous successful view and keeps exact isolation errors", async () => {
   for (const code of ["matrix_http_isolation_failed", "matrix_http_isolation_cleanup_failed"] as const) {
     let fail = false;

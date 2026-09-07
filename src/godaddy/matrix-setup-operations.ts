@@ -2,7 +2,7 @@ import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 import { parseGoDaddyMatrixConfiguration } from "./matrix-service-config.ts";
 import { inspectMatrixRelease, prepareMatrixRelease, verifyMatrixHttpIsolation,
-  type MatrixReleaseExpectation } from "./matrix-release-install.ts";
+  type MatrixReleaseExpectation, type MatrixIsolationDiagnostics } from "./matrix-release-install.ts";
 import { MATRIX_RELEASE_PIN } from "./matrix-release-pin.ts";
 import type { MatrixBrowserChallenge } from "./matrix-browser-isolation.ts";
 import { spawnMatrixSetupProcess, type MatrixSetupProcess, type MatrixSetupCommand } from "./matrix-setup-process.ts";
@@ -64,11 +64,14 @@ export function createMatrixSetupOperations(environment: Record<string, unknown>
           view = { state: "awaiting_preview", browserChallenge: challenge };
           announce(view);
         });
-      isolationRun = (dependencies.isolation ?? verifyMatrixHttpIsolation)(root, pin, fetch, {}, browserCheck)
+      let diagnostics: MatrixIsolationDiagnostics | undefined;
+      isolationRun = (dependencies.isolation ?? verifyMatrixHttpIsolation)(root, pin, fetch, {}, browserCheck,
+        observation => { diagnostics = observation; })
         .then(isolation => {
           browserPending = undefined;
           if (closed) return view;
-          if (!isolation.ok) { view = { state: "unprepared", error: isolation.code }; return view; }
+          if (!isolation.ok) { view = { state: "unprepared", error: isolation.code,
+            ...(diagnostics === undefined ? {} : { isolationDiagnostics: diagnostics }) }; return view; }
           isolationConfirmed = true; isolationExpiresAt = Date.now() + 300_000;
           view = { state: "prepared", ...(isolation.evidenceKind === undefined ? {} : { isolationEvidence: isolation.evidenceKind }) };
           return view;
