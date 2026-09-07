@@ -1,0 +1,17 @@
+{
+  "event": "scoped_additive_database_authorization",
+  "role": "user",
+  "original_message": "yes",
+  "question_answered": "May I create only these two tables through a protected operation inside Published, preserving every existing table and record? personal_consultant_matrix_outbox; personal_consultant_matrix_ingress.",
+  "source": "Active Codex conversation and retained preceding approval request",
+  "original_transport_message_id": null,
+  "original_transport_received_at": null,
+  "recorded_at": "2026-09-07T12:35:08Z",
+  "provenance_limit": "Recording time is not the original message receipt time; unavailable transport identifiers are not invented.",
+  "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
+  "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+  "allowed_tables": ["personal_consultant_matrix_outbox", "personal_consultant_matrix_ingress"],
+  "operation": "Owner-authenticated, same-origin, purpose-CSRF-protected Published POST; create only absent approved tables using canonical fixed CREATE TABLE definitions.",
+  "preserve": ["All existing tables and records", "Stateless Preview", "Existing Matrix trust and encryption state", "Other repositories and applications"],
+  "excluded": ["GoDaddy SQL importer", "DROP", "TRUNCATE", "DELETE", "ALTER of existing tables", "Arbitrary SQL input", "Automatic startup or GET migrations", "Product V1 release claims"]
+}

@@ -27,6 +27,7 @@ import { createMatrixSetupOperations, type MatrixSetupOperations } from "./matri
 import { MATRIX_SETUP_ACTION, MATRIX_SETUP_ACTIONS, MATRIX_SETUP_PAGE, matrixSetupDocument, type MatrixSetupAction } from "./matrix-setup-page.ts";
 import { matrixPreviewVerifierResponse } from "./matrix-browser-isolation.ts";
 import { matrixPositiveControlResponse } from "./matrix-positive-control.ts";
+import { inspectMatrixSchema, createMissingMatrixTables } from "./matrix-additive-schema.ts";
 
 type SettingsAsset = "settings.css" | "settings.js";
 type CatalogFailureCode = Extract<RuntimeCapabilityCatalogResult, { ok: false }>["code"];
@@ -252,6 +253,7 @@ async function isEmptyJsonAction(request: Request): Promise<boolean> {
 
 const isSettingsPath = (pathname: string): boolean => settingsPaths.has(pathname);
 const MATRIX_STATUS_PATH = "/operations/matrix/status";
+const MATRIX_SCHEMA_PATH = "/operations/matrix/schema";
 const MATRIX_STATUS_REASONS = new Set([
   "matrix_disabled_for_runtime", "matrix_state_database_not_enabled", "matrix_not_configured",
   "matrix_configuration_incomplete", "matrix_configuration_invalid", "store_binding_unavailable", "store_binding_invalid",
@@ -259,7 +261,7 @@ const MATRIX_STATUS_REASONS = new Set([
   "ingress_blocked", "media_consumer_unavailable", "sidecar_not_ready", "lock_contended", "circuit_open",
   "retry_exhausted", "publication_fence_unavailable", "stopping", "stopped", "termination_failed"
 ]);
-const isManagedPath = (pathname: string): boolean => isSettingsPath(pathname) || runtimeOperationPaths.has(pathname) || pathname === MATRIX_SETUP_PAGE || pathname === MATRIX_SETUP_ACTION || pathname === MATRIX_STATUS_PATH;
+const isManagedPath = (pathname: string): boolean => isSettingsPath(pathname) || runtimeOperationPaths.has(pathname) || pathname === MATRIX_SETUP_PAGE || pathname === MATRIX_SETUP_ACTION || pathname === MATRIX_STATUS_PATH || pathname === MATRIX_SCHEMA_PATH;
 
 function defaultPool(configuration: GodaddyDatabaseConfiguration): MySqlPool {
   return createGodaddyMySqlPool(configuration);
@@ -511,6 +513,26 @@ export function createGoDaddySettingsRuntime(
         const form = await parseActionForm(request);
         return form !== undefined && await owner.verifyActionToken(cookieHeader, url.pathname, form.formToken);
       };
+      if (url.pathname === MATRIX_SCHEMA_PATH) {
+        if (url.search) return plain("Invalid request.", 400);
+        if (request.method !== "GET" && request.method !== "POST") return plain("Method not allowed.", 405, { allow: "GET, POST" });
+        // The runtime's configuration gate above requires production + Published
+        // DB role. No schema helper runs in Preview or before owner verification.
+        if (request.method === "POST" && !await verifyAction()) return plain("Access denied.", 403);
+        const inventory = request.method === "POST" ? await createMissingMatrixTables(pool) : await inspectMatrixSchema(pool);
+        const token = await owner.issueActionToken(cookieHeader, MATRIX_SCHEMA_PATH);
+        if (token === undefined) return plain("Access denied.", 403);
+        return html(`<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Таблиці Matrix</title><script src="${OWNER_AUTH_SCRIPT_PATH}" defer></script></head><body><main>
+          <h1>Таблиці Matrix</h1><p>Операція створює лише відсутні personal_consultant_matrix_outbox та personal_consultant_matrix_ingress. Наявні таблиці й записи не змінюються.</p>
+          <p role="status">${inventory.missing.length === 0 ? "Обидві таблиці наявні. Це ще не підтвердження готовності консультації." : `Відсутні: ${inventory.missing.map(escapeHtml).join(", ")}`}</p>
+          <p>Порівняння ключів наявної таблиці стану (потрібне utf8mb4_bin): ${escapeHtml(JSON.stringify(inventory.stateKeyCollations))}</p>
+          <p role="alert" tabindex="-1" data-owner-action-status></p>
+          ${inventory.missing.length === 0 ? "" : `<form action="${MATRIX_SCHEMA_PATH}" method="post" data-owner-action><input type="hidden" name="formToken" value="${escapeHtml(token)}"><button type="submit">Створити лише відсутні таблиці Matrix</button></form>`}
+          <p><a href="${MATRIX_STATUS_PATH}">Перевірити готовність Matrix</a></p>
+          <noscript>Для захищеної операції увімкніть JavaScript і оновіть сторінку.</noscript>
+          </main></body></html>`, 200);
+      }
       if (url.pathname === MATRIX_STATUS_PATH) {
         if (request.method !== "GET") return plain("Method not allowed.", 405, { allow: "GET" });
         if (url.search) return plain("Invalid request.", 400);

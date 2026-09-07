@@ -10,6 +10,7 @@ import type { MatrixSetupOperations } from "../src/godaddy/matrix-setup-operatio
 import type { RuntimeCapabilityCatalogResult } from "../src/runtime/capability-catalog.ts";
 import { activeNow, createCapabilityReceipt } from "./fixtures/capability-receipt.ts";
 import { OwnerAuthPool } from "./fixtures/owner-auth-pool.ts";
+import { MatrixSchemaPool } from "./fixtures/matrix-schema-pool.ts";
 import { browser, Form } from "./fixtures/owner-action-browser.ts";
 import { createHash } from "node:crypto";
 import { OWNER_AUTH_SCRIPT_PATH, ownerAuthClientJavaScript } from "../src/godaddy/owner-auth-client.ts";
@@ -139,6 +140,64 @@ function fixture(options: { pool?: OwnerAuthPool; runtime?: RuntimeBootstrap; go
   });
   return { runtime, pool };
 }
+
+test("additive schema route requires owner, same origin and purpose CSRF; GET never creates tables", async () => {
+  const path = "/operations/matrix/schema";
+  const pool = new MatrixSchemaPool();
+  const { runtime } = fixture({ pool });
+  assert.equal((await runtime.handle(request(path)))?.status, 403);
+  assert.equal((await runtime.handle(request(path, undefined, { method: "POST" })))?.status, 403);
+  assert.equal(pool.schemaStatements.length, 0);
+  const { jar } = await login(runtime);
+  assert.equal(pool.schemaStatements.length, 0, "Startup and login cannot run schema operations");
+  const page = await runtime.handle(request(path, jar));
+  const document = await page!.text();
+  const token = formToken(document, path);
+  assert.equal(page?.headers.get("cache-control"), "no-store");
+  assert.equal(pool.creates.length, 0);
+  assert.equal((await runtime.handle(actionRequest(path, token, jar, { origin: "https://evil.test" })))?.status, 403);
+  assert.equal((await runtime.handle(actionRequest(path, token, jar, { "sec-fetch-site": "cross-site" })))?.status, 403);
+  assert.equal((await runtime.handle(actionRequest(path, "x".repeat(64), jar)))?.status, 403);
+  const operations = await runtime.handle(request("/operations/runtime", jar));
+  const wrongPurpose = formToken(await operations!.text(), "/auth/sign-out");
+  assert.equal((await runtime.handle(actionRequest(path, wrongPurpose, jar)))?.status, 403);
+  assert.equal((await runtime.handle(actionRequest(path + "?sql=DROP", token, jar)))?.status, 400);
+  assert.equal((await runtime.handle(request(path, jar, { method: "PUT" })))?.status, 405);
+  assert.equal((await runtime.handle(request(path, jar, { method: "POST", headers: {
+    origin, "sec-fetch-site": "same-origin", "content-type": "application/x-www-form-urlencoded"
+  }, body: new URLSearchParams({ formToken: token, sql: "DROP TABLE existing" }).toString() })))?.status, 403);
+  assert.equal(pool.creates.length, 0);
+  const client = browser(async (actionPath, init) => {
+    const headers = new Headers(init.headers);
+    headers.set("origin", origin); headers.set("sec-fetch-site", "same-origin");
+    return (await runtime.handle(request(actionPath, jar, { ...init, headers })))!;
+  });
+  const form = new Form(path); form.token = token;
+  await client.submit(form);
+  assert.equal(pool.creates.length, 2);
+  assert.equal(client.state().replaced, true);
+  assert.equal(client.state().message, "");
+  const after = await runtime.handle(request(path, jar));
+  assert.ok(!(await after!.text()).includes("<form"), "Completed operation offers no further migration action");
+  await runtime.close();
+});
+
+test("Preview schema route is inert and database errors remain private", async () => {
+  const pool = new MatrixSchemaPool();
+  const preview = fixture({ pool, environment: { RUNTIME_MODE: "development" } }).runtime;
+  for (const method of ["GET", "POST"]) {
+    assert.equal((await preview.handle(request("/operations/matrix/schema", undefined, { method })))?.status, 503);
+  }
+  assert.equal(pool.schemaStatements.length, 0);
+  await preview.close();
+  const { runtime } = fixture({ pool }); const { jar } = await login(runtime);
+  const page = await runtime.handle(request("/operations/matrix/schema", jar));
+  const token = formToken(await page!.text()); pool.failCreateAt = 0;
+  const response = await runtime.handle(actionRequest("/operations/matrix/schema", token, jar));
+  assert.equal(response?.status, 503);
+  assert.ok(!(await response!.text()).includes("private-database-error"));
+  await runtime.close();
+});
 
 test("Matrix diagnostics are read-only, owner-only, uncached, and project fixed fields only", async () => {
   let reads = 0;
