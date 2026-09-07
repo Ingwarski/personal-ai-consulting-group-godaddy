@@ -461,7 +461,13 @@ export function formatConfirmedMessageForMatrix(
 export function formatConfirmedMessageContentForMatrix(
   message: ConfirmedAgentMessage
 ): Readonly<{ body: string; formattedBody: string }> {
-  const header = `${message.role} · ${message.visibleTime}`;
+  // Keep the registrar's immutable control identity/hash intact. The visible
+  // label identifies the head's coordination function without presenting an
+  // automatic status notice as a model-authored specialist or Critic reply.
+  const visibleRole = message.role === "Система" && message.authority === undefined
+    ? "Головний консультант · службове повідомлення"
+    : message.role;
+  const header = `${visibleRole} · ${message.visibleTime}`;
   return Object.freeze({
     body: `${header}\n\n${message.body}`,
     formattedBody: `<strong>${escapeHtml(header)}</strong>${renderMarkdownParagraphs(message.body)}`

@@ -12,6 +12,8 @@ import {
   type MatrixDeviceTrustResolver
 } from "../src/matrix/bridge.ts";
 import type { MatrixRoomState, RoomBinding } from "../src/matrix/room-invariant.ts";
+import { CONSULTATION_SPECIALISTS } from "../src/runtime/consultation-intake.ts";
+import { confirmedMessageFingerprint, matrixTransactionIdFor } from "../src/session/registrar-do.ts";
 
 const binding: RoomBinding = {
   roomId: "!consultant:example.test",
@@ -140,6 +142,43 @@ test("formats only a registrar-confirmed role, time and complete body for Matrix
   assert.match(delivery.body, /Повна відповідь\nбез скорочення/);
   assert.equal(delivery.replyToEventId, "$owner-request");
   assert.doesNotMatch(delivery.formattedBody, /internal-event-0002|sequence|bodyHash/);
+});
+
+test("shows every consultant and Critic under their exact registered role", () => {
+  for (const role of ["Головний консультант", ...CONSULTATION_SPECIALISTS.map(item => item.role), "Критик"]) {
+    const delivery = formatConfirmedMessageForMatrix(binding, {
+      generation: 1, sequence: 1, internalEventId: "role-label-event", role, visibleTime: "18:10",
+      body: "Повна підтверджена репліка.", bodyFormat: "markdown", bodyHash: "a".repeat(64),
+      confirmedAt: "2026-09-07T15:10:00.000Z"
+    });
+    assert.equal(delivery.body, `${role} · 18:10\n\nПовна підтверджена репліка.`);
+    assert.equal(delivery.formattedBody, `<strong>${role} · 18:10</strong><p>Повна підтверджена репліка.</p>`);
+    assert.doesNotMatch(delivery.body, /Система/u);
+  }
+});
+
+test("labels automatic notices as head coordination without changing stored identity or retry transaction", async () => {
+  const input = { role: "Система", body: "Очікую завершення запиту.\nГотової відповіді ще немає." };
+  const message = Object.freeze({
+    ...input, generation: 1, sequence: 2, internalEventId: "control-role-label-event", visibleTime: "18:11",
+    bodyFormat: "markdown" as const, bodyHash: await confirmedMessageFingerprint(input),
+    confirmedAt: "2026-09-07T15:11:00.000Z"
+  });
+  const before = JSON.stringify(message);
+  const transactionId = matrixTransactionIdFor(message);
+  const delivery = formatConfirmedMessageForMatrix(binding, message, "$original-owner-event");
+  assert.equal(delivery.body, `Головний консультант · службове повідомлення · 18:11\n\n${input.body}`);
+  assert.match(delivery.formattedBody, /^<strong>Головний консультант · службове повідомлення · 18:11<\/strong>/u);
+  assert.doesNotMatch(delivery.formattedBody, /Система/u);
+  assert.equal(delivery.replyToEventId, "$original-owner-event");
+  assert.equal(JSON.stringify(message), before);
+  assert.equal(await confirmedMessageFingerprint(input), message.bodyHash);
+  assert.equal(matrixTransactionIdFor(message), transactionId);
+  // An authority-bearing agent name must never be relabeled as a control.
+  const agent = formatConfirmedMessageForMatrix(binding, {
+    ...message, authority: { agentId: "head", provider: "codex", runtimeSessionRef: "thread-head", kind: "assignment" }
+  });
+  assert.match(agent.body, /^Система · 18:11/u);
 });
 
 test("enforces the actual plaintext and formatted Matrix runtime byte envelopes without truncation", () => {

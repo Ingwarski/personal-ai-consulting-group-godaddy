@@ -16953,6 +16953,7 @@
     "room_history_visibility_joined_verified": true,
     "status": "final-synthesis-recovery-published-awaiting-live-continuation",
     "final_synthesis_recovery_evidence_ref": "forge/runs/U-08/matrix-production-setup-20260906/final-synthesis-recovery.md",
+    "role_labels_evidence_ref": "forge/runs/U-08/matrix-production-setup-20260906/role-labels.md",
     "catalog_intake_review_evidence_ref": "forge/runs/U-08/matrix-production-setup-20260906/catalog-and-intake-review.md",
     "pending_intake_review_commit": "79f9b29",
     "pending_intake_review_deployment_verified": true,
@@ -16986,7 +16987,7 @@
     "control_reply_delivery_verified_in_element": true,
     "cyrillic_control_reply_verified_in_element": true,
     "live_verifier_script": "/assets/matrix-preview-isolation.867a03539fd93dbd533918a456d76ff58bec2548366488d3faaf80ee9ba5b9d8.js",
-    "latest_local_test_count": 810,
+    "latest_local_test_count": 812,
     "private_path_proof": {
       "recorded_at": "2026-09-07T10:00:51Z",
       "repeated_after_credential_save_and_protocol_correction": true,
