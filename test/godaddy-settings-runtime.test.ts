@@ -265,11 +265,17 @@ test("Matrix diagnostics are read-only, owner-only, uncached, and project fixed 
   assert.equal(response?.headers.get("cache-control"), "no-store");
   assert.deepEqual(await response!.json(), { setupMode: "disabled", configured: true, ready: false,
     reason: "schema_unavailable", consultationWorking: false, consultationBlocked: true });
+  for (const storageReason of ["store_binding_missing", "store_binding_access_denied", "store_binding_transient"]) {
+    reason = storageReason;
+    const storageResponse = await runtime.handle(request("/operations/matrix/status", jar));
+    assert.deepEqual(await storageResponse!.json(), { setupMode: "disabled", configured: true, ready: false,
+      reason: storageReason, consultationWorking: false, consultationBlocked: true });
+  }
   reason = "secret-that-must-not-leak";
   assert.equal((await (await runtime.handle(request("/operations/matrix/status", jar)))!.json()).reason, "unavailable");
   assert.equal((await runtime.handle(request("/operations/matrix/status", jar, { method: "POST" })))?.status, 405);
   assert.equal((await runtime.handle(request("/operations/matrix/status?x=1", jar)))?.status, 400);
-  assert.equal(reads, 2);
+  assert.equal(reads, 5);
   await runtime.close();
 });
 

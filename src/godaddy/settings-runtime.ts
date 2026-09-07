@@ -261,6 +261,7 @@ const MATRIX_COLLATION_PATH = "/operations/matrix/state-collation";
 const MATRIX_STATUS_REASONS = new Set([
   "matrix_disabled_for_runtime", "matrix_state_database_not_enabled", "matrix_not_configured",
   "matrix_configuration_incomplete", "matrix_configuration_invalid", "store_binding_unavailable", "store_binding_invalid",
+  "store_binding_missing", "store_binding_access_denied", "store_binding_transient",
   "not_started", "starting", "ready", "database_unavailable", "schema_unavailable", "outbox_blocked",
   "ingress_blocked", "media_consumer_unavailable", "sidecar_not_ready", "lock_contended", "circuit_open",
   "retry_exhausted", "publication_fence_unavailable", "stopping", "stopped", "termination_failed"
