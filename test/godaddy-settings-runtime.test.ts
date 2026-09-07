@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { GODADDY_STATE_DATABASE_ROLE, type MySqlConnection } from "../src/godaddy/mysql-storage.ts";
-import { createGoDaddySettingsRuntime, type GoDaddySettingsRuntime } from "../src/godaddy/settings-runtime.ts";
+import { createGoDaddySettingsRuntime, type GoDaddySettingsRuntime, type GoDaddySettingsRuntimeDependencies } from "../src/godaddy/settings-runtime.ts";
 import { GOOGLE_SESSION_COOKIE } from "../src/godaddy/owner-google-auth.ts";
 import type { GoogleIdentityProvider } from "../src/godaddy/google-identity-provider.ts";
 import type { RuntimeBootstrap } from "../src/godaddy/runtime-bootstrap.ts";
@@ -127,17 +127,42 @@ async function login(runtime: GoDaddySettingsRuntime, jar = new CookieJar()): Pr
   jar.collect(callback);
   return { jar, callback };
 }
-function fixture(options: { pool?: OwnerAuthPool; runtime?: RuntimeBootstrap; google?: GoogleIdentityProvider; environment?: Record<string, unknown>; now?: () => Date; matrixSetup?: MatrixSetupOperations } = {}) {
+function fixture(options: { pool?: OwnerAuthPool; runtime?: RuntimeBootstrap; google?: GoogleIdentityProvider; environment?: Record<string, unknown>; now?: () => Date; matrixSetup?: MatrixSetupOperations; matrixDiagnostics?: GoDaddySettingsRuntimeDependencies["matrixDiagnostics"] } = {}) {
   const pool = options.pool ?? new OwnerAuthPool();
   const runtime = createGoDaddySettingsRuntime({ ...configuredEnvironment, ...options.environment }, {
     pool, now: options.now ?? (() => activeNow),
     googleIdentityProvider: options.google ?? provider(),
     ...(options.matrixSetup === undefined ? {} : { matrixSetupOperations: options.matrixSetup }),
+    ...(options.matrixDiagnostics === undefined ? {} : { matrixDiagnostics: options.matrixDiagnostics }),
     createRuntimeBootstrap: () => options.runtime ?? bootstrap(),
     readAsset: async () => new TextEncoder().encode("protected asset")
   });
   return { runtime, pool };
 }
+
+test("Matrix diagnostics are read-only, owner-only, uncached, and project fixed fields only", async () => {
+  let reads = 0;
+  let reason = "schema_unavailable";
+  const { runtime } = fixture({ environment: { MATRIX_SETUP_MODE: "disabled" }, matrixDiagnostics: () => {
+    reads += 1;
+    return { configured: true, ready: false, reason, consultationWorking: false, consultationBlocked: true,
+      privateValue: "never-expose-this" };
+  } });
+  assert.equal((await runtime.handle(request("/operations/matrix/status")))?.status, 403);
+  assert.equal(reads, 0);
+  const { jar } = await login(runtime);
+  const response = await runtime.handle(request("/operations/matrix/status", jar));
+  assert.equal(response?.status, 200);
+  assert.equal(response?.headers.get("cache-control"), "no-store");
+  assert.deepEqual(await response!.json(), { setupMode: "disabled", configured: true, ready: false,
+    reason: "schema_unavailable", consultationWorking: false, consultationBlocked: true });
+  reason = "secret-that-must-not-leak";
+  assert.equal((await (await runtime.handle(request("/operations/matrix/status", jar)))!.json()).reason, "unavailable");
+  assert.equal((await runtime.handle(request("/operations/matrix/status", jar, { method: "POST" })))?.status, 405);
+  assert.equal((await runtime.handle(request("/operations/matrix/status?x=1", jar)))?.status, 400);
+  assert.equal(reads, 2);
+  await runtime.close();
+});
 
 test("every owner surface binds its script URL to the exact current handler bytes", async () => {
   const { runtime } = fixture({ pool: new SettingsPool() });

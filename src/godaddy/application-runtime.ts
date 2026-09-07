@@ -124,6 +124,7 @@ export function createGoDaddyApplicationRuntime(
 
   const pool = (dependencies.createPool ?? createGodaddyMySqlPool)(database.value);
   let matrixService: GoDaddyMatrixService | undefined;
+  let consultationService: MatrixConsultationService | undefined;
   let wakePending = false;
   const registrarRuntime = (dependencies.createRegistrarRuntime ?? createGoDaddyRegistrarRuntime)({
     pool,
@@ -136,7 +137,13 @@ export function createGoDaddyApplicationRuntime(
       matrixService.wakeOutbox();
     }
   });
-  const settings = createSettings(environment, { pool, registrarRuntime, now });
+  const settings = createSettings(environment, { pool, registrarRuntime, now,
+    matrixDiagnostics: () => ({
+      ...(matrixService?.getReadiness() ?? { configured: false, ready: false, reason: "not_started" }),
+      consultationWorking: consultationService?.status().working === true,
+      consultationBlocked: consultationService === undefined || consultationService.status().blocked
+    })
+  });
   let mediaStore: MatrixConsultationMediaStore | undefined;
   if (typeof environment.MATRIX_STORE_PASSPHRASE === "string" && /^[a-f0-9]{64}$/.test(environment.MATRIX_STORE_PASSPHRASE)) {
     // Domain-separated staging key; never reuse the SQLite passphrase directly
@@ -158,7 +165,7 @@ export function createGoDaddyApplicationRuntime(
   );
   matrixService = createdMatrixService;
   if (wakePending) createdMatrixService.wakeOutbox();
-  const consultationService = settings.consilium === undefined || settings.prepareConsultationSnapshot === undefined ? undefined
+  consultationService = settings.consilium === undefined || settings.prepareConsultationSnapshot === undefined ? undefined
     : (dependencies.createConsultationService ?? createMatrixConsultationService)({
       storage: new MySqlKeyValueStorage({ executor: pool, namespace: "matrix-consultation-v1" }),
       ingress: registrarRuntime.matrixIngressReceipts, registrar: registrarRuntime.registrar,

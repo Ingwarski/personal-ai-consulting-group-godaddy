@@ -63,6 +63,7 @@ test("Published composition shares one pool and closes Matrix, providers, then t
   const calls: string[] = [];
   let capturedPool: unknown;
   let capturedRegistrar: unknown;
+  let diagnostics: (() => Readonly<{ configured: boolean; ready: boolean; reason: string; consultationWorking: boolean; consultationBlocked: boolean }>) | undefined;
   let wakeMatrixOutbox: (() => void | Promise<void>) | undefined;
   const pool = {
     execute: async (): Promise<readonly [unknown, unknown]> => [[], []],
@@ -95,6 +96,7 @@ test("Published composition shares one pool and closes Matrix, providers, then t
     createSettingsRuntime: (_environment, dependencies) => {
       assert.equal(dependencies.pool, pool);
       capturedRegistrar = dependencies.registrarRuntime;
+      diagnostics = dependencies.matrixDiagnostics;
       return Object.freeze({
         configured: true,
         handle: async () => undefined,
@@ -121,6 +123,7 @@ test("Published composition shares one pool and closes Matrix, providers, then t
   assert.equal(application.configured, true);
   assert.equal(capturedPool, pool);
   assert.equal(capturedRegistrar, registrarRuntime);
+  assert.deepEqual(diagnostics?.(), { configured: true, ready: true, reason: "ready", consultationWorking: false, consultationBlocked: true });
   assert.equal(matrixWakes, 1);
   await Promise.all([application.start(), application.start()]);
   assert.equal(matrixStarts, 1);

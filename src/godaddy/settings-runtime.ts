@@ -57,6 +57,10 @@ export type GoDaddySettingsRuntime = Readonly<{
 }>;
 
 export type GoDaddySettingsRuntimeDependencies = Readonly<{
+  matrixDiagnostics?: () => Readonly<{
+    configured: boolean; ready: boolean; reason: string;
+    consultationWorking: boolean; consultationBlocked: boolean;
+  }>;
   /** A process-owned pool supplied by the application composition root. */
   pool?: MySqlPool;
   createPool?: (configuration: GodaddyDatabaseConfiguration) => MySqlPool;
@@ -247,7 +251,15 @@ async function isEmptyJsonAction(request: Request): Promise<boolean> {
 }
 
 const isSettingsPath = (pathname: string): boolean => settingsPaths.has(pathname);
-const isManagedPath = (pathname: string): boolean => isSettingsPath(pathname) || runtimeOperationPaths.has(pathname) || pathname === MATRIX_SETUP_PAGE || pathname === MATRIX_SETUP_ACTION;
+const MATRIX_STATUS_PATH = "/operations/matrix/status";
+const MATRIX_STATUS_REASONS = new Set([
+  "matrix_disabled_for_runtime", "matrix_state_database_not_enabled", "matrix_not_configured",
+  "matrix_configuration_incomplete", "matrix_configuration_invalid", "store_binding_unavailable", "store_binding_invalid",
+  "not_started", "starting", "ready", "database_unavailable", "schema_unavailable", "outbox_blocked",
+  "ingress_blocked", "media_consumer_unavailable", "sidecar_not_ready", "lock_contended", "circuit_open",
+  "retry_exhausted", "publication_fence_unavailable", "stopping", "stopped", "termination_failed"
+]);
+const isManagedPath = (pathname: string): boolean => isSettingsPath(pathname) || runtimeOperationPaths.has(pathname) || pathname === MATRIX_SETUP_PAGE || pathname === MATRIX_SETUP_ACTION || pathname === MATRIX_STATUS_PATH;
 
 function defaultPool(configuration: GodaddyDatabaseConfiguration): MySqlPool {
   return createGodaddyMySqlPool(configuration);
@@ -499,6 +511,20 @@ export function createGoDaddySettingsRuntime(
         const form = await parseActionForm(request);
         return form !== undefined && await owner.verifyActionToken(cookieHeader, url.pathname, form.formToken);
       };
+      if (url.pathname === MATRIX_STATUS_PATH) {
+        if (request.method !== "GET") return plain("Method not allowed.", 405, { allow: "GET" });
+        if (url.search) return plain("Invalid request.", 400);
+        let status: ReturnType<NonNullable<GoDaddySettingsRuntimeDependencies["matrixDiagnostics"]>> | undefined;
+        try { status = dependencies.matrixDiagnostics?.(); } catch { /* Do not expose errors or state. */ }
+        return json({
+          setupMode: environment.MATRIX_SETUP_MODE === "provision" ? "provision"
+            : environment.MATRIX_SETUP_MODE === "disabled" || environment.MATRIX_SETUP_MODE === undefined ? "disabled" : "invalid",
+          configured: status?.configured === true, ready: status?.ready === true,
+          reason: status !== undefined && MATRIX_STATUS_REASONS.has(status.reason) ? status.reason : "unavailable",
+          consultationWorking: status?.consultationWorking === true,
+          consultationBlocked: status?.consultationBlocked !== false
+        });
+      }
       if (url.pathname === MATRIX_SETUP_PAGE || url.pathname === MATRIX_SETUP_ACTION) {
         if (url.search) return plain("Invalid request.", 400);
         const render = async (view = matrixSetup.view()): Promise<Response> => {
