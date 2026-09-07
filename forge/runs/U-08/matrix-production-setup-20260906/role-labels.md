@@ -18,4 +18,10 @@
 - Нові регресійні перевірки охоплюють усі 13 рольових підписів, обидва формати Matrix, службову позначку, незмінний запис/відбиток/transaction ID і відсутність перейменування authority-bearing агента.
 - Live-публікація та нова доставка ще не підтверджені на момент цього запису. Попередній тест із Критиком усе ще очікує одну ручну команду «Продовжити»; новий модельний цикл для перевірки назв не запускався.
 
+## Результат публікації
+
+Оновлення 2026-09-07 15:46 UTC: у Chrome вибрана саме вкладка GoDaddy «Опубліковано», спостерігали commit `38e508b6decf6a14126dc31d1d78397b53c3fcd4`, два OK і повідомлення «Опубліковано». HTTP `/healthz` повернув `status=alive,runtime=godaddy-node22`. Захищений `/operations/matrix/status` показав ready=true, consultationWorking=false, consultationBlocked=false; у діагностиці збережено попереднє readiness/matrix_sidecar_not_ready, яке не оголошуємо виправленим цією зміною назв. Нового повідомлення для примусової демонстрації не надсилали. Відображення перевірене тестами; нова реальна доставка залишається окремою непроведеною перевіркою.
+
+Усі 29 native build inputs мають попередні SHA-256; Rust-збірка не запускалася.
+
 Окреме питання власника: встановлений `/Applications/Element.app/Contents/Info.plist` повернув CFBundleIdentifier `im.riot.app`. Це ідентифікатор Element, підтверджений [офіційним build config](https://github.com/element-hq/element-web/blob/develop/apps/desktop/element.io/release/build.json); [Riot перейменовано на Element](https://element.io/blog/welcome-to-element/).
