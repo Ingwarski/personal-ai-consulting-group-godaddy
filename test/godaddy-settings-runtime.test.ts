@@ -129,13 +129,14 @@ async function login(runtime: GoDaddySettingsRuntime, jar = new CookieJar()): Pr
   jar.collect(callback);
   return { jar, callback };
 }
-function fixture(options: { pool?: OwnerAuthPool; runtime?: RuntimeBootstrap; google?: GoogleIdentityProvider; environment?: Record<string, unknown>; now?: () => Date; matrixSetup?: MatrixSetupOperations; matrixDiagnostics?: GoDaddySettingsRuntimeDependencies["matrixDiagnostics"] } = {}) {
+function fixture(options: { pool?: OwnerAuthPool; runtime?: RuntimeBootstrap; google?: GoogleIdentityProvider; environment?: Record<string, unknown>; now?: () => Date; matrixSetup?: MatrixSetupOperations; matrixDiagnostics?: GoDaddySettingsRuntimeDependencies["matrixDiagnostics"]; inspectMatrixStorage?: GoDaddySettingsRuntimeDependencies["inspectMatrixStorage"] } = {}) {
   const pool = options.pool ?? new OwnerAuthPool();
   const runtime = createGoDaddySettingsRuntime({ ...configuredEnvironment, ...options.environment }, {
     pool, now: options.now ?? (() => activeNow),
     googleIdentityProvider: options.google ?? provider(),
     ...(options.matrixSetup === undefined ? {} : { matrixSetupOperations: options.matrixSetup }),
     ...(options.matrixDiagnostics === undefined ? {} : { matrixDiagnostics: options.matrixDiagnostics }),
+    ...(options.inspectMatrixStorage === undefined ? {} : { inspectMatrixStorage: options.inspectMatrixStorage }),
     createRuntimeBootstrap: () => options.runtime ?? bootstrap(),
     readAsset: async () => new TextEncoder().encode("protected asset")
   });
@@ -251,12 +252,15 @@ test("Preview schema route is inert and database errors remain private", async (
 
 test("Matrix diagnostics are read-only, owner-only, uncached, and project fixed fields only", async () => {
   let reads = 0;
+  let storageReads = 0;
+  const storagePaths = { application: "directory", public: "directory", assets: "directory",
+    privateRoot: "missing", cryptoStore: "not_checked", deviceBinding: "not_checked" } as const;
   let reason = "schema_unavailable";
   const { runtime } = fixture({ environment: { MATRIX_SETUP_MODE: "disabled" }, matrixDiagnostics: () => {
     reads += 1;
     return { configured: true, ready: false, reason, consultationWorking: false, consultationBlocked: true,
       privateValue: "never-expose-this" };
-  } });
+  }, inspectMatrixStorage: async () => { storageReads += 1; return storagePaths; } });
   assert.equal((await runtime.handle(request("/operations/matrix/status")))?.status, 403);
   assert.equal(reads, 0);
   const { jar } = await login(runtime);
@@ -269,13 +273,28 @@ test("Matrix diagnostics are read-only, owner-only, uncached, and project fixed 
     reason = storageReason;
     const storageResponse = await runtime.handle(request("/operations/matrix/status", jar));
     assert.deepEqual(await storageResponse!.json(), { setupMode: "disabled", configured: true, ready: false,
-      reason: storageReason, consultationWorking: false, consultationBlocked: true });
+      reason: storageReason, consultationWorking: false, consultationBlocked: true,
+      ...(storageReason === "store_binding_missing" ? { storagePaths } : {}) });
   }
   reason = "secret-that-must-not-leak";
   assert.equal((await (await runtime.handle(request("/operations/matrix/status", jar)))!.json()).reason, "unavailable");
   assert.equal((await runtime.handle(request("/operations/matrix/status", jar, { method: "POST" })))?.status, 405);
   assert.equal((await runtime.handle(request("/operations/matrix/status?x=1", jar)))?.status, 400);
   assert.equal(reads, 5);
+  assert.equal(storageReads, 1);
+  reason = "store_binding_missing";
+  assert.equal((await runtime.handle(request("/operations/matrix/status")))?.status, 403);
+  assert.equal((await runtime.handle(request("/operations/matrix/status?path=/etc", jar)))?.status, 400);
+  assert.equal((await runtime.handle(request("/operations/matrix/status", jar, { method: "POST" })))?.status, 405);
+  assert.equal(storageReads, 1, "Denied requests cannot inspect storage");
+  await runtime.close();
+});
+
+test("Preview cannot inspect Matrix storage even when a diagnostic callback is supplied", async () => {
+  const { runtime } = fixture({ environment: { RUNTIME_MODE: "development" },
+    matrixDiagnostics: () => { throw new Error("must not run"); },
+    inspectMatrixStorage: async () => { throw new Error("must not run"); } });
+  assert.equal((await runtime.handle(request("/operations/matrix/status")))?.status, 503);
   await runtime.close();
 });
 

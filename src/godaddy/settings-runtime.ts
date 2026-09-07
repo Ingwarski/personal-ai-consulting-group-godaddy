@@ -30,6 +30,7 @@ import { matrixPositiveControlResponse } from "./matrix-positive-control.ts";
 import { inspectMatrixSchema, createMissingMatrixTables } from "./matrix-additive-schema.ts";
 import { inspectStateKeyCollation, repairStateKeyCollation } from "./matrix-state-collation.ts";
 import { safeConsultationFailure } from "./consultation-diagnostics.ts";
+import { inspectMatrixStoragePaths, type MatrixStoragePaths } from "./matrix-storage-diagnostics.ts";
 
 type SettingsAsset = "settings.css" | "settings.js";
 type CatalogFailureCode = Extract<RuntimeCapabilityCatalogResult, { ok: false }>["code"];
@@ -60,6 +61,7 @@ export type GoDaddySettingsRuntime = Readonly<{
 }>;
 
 export type GoDaddySettingsRuntimeDependencies = Readonly<{
+  inspectMatrixStorage?: () => Promise<MatrixStoragePaths>;
   matrixDiagnostics?: () => Readonly<{
     configured: boolean; ready: boolean; reason: string;
     consultationWorking: boolean; consultationBlocked: boolean;
@@ -563,6 +565,11 @@ export function createGoDaddySettingsRuntime(
         if (url.search) return plain("Invalid request.", 400);
         let status: ReturnType<NonNullable<GoDaddySettingsRuntimeDependencies["matrixDiagnostics"]>> | undefined;
         try { status = dependencies.matrixDiagnostics?.(); } catch { /* Do not expose errors or state. */ }
+        // Read existence metadata only after the owner/method/query gates above.
+        // This cannot provision state, restart Matrix or change its readiness.
+        const storagePaths = status?.configured === true && status.ready === false
+          && status.reason === "store_binding_missing"
+          ? await (dependencies.inspectMatrixStorage ?? inspectMatrixStoragePaths)() : undefined;
         return json({
           setupMode: environment.MATRIX_SETUP_MODE === "provision" ? "provision"
             : environment.MATRIX_SETUP_MODE === "disabled" || environment.MATRIX_SETUP_MODE === undefined ? "disabled" : "invalid",
@@ -570,6 +577,7 @@ export function createGoDaddySettingsRuntime(
           reason: status !== undefined && MATRIX_STATUS_REASONS.has(status.reason) ? status.reason : "unavailable",
           consultationWorking: status?.consultationWorking === true,
           consultationBlocked: status?.consultationBlocked !== false,
+          ...(storagePaths === undefined ? {} : { storagePaths }),
           ...(safeConsultationFailure(status?.consultationFailure) === undefined ? {} : { consultationFailure: safeConsultationFailure(status?.consultationFailure) })
         });
       }
