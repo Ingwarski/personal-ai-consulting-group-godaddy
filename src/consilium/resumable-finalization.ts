@@ -8,6 +8,7 @@ import type { AgentRegistration } from "./roster.ts";
 export async function readResumableFinalization(registrar: RegistrarDO, generation: number): Promise<Readonly<{
   head: AgentRegistration; critic: AgentRegistration;
 }> | undefined> {
+  if (await registrar.getConsensusTask(generation) !== undefined) return undefined;
   const active = await registrar.getActiveSession();
   if (active?.generation !== generation || active.phase !== "active") return undefined;
   const critic = await registrar.getDesignatedCritic(generation);

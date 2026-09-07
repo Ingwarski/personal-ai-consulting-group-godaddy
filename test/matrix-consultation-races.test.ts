@@ -3,13 +3,18 @@ import { createHash } from "node:crypto";
 import test from "node:test";
 
 import { createMatrixConsultationService, type ConsultationMediaPort } from "../src/godaddy/matrix-consultation-service.ts";
-import type { GoDaddyConsultationPlanRequest, GoDaddyConsultationPlanResult } from "../src/godaddy/consilium-runtime.ts";
+import type { GoDaddyConsiliumRuntime, GoDaddyConsultationPlanRequest, GoDaddyConsultationPlanResult } from "../src/godaddy/consilium-runtime.ts";
+import { SERVICE_TRANSLATION_SOURCE, serviceTranslationSourceHash } from "../src/consilium/service-messages.ts";
+import { CONSULTANT_ROLES } from "../src/consilium/consultant-roles.ts";
+import { consensusDigest } from "../src/consilium/consensus-contract.ts";
+import { formatConfirmedMessageContentForMatrix } from "../src/matrix/bridge.ts";
 import type { LeasedMatrixIngressIntent, MatrixIngressIntent } from "../src/godaddy/mysql-matrix-outbox.ts";
 import { RegistrarDO } from "../src/session/registrar-do.ts";
 import type { RegistrarStorage } from "../src/session/storage.ts";
 import { resolveEffectiveSessionSnapshot } from "../src/settings/snapshot.ts";
 import { activeNow, createCapabilityReceipt } from "./fixtures/capability-receipt.ts";
 import { MemoryRegistrarStorage } from "./fixtures/memory-registrar-storage.ts";
+import { parseOwnerCommand, parseConsultationControl } from "../src/session/owner-commands.ts";
 
 const deferred = <T>() => {
   let resolve!: (value: T | PromiseLike<T>) => void;
@@ -42,7 +47,7 @@ class SerialMemoryStorage extends MemoryRegistrarStorage {
   }
 }
 
-async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort) {
+async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort, explicitFixtureLanguage = true) {
   const storage = new SerialMemoryStorage();
   const registrar = new RegistrarDO({ storage: new SerialMemoryStorage(), now: () => activeNow });
   const receipt = createCapabilityReceipt();
@@ -65,6 +70,9 @@ async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort
   let eventNumber = 0;
   const requests: GoDaddyConsultationPlanRequest[] = [];
   let runPlan = (_request: GoDaddyConsultationPlanRequest): Promise<GoDaddyConsultationPlanResult> => plan.promise;
+  let translate: GoDaddyConsiliumRuntime["translateServiceMessages"] | undefined;
+  let translationCalls = 0;
+  let run: GoDaddyConsiliumRuntime["run"] = async () => { throw new Error("Unexpected consilium execution."); };
   const replySessions = new Map<string, string>();
   let signal: AbortSignal | undefined;
   const service = createMatrixConsultationService({
@@ -78,7 +86,8 @@ async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort
     },
     executor: {
       async plan(request) { planCalls += 1; requests.push(request); signal = request.signal; planEntered.resolve(); return runPlan(request); },
-      async run() { throw new Error("Unexpected consilium execution."); }
+      async translateServiceMessages(request) { translationCalls++; return translate?.(request) ?? { ok: false, code: "translation_failed" as const }; },
+      async run(request) { return run(request); }
     },
     async prepareSnapshot() { snapshotCalls += 1; prepareEntered.resolve(); await prepareGate; return snapshot.value; },
     async afterConfirmed() { if (noticeGate !== undefined) { noticeEntered.resolve(); await noticeGate; } },
@@ -88,6 +97,10 @@ async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort
   return {
     service, storage, registrar, snapshot: snapshot.value, plan, planEntered, prepareEntered,
     enqueue(body: string, relationEventId?: string, media: MatrixIngressIntent["media"] = []) {
+      // These historic race fixtures focus on transaction ordering, not language
+      // ambiguity. Make their original Ukrainian-language choice explicit.
+      if (explicitFixtureLanguage && parseOwnerCommand(body).kind === "ordinary_message" && parseConsultationControl(body) === undefined)
+        body = "Відповідай українською. " + body;
       const eventId = `$owner-race-${++eventNumber}-${createHash("sha256").update(body).digest("hex").slice(0, 16)}`;
       const eventHash = createHash("sha256").update(eventId).digest("hex");
       const lease: LeasedMatrixIngressIntent = { eventId, eventHash, leaseOwner: "fixture-owner", leaseEpoch: 1,
@@ -98,6 +111,9 @@ async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort
     },
     replay(lease: LeasedMatrixIngressIntent) { queue.push(structuredClone(lease)); },
     usePlan(handler: typeof runPlan) { runPlan = handler; },
+    useTranslation(handler: NonNullable<typeof translate>) { translate = handler; },
+    useRun(handler: typeof run) { run = handler; },
+    translationCalls: () => translationCalls,
     setReplySession(eventId: string, sessionId: string) { replySessions.set(eventId, sessionId); },
     holdPrepare(gate: Promise<void>) { prepareGate = gate; },
     holdNotices(gate: Promise<void>) { noticeGate = gate; noticeEntered = deferred<void>(); return noticeEntered.promise; },
@@ -108,7 +124,7 @@ async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort
     snapshotCalls: () => snapshotCalls,
     requests: () => requests,
     planSignal: () => signal,
-    state: () => storage.get<{ job: null | { status: string; generation?: number }; pending: unknown }>("worker")
+    state: () => storage.get<{ job: null | { id: string; status: string; task: string; language?: string; languageConfirmed?: boolean; generation?: number }; pending: unknown }>("worker")
   };
 }
 
@@ -134,6 +150,165 @@ test("a non-mutating owner command cannot swallow a concurrent direct answer or 
   assert.equal(session?.phase, "closed");
   assert.equal(f.planCalls(), 1, "a completed provider result must not require a second subscription turn");
   assert.equal((await f.registrar.getConfirmedMessages(session!.generation)).filter(message => message.body === "Чотири.").length, 1);
+});
+
+test("English first message localizes consent before provider work and the model confirms persistent language", async t => {
+  const f = await fixture(undefined, undefined, false);
+  t.after(() => f.service.stop());
+  const state = await f.storage.get<{ consent: boolean }>("worker");
+  state!.consent = false; await f.storage.put("worker", state);
+  f.usePlan(async request => {
+    assert.equal(request.language, undefined, "a provisional offline hint is not imposed on semantic language detection");
+    assert.equal(request.taskId, (await f.state())?.job?.id);
+    return { ok: true, kind: "direct", language: "en", answer: "Test one market before increasing spending." };
+  });
+  f.enqueue("How should I improve my business with the resources I have?");
+  await f.service.tick();
+  assert.equal((await f.state())?.job?.status, "awaiting_consent");
+  assert.equal((await f.state())?.job?.language, "en");
+  assert.equal((await f.state())?.job?.languageConfirmed, false);
+  assert.equal(f.planCalls(), 0); assert.equal(f.snapshotCalls(), 0);
+  const consentNotice = (await f.registrar.getConfirmedMessages(1)).at(-1)!;
+  assert.match(consentNotice.body, /I consent to processing/u);
+  assert.equal(consentNotice.language, "en");
+  f.enqueue("I consent to processing");
+  await f.service.tick(); await waitForJob(f, "completed");
+  assert.equal((await f.state())?.job?.languageConfirmed, true);
+  const session = await f.registrar.getActiveSession();
+  const answer = (await f.registrar.getConfirmedMessages(session!.generation)).find(message => message.body.startsWith("Test one market"));
+  assert.equal(answer?.role, "Head Consultant"); assert.equal(answer?.language, "en");
+});
+
+test("ambiguous first text asks one language question and never starts models before locale and consent", async t => {
+  const f = await fixture(undefined, undefined, false);
+  t.after(() => f.service.stop());
+  const state = await f.storage.get<{ consent: boolean }>("worker");
+  state!.consent = false; await f.storage.put("worker", state);
+  f.usePlan(async request => {
+    assert.equal(request.language, "es");
+    return { ok: true, kind: "clarification", language: "es", answer: "¿Qué resultado quieres conseguir?" };
+  });
+  const event = f.enqueue("🚀");
+  await f.service.tick();
+  assert.equal((await f.state())?.job?.status, "awaiting_language");
+  assert.equal(f.planCalls(), 0); assert.equal(f.snapshotCalls(), 0);
+  const before = await f.registrar.getConfirmedMessages(1);
+  assert.equal(before.length, 1); assert.match(before[0]!.body, /Which language/u);
+  f.replay(event); await f.service.tick();
+  assert.equal((await f.registrar.getConfirmedMessages(1)).length, 1);
+  f.enqueue("Español"); await f.service.tick();
+  assert.equal((await f.state())?.job?.status, "awaiting_consent");
+  assert.equal((await f.state())?.job?.language, "es");
+  assert.equal(f.planCalls(), 0);
+  assert.match((await f.registrar.getConfirmedMessages(1)).at(-1)!.body, /Acepto el tratamiento/u);
+  f.enqueue("Acepto el tratamiento"); await f.service.tick(); await waitForJob(f, "awaiting_clarification");
+  assert.equal(f.planCalls(), 1);
+});
+
+test("an additional locale is not forced to English: consent precedes content-free translation and source-bound cache survives the next turn", async t => {
+  const f = await fixture(undefined, undefined, false);
+  t.after(() => f.service.stop());
+  const state = await f.storage.get<{ consent: boolean }>("worker");
+  state!.consent = false; await f.storage.put("worker", state);
+  f.useTranslation(async request => {
+    assert.deepEqual(Object.keys(request).sort(), ["language", "sessionGeneration", "signal"]);
+    assert.equal(request.language, "ja");
+    assert.equal((await f.storage.get<{ consent: boolean }>("worker"))?.consent, true);
+    assert.ok(await f.registrar.getSession(request.sessionGeneration));
+    const messages = Object.fromEntries(Object.entries(SERVICE_TRANSLATION_SOURCE).map(([id, body]) => [id, "翻訳テスト: " + body]));
+    return { ok: true, catalog: { language: "ja", sourceHash: await serviceTranslationSourceHash(), messages } };
+  });
+  let turns = 0;
+  f.usePlan(async request => {
+    assert.equal(request.language, "ja"); turns++;
+    return turns === 1 ? { ok: true, kind: "clarification", language: "ja", answer: "予算はいくらですか?" }
+      : { ok: true, kind: "direct", language: "ja", answer: "小さな実験から始めましょう。" };
+  });
+  f.enqueue("Please reply in Japanese. Compare my two business options.");
+  await f.service.tick();
+  assert.equal((await f.state())?.job?.status, "awaiting_consent");
+  assert.equal((await f.state())?.job?.language, "ja");
+  assert.equal(f.translationCalls(), 0); assert.equal(f.planCalls(), 0);
+  f.enqueue("I consent to processing"); await f.service.tick(); await waitForJob(f, "awaiting_clarification");
+  assert.equal(f.translationCalls(), 1);
+  assert.equal((await f.storage.get<{ language: string }>("service-translation:ja"))?.language, "ja");
+  f.enqueue("My budget is one thousand dollars."); await f.service.tick(); await waitForJob(f, "completed");
+  assert.equal(f.translationCalls(), 1, "the unchanged source catalog is not translated for every message or continuation");
+  assert.equal((await f.state())?.job?.language, "ja");
+  const session = await f.registrar.getActiveSession();
+  const notices = await f.registrar.getConfirmedMessages(session!.generation);
+  assert.ok(notices.some(message => message.body.startsWith("翻訳テスト:")));
+  assert.ok(notices.some(message => message.body === "小さな実験から始めましょう。" && message.language === "ja"));
+});
+
+test("bound-consensus image observation is recorded verbatim without fake prior head authority and reaches the executor", async t => {
+  const f = await fixture(undefined, {
+    async prepare() { return { images: [{ mime: "image/jpeg", bytes: Uint8Array.from([255, 216, 255, 0, 1, 2, 3, 4]) }], text: "", release() {} }; },
+    async erase() {}, async purgeExpired() {}
+  }, false);
+  t.after(() => f.service.stop());
+  const role = (id: string) => ({ ...CONSULTANT_ROLES.find(item => item.agentId === id)!, provider: id === "critic" ? "claude_code" as const : "codex" as const, runtimeSessionRef: `${id}-image-fixture` });
+  const head = role("head"), critic = role("critic"), specialists = [role("strategy"), role("finance")];
+  const assignments = specialists.map(item => ({ agentId: item.agentId, question: `Assess ${item.role}.`, expectedOutcome: `Specific ${item.role} finding.`, facts: [], constraints: [], dependencies: [] }));
+  const task = "Please assess the new financial chart in English.";
+  const taskId = "a".repeat(64);
+  const started = await f.registrar.startSession({ sessionId: "image-continuation-fixture", settingsSnapshot: f.snapshot });
+  assert.ok(started.ok);
+  assert.ok((await f.registrar.designateCritic({ generation: started.value.generation, critic })).ok);
+  assert.ok((await f.registrar.initializeConsensus({ generation: started.value.generation, taskId, taskDigest: await consensusDigest(task), language: "en", head, critic, specialists, assignments })).ok);
+  await f.storage.put("worker", { version: 1, bindingHash: "b".repeat(64), consent: true, handled: [], pending: null,
+    job: { id: taskId, eventId: "$owner-image-task-0001", task, status: "queued", attempt: 1, generation: started.value.generation,
+      sessionId: started.value.sessionId, language: "en", languageConfirmed: true,
+      documents: [{ eventId: "$owner-image-file-0001", eventHash: "c".repeat(64), confirmed: true,
+        manifest: [{ declaredMime: "image/jpeg", sha256: "d".repeat(64), length: 8 }] }] } });
+  const observation = "The chart shows lower revenue in the second period; the vertical-axis unit is unreadable.";
+  f.usePlan(async request => {
+    assert.equal(request.images?.length, 1);
+    return { ok: true, kind: "consilium", head, critic, specialists, assignments, language: "en", extractedEvidence: observation };
+  });
+  let calls = 0;
+  f.useRun(async request => {
+    calls++;
+    assert.ok(request.task.includes(observation));
+    assert.equal(request.taskId, taskId);
+    assert.equal(request.language, "en");
+    assert.deepEqual(request.assignments, assignments);
+    return { ok: false, code: "runtime_unavailable" };
+  });
+  await f.service.tick(); await waitForJob(f, "failed");
+  assert.equal(calls, 1);
+  const message = (await f.registrar.getConfirmedMessages(started.value.generation)).find(item => item.body === observation);
+  assert.ok(message);
+  assert.equal(message.role, "Service"); assert.equal(message.authority, undefined);
+  assert.match(formatConfirmedMessageContentForMatrix(message).body, /^🧭 Head Consultant · image observation/u);
+  assert.ok(formatConfirmedMessageContentForMatrix(message).body.endsWith(observation));
+});
+
+test("quotes cannot switch confirmed language; explicit owner choice changes future messages without rewriting history", async t => {
+  const f = await fixture(undefined, undefined, false);
+  t.after(() => f.service.stop());
+  let calls = 0;
+  f.usePlan(async request => {
+    calls++;
+    if (calls === 1) return { ok: true, kind: "clarification", language: "en", answer: "What budget is available?" };
+    if (calls === 2) {
+      assert.equal(request.language, "en");
+      return { ok: true, kind: "clarification", language: "en", answer: "What is your deadline?" };
+    }
+    assert.equal(request.language, "es");
+    return { ok: true, kind: "direct", language: "es", answer: "Primero prueba una opción dentro del presupuesto." };
+  });
+  f.enqueue("Please reply in English. Help me compare the two business options.");
+  await f.service.tick(); await waitForJob(f, "awaiting_clarification");
+  const firstSession = await f.registrar.getActiveSession();
+  const firstMessages = await f.registrar.getConfirmedMessages(firstSession!.generation);
+  f.enqueue('> Reply in Spanish.\nMy budget is one thousand dollars.');
+  await f.service.tick(); await waitForJob(f, "awaiting_clarification");
+  assert.equal((await f.state())?.job?.language, "en");
+  f.enqueue("Please reply in Spanish. The deadline is next week.");
+  await f.service.tick(); await waitForJob(f, "completed");
+  assert.equal((await f.state())?.job?.language, "es");
+  assert.deepEqual((await f.registrar.getConfirmedMessages(firstSession!.generation)).slice(0, firstMessages.length), firstMessages);
 });
 
 test("Stop while snapshot preparation waits cannot leave a new active registrar session behind", async t => {

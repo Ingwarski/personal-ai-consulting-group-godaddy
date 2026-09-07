@@ -193,3 +193,18 @@ test("reports an unavailable binding without exposing filesystem detail", async 
   assert.deepEqual(result, { ok: false, code: "store_binding_unavailable" });
   assert.doesNotMatch(JSON.stringify(result), /sensitive|filesystem/i);
 });
+
+test("classifies temporary, missing and access-denied storage without exposing paths or resetting identity", async () => {
+  for (const [code, expected] of [
+    ["EIO", "store_binding_transient"], ["EAGAIN", "store_binding_transient"],
+    ["ESTALE", "store_binding_transient"], ["ETIMEDOUT", "store_binding_transient"],
+    ["ENOENT", "store_binding_missing"], ["ENOTDIR", "store_binding_missing"],
+    ["EACCES", "store_binding_access_denied"], ["EPERM", "store_binding_access_denied"],
+    ["ELOOP", "store_binding_unavailable"]
+  ]) {
+    const result = await readExistingMatrixStoreBinding({ storeDir, expectedDeviceId: deviceId, expectedOwnerUid: 501,
+      fileSystem: { ...fileSystem(), lstat: async () => { throw Object.assign(new Error("private path and token"), { code }); } } });
+    assert.deepEqual(result, { ok: false, code: expected });
+    assert.doesNotMatch(JSON.stringify(result), /private|token|srv/u);
+  }
+});

@@ -349,6 +349,7 @@ function fixture(overrides: Readonly<{
       ...(overrides.diagnostics === undefined ? {} : { onDiagnostic: (value) => overrides.diagnostics?.push(value) }),
       ...(overrides.maxCrashes === undefined ? {} : { maxCrashes: overrides.maxCrashes }),
       restartBackoffMs: [1],
+      random: () => 1,
       ...(overrides.maxLockContentionRetries === undefined
         ? {}
         : { maxLockContentionRetries: overrides.maxLockContentionRetries }),
@@ -544,7 +545,7 @@ test("lock contention stays HTTP-live and retries with bounded backoff until the
   await supervisor.stop();
 });
 
-test("lock contention has a distinct bounded retry circuit", async () => {
+test("lock contention has a bounded cooldown and one automatic half-open attempt", async () => {
   const clock = new ManualClock();
   const { supervisor, children } = fixture({
     clock,
@@ -570,15 +571,14 @@ test("lock contention has a distinct bounded retry circuit", async () => {
   assert.equal(supervisor.getStatus().circuitOpen, true);
   await supervisor.start();
   await supervisor.start();
-  clock.advance(60_000);
+  clock.advance(59_999);
   assert.equal(children.length, 3);
   assert.equal(supervisor.getStatus().restartCount, 3);
-  await supervisor.stop();
-  await supervisor.start();
-  assert.equal(children.length, 3);
-  assert.deepEqual(supervisor.getStatus(), {
-    liveness: "dead", matrixReadiness: "not_ready", reason: "circuit_open", restartCount: 3, circuitOpen: true
-  });
+  clock.advance(1);
+  await turn();
+  assert.equal(children.length, 4);
+  assert.equal(supervisor.getStatus().reason, "lock_contended");
+  assert.equal(supervisor.getStatus().restartCount, 1);
   await supervisor.stop();
 });
 
@@ -1032,7 +1032,7 @@ test("stale backpressure from an exited child cannot delay or poison the next ha
   await supervisor.stop();
 });
 
-test("redacts stderr and opens a bounded crash circuit without resetting state", async () => {
+test("redacts stderr and automatically half-opens the crash circuit without resetting persistent state", async () => {
   const clock = new ManualClock();
   const diagnostics: MatrixSidecarDiagnostic[] = [];
   const { supervisor, children } = fixture({ clock, diagnostics, maxCrashes: 3 });
@@ -1054,14 +1054,50 @@ test("redacts stderr and opens a bounded crash circuit without resetting state",
   const opened = supervisor.getStatus();
   await supervisor.start();
   await supervisor.start();
+  clock.advance(59_999);
+  assert.equal(children.length, 3);
+  assert.deepEqual(supervisor.getStatus(), opened);
+  clock.advance(1);
+  await turn();
+  assert.equal(children.length, 4);
+  assert.equal(supervisor.getStatus().matrixReadiness, "ready");
+  await Promise.all([supervisor.start(), supervisor.start()]);
+  assert.equal(children.length, 4);
+  await supervisor.stop();
+  clock.advance(600_000);
+  await turn();
+  assert.equal(children.length, 4);
+});
+
+test("initial sync not_ready retries the same store and recovers without a Settings action", async () => {
+  const clock = new ManualClock();
+  const { supervisor, children, spawnCalls } = fixture({ clock, maxCrashes: 1,
+    protocol: (index) => index === 0 ? { initializeError: "not_ready" } : {} });
+  await assert.rejects(supervisor.start(), (error: unknown) => error instanceof MatrixSidecarError && error.code === "spawn_failed");
+  await turn();
+  assert.equal(supervisor.getStatus().circuitOpen, true);
   clock.advance(60_000);
-  assert.equal(children.length, 3);
-  assert.deepEqual(supervisor.getStatus(), opened);
+  await turn();
+  assert.equal(children.length, 2);
+  assert.equal(supervisor.getStatus().matrixReadiness, "ready");
+  assert.deepEqual(spawnCalls[1], spawnCalls[0]);
   await supervisor.stop();
-  await supervisor.start();
-  assert.equal(children.length, 3);
-  assert.deepEqual(supervisor.getStatus(), opened);
-  await supervisor.stop();
+});
+
+test("identity rejection and store quarantine cannot be cleared by automatic half-open", async () => {
+  for (const protocol of [{ identity: readyIdentity({ store_fingerprint: "f".repeat(64) }) },
+    { initializeError: "store_quarantined" as const }]) {
+    const clock = new ManualClock();
+    const { supervisor, children } = fixture({ clock, maxCrashes: 1, protocol });
+    await supervisor.start().catch(() => undefined);
+    await turn();
+    clock.advance(600_000);
+    await supervisor.start();
+    await turn();
+    assert.equal(children.length, 1);
+    assert.equal(supervisor.getStatus().matrixReadiness, "not_ready");
+    await supervisor.stop();
+  }
 });
 
 test("uses one absolute graceful deadline before bounded TERM and KILL escalation", async () => {

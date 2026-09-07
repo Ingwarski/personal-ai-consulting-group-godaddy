@@ -98,6 +98,7 @@ export class CriticGatedFinalizer {
     messageId: string;
     recommendation: FinalRecommendation;
   }>): Promise<FinalRecommendationResult> {
+    if (await this.#registrar.getConsensusTask(input.sessionGeneration) !== undefined) return { ok: false, code: "critic_not_ready" };
     if (!this.validatesHead(this.#head)) return { ok: false, code: "invalid_final_sender" };
     if (!isValidFinalRecommendation(input.recommendation)) return { ok: false, code: "invalid_final_recommendation" };
     const body = formatFinalRecommendation(input.recommendation);

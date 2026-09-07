@@ -13,6 +13,7 @@ import {
 } from "../src/matrix/bridge.ts";
 import type { MatrixRoomState, RoomBinding } from "../src/matrix/room-invariant.ts";
 import { CONSULTATION_SPECIALISTS } from "../src/runtime/consultation-intake.ts";
+import { CONSULTANT_ROLES, resolveConsultantRole } from "../src/consilium/consultant-roles.ts";
 import { confirmedMessageFingerprint, matrixTransactionIdFor } from "../src/session/registrar-do.ts";
 
 const binding: RoomBinding = {
@@ -138,7 +139,7 @@ test("formats only a registrar-confirmed role, time and complete body for Matrix
   }, "$owner-request");
 
   assert.equal(delivery.roomId, binding.roomId);
-  assert.match(delivery.body, /^Фінансовий консультант · 16:20/);
+  assert.match(delivery.body, /^📊 Financial Consultant · 16:20/);
   assert.match(delivery.body, /Повна відповідь\nбез скорочення/);
   assert.equal(delivery.replyToEventId, "$owner-request");
   assert.doesNotMatch(delivery.formattedBody, /internal-event-0002|sequence|bodyHash/);
@@ -151,8 +152,9 @@ test("shows every consultant and Critic under their exact registered role", () =
       body: "Повна підтверджена репліка.", bodyFormat: "markdown", bodyHash: "a".repeat(64),
       confirmedAt: "2026-09-07T15:10:00.000Z"
     });
-    assert.equal(delivery.body, `${role} · 18:10\n\nПовна підтверджена репліка.`);
-    assert.equal(delivery.formattedBody, `<strong>${role} · 18:10</strong><p>Повна підтверджена репліка.</p>`);
+    const known = resolveConsultantRole(role)!;
+    assert.equal(delivery.body, `${known.emoji} ${known.role} · 18:10\n\nПовна підтверджена репліка.`);
+    assert.equal(delivery.formattedBody, `<strong>${known.emoji} ${known.role} · 18:10</strong><p>Повна підтверджена репліка.</p>`);
     assert.doesNotMatch(delivery.body, /Система/u);
   }
 });
@@ -167,8 +169,8 @@ test("labels automatic notices as head coordination without changing stored iden
   const before = JSON.stringify(message);
   const transactionId = matrixTransactionIdFor(message);
   const delivery = formatConfirmedMessageForMatrix(binding, message, "$original-owner-event");
-  assert.equal(delivery.body, `Головний консультант · службове повідомлення · 18:11\n\n${input.body}`);
-  assert.match(delivery.formattedBody, /^<strong>Головний консультант · службове повідомлення · 18:11<\/strong>/u);
+  assert.equal(delivery.body, `🧭 Head Consultant · службове повідомлення · 18:11\n\n${input.body}`);
+  assert.match(delivery.formattedBody, /^<strong>🧭 Head Consultant · службове повідомлення · 18:11<\/strong>/u);
   assert.doesNotMatch(delivery.formattedBody, /Система/u);
   assert.equal(delivery.replyToEventId, "$original-owner-event");
   assert.equal(JSON.stringify(message), before);
@@ -179,6 +181,49 @@ test("labels automatic notices as head coordination without changing stored iden
     ...message, authority: { agentId: "head", provider: "codex", runtimeSessionRef: "thread-head", kind: "assignment" }
   });
   assert.match(agent.body, /^Система · 18:11/u);
+});
+
+test("role colours are opt-in, accessible seven-slot headers with mandatory emoji/plain text and immutable body", () => {
+  const base = { generation: 1, sequence: 1, internalEventId: "colour-event", visibleTime: "12:34", body: "**Exact advice**\n\nДослівний текст.",
+    bodyFormat: "markdown" as const, bodyHash: "a".repeat(64), confirmedAt: "2026-09-08T09:34:00.000Z", language: "en" };
+  const colours: string[] = [];
+  const luminance = (hex: string): number => {
+    const [r, g, b] = [1, 3, 5].map(index => parseInt(hex.slice(index, index + 2), 16) / 255)
+      .map(value => value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+    return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+  };
+  for (let slot = 0; slot < 7; slot++) {
+    const known = CONSULTANT_ROLES[slot]!;
+    const message = { ...base, role: known.role, addressedTo: "Критик; Головний консультант" };
+    const before = JSON.stringify(message);
+    const plain = formatConfirmedMessageForMatrix(binding, message);
+    assert.doesNotMatch(plain.formattedBody, /data-mx-color/u);
+    const styled = formatConfirmedMessageForMatrix(binding, message, undefined, { roleColorSlot: slot, supportsRoleColours: true });
+    assert.equal(styled.body, plain.body);
+    assert.ok(styled.body.endsWith(base.body));
+    assert.ok(styled.body.startsWith(`${known.emoji} ${known.role} → Critic; Head Consultant`));
+    const colour = /data-mx-color="(#[a-f0-9]{6})"/u.exec(styled.formattedBody)?.[1];
+    assert.ok(colour);
+    colours.push(colour);
+    assert.ok(1.05 / (luminance(colour) + 0.05) >= 4.5);
+    assert.match(styled.formattedBody, /data-mx-bg-color="#ffffff"/u);
+    assert.equal(JSON.stringify(message), before);
+  }
+  assert.equal(new Set(colours).size, 7);
+  for (const slot of [-1, 7, NaN, 1.2]) {
+    assert.doesNotMatch(formatConfirmedMessageForMatrix(binding, { ...base, role: "Critic" }, undefined,
+      { roleColorSlot: slot, supportsRoleColours: true }).formattedBody, /data-mx-color/u);
+  }
+});
+
+test("candidate and exact approved final remain visible but have distinct localized stage headers", () => {
+  const base = { generation: 1, sequence: 1, internalEventId: "stage-event", visibleTime: "12:34", body: "Exactly the same agreed recommendation.",
+    bodyFormat: "markdown" as const, bodyHash: "a".repeat(64), confirmedAt: "2026-09-08T09:34:00.000Z", language: "en", role: "Head Consultant" };
+  for (const [consensusKind, label] of [["proposal", "Candidate"], ["final", "Approved"], ["unresolved", "Unresolved"], ["safety_handoff", "Safety handoff"]] as const) {
+    const result = formatConfirmedMessageForMatrix(binding, { ...base, consensusKind });
+    assert.ok(result.body.startsWith(`🧭 Head Consultant · ${label} · 12:34`));
+    assert.ok(result.body.endsWith(base.body));
+  }
 });
 
 test("enforces the actual plaintext and formatted Matrix runtime byte envelopes without truncation", () => {

@@ -197,6 +197,8 @@ export type MatrixSidecarSupervisorOptions = Readonly<{
   maxCrashes?: number;
   crashWindowMs?: number;
   restartBackoffMs?: readonly number[];
+  circuitCooldownMs?: number;
+  random?: () => number;
   maxLockContentionRetries?: number;
   lockContentionBackoffMs?: readonly number[];
   fileSystem?: MatrixSidecarFileSystem;
@@ -749,12 +751,14 @@ export class MatrixSidecarSupervisor {
     maxCrashes: number;
     crashWindowMs: number;
     restartBackoffMs: readonly number[];
+    circuitCooldownMs: number;
     maxLockContentionRetries: number;
     lockContentionBackoffMs: readonly number[];
   }>;
   readonly #fileSystem: MatrixSidecarFileSystem;
   readonly #spawnSidecar: MatrixSidecarSpawn;
   readonly #clock: MatrixSidecarClock;
+  readonly #random: () => number;
   readonly #onDiagnostic: ((diagnostic: MatrixSidecarDiagnostic) => void) | undefined;
   readonly #pending = new Map<string, PendingRequest>();
   readonly #expiredIds = new Set<string>();
@@ -797,6 +801,9 @@ export class MatrixSidecarSupervisor {
   #lockContentionAttempts = 0;
   #restartCause: "crash" | "lock_contended" = "crash";
   #circuitOpenRestartCount: number | undefined;
+  #circuitRecoveryDueAt = 0;
+  #circuitOpenCount = 0;
+  #recoveryPermitted = true;
 
   constructor(options: MatrixSidecarSupervisorOptions) {
     if (
@@ -820,6 +827,7 @@ export class MatrixSidecarSupervisor {
     const maxCrashes = options.maxCrashes ?? DEFAULT_MAX_CRASHES;
     const crashWindowMs = options.crashWindowMs ?? DEFAULT_CRASH_WINDOW_MS;
     const restartBackoffMs = options.restartBackoffMs ?? DEFAULT_RESTART_BACKOFF_MS;
+    const circuitCooldownMs = options.circuitCooldownMs ?? 60_000;
     const maxLockContentionRetries = options.maxLockContentionRetries ?? DEFAULT_MAX_LOCK_CONTENTION_RETRIES;
     const lockContentionBackoffMs = options.lockContentionBackoffMs ?? DEFAULT_LOCK_CONTENTION_BACKOFF_MS;
     const expectedOwnerUid = options.expectedOwnerUid === undefined ? defaultOwnerUid() : options.expectedOwnerUid;
@@ -866,6 +874,7 @@ export class MatrixSidecarSupervisor {
       || !positiveInteger(maxUnackedEvents, MATRIX_SIDECAR_MAX_UNACKED_EVENTS)
       || !positiveInteger(maxCrashes, 100)
       || !positiveInteger(crashWindowMs, 24 * 60 * 60_000)
+      || !positiveInteger(circuitCooldownMs, 5 * 60_000)
       || restartBackoffMs.length === 0
       || restartBackoffMs.length > 100
       || restartBackoffMs.some((value) => !Number.isSafeInteger(value) || value < 0 || value > 60_000)
@@ -894,6 +903,7 @@ export class MatrixSidecarSupervisor {
       maxUnackedEvents,
       maxCrashes,
       crashWindowMs,
+      circuitCooldownMs,
       restartBackoffMs: Object.freeze([...restartBackoffMs]),
       maxLockContentionRetries,
       lockContentionBackoffMs: Object.freeze([...lockContentionBackoffMs])
@@ -901,6 +911,7 @@ export class MatrixSidecarSupervisor {
     this.#fileSystem = options.fileSystem ?? nativeFileSystem;
     this.#spawnSidecar = options.spawnSidecar ?? nativeSpawn;
     this.#clock = options.clock ?? nativeClock;
+    this.#random = options.random ?? Math.random;
     this.#onDiagnostic = options.onDiagnostic;
   }
 
@@ -959,6 +970,7 @@ export class MatrixSidecarSupervisor {
         this.#stopRequested = false;
       }
       this.#setStatus("dead", "not_ready", "circuit_open", true, this.#circuitOpenRestartCount);
+      this.#scheduleHalfOpen();
       return;
     }
     if (
@@ -1160,6 +1172,8 @@ export class MatrixSidecarSupervisor {
       await this.#verifyBinaryUnchanged(verifiedBinary);
     } catch (error) {
       if (error instanceof MatrixSidecarError && error.code === "stopped") throw error;
+      // Never auto-clear a changed/untrusted executable or identity failure.
+      this.#recoveryPermitted = false;
       this.#setStatus("dead", "not_ready", "verification_failed", false);
       throw error instanceof MatrixSidecarError ? error : new MatrixSidecarError("binary_verification_failed");
     }
@@ -1518,10 +1532,16 @@ export class MatrixSidecarSupervisor {
           this.#handleLockContention();
           return;
         }
-        if (
-          frame.id === this.#initializeId
-          && (frame.error === "not_ready" || frame.error === "store_quarantined")
-        ) {
+        if (frame.id === this.#initializeId && frame.error === "not_ready") {
+          // The pinned protocol reports temporary initial sync failures as
+          // not_ready. Retry the same store after confirmed child exit; every
+          // launch revalidates identity/trust. This never provisions or grants
+          // access when authorization/policy remains invalid.
+          this.#failGeneration("spawn_failed", "spawn_failed");
+          return;
+        }
+        if (frame.id === this.#initializeId && frame.error === "store_quarantined") {
+          this.#recoveryPermitted = false;
           this.#handshakePhase = "blocked";
           this.#acceptingRequests = false;
           this.#identityVerified = false;
@@ -1689,6 +1709,7 @@ export class MatrixSidecarSupervisor {
     const generation = this.#generation;
     if (this.#failedGeneration === generation) return;
     this.#failedGeneration = generation;
+    if (code === "protocol_error" || code === "handshake_rejected") this.#recoveryPermitted = false;
     this.#restartCause = "crash";
     this.#acceptingRequests = false;
     this.#identityVerified = false;
@@ -1751,9 +1772,7 @@ export class MatrixSidecarSupervisor {
       this.#lockContentionAttempts += 1;
       const restartCount = this.#lockContentionAttempts;
       if (restartCount >= this.#options.maxLockContentionRetries) {
-        this.#circuitOpenRestartCount = restartCount;
-        this.#setStatus("dead", "not_ready", "circuit_open", true, restartCount);
-        this.#diagnostic({ code: "circuit_open" });
+        this.#openCircuit(restartCount);
         return;
       }
       const delay = this.#options.lockContentionBackoffMs[
@@ -1770,15 +1789,44 @@ export class MatrixSidecarSupervisor {
     this.#crashTimes.push(now);
     const restartCount = this.#crashTimes.length;
     if (restartCount >= this.#options.maxCrashes) {
-      this.#circuitOpenRestartCount = restartCount;
-      this.#setStatus("dead", "not_ready", "circuit_open", true, restartCount);
-      this.#diagnostic({ code: "circuit_open" });
+      this.#openCircuit(restartCount);
       return;
     }
     const delay = this.#options.restartBackoffMs[Math.min(restartCount - 1, this.#options.restartBackoffMs.length - 1)] ?? 0;
     this.#setStatus("dead", "not_ready", "crash_backoff", false, restartCount);
     this.#diagnostic({ code: "restart_scheduled" });
     this.#scheduleLaunch(delay, restartCount);
+  }
+
+  #openCircuit(restartCount: number): void {
+    this.#circuitOpenRestartCount = restartCount;
+    this.#circuitOpenCount = Math.min(8, this.#circuitOpenCount + 1);
+    const random = this.#random();
+    const jitter = Number.isFinite(random) ? Math.max(0, Math.min(1, random)) : 0.5;
+    const delay = Math.min(5 * 60_000, Math.ceil(this.#options.circuitCooldownMs
+      * 2 ** (this.#circuitOpenCount - 1) * (0.75 + 0.25 * jitter)));
+    this.#circuitRecoveryDueAt = this.#clock.now() + delay;
+    this.#setStatus("dead", "not_ready", "circuit_open", true, restartCount);
+    this.#diagnostic({ code: "circuit_open" });
+    this.#scheduleHalfOpen();
+  }
+
+  #scheduleHalfOpen(): void {
+    if (!this.#recoveryPermitted || this.#stopRequested || this.#child !== undefined
+      || this.#restartTimer !== undefined || this.#circuitOpenRestartCount === undefined) return;
+    const generation = this.#generation;
+    this.#restartTimer = this.#clock.setTimeout(() => {
+      this.#restartTimer = undefined;
+      if (this.#stopRequested || this.#child !== undefined || generation !== this.#generation
+        || !this.#recoveryPermitted || this.#circuitOpenRestartCount === undefined) return;
+      // One half-open worker only, after the preceding child's confirmed exit.
+      // The exclusive Rust store lock and full binary/identity handshake stay
+      // in force. Clear only volatile retry counts, never persistent state.
+      this.#circuitOpenRestartCount = undefined;
+      this.#crashTimes = [];
+      this.#lockContentionAttempts = 0;
+      this.#scheduleLaunch(0, 0);
+    }, Math.max(0, this.#circuitRecoveryDueAt - this.#clock.now()));
   }
 
   #scheduleLaunch(delay: number, restartCount: number): void {

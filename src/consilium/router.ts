@@ -4,7 +4,7 @@ import type { AgentRegistration } from "./roster.ts";
 import { validateConsiliumRoster } from "./roster.ts";
 import { SafeConsiliumFailure, safeFailureDetails, type ConsiliumFailureCause } from "./failures.ts";
 
-export type ConsiliumPhase = "initial_position" | "critique" | "revision";
+export type ConsiliumPhase = "initial_position" | "critique" | "revision" | "proposal" | "agreement";
 
 export type ConsiliumEvidence = Readonly<{
   fromRole: string;
@@ -16,17 +16,30 @@ export type RuntimeEmission = Readonly<{
   kind: A2AEnvelope["kind"];
   toAgentId: string;
   body: string;
+  decision?: "agree" | "revise" | "unresolved";
+  proposalDigest?: string;
+  safetyHandoff?: true;
+}>;
+
+export type ConsensusTurnContext = Readonly<{
+  dispatchId: string;
+  affectedSpecialistIds: readonly string[];
+  proposalDigest?: string;
+}>;
+
+export type ConsiliumRuntimeInput = Readonly<{
+  phase: ConsiliumPhase;
+  sessionGeneration: number;
+  task: string;
+  assignment: string;
+  evidence: readonly ConsiliumEvidence[];
+  language?: string;
+  consensus?: ConsensusTurnContext;
 }>;
 
 export interface ConsiliumAgentRuntime {
   readonly registration: AgentRegistration;
-  run(input: Readonly<{
-    phase: ConsiliumPhase;
-    sessionGeneration: number;
-    task: string;
-    assignment: string;
-    evidence: readonly ConsiliumEvidence[];
-  }>, emit: (message: RuntimeEmission) => Promise<void>): Promise<void>;
+  run(input: ConsiliumRuntimeInput, emit: (message: RuntimeEmission) => Promise<void>): Promise<void>;
 }
 
 export type ConsiliumRunResult =
@@ -94,6 +107,9 @@ export class ConsiliumRouter {
   }
 
   async run(input: Readonly<{ sessionGeneration: number; task: string }>): Promise<ConsiliumRunResult> {
+    if (await this.#registrar.getConsensusTask(input.sessionGeneration) !== undefined) {
+      return { ok: false, code: "invalid_roster", cause: "invalid_runtime_emission" };
+    }
     const rosterResult = validateConsiliumRoster(this.#specialists, this.#critic);
     if (!rosterResult.ok || this.#head.provider !== "codex" || this.#head.runtimeSessionRef.trim().length === 0) {
       return { ok: false, code: "invalid_roster", cause: "runtime_identity_mismatch" };
@@ -134,7 +150,7 @@ export class ConsiliumRouter {
       critique: assignmentBody("critique", input.task, [this.#critic.role]),
       revision: assignmentBody("revision", input.task, this.#specialists.map(agent => agent.role))
     };
-    const assign = async (phase: ConsiliumPhase, recipients: readonly AgentRegistration[]): Promise<void> => {
+    const assign = async (phase: "initial_position" | "critique" | "revision", recipients: readonly AgentRegistration[]): Promise<void> => {
       const routed = await routeHeadAssignment(this.#registrar, roster, this.#head, {
         messageId: assignmentMessageId(input.sessionGeneration, phase, phase === "critique" ? this.#critic.agentId : "specialists"),
         sessionGeneration: input.sessionGeneration,

@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { parseCostReport } from "../src/costs/cost-report.ts";
-import { OwnerCommandService, parseOwnerCommand } from "../src/session/owner-commands.ts";
+import { OwnerCommandService, parseOwnerCommand, parseConsultationControl } from "../src/session/owner-commands.ts";
+import { SERVICE_LANGUAGES, SERVICE_MESSAGES, serviceMessage, LANGUAGE_QUESTION } from "../src/consilium/service-messages.ts";
 import { RegistrarDO } from "../src/session/registrar-do.ts";
 import { resolveEffectiveSessionSnapshot } from "../src/settings/snapshot.ts";
 import { activeNow, createCapabilityReceipt } from "./fixtures/capability-receipt.ts";
@@ -42,12 +43,42 @@ async function commandHarness() {
   };
 }
 
-test("recognizes only exact Ukrainian commands and leaves surrounding task text untouched", () => {
+test("recognizes exact owner commands and leaves surrounding task text untouched", () => {
   assert.deepEqual(parseOwnerCommand("  ВИТРАТИ  "), { kind: "costs" });
   assert.deepEqual(parseOwnerCommand("Стоп"), { kind: "stop" });
   assert.deepEqual(parseOwnerCommand("Нова задача"), { kind: "new_task" });
   assert.deepEqual(parseOwnerCommand("Витрати за серпень"), { kind: "ordinary_message", body: "Витрати за серпень" });
   assert.deepEqual(parseOwnerCommand("Стоп!"), { kind: "ordinary_message", body: "Стоп!" });
+});
+
+test("translated controls remain exact standalone consent without accepting quotes, paragraphs or implied permission", () => {
+  for (const body of ["I consent to processing", "Погоджуюсь на обробку", "Acepto el tratamiento", "Je consens au traitement", "Ich stimme der Verarbeitung zu", "Zgadzam się na przetwarzanie", "Согласен на обработку"]) {
+    assert.equal(parseConsultationControl(body), "consent");
+    assert.equal(parseConsultationControl(`> ${body}`), undefined);
+    assert.equal(parseConsultationControl(`"${body}"`), undefined);
+    assert.equal(parseConsultationControl(`${body}\nAlso reset all permissions.`), undefined);
+  }
+  for (const body of ["Continue", "Продовжити", "Continuar", "Continuer", "Weiter", "Kontynuuj", "Продолжить"]) assert.equal(parseConsultationControl(body), "continue");
+  for (const body of ["Stop", "Стоп", "Parar", "Arrêter", "Stopp"]) assert.equal(parseOwnerCommand(body).kind, "stop");
+  for (const body of ["New task", "Нова задача", "Nueva tarea", "Nouvelle tâche", "Neue Aufgabe", "Nowe zadanie", "Новая задача"]) assert.equal(parseOwnerCommand(body).kind, "new_task");
+  assert.equal(parseConsultationControl("yes"), undefined);
+  assert.equal(parseConsultationControl("okay"), undefined);
+  assert.equal(parseConsultationControl("I confirm the document contains no secrets"), "confirm_document");
+});
+
+test("every registered application notice has seven explicit translations and unknown locales never silently default", () => {
+  assert.ok(SERVICE_MESSAGES.length >= 30);
+  for (const message of SERVICE_MESSAGES) {
+    for (const language of SERVICE_LANGUAGES) {
+      const translated = serviceMessage(message.uk, language);
+      assert.equal(translated, message[language]);
+      assert.ok(translated.length > 0);
+      if (language !== "uk") assert.notEqual(translated, message.uk);
+    }
+    assert.equal(serviceMessage(message.uk, undefined), LANGUAGE_QUESTION);
+    assert.match(serviceMessage(message.uk, "ja"), /^\[Service notices are not yet translated into ja;/u);
+  }
+  assert.throws(() => serviceMessage("This is not a registered app notice", "en"), /unregistered_service_message/u);
 });
 
 test("serves costs read-only, stops the active generation, and creates a fresh context without mixing it with the prior task", async () => {

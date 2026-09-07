@@ -26,12 +26,26 @@ export type OwnerCommandResult =
   | Readonly<{ ok: false; kind: "stop" | "new_task"; responseBody: string; code: "no_active_session" | "new_task_preflight_failed" | "registrar_rejected" }>;
 
 const exactCommand = (value: string): "costs" | "stop" | "new_task" | undefined => {
-  const normalized = value.trim().toLocaleLowerCase("uk-UA");
-  if (normalized === "витрати") return "costs";
-  if (normalized === "стоп") return "stop";
-  if (normalized === "нова задача") return "new_task";
+  const normalized = value.trim().toLocaleLowerCase("en");
+  if (["витрати", "costs", "cost", "costes", "costos", "coûts", "kosten", "koszty", "расходы"].includes(normalized)) return "costs";
+  if (["стоп", "stop", "parar", "arrêter", "stopp"].includes(normalized)) return "stop";
+  if (["нова задача", "new task", "nueva tarea", "nouvelle tâche", "neue aufgabe", "nowe zadanie", "новая задача"].includes(normalized)) return "new_task";
   return undefined;
 };
+
+export type ConsultationControl = "consent" | "decline_consent" | "confirm_document" | "reject_document" | "continue";
+const CONSULTATION_CONTROLS: Readonly<Record<ConsultationControl, readonly string[]>> = Object.freeze({
+  consent: ["погоджуюсь на обробку", "i consent to processing", "acepto el tratamiento", "je consens au traitement", "ich stimme der verarbeitung zu", "zgadzam się na przetwarzanie", "согласен на обработку", "согласна на обработку"],
+  decline_consent: ["не погоджуюсь", "i do not consent", "no acepto", "je ne consens pas", "ich stimme nicht zu", "nie zgadzam się", "не согласен", "не согласна"],
+  confirm_document: ["підтверджую документ без секретів", "i confirm the document contains no secrets", "confirmo documento sin secretos", "je confirme le document sans secrets", "dokument ohne geheimnisse bestätigen", "potwierdzam dokument bez sekretów", "подтверждаю документ без секретов"],
+  reject_document: ["відхиляю документ", "reject document", "rechazar documento", "refuser le document", "dokument ablehnen", "odrzuć dokument", "отклонить документ"],
+  continue: ["продовжити", "continue", "continuar", "continuer", "weiter", "kontynuuj", "продолжить"]
+});
+/** Exact standalone controls only. Quotes, additions or attachment text never grant consent. */
+export function parseConsultationControl(body: string): ConsultationControl | undefined {
+  const normalized = body.trim().toLocaleLowerCase("en");
+  return (Object.keys(CONSULTATION_CONTROLS) as ConsultationControl[]).find(kind => CONSULTATION_CONTROLS[kind].includes(normalized));
+}
 
 /** Only exact stand-alone commands receive control semantics; ordinary text stays task context. */
 export function parseOwnerCommand(body: string): OwnerCommand {

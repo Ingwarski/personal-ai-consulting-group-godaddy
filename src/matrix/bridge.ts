@@ -1,5 +1,14 @@
 import type { ConfirmedAgentMessage } from "../session/registrar-do.ts";
 import { validateRoomInvariant, type MatrixRoomState, type RoomBinding } from "./room-invariant.ts";
+import { CONSULTANT_COLOUR_SLOTS, HEAD_CONSULTANT, resolveConsultantRole } from "../consilium/consultant-roles.ts";
+
+export type MatrixRolePresentation = Readonly<{
+  language?: string;
+  /** Slot from the persisted session roster, never derived by hashing a role. */
+  roleColorSlot?: number;
+  /** Only enable after verifying the client preserves foreground AND background. */
+  supportsRoleColours?: boolean;
+}>;
 
 export type RawMatrixIngress = Readonly<{
   eventId: string;
@@ -447,9 +456,10 @@ export async function validateMatrixIngress(
 export function formatConfirmedMessageForMatrix(
   binding: RoomBinding,
   message: ConfirmedAgentMessage,
-  replyToEventId?: string
+  replyToEventId?: string,
+  presentation?: MatrixRolePresentation
 ): MatrixDelivery {
-  const content = formatConfirmedMessageContentForMatrix(message);
+  const content = formatConfirmedMessageContentForMatrix(message, presentation);
   return Object.freeze({
     roomId: binding.roomId,
     ...content,
@@ -459,18 +469,36 @@ export function formatConfirmedMessageForMatrix(
 }
 
 export function formatConfirmedMessageContentForMatrix(
-  message: ConfirmedAgentMessage
+  message: ConfirmedAgentMessage,
+  presentation?: MatrixRolePresentation
 ): Readonly<{ body: string; formattedBody: string }> {
   // Keep the registrar's immutable control identity/hash intact. The visible
   // label identifies the head's coordination function without presenting an
   // automatic status notice as a model-authored specialist or Critic reply.
-  const visibleRole = message.role === "Система" && message.authority === undefined
-    ? "Головний консультант · службове повідомлення"
-    : message.role;
-  const header = `${visibleRole} · ${message.visibleTime}`;
+  const service = ["Система", "System", "Service"].includes(message.role) && message.authority === undefined;
+  const known = service ? HEAD_CONSULTANT : resolveConsultantRole(message.role);
+  const language = (presentation?.language ?? message.language ?? "uk").split("-")[0];
+  const serviceLabel = ({ uk: "службове повідомлення", en: "service notice", ru: "служебное сообщение", es: "aviso de servicio",
+    fr: "message de service", de: "Statusmeldung", pl: "komunikat systemowy" } as Record<string, string>)[language!] ?? "service notice";
+  const observationLabel = ({ uk: "спостереження із зображення", en: "image observation", ru: "наблюдение по изображению", es: "observación de imagen",
+    fr: "observation d’image", de: "Bildbeobachtung", pl: "obserwacja obrazu" } as Record<string, string>)[language!] ?? "image observation";
+  const visibleRole = known === undefined ? message.role : `${known.emoji} ${known.role}`;
+  const addressee = message.addressedTo === undefined ? "" : ` → ${message.addressedTo.split("; ").map(role => resolveConsultantRole(role)?.role ?? role).join("; ")}`;
+  const stageLabels: Readonly<Record<string, readonly string[]>> = { en: ["Candidate", "Approved", "Unresolved", "Safety handoff"], uk: ["Пропозиція", "Погоджено", "Без консенсусу", "Допомога людини для безпеки"],
+    es: ["Propuesta", "Aprobado", "Sin consenso", "Ayuda humana para la seguridad"], fr: ["Proposition", "Approuvé", "Sans consensus", "Aide humaine pour la sécurité"], de: ["Vorschlag", "Bestätigt", "Kein Konsens", "Menschliche Sicherheitshilfe"],
+    pl: ["Propozycja", "Zatwierdzono", "Brak konsensusu", "Pomoc człowieka dla bezpieczeństwa"], ru: ["Предложение", "Согласовано", "Без консенсуса", "Помощь человека для безопасности"] };
+  const stageKind = String(message.consensusKind);
+  const stageIndex = stageKind === "proposal" ? 0 : stageKind === "final" ? 1 : stageKind === "unresolved" ? 2 : stageKind === "safety_handoff" ? 3 : undefined;
+  const stage = stageIndex === undefined ? "" : ` · ${(stageLabels[language!] ?? stageLabels.en)![stageIndex]}`;
+  const header = `${visibleRole}${service ? ` · ${message.internalEventId.startsWith("mx-image-") ? observationLabel : serviceLabel}` : ""}${stage}${addressee} · ${message.visibleTime}`;
+  const slot = presentation?.roleColorSlot;
+  const colour = known !== undefined && presentation?.supportsRoleColours === true && Number.isSafeInteger(slot) && slot! >= 0 && slot! < CONSULTANT_COLOUR_SLOTS.length
+    ? CONSULTANT_COLOUR_SLOTS[slot!] : undefined;
+  const styledHeader = colour === undefined ? escapeHtml(header)
+    : `<span data-mx-color="${colour}" data-mx-bg-color="#ffffff">${escapeHtml(header)}</span>`;
   return Object.freeze({
     body: `${header}\n\n${message.body}`,
-    formattedBody: `<strong>${escapeHtml(header)}</strong>${renderMarkdownParagraphs(message.body)}`
+    formattedBody: `<strong>${styledHeader}</strong>${renderMarkdownParagraphs(message.body)}`
   });
 }
 

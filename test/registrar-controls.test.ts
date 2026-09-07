@@ -79,7 +79,7 @@ test("pre-session controls use a private durable sequence without creating a con
   assert.equal(second.ok, true);
   if (!first.ok || !second.ok) return;
   assert.deepEqual([first.value.generation, first.value.sequence, second.value.sequence], [1, 1, 2]);
-  assert.equal(first.value.role, "Система");
+  assert.equal(first.value.role, "Service");
   assert.equal(first.value.authority, undefined);
   assert.equal(Object.isFrozen(first.value), true);
   assert.equal(await registrar.getActiveSession(), undefined);

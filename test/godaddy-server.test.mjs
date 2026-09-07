@@ -15,6 +15,36 @@ import {
 
 const supportedEnvironment = Object.freeze({ RUNTIME_MODE: "production" });
 
+test("Published Matrix wake route bypasses Settings only via its dedicated wake handler", async (t) => {
+  let settingsCalls = 0;
+  let wakes = 0;
+  await withServer(t, { environment: supportedEnvironment, nodeVersion: "v22.16.0",
+    settingsRuntime: { handle: async () => { settingsCalls += 1; return new Response("Access denied", { status: 403 }); } },
+    handleMatrixWake: async (request) => {
+      assert.equal(request.headers.get("cookie"), null);
+      wakes += 1;
+      return Response.json({ rejected: [] });
+    }
+  }, async (origin) => {
+    assert.equal((await fetch(`${origin}/_matrix/push/v1/notify`, { method: "POST", body: "{}" })).status, 200);
+    assert.equal(settingsCalls, 0);
+    assert.equal(wakes, 1);
+    assert.equal((await fetch(`${origin}/settings`)).status, 403);
+    assert.equal(settingsCalls, 1);
+  });
+});
+
+test("Matrix wake cannot activate in Preview or when not configured", async (t) => {
+  let wakes = 0;
+  for (const options of [{ environment: { RUNTIME_MODE: "development" }, handleMatrixWake: async () => { wakes += 1; return Response.json({}); } },
+    { environment: supportedEnvironment }]) {
+    await withServer(t, { ...options, nodeVersion: "v22.16.0" }, async (origin) => {
+      assert.equal((await fetch(`${origin}/_matrix/push/v1/notify`, { method: "POST", body: "{}" })).status, 404);
+    });
+  }
+  assert.equal(wakes, 0);
+});
+
 async function withServer(t, options, assertion) {
   const server = createGodaddyServer(options);
   await new Promise((resolveListen, rejectListen) => {

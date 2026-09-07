@@ -1,0 +1,905 @@
+Captured from the actual npm run check output. Kept npm commands, TAP outcomes, totals and environment-policy result; omitted timings per test and repeated experimental warnings.
+
+> personal-ai-consulting-group@0.1.0 check
+> npm run build && npm run typecheck && npm run test && npm run check:environment
+> personal-ai-consulting-group@0.1.0 build
+> npm run build:settings-assets
+> personal-ai-consulting-group@0.1.0 build:settings-assets
+> node scripts/build-settings-assets.mjs
+> personal-ai-consulting-group@0.1.0 typecheck
+> tsc --noEmit
+> personal-ai-consulting-group@0.1.0 test
+> node --experimental-strip-types --test test/*.test.ts test/*.test.mjs
+TAP version 13
+ok 1 - maps an active Registrar generation to a content-free immutable Settings summary
+ok 2 - seals an immutable whole transcript with AEAD and exports its exact visible bodies only after owner confirmation
+ok 3 - detects encrypted-content tampering and keeps whole-session deletion explicit, retry-safe and irreversible
+ok 4 - a capability catalog accepts explicit whole defaults and both requested subscription runtime reports
+ok 5 - catalog issuance blocks paid Claude acceleration and never selects a replacement default
+ok 6 - Codex-only issuance preserves independent historical Claude freshness, including old envelopes
+ok 7 - Astra needs exact runtime identity plus xhigh verification, not a product-name or model-default guess
+ok 8 - a capability receipt round-trips only when its complete catalog remains trusted and current
+ok 9 - capability receipt parsing has no fallback for retired, malformed or untrusted models
+ok 10 - runs the Claude critic only through one ready subscription process and emits its full completion
+ok 11 - fails closed before content leaves the process for Fast Mode, wrong auth, bare mode or effort downgrade
+ok 12 - accepts only a correctly signed Cloudflare Access assertion for the exact owner
+ok 13 - fails closed for a bad audience, issuer, email, expiry or a missing assertion
+ok 14 - refreshes JWKS once for an unknown kid and never accepts a stale cached match as a bypass
+ok 15 - an unknown kid with no cache performs one JWKS fetch, not two back-to-back fetches
+ok 16 - pinned native CLI accepts analysis-only empty environments and its generated schema confirms the exact policy
+ok 17 - discovery paginates the full runtime catalog and retains only the explicitly requested hidden Astra
+ok 18 - discovery rejects a cyclic pagination cursor instead of looping or accepting an incomplete catalog
+ok 19 - Codex capability discovery accepts only managed ChatGPT OAuth and the app-server's visible model catalog
+ok 20 - Codex discovery skips a provider-returned hidden model but still rejects malformed visible entries
+ok 21 - Codex discovery preserves the current provider-advertised efforts for the selected model
+ok 22 - Codex discovery fails closed for a key/cloud auth mode, a reached subscription limit, malformed catalog or transport error
+ok 23 - the head turns confirmed specialist and critic messages into one schema-validated final recommendation
+ok 24 - a null technical section is accepted and omitted from the domain recommendation
+ok 25 - does not synthesize before a confirmed Claude critique and rejects malformed model output
+ok 26 - starts one real Codex thread and preserves only the completed agent message
+ok 27 - approved images use only private owned localImage paths and are erased when the turn ends
+ok 28 - images fail closed on wrong magic, limits, or a non-owned workspace before turn/start
+ok 29 - cancelled image turns erase staged files and do not accept late image output
+ok 30 - interrupts an in-flight turn on cancellation or timeout and releases its context
+ok 31 - rejects and unsubscribes a thread when the server silently substitutes a different model
+ok 32 - cancellation or release while turn/start is pending wins over a completed start response
+ok 33 - pre-start buffering ignores unrelated threads and fails closed on excessive own-thread events
+ok 34 - cancellation wins a simultaneous normal completion; failed interruption invokes managed-process shutdown
+ok 35 - a registered Codex specialist cannot substitute a role label for a different app-server thread
+ok 36 - authority hashes ignore all JSON key permutations but preserve the producer's existing digest
+ok 37 - ordinary and control message fingerprints remain byte-compatible
+ok 38 - review: SQL object-key reordering preserves reservation identity, confirmation replay and final fingerprint
+ok 39 - review: Critic cannot address an uncounted specialist or bypass ledger through legacy append
+ok 40 - review: a same-text proposal over new positions does not revive old approval reservations
+ok 41 - review: durable review/count corruption fails closed instead of becoming consensus
+ok 42 - Critic message, count and canonical outbox commit exactly once
+ok 43 - concurrent reservations cannot create the eighth Critic message, including approvals
+ok 44 - outbox failure rolls back the count, message and proposal approval together
+ok 45 - all actors must explicitly agree to the same exact proposal; final is immutable and unique
+ok 46 - position changes invalidate old approvals and stale review reservations
+ok 47 - restart and explicit Continue preserve task counts, reject a new task ID on revision
+ok 48 - Stop fences an already reserved reply; forged Critic actor cannot spend or approve
+ok 49 - a changed owner task refreshes positions without resetting lifetime Critic counts
+ok 50 - durable state corruption is rejected instead of becoming an approval or count reset
+ok 51 - Codex specialist, designated Critic and Head use strict structured votes with session language and independent efforts
+ok 52 - Head creates the candidate as a separately completed body, not an assumed approval
+ok 53 - a stale or unstructured Codex vote emits no message and cannot become consensus
+ok 54 - Claude uses the same exact review contract without changing its subscription/model/effort gate
+ok 55 - a durable final completion wins over a delayed executor return and the deadline
+ok 56 - a durable safety completion wins over a delayed executor return and the deadline
+ok 57 - a changed authorized document changes the consensus task digest even when the owner text is unchanged
+ok 58 - explicit complete agreement stops after one Critic message per target and publishes exactly the reviewed proposal
+ok 59 - constructive correction revises only affected specialist then obtains fresh agreement from everyone
+ok 60 - Head is an actual approver and may require a changed proposal after all others agreed
+ok 61 - no eighth Critic call: seven non-consensus exchanges per target produce an honest unresolved result
+ok 62 - restart after confirmed Critic message reuses durable work and does not count or call it twice
+ok 63 - failed provider is not an approval or counted message and pending dispatch cannot duplicate a model call
+ok 64 - legacy finalizer and resumption cannot bypass current consensus approval
+ok 65 - review parser rejects prose votes, stale digests, unknown fields and invalid decisions
+ok 66 - mid-consultation crisis stops routine turns and publishes one actual safety handoff without consensus
+ok 67 - provider safety flag must be explicit and cannot simultaneously claim agreement
+ok 68 - requires two to five registered Codex specialists and one separate Claude or Codex critic
+ok 69 - shared head assignment is a single idempotent record with all recipients bound to its fingerprint
+ok 70 - shared assignment rejects invalid recipients, substituted head, unsafe content and stopped generations
+ok 71 - routes a complete addressed A2A message through the sole registrar
+ok 72 - does not route an envelope from an unregistered agent
+ok 73 - preserves a safe Registrar failure cause instead of flattening it
+ok 74 - unsafe generated A2A bodies are rejected whole before append, Critic receipt, or publication
+ok 75 - starts independent specialist passes, records the critic, then records each visible specialist revision
+ok 76 - two or five specialists consume one verbatim visible head instruction per phase, never duplicate broadcasts
+ok 77 - does not fabricate a consilium when a runtime is missing, mismatched or returns no complete visible message
+ok 78 - blocks a phase after append when a configured Matrix publication receipt is not obtained
+ok 79 - rejects a duplicate specialist emission before it reaches the Registrar or delivery observer
+ok 80 - fails closed before runtime work when a historical speed-policy snapshot remains unapproved
+ok 81 - preflights before it creates a head, two real specialist threads and one isolated Claude critic
+ok 82 - does not create even one Codex thread when the Claude preflight is ineligible
+ok 83 - executes the whole prepared path through finalization after the registered critic
+ok 84 - Astra Extra High critic uses a fourth fresh read-only workspace, independent head settings and no Claude dependency
+ok 85 - a partial thread-start failure releases already created contexts and owned workspaces
+ok 86 - cancellation before execution closes every prepared context without sending business content
+ok 87 - consultation executor holds one connection-owned lock and releases it exactly once
+ok 88 - busy consultation lock returns its unused connection without starting a second executor
+ok 89 - uncertain lock acquisition destroys the connection and exposes only a safe error
+ok 90 - lost or unreadable ownership fails closed
+ok 91 - uncertain lock release never returns a potentially locked connection to the pool
+ok 92 - native bot reply resolves only one accepted delivery through a parameterized bounded query
+ok 93 - consultation diagnostics classify known errors without exposing SQL, message, values or credentials
+ok 94 - readiness failures retain only allowlisted cause, never raw context
+ok 95 - strict intake returns exact direct prose or fixed catalog roles, never model-authored role authority
+ok 96 - untrusted or oversized routing output never changes provider, role catalog, count or effort
+ok 97 - image consilium requires factual extraction and text-only input cannot fabricate image evidence
+ok 98 - clarification is a distinct bounded question outcome, never a completed direct answer
+ok 99 - an explicit independent review cannot be downgraded to a direct final answer
+ok 100 - all20 English roles retain historic IDs and seven personal roles without expanding roster limits
+ok 101 - requires complete distinct delegation; rejects duplicate, forged, missing and cyclic assignments
+ok 102 - language is explicit metadata, ambiguous input clarifies, and retained language cannot drift
+ok 103 - explicit language detection ignores quotes, code and ordinary mentions, not the current task language
+ok 104 - crisis handoff bypasses ordinary debate without pretending a Critic reviewed it
+ok 105 - every document needs exact affirmative consent before the first durable load
+ok 106 - confirmed documents become actual PDF text and native image bytes with explicit ownership
+ok 107 - unavailable later document releases already-loaded bytes and forwards no partial payload
+ok 108 - storage exceptions still release every previously loaded object
+ok 109 - a secret discovered in PDF extraction rejects exact document and exposes no partial image/text payload
+ok 110 - failed rejection erasure does not prevent in-memory cleanup
+ok 111 - already cancelled preparation never loads an image
+ok 112 - Stop during durable image load releases bytes and never returns them for provider use
+ok 113 - Stop terminates PDF extraction and releases plaintext instead of yielding parsed content
+ok 114 - explicit exact-event erasure and idle-expiry maintenance use only the durable store
+ok 115 - reports only configured subscription fees, factual infrastructure spend and provider status without fabricating session token cost
+ok 116 - fails closed for a fabricated per-session/token amount, unknown fields, or incomplete provider status
+ok 117 - only the designated critic context can submit critique, not a same-provider head/specialist or same-label runtime
+ok 118 - an ordinary reply or legacy role-only receipt cannot satisfy the gate
+ok 119 - critique event identity cannot be replayed across a new generation or replace a prior receipt
+ok 120 - a tampered confirmed body hash or runtime authority invalidates an otherwise complete receipt
+ok 121 - Codex critic validates Astra xhigh independently of the head and unavailable Claude
+ok 122 - selected Claude requires Claude evidence; head Codex and critic Codex each need exact effort support
+ok 123 - active provider expiry fails closed while the inactive receipt does not affect Codex
+ok 124 - strict branch structure rejects partial active settings and extra inactive privileges
+ok 125 - new immutable snapshot pins selected critic settings and all inactive preferences
+ok 126 - v2 migration preserves unavailable historical Claude and exact values, then permits explicit Codex save
+ok 127 - historical save replay preserves body identity and ledger bytes even after migration and expiry
+ok 128 - historical reset replay uses its original confirmed operation rather than today's default availability
+ok 129 - unknown schemas and malformed v1 settings are never overwritten by initialization
+ok 130 - v1 historical reader retains unsupported shared depth instead of defaulting or substituting models
+ok 131 - migration is atomic on audit failure and concurrent initialization migrates once
+ok 132 - issues a short-lived CSRF token bound to the exact owner, Access audience and settings origin
+ok 133 - rejects a missing, expired, cross-origin or wrong-audience CSRF token
+ok 134 - Durable Object adapter exposes one atomic transaction boundary to the domain
+ok 135 - Durable Object adapter reuses a nested transaction instead of committing an intermediate state
+ok 136 - does not emit a final conclusion before a real Claude critic message is registered
+ok 137 - does not mistake an ordinary critic message for a registered critique
+ok 138 - publishes a compact structured final only after the critic body is visibly registered, then fences late output
+ok 139 - refuses an incomplete final and never inserts a technical section unless it is explicitly supplied
+ok 140 - final output rejects sensitive material in any formatted field before registrar or observers and preserves the active session
+ok 141 - does not let a Claude runtime impersonate the head who publishes the final
+ok 142 - keeps a confirmed final retryable until the Matrix delivery observer accepts its exact body
+ok 143 - keeps the final retryable until a whole-session close observer commits its archive
+ok 144 - Preview remains inert even when a complete Published environment is copied into it
+ok 145 - Published composition shares one pool and closes Matrix, providers, then the pool exactly once
+ok 146 - forbidden production credentials fail before any stateful composition
+ok 147 - invalid shutdown policy fails early, but incomplete owner web auth does not block configured Matrix transport
+ok 148 - a failed Matrix stop never races provider or pool teardown
+ok 149 - cancellation terminates only the owned child and is forwarded through the Claude adapter
+ok 150 - does not create a Claude process without a locally injected subscription token
+ok 151 - checks only Claude subscription auth in a disposable, scrubbed child environment
+ok 152 - runs a critic with subscription OAuth only, no tools and no persistent conversation
+ok 153 - fails closed for a rejected authentication check or malformed completion
+ok 154 - probes exact current Claude models and exposes only the usable per-model efforts
+ok 155 - Claude readiness rejects unsuccessful, malformed and non-subscription status despite exit zero
+ok 156 - Claude discovery reports only safe failure categories and stops repeated global failures
+ok 157 - Claude error envelopes are not successful model completions even with exit zero
+ok 158 - Claude failure diagnostics retain only bounded numeric fields and fixed categories
+ok 159 - an unresponsive owned app-server is killed and its private directory removed before close resolves
+ok 160 - exact Astra Extra High proof shares the managed OAuth client and always releases its ephemeral thread
+ok 161 - accepts Node's null child-process write callback as success
+ok 162 - uses Codex-managed device OAuth and seals its restored auth state
+ok 163 - never returns a malformed device-code response
+ok 164 - persists the updated auth state after App Server reports an account change
+ok 165 - clears the sealed Codex state before a replacement login
+ok 166 - final-only recovery reuses the same designated review, creates one head context, and closes the same generation
+ok 167 - partial, tampered, substituted or obsolete reviews cannot qualify for final-only recovery
+ok 168 - final-only recovery still rejects changed subscription eligibility and model mappings
+ok 169 - cancelling final-only recovery interrupts and releases its sole head context without publishing a late final
+ok 170 - Matrix Continue resumes verified final-only work without a new generation, snapshot, intake or Critic
+ok 171 - production application runner reaches fresh Astra critic, registered full critique and final through the shared registrar
+ok 172 - actual application intake reaches planner, separate specialists, Astra critic and a still-deliverable final exactly once
+ok 173 - unapproved speed policy, missing or stale generation fail before any catalog or provider acquisition
+ok 174 - head intake produces a direct answer with exact immutable head model and effort without acquiring the selected Claude Critic
+ok 175 - declared independent review cannot publish an unreviewed direct result through the production planner
+ok 176 - head intake chooses the bounded specialist catalog via structured model decision
+ok 177 - critical missing information returns clarification without closing or altering the immutable active snapshot
+ok 178 - approved image reaches only the head intake and returns visible extraction for later specialist context
+ok 179 - head intake requires fresh managed subscription auth and exact catalog/model/effort without a fallback
+ok 180 - Continue interprets newly authorized images while retaining the durable team and assignments
+ok 181 - a task digest without the rest of consensus metadata cannot downgrade to legacy execution
+ok 182 - invalid intake is sanitized, releases context and does not create a Critic review
+ok 183 - intake and execution share the generation mutex; stop interrupts and releases the intake
+ok 184 - missing catalog and invalid task fail without provider turns
+ok 185 - duplicate generation cannot start another run; close interrupts live turns and releases every context
+ok 186 - caller cancellation before acquisition produces no runtime effects
+ok 187 - additive operation executes exactly the two canonical CREATE blocks and retries without changes
+ok 188 - partial DDL failure preserves the created table and retry creates only the remaining one
+ok 189 - malformed inventory fails closed before CREATE
+ok 190 - binds the exact Matrix tuple and sends only while aggregate readiness is ready
+ok 191 - does not call an alternate sidecar start implementation after the circuit is open
+ok 192 - rejects stale and future-dated room-policy snapshots before sidecar dispatch
+ok 193 - requires one durable subscriber per ingress channel and reattaches both across stop/start
+ok 194 - passes sender device identity, accepts identical crash replay, and fails closed on conflicting replay
+ok 195 - delivers frozen content-free media-expired rejections and retains their ACK binding across failure
+ok 196 - invalid-media rejection keeps its identity and reason through replay and ACK
+ok 197 - Rust invalid-media fixture preserves canonical hashes, rejection ACK and following text in Node
+ok 198 - reconciles a matching normal-ingress to media-expired transition and rejects conflicting replay
+    ok 1 - non-object wrapper
+    ok 2 - wrapper metadata
+    ok 3 - unknown reason
+    ok 4 - uppercase hash
+    ok 5 - wrong room
+    ok 6 - missing device
+    ok 7 - body
+    ok 8 - media
+    ok 9 - handles
+    ok 10 - reply
+    ok 11 - path
+    ok 12 - metadata
+ok 199 - fails closed on malformed or content-bearing rejection schemas
+ok 200 - counts normal and rejected ingress against one pending bound
+ok 201 - fails closed when either durable subscriber is absent or rejects asynchronously
+ok 202 - keeps ingress pending when ACK fails so the exact durable ACK can be retried
+    ok 1 - current
+    ok 2 - replay
+ok 203 - strictly inspects then reads current- or prior-boot media authorized by the pending ingress frame
+ok 204 - rejects path-shaped and pending-frame-absent handles without sending a caller path over NDJSON
+    ok 1 - symlink
+    ok 2 - race
+    ok 3 - size
+    ok 4 - hash
+    ok 5 - close
+    ok 6 - magic
+ok 205 - fails closed on media symlink, path race, size, hash, and MIME-magic violations
+ok 206 - wipes earlier verified media if a later object in the batch fails
+ok 207 - rejects media object and aggregate bounds before binary dispatch
+ok 208 - fails closed on malformed acceptance and rejects non-matrix.org configuration
+ok 209 - accepts one exact Published matrix.org binding and creates a child-only environment
+ok 210 - Preview and test runtimes stay stateless even if production credentials were copied into them
+ok 211 - distinguishes absent, partial and invalid Matrix configuration without naming a secret
+ok 212 - rejects target expansion, ambiguous or non-dedicated state roots and wrong Matrix identities
+ok 213 - keeps the documented Matrix environment inventory exact
+ok 214 - Preview is inert before parser, pool, filesystem, randomness, timers or sidecar dependencies
+ok 215 - transient binding I/O automatically recovers with exponential backoff and one fenced runtime
+ok 216 - missing, corrupt and inaccessible identity stay blocked despite timers and wake attempts
+ok 217 - Published startup fails closed before state or sidecar work when the shared publication fence is absent
+ok 218 - a partially old schema is detected through metadata without DDL and prevents binding or spawn
+ok 219 - columns-correct but wrong InnoDB index order remains schema_unavailable before spawn
+ok 220 - database/schema recovery gates exact store binding and passes bound identity into one runtime
+ok 221 - a rejection-subscriber registration failure removes the ingress subscriber and stops the unstarted runtime
+ok 222 - ingress is serialized and deduped, commits the full intent before ACK, then records ACK evidence
+ok 223 - secret-like ingress persists only content-free rejection hashes before ACK
+ok 224 - media expiry persists only content-free hashes before ACK and ACK evidence
+ok 225 - invalid media commits its explicit rejection before ACK and lets later valid ingress proceed
+ok 226 - same-receipt media expiry replaces an in-flight unconsumed intent without reading expired media
+ok 227 - same-receipt expiry identity or hash conflict blocks ingress without persistence, media read or ACK
+ok 228 - media-expiry ACK evidence retries without repeating rejection persistence or sidecar ACK
+ok 229 - ACK evidence retries without repeating the already-applied sidecar ACK
+ok 230 - media never ACKs without a durable consumer
+ok 231 - media uses eventHash idempotency, caches its stable receipt across DB failure, and wipes bytes
+ok 232 - media buffers are wiped when the durable consumer throws
+ok 233 - outbox inspects the strict head before a 60-second lease and publishes the deterministic transaction once
+ok 234 - a MySQL failure after Matrix acceptance never releases the lease for a fresh send
+ok 235 - a publication that acquires the shared permit first completes acceptance before a generation fence
+ok 236 - a generation fence that acquires first cancels pending work before the service can inspect or lease
+ok 237 - send failures release only proven pre-dispatch leases and retain outcome-ambiguous leases
+ok 238 - lost acceptance stays fenced through a pre-dispatch retry failure and reconciles the same transaction
+ok 239 - exhausted ambiguous publication remains fenced and stops retrying
+ok 240 - policy denial on a reclaimed lease preserves any prior acceptance fence
+ok 241 - stop blocks new intake, drains the current ACK/evidence, then stops the sidecar exactly once
+ok 242 - stop drains cancelled zero-delay ingress and leaves not-yet-leased outbox work durable
+ok 243 - stop drains an active expiry receipt, ignores new intake, and removes both runtime subscribers
+ok 244 - stop racing an unresolved store read cannot resume startup or spawn afterward
+ok 245 - verifies binary and exact ready identity before exposing readiness
+    ok 1 - symlink
+    ok 2 - non-regular
+    ok 3 - non-executable
+    ok 4 - group-writable
+    ok 5 - setuid
+    ok 6 - oversized
+    ok 7 - wrong-owner
+    ok 8 - path-swap
+    ok 9 - checksum
+ok 246 - rejects unsafe, oversized, changed, and wrong-checksum binaries before spawn
+ok 247 - performs the final path check immediately before the immutable deployment-path spawn
+ok 248 - rejects ambient process injection and split-brain identity/path configuration
+    ok 1 - missing ready
+    ok 2 - identity drift
+ok 249 - waits for an identity-bearing ready frame and rejects timeout or identity drift
+ok 250 - store quarantine remains alive and blocked without a crash/restart loop
+ok 251 - lock contention stays HTTP-live and retries with bounded backoff until the old process releases the lock
+ok 252 - lock contention has a bounded cooldown and one automatic half-open attempt
+ok 253 - accepts a ready frame and first ingress in one stdout chunk
+ok 254 - verifies exact ingress event identity and ACK event ID
+ok 255 - accepts only a content-free media-expired rejection, freezes it, and ACKs its event
+    ok 1 - top-level metadata
+    ok 2 - wrong reason
+    ok 3 - uppercase hash
+    ok 4 - missing device
+    ok 5 - body
+    ok 6 - media
+    ok 7 - handles
+    ok 8 - reply
+    ok 9 - path
+    ok 10 - metadata
+    ok 11 - duplicate
+    ok 12 - aggregate unacked overflow
+ok 256 - rejects malformed, content-bearing, duplicate, and aggregate-overflow rejection frames
+ok 257 - deep-freezes nested ingress media before notifying subscribers
+ok 258 - reconciles an ACK whose response was lost across a sidecar restart
+ok 259 - preserves safe sidecar failure classes and treats invalid-state as protocol failure
+ok 260 - malformed nested frames fail terminally and cannot be re-promoted by later status
+    ok 1 - UTF-8
+    ok 2 - line
+    ok 3 - duplicate
+    ok 4 - device
+    ok 5 - unacked
+ok 261 - rejects malformed UTF-8, oversized lines, duplicate IDs, missing device IDs and unacked overflow
+ok 262 - fails closed before inbound ID history saturation can evict and admit a late replay
+ok 263 - processes more than 4096 healthy requests by verified generation rollover without opening the crash circuit
+ok 264 - generation rollover drains already forwarded work and replays newly journaled ingress after re-handshake
+ok 265 - an undrained rollover fails closed instead of resetting replay history on a live generation
+ok 266 - an explicit stop during generation rollover drains the current child without launching a replacement
+ok 267 - accepts a bounded content-free invalid-media rejection and acknowledges its durable receipt
+    ok 1 - serialization
+    ok 2 - write
+ok 268 - serialization and stdin write failures reject the request and fail the generation closed
+ok 269 - a queued request that expires is never written after backpressure releases
+ok 270 - stale backpressure from an exited child cannot delay or poison the next handshake
+ok 271 - redacts stderr and automatically half-opens the crash circuit without resetting persistent state
+ok 272 - initial sync not_ready retries the same store and recovers without a Settings action
+ok 273 - identity rejection and store quarantine cannot be cleared by automatic half-open
+ok 274 - uses one absolute graceful deadline before bounded TERM and KILL escalation
+ok 275 - stops intake but permits media inspection and durable ACK during the graceful drain
+ok 276 - does not report stopped when a child survives SIGKILL escalation
+ok 277 - Cyrillic-preserving repair executes only the canonical two-column ALTER and is idempotent
+ok 278 - unexpected charset or collation, failed Cyrillic round-trip, and case folding block ALTER
+ok 279 - DDL failure restores the session and missing old keys cannot be reported as a successful repair
+ok 280 - a connection whose session settings cannot be restored is destroyed, not returned to the pool
+ok 281 - loads one canonical private existing-store binding through the verified descriptor
+    ok 1 - root symlink
+    ok 2 - ancestor resolution
+    ok 3 - wrong owner
+    ok 4 - group-readable binding
+    ok 5 - binding symlink
+    ok 6 - special mode bit
+    ok 7 - oversized binding
+ok 282 - rejects unsafe store or binding metadata before use
+    ok 1 - replacement
+    ok 2 - mutation
+ok 283 - rejects inode replacement and same-inode mutation during the read
+    ok 1 - growth
+ok 284 - rejects wrong device, ambiguous JSON and a file that grows beyond its verified size
+ok 285 - reports an unavailable binding without exposing filesystem detail
+ok 286 - classifies temporary, missing and access-denied storage without exposing paths or resetting identity
+ok 287 - wake is opt-in, exact Published, existing-identity mode only
+ok 288 - wake requires exact key, app and room; content, oversized bodies and excess devices never reach transport
+ok 289 - count-only hints do no work; successful event wake needs no cookie and duplicate hints coalesce
+ok 290 - unavailable or timed-out handoff is retryable and never deletes the valid pusher
+ok 291 - wake receipt expiry rechecks transport instead of hiding a later outage
+ok 292 - registration is dry-run by default and does not touch the network
+ok 293 - explicit registration verifies bot/endpoint and preserves other pushers/rules with idempotent retry
+ok 294 - registration refuses a wrong bot or conflicting rule without overwriting anything
+ok 295 - GoDaddy archive storage commits ciphertext then irreversibly replaces it with a tombstone
+ok 296 - same-process registrar transactions queue before borrowing the bounded pool
+ok 297 - leases only the strict outbox head and preserves its deterministic transaction ID across crash retry
+ok 298 - leases identity-bound critic messages and rejects altered, malformed or stripped authority
+ok 299 - leases the full bounded five-recipient assignment while rejecting overlong or tampered destinations
+ok 300 - consensus locale and final-state metadata survive the SQL outbox and reject tampering
+ok 301 - a blocked strict head intentionally halts all later publication, as does an active head lease
+ok 302 - head inspection distinguishes idle, waiting, available, blocked and corrupt state without leasing
+ok 303 - delivery digest rejects visible-time or record-kind relabeling under the same transaction ID
+ok 304 - recomputes every leased row and quarantines canonical corruption before send
+ok 305 - quarantines a canonical row whose real formatted Matrix envelope exceeds the runtime limit
+ok 306 - accepted, device-delivered and read are separate fenced transitions
+ok 307 - an invalid Matrix acceptance ID is rejected before touching durable state
+ok 308 - ingress receipt and work intent commit before ACK, then lease idempotent consumer work
+ok 309 - media ingress persists nullable body, reply relation and metadata but withholds ACK until durable consumption
+ok 310 - a blocked or corrupted existing ingress row cannot become durable ACK on replay
+ok 311 - persists a content-free rejected ingress receipt that is ACK eligible but never dispatchable
+ok 312 - invalid media stores one content-free rejection across replay and never becomes work
+ok 313 - media expiry durably replaces only the exact unconsumed ready intent before ACK
+ok 314 - media expiry leaves an already-consumed durable intent intact and ACK eligible
+ok 315 - replayed rejection requires its exact content-free code and canonical ACK timestamp
+ok 316 - an unconsumed media intent remains the strict ingress head and cannot be leased
+ok 317 - media consumption cannot mutate a rejected row while ACK evidence remains lease-safe
+ok 318 - quarantines a durable ingress intent containing an ephemeral handle or mismatched metadata
+ok 319 - schema uses binary comparison for byte-significant IDs, hashes, keys and lease owners
+ok 320 - publication permit holds the cross-process lock through Matrix acceptance persistence
+ok 321 - generation fence refuses an unresolved lease and never invokes cancellation
+ok 322 - generation fence runs pending-only cancellation while still holding the lock
+ok 323 - lock timeout fails closed without running the callback
+ok 324 - an indeterminate acquisition response destroys the connection
+ok 325 - a failed lock release destroys the connection instead of pooling a held lock
+ok 326 - GoDaddy state storage is unavailable without an explicit published role
+ok 327 - MySQL storage commits only whole transactions and never creates schema
+ok 328 - malformed Google client secret fails configuration before constructing the provider
+ok 329 - Google owner configuration requires explicit enablement, exact Gmail and separate protected configuration
+ok 330 - Google owner flow persists only hashed bindings and AEAD-encrypted verifier, then a separate local session
+ok 331 - Google owner start rejects missing, wrong, duplicate, tampered and expired browser-intent bindings
+ok 332 - Google callback accepts its RFC 9207 issuer metadata without bypassing owner verification
+    ok 1 - reject issuer ""
+    ok 2 - reject issuer "accounts.google.com"
+    ok 3 - reject issuer "http://accounts.google.com"
+    ok 4 - reject issuer "https://accounts.google.com/"
+    ok 5 - reject issuer "https://accounts.google.com.attacker.test"
+    ok 6 - reject issuer "https://accounts.google.com?ignored=true"
+    ok 7 - reject issuer "https://ACCOUNTS.GOOGLE.COM"
+ok 333 - Google callback rejects non-exact or duplicate issuer metadata before exchange
+ok 334 - Google cancellation with issuer metadata consumes its transaction without token exchange
+    ok 1 - duplicate state
+    ok 2 - duplicate code
+    ok 3 - missing state
+    ok 4 - missing code and error
+    ok 5 - code and error
+    ok 6 - unknown field
+    ok 7 - oversized code
+    ok 8 - code whitespace
+    ok 9 - oversized response
+    ok 10 - wrong state format
+    ok 11 - duplicate optional metadata
+ok 335 - Google callback rejects invalid protocol parameters without exchanging a token
+ok 336 - Google callback state and transaction binding cannot move across browsers or be supplied twice
+ok 337 - Google cancel consumes its transaction, creates no grant and permits a fresh retry
+ok 338 - Concurrent Google callbacks commit one claim before exchange and deny replay after restart
+ok 339 - Google provider timeout/error consumes the claim without leaking errors or retrying the code
+ok 340 - Google transactions expire after lock wait and after network verification, without a late grant
+ok 341 - Only the preallowed verified email may bind the owner, and a different subject cannot rebind
+ok 342 - Malformed provider identity fails closed as a sanitized denial
+ok 343 - Google relogin rotates the browser session; logout revokes only that browser durably
+ok 344 - Revocation invalidates every session and in-flight claim, while unauthenticated revocation does not
+ok 345 - Google idle and absolute session expiry use fresh time after obtaining the database lock
+ok 346 - Google session cap rejects a seventeenth browser without evicting existing sessions
+ok 347 - Google session/config generation invalidates existing sessions and pending callbacks but preserves stable subject binding
+ok 348 - A callback from an old configuration cannot erase a new configuration's sessions after its network wait
+ok 349 - An explicit allowed-email configuration change retires old access and binds only the newly allowed owner
+    ok 1 - read
+    ok 2 - logout
+    ok 3 - revoke
+    ok 4 - callback
+    ok 5 - start
+ok 350 - Stale service reads, logout, revocation, callback and start never roll back a newly activated configuration
+ok 351 - Mutating a caller's configuration object cannot silently change the active owner boundary
+ok 352 - Failed configuration-activation commit rolls back and allows a retry without restarting the process
+ok 353 - Concurrent first-owner binding allows exactly one verified stable subject
+ok 354 - Concurrent logins cannot overbook the last session slot
+ok 355 - Late logout from a rotated session cannot revoke the new browser session
+ok 356 - A successful provider response cannot outlive transaction expiry while waiting for final commit
+ok 357 - Google action tokens bind purpose, current session, expiry, rotation and durable revocation
+ok 358 - Google browser limiter permits five start/finish attempts per minute and survives restart
+ok 359 - Invalid-state callbacks count toward the same browser limiter without storing attacker-controlled transaction IDs
+ok 360 - Google global limiter survives new browser bindings and restarts, with bounded retry
+ok 361 - Untrusted-browser floods do not revoke or lock out an already established owner session
+ok 362 - Google outstanding transactions are capped at 128 and expired transactions reclaim capacity
+ok 363 - Tampered and swapped encrypted PKCE verifier cannot cause a provider exchange
+ok 364 - Legacy password-session namespace and malformed session cookies are never accepted
+ok 365 - GoDaddy owner-password configuration requires distinct strong Secrets
+ok 366 - GoDaddy owner-password service issues no secret-bearing cookie and binds a completed owner session to a canonical HTTPS origin
+ok 367 - GoDaddy owner session expires without a refresh path
+ok 368 - a login challenge is consumed once across concurrent services and restart, including a failed password
+ok 369 - owner session survives a process restart, but not logout, password or signing-key rotation
+ok 370 - fresh login rotates the browser's old session while retaining other owner devices
+ok 371 - idle expiry is refreshed by activity without extending the absolute lifetime
+ok 372 - password throttling survives new challenges and service restart, then permits recovery
+ok 373 - a storage outage or corrupt authorization state fails closed
+ok 374 - a burst of throttled challenges cannot extend cooldown by filling replay storage
+ok 375 - credential rotation releases stale session capacity immediately
+ok 376 - challenge and idle expiry are evaluated after waiting for the authorization transaction
+ok 377 - long transcripts preserve order with the real finite pool queue and competing reads
+ok 378 - GoDaddy registrar stores the canonical active session in its own MySQL namespace
+ok 379 - GoDaddy registrar bounds deadlock retries while taking the stable transaction lock first
+ok 380 - Stop fences pending and blocked message rows before adding its explicit control row
+ok 381 - GoDaddy registrar rolls back its MySQL confirmation when the outbox insert fails
+ok 382 - GoDaddy registrar rolls back content that exceeds the actual Matrix plaintext or formatted envelope
+ok 383 - bootstrap preserves safe discovery failures and does not write or replace a valid catalog
+ok 384 - bootstrap distinguishes empty models, unexpected exceptions and storage failures
+ok 385 - default Codex refresh/status never call, await or probe inactive Claude
+ok 386 - Astra verification absent, rejected or throwing keeps other Codex models and marks only Astra unavailable
+ok 387 - partial Codex refresh retains expired inactive evidence and historical default selection
+ok 388 - concurrent Claude and Codex refreshes serialize and preserve the most recent inactive Claude receipt
+ok 389 - subscription inspection exceptions return safe unavailable status or refresh failure
+ok 390 - Published Matrix wake route bypasses Settings only via its dedicated wake handler
+ok 391 - Matrix wake cannot activate in Preview or when not configured
+ok 392 - GoDaddy health reports Node liveness without claiming dependency readiness
+ok 393 - malformed and non-origin HTTP targets return 400 without terminating the server
+ok 394 - a rejected Settings response body becomes 500 while HTTP remains alive
+ok 395 - HTTP idle waits for the Settings response body, not just its headers
+ok 396 - GoDaddy health stays live while invalid configuration blocks dependent routes
+ok 397 - HTTP liveness remains available when asynchronous Matrix application startup fails
+ok 398 - a failed HTTP bind closes the already-constructed application runtime
+ok 399 - shutdown stops Matrix intake immediately but preserves MySQL until an active Settings request drains
+ok 400 - forced socket closure never tears providers or MySQL down under an unfinished Settings handler
+ok 401 - shutdown timeout configuration fails before mutating the server
+ok 402 - GoDaddy server preserves its health probe while Settings stays unavailable without configuration
+ok 403 - runtime and port validation are explicit
+ok 404 - GoDaddy keeps the production credential denylist aligned with the Worker
+ok 405 - state collation repair is a distinct owner-only same-origin CSRF action, not an additive-schema side effect
+ok 406 - collation migration errors are sanitized and never report success
+ok 407 - additive schema route requires owner, same origin and purpose CSRF; GET never creates tables
+ok 408 - Preview schema route is inert and database errors remain private
+ok 409 - Matrix diagnostics are read-only, owner-only, uncached, and project fixed fields only
+ok 410 - every owner surface binds its script URL to the exact current handler bytes
+ok 411 - Matrix prepare uses the HTML-selected versioned handler even when the legacy URL has an obsolete cached handler
+ok 412 - Matrix setup page and all setup effects require the same exact owner session and purpose-bound CSRF
+ok 413 - served owner script forwards only explicit setup fields and does not discard device/SAS confirmation data
+ok 414 - provider-specific catalog actions preserve Google auth and dispatch only the requested provider
+ok 415 - served catalog forms pass through the served browser script to the exact protected provider route
+ok 416 - an expired or missing catalog exposes saved Critic recovery controls without enabling an unverified save
+ok 417 - a first-time owner with no catalog gets a protected recovery page rather than an HTTP 503
+ok 418 - catalog failures identify the failing step without leaking details or clearing credentials
+ok 419 - unexpected catalog exceptions stay private and leave the Google session usable
+ok 420 - Google configuration and Published policy fail closed before a pool is created; password is not a fallback
+ok 421 - entry and GET start cannot exchange tokens or touch durable auth/application state
+ok 422 - Google login uses configured public origin despite internal Host, returns same-tab callback to a catalog-independent destination
+ok 423 - all protected bytes deny unknown grants, while callback failures clean the URL without exposing provider text
+ok 424 - start rejects null/wrong Origin, wrong metadata, missing/duplicate token and oversized/chunked body before exchange
+ok 425 - durable start limiter produces 429 with bounded retry and no new provider exchange
+ok 426 - callback throttling immediately cleans the callback URL and the final retry page returns429
+ok 427 - Settings page exposes only session-bound action tokens and CSRF refresh requires its own purpose token and bounded JSON
+ok 428 - runtime operations require independent purpose CSRF; login/logout do not change AI credentials
+ok 429 - revoke-all invalidates every browser grant, and session-bound action tokens do not cross browsers
+ok 430 - session expiry is enforced for protected assets without relying on browser cookie deletion
+ok 431 - database failures are sanitized and callback failures still remove the callback query
+ok 432 - Settings closes its bootstrap once, closes only its owned pool and preserves shared-pool ownership
+ok 433 - Google authorization uses only fixed identity scopes, browser binding, S256 and account selection
+ok 434 - Google provider fails closed for unsafe configuration without echoing configuration
+ok 435 - Google provider captures configuration instead of accepting later caller mutation
+ok 436 - Google provider verifies a locally signed ID token using trusted fixed-endpoint keys and returns identity only
+    ok 1 - header mutation 1
+    ok 2 - header mutation 2
+    ok 3 - header mutation 3
+    ok 4 - header mutation 4
+    ok 5 - header mutation 5
+    ok 6 - header mutation 6
+    ok 7 - header mutation 7
+    ok 8 - header mutation 8
+    ok 9 - header mutation 9
+    ok 10 - header mutation 10
+    ok 11 - header mutation 11
+    ok 12 - header mutation 12
+    ok 13 - header mutation 13
+    ok 14 - header mutation 14
+    ok 15 - header mutation 15
+    ok 16 - header mutation 16
+    ok 17 - header mutation 17
+    ok 18 - header mutation 18
+ok 437 - Google ID token rejects wrong cryptographic headers, access tokens and untrusted signatures
+    ok 1 - wrong issuer
+    ok 2 - issuer slash
+    ok 3 - issuer type
+    ok 4 - wrong audience
+    ok 5 - audience array
+    ok 6 - missing audience
+    ok 7 - wrong presenter
+    ok 8 - null presenter
+    ok 9 - unverified email
+    ok 10 - string verification
+    ok 11 - missing verification
+    ok 12 - missing email
+    ok 13 - non-string email
+    ok 14 - padded email
+    ok 15 - empty subject
+    ok 16 - missing subject
+    ok 17 - numeric subject
+    ok 18 - oversize subject
+    ok 19 - subject controls
+    ok 20 - wrong nonce
+    ok 21 - missing nonce
+    ok 22 - nonce type
+    ok 23 - expired now
+    ok 24 - expired past
+    ok 25 - missing expiry
+    ok 26 - string expiry
+    ok 27 - fractional expiry
+    ok 28 - expiry before issue
+    ok 29 - issued too far ahead
+    ok 30 - issued before transaction
+    ok 31 - missing issued-at
+    ok 32 - string issued-at
+    ok 33 - fractional issued-at
+    ok 34 - future not-before
+    ok 35 - not-before type
+ok 438 - Google token claim types, owner identity prerequisites, audience, freshness and nonce are strict
+ok 439 - Google code exchange validates bounded local inputs before network
+    ok 1 - provider error
+    ok 2 - error plus token
+    ok 3 - access token only
+    ok 4 - token type
+    ok 5 - non-object JSON
+    ok 6 - server failure
+    ok 7 - redirect
+    ok 8 - content type
+    ok 9 - invalid JSON
+    ok 10 - oversize length
+    ok 11 - bad length
+    ok 12 - actual oversize
+    ok 13 - misleading short length
+ok 440 - Google exchange denies malformed, oversized, wrong-content and redirect token responses without retry
+ok 441 - Google bounded reader cancels an overflowing stream even with no Content-Length
+ok 442 - Google denies a transport that claims it followed a redirect or returned a different endpoint
+    ok 1 - empty keys
+    ok 2 - key count
+    ok 3 - duplicate ID
+    ok 4 - wrong type
+    ok 5 - wrong algorithm
+    ok 6 - encryption key
+    ok 7 - non-RSA
+    ok 8 - missing exponent
+    ok 9 - unsafe exponent
+    ok 10 - invalid modulus
+    ok 11 - weak modulus
+    ok 12 - private key
+    ok 13 - external key URL
+    ok 14 - wrong key operations
+ok 443 - Google keys reject malformed, duplicate, private, weak or excessive key material
+ok 444 - Google key cache honors TTL/Age, coalesces concurrency and limits unknown-key refresh
+ok 445 - Google no-store/expired keys are not reused and a new flow recovers after a bounded failure
+ok 446 - Google key cache never exceeds one hour even if the provider advertises longer freshness
+ok 447 - Google key cache does not invent freshness from missing, conflicting or expired cache metadata
+ok 448 - Google rechecks token expiry after a slow key fetch before returning identity
+ok 449 - Google token transport and body stalls have an overall 10-second deadline and no retries
+ok 450 - Google JWKS stalls remain closed, cancel network and recover only through another exchange
+ok 451 - derives one stable ledger-safe event ID from short or mixed-case provider references
+ok 452 - concurrent role clients share exactly one managed-OAuth connection initialization
+ok 453 - requires the documented initialize then initialized handshake before Codex app-server requests
+ok 454 - does not surface raw server error bodies and cancels unresolved requests on close
+ok 455 - whole-message privacy gate recognizes assigned secrets and labeled identifiers without treating ordinary business numbers as credentials
+ok 456 - accepts only an encrypted event from a crypto-store-verified owner device in the exact private room
+ok 457 - blocks room drift, wrong room/sender, unencrypted events and secret-like content
+ok 458 - fails closed for unverified, revoked, unknown or unavailable owner-device trust
+ok 459 - rejects an ingress body above 64 KiB by UTF-8 bytes before durable storage
+ok 460 - formats only a registrar-confirmed role, time and complete body for Matrix delivery
+ok 461 - shows every consultant and Critic under their exact registered role
+ok 462 - labels automatic notices as head coordination without changing stored identity or retry transaction
+ok 463 - role colours are opt-in, accessible seven-slot headers with mandatory emoji/plain text and immutable body
+ok 464 - candidate and exact approved final remain visible but have distinct localized stage headers
+ok 465 - enforces the actual plaintext and formatted Matrix runtime byte envelopes without truncation
+ok 466 - renders the closed Markdown subset and keeps injected HTML inert
+ok 467 - keeps the legacy HTML output byte-identical when the body contains no Markdown
+ok 468 - persists a durable work intent before ACK eligibility and never dispatches inline
+ok 469 - durably rejects secret-like sidecar input without storing its plaintext
+ok 470 - preserves nullable media intent and reply relation without persisting handles, and ACKs only after durable media consumption
+ok 471 - rejects media paths and out-of-contract media before durable receipt creation
+ok 472 - drains one leased record with its stored transaction ID and records homeserver acceptance only
+ok 473 - retries transient room-state failure with bounded backoff but blocks confirmed drift for reconciliation
+ok 474 - browser verifier checks actual shared-mount positive body and six denial bodies without transmitting content
+ok 475 - generic, unsafe or malformed control results make no private requests
+ok 476 - exact safe missing_file control still checks all six private responses and labels only visibility
+ok 477 - Preview rejects login/redirect/errors, overlong bodies, leaked canaries/ELF/binding and opaque results
+ok 478 - fixed Preview asset binds opener/origin/nonce and rejects service-worker synthetic HTTP
+ok 479 - Preview verifier route is static GET-only and cannot accept state or credentials
+ok 480 - encrypted media is durable before ACK, restart/replay stable, and caller releases owned plaintext
+ok 481 - failed transaction yields no ACK receipt or partial encrypted staging
+ok 482 - hash, MIME, exact manifest order, event binding, and count are validated before storage
+ok 483 - 20 MiB per object, 64 MiB aggregate and four-object bounds reject before copying
+ok 484 - large permitted media is encrypted in bounded SQL chunks
+ok 485 - ciphertext, GCM tag, metadata expiry, and wrong-key tampering never returns plaintext
+ok 486 - 15 minute expiry clears encrypted chunks, keeps a stable tombstone and does not resurrect on replay
+ok 487 - rejection and cancellation erase only the exact pending event, never resurrect after replay
+ok 488 - accessible secrets are rejected without storing content; consent cannot bypass this
+ok 489 - mismatched load manifests fail closed and close zeroes outstanding plaintext
+ok 490 - pending event count is bounded across callers sharing the same database
+ok 491 - Node22 worker extracts actual text PDF with no native canvas or external service
+ok 492 - extracted compressed secret is blocked before provider handoff
+ok 493 - scripts, escaped script names, XFA, embedded files and encrypted PDFs are refused
+ok 494 - scanned or mixed image-only pages are not silently omitted
+ok 495 - PDF page and UTF8 output limits fail without returning partial text
+ok 496 - hard worker timeout and cancellation terminate before admitting the next extraction
+ok 497 - PDF worker concurrency is bounded and cannot be expanded through caller options
+ok 498 - a non-mutating owner command cannot swallow a concurrent direct answer or strand the job
+ok 499 - English first message localizes consent before provider work and the model confirms persistent language
+ok 500 - ambiguous first text asks one language question and never starts models before locale and consent
+ok 501 - an additional locale is not forced to English: consent precedes content-free translation and source-bound cache survives the next turn
+ok 502 - bound-consensus image observation is recorded verbatim without fake prior head authority and reaches the executor
+ok 503 - quotes cannot switch confirmed language; explicit owner choice changes future messages without rewriting history
+ok 504 - Stop while snapshot preparation waits cannot leave a new active registrar session behind
+ok 505 - temporary readiness loss leaves an explicit resumable interruption, not a running job without execution
+ok 506 - a stale leader may not stop the replacement leader's new generation
+ok 507 - the execution deadline asks for continuation even when the provider ignores cancellation
+ok 508 - ordinary consultation requires one-time consent and does not ask again for a later task
+ok 509 - declining consent clears the held task without preparing settings or invoking the head
+ok 510 - replaying the same Matrix event during and after execution invokes the head exactly once
+ok 511 - uncertain running checkpoint never auto-relaunches; explicit continuation preserves snapshot and prior evidence
+ok 512 - answering a head clarification keeps the logical session, original settings and full question context
+ok 513 - Stop prevents a late provider final even when the provider resolves successfully after cancellation
+ok 514 - a committed normal close at the crash checkpoint is recovered as completed without another provider call
+ok 515 - confirmed attachments remain available through clarification and are erased only after final completion
+ok 516 - a native reply to the bot clarification joins only its confirmed logical session
+ok 517 - attachments across separate messages cannot exceed the total byte bound or poison durable control state
+ok 518 - manual Matrix device handoff passes its credential-free Python regression suite
+ok 519 - actual HTTP server serves only the fresh harmless public control, not arbitrary assets
+ok 520 - control reader rejects missing, stale, malformed, oversized, linked and unsafe files
+ok 521 - safe marker diagnostics distinguish missing or unsafe ancestors without revealing paths
+ok 522 - ENOENT after an ancestor is replaced cannot be classified as missing_file
+ok 523 - control route rejects state-bearing requests and does not configure stateless Preview or open a pool
+ok 524 - a real child creates private SDK-style files and host umask is restored
+ok 525 - explicit preparation installs both exact binaries privately and creates empty dedicated dirs
+ok 526 - inspection is read-only and does not turn missing installation into a provisioning action
+ok 527 - unsafe state diagnostics expose only fixed metadata labels and never repair or read state
+ok 528 - explicit repair only tightens the SDK media cache and preserves all bytes and inodes
+    ok 1 - unrelated
+    ok 2 - symlink
+    ok 3 - hardlink
+    ok 4 - directory
+    ok 5 - mode
+    ok 6 - ancestor
+    ok 7 - binding
+ok 529 - media repair refuses unrelated unsafe files, links, wrong modes, ancestors and absent binding before mutation
+ok 530 - preparation is idempotent, preserving binary inodes and existing encrypted data bytes/modes
+    ok 1 - personal-consultant-matrix-sidecar
+    ok 2 - personal-consultant-matrix-setup
+    ok 3 - provenance.json
+    ok 4 - release-manifest.json
+ok 531 - both source binaries and evidence are verified before any dedicated runtime/state directory is created
+    ok 1 - verification-only
+    ok 2 - image tag
+    ok 3 - source mismatch
+    ok 4 - wrong target
+    ok 5 - escape
+    ok 6 - duplicate
+    ok 7 - missing evidence
+ok 532 - rejects verification-only, unpinned builder, foreign source, path escape and duplicate binary manifests
+ok 533 - refuses an installed binary mismatch without overwriting either executable
+ok 534 - rejects unsafe existing directory permissions without chmod or any crypto mutation
+ok 535 - rejects group-readable existing crypto files without repairing or deleting them
+    ok 1 - source
+    ok 2 - runtime
+    ok 3 - crypto
+ok 536 - rejects symlink and ancestor path escapes without traversing their targets
+ok 537 - rejects wrong owner and noncanonical caller roots with safe content-free errors
+    ok 1 - source
+    ok 2 - installed
+ok 538 - rejects multiply-linked source binaries and installed executables
+ok 539 - live isolation proof checks 12 fixed host paths without credentials/redirects and removes its exact canaries
+ok 540 - isolation proof resumes through the existing binding without touching crypto contents or inserting files
+ok 541 - nonempty unknown crypto state is neither guessed fresh nor repaired
+ok 542 - partial fresh provisioning is classified only from its private intent marker and HTTP-probed without crypto writes
+ok 543 - bound marker takes precedence over an unfinished intent; unsafe markers never authorize recovery
+ok 544 - a nonempty media spool fails closed without probes or new files
+ok 545 - resume proof rejects binding replacement during checks without deleting or overwriting it
+    ok 1 - 200
+    ok 2 - redirect
+    ok 3 - oversized
+    ok 4 - ELF
+    ok 5 - binding disclosure
+    ok 6 - intent disclosure
+    ok 7 - network
+ok 546 - HTTP 200, redirects, oversized denial bodies, ELF data and network failures all fail closed and clean canaries
+ok 547 - a misleading 404 containing the actual harmless canary is rejected
+ok 548 - authenticated browser proof retains exact files, checks Published control twice and cleans owned probes
+ok 549 - browser fallback cannot override Published denial failure, Preview leakage, redirects or server errors
+ok 550 - real HTTP with separate Published and stateless Preview roots verifies exact private paths without shared-file assumptions
+ok 551 - safe Preview missing_file cannot waive an invalid Published positive control before or after browser proof
+ok 552 - owner diagnostics identify a failed probe without returning URL, canary, response or network error text
+ok 553 - browser abort, mismatched challenge and tampered retained canary never grant readiness
+ok 554 - canary cleanup refuses to delete a replacement inode and reports the failure
+ok 555 - release builder pins the platform manifest and exact toolchain
+ok 556 - release provenance binds the authenticated workflow run to its exact checkout
+ok 557 - ELF verification accepts static stripped x86_64 including static PIE
+ok 558 - ELF verification rejects dynamic interpreter, DT_NEEDED and symbol tables
+ok 559 - ELF verification rejects wrong architecture, malformed bounds and verification text artifacts
+ok 560 - two independently built binaries must be byte-identical, not merely valid ELF files
+ok 561 - SBOM and license inventory cover production/build closure without development-only crates
+ok 562 - release dependency evidence fails closed on incomplete graph and unpinned path/git dependencies
+ok 563 - release workflow remains separate from non-deployable verification and cannot deploy
+ok 564 - the actual shared Rust test includes resolve inside read-only provenance-bound release mounts
+ok 565 - header overlay verifies exact archive bytes and refuses path escapes, symlinks and missing entries
+ok 566 - Published setup mode is explicit and Preview cannot prepare files or start a child
+ok 567 - permission repair cannot be invoked without the exact diagnostic or during active setup
+ok 568 - safe native errors retain actionable guidance but arbitrary SDK text is never exposed
+ok 569 - fresh initialization requires verified release and separate successful HTTP isolation first
+ok 570 - failed isolation never unlocks credential-bearing child execution
+ok 571 - failed preparation renders content-free probe diagnostics without unlocking setup
+ok 572 - a failed repeat preparation revokes the previous successful view and keeps exact isolation errors
+ok 573 - existing state cannot be freshly initialized; exact incomplete intent selects native recovery, bound state does not
+ok 574 - dead setup revokes old SAS and supports a checked existing-store resume
+ok 575 - a stale SAS error removes its confirmation token but preserves device status
+ok 576 - cancelling a browser challenge cannot conceal a temporary-file cleanup failure
+ok 577 - pending browser check is bound to the initiating owner session and cannot start a child or replay
+ok 578 - shutdown during either preparation or initial probes cannot create a later browser challenge
+ok 579 - setup status projects only public fingerprints and strict known fields
+ok 580 - setup comparison has an exact flow, bounded SAS and one-time comparison token
+ok 581 - setup transport requires handshake, sends exact explicit commands, and does not inherit host credentials
+ok 582 - unexpected child response fields fail closed instead of leaking into owner UI
+ok 583 - final flushed status is accepted when child exit arrives before stdout drains
+ok 584 - owner setup markup shows codes for comparison, no secret inputs or automatic confirmation
+ok 585 - a near-expiry process refuses new SAS without sending an invitation
+ok 586 - catalog actions submit the selected provider unchanged, including the legacy Codex-default URL
+ok 587 - invalid catalog actions fail closed with visible feedback, not a silent ignored click
+ok 588 - explicit Google action uses cors with no-referrer, credentials and no automatic redirects, then navigates this tab
+ok 589 - the client rejects action origin/path changes and redirect destinations outside its explicit allowlist
+ok 590 - logout may navigate only to a clean local destination, never to Google or a query-bearing destination
+ok 591 - an operations HTML result keeps its one-time code in the current document and moves focus to its heading
+ok 592 - failed and throttled actions show bounded messages, reenable their buttons and never disclose server errors
+ok 593 - a second submit while one action is pending does not start another OAuth transaction
+ok 594 - recognizes exact owner commands and leaves surrounding task text untouched
+ok 595 - translated controls remain exact standalone consent without accepting quotes, paragraphs or implied permission
+ok 596 - every registered application notice has seven explicit translations and unknown locales never silently default
+ok 597 - serves costs read-only, stops the active generation, and creates a fresh context without mixing it with the prior task
+ok 598 - does not close the existing context when fresh settings/subscription preflight is unavailable
+ok 599 - initializes one complete default revision and exposes explicit effective values
+ok 600 - migrates a prior shared-effort document into independent provider settings without inventing a fallback
+ok 601 - keeps a bounded idempotency ledger while preserving exact in-window replay
+ok 602 - revalidates the stored set against the current catalog without mutating it
+ok 603 - distinguishes no active session from an unavailable provider and exposes only a pinned safe summary
+ok 604 - writes exactly one full validated revision with an If-Match precondition
+ok 605 - rejects a stale revision without changing any persisted setting
+ok 606 - returns an idempotent replay, but rejects the same key with a different body
+ok 607 - reset is explicit, revalidates defaults and creates a single new revision
+ok 608 - allows only private subscription OAuth runtimes with the selected available models
+ok 609 - fails closed for API/PAYG environment material and paid Claude acceleration
+ok 610 - fails closed for auth, quota and runtime-model availability problems
+ok 611 - does not accept alternate auth modes or a non-private usage boundary
+ok 612 - maps staged, committed and tombstoned whole-session archive records to separate R2 paths
+ok 613 - pre-session controls use a private durable sequence without creating a consultation
+ok 614 - control deduplication survives a new registrar and binds both body and native reply
+ok 615 - controls preserve active, stopped and closed phases while ordinary messages stay fenced
+ok 616 - a control cannot carry model authority or borrow an ordinary message event
+ok 617 - concurrent controls, duplicate delivery and consultation allocation share the MySQL registrar gate
+ok 618 - failed control projection rolls back generation, ledger, transcript and sequence together
+ok 619 - normal close preserves pending output and is distinct from Stop or Critic approval
+ok 620 - owner revision advances only the technical generation and preserves immutable session context
+ok 621 - revision idempotency survives concurrency and later session closure without reopening it
+ok 622 - revision rejects missing, stale and invalid requests and rolls back a failed generation fence
+ok 623 - starts exactly one generation with an immutable settings snapshot
+ok 624 - appends only one verbatim confirmed message for an idempotent event
+ok 625 - rolls back confirmation and sequence when the transaction-local outbox projection fails
+ok 626 - rejects a duplicate event with a changed body
+ok 627 - includes the native reply relation in the idempotency fingerprint
+ok 628 - enforces the 64 KiB UTF-8 confirmed-body boundary before storage
+ok 629 - stop and new task fence late output from the obsolete generation
+ok 630 - canonical order is monotonic and returned messages cannot be edited
+ok 631 - uses one durable per-owner ledger across Durable Object instance lifetimes
+ok 632 - seals a runtime credential before it reaches persistent storage
+ok 633 - fails closed when a sealed record is tampered with or opened under a different root
+ok 634 - clears only the requested sealed credential
+ok 635 - accepts only an explicit supported runtime mode
+ok 636 - fails closed for an unknown runtime mode
+ok 637 - fails closed whenever a forbidden provider credential/configuration is present
+ok 638 - content-free translation uses only exact selected subscription model, private isolated context and preserved commands
+ok 639 - translation rejects missing keys, changed command placeholders, HTML, URL and unchanged English for a different locale
+ok 640 - no translation turn for forbidden API credentials, invalid locale, abort or changed catalog mapping
+ok 641 - cached translation is source-hash and locale bound with no partial catalog acceptance
+ok 642 - permits a new session only when both live subscription runtimes exactly match the immutable snapshot
+ok 643 - fails before launch for catalog drift, forbidden credentials, Claude Fast Mode and a runtime effort downgrade
+ok 644 - Codex-selected preflight never calls missing, failing, or hung Claude and checks the independent critic effort
+ok 645 - matching product labels cannot hide a runtime model substitution
+ok 646 - normalises configured Access identifiers but never invents an owner identity
+ok 647 - refuses an incomplete, non-Access or non-HTTPS protected-route configuration
+ok 648 - GET returns the full current/default/effective model with no-store and ETag
+ok 649 - PUT requires the mutation guard and preserves the old revision on denial
+ok 650 - PUT rejects a partial payload and atomically saves a valid full object
+ok 651 - reset requires explicit confirmation and has a distinct endpoint
+ok 652 - settings endpoints distinguish unsupported methods, unknown routes and oversized bodies
+ok 653 - the protected static-asset build emits only the canonical Settings CSS and browser client
+ok 654 - settings browser client is valid JavaScript and carries only the full-object protected mutation flow
+ok 655 - switching Critic providers retains both drafts, leaves head untouched, and performs no autosave
+ok 656 - a null Critic branch is not silently populated from head or the first catalog model
+ok 657 - missing Claude retains its unavailable choices while Codex Critic remains usable
+ok 658 - a fresh provider receipt cannot hide an expired overall catalog
+ok 659 - switching models retains an unsupported effort visibly and blocks saving until explicit correction
+ok 660 - accepts a complete settings set backed by both provider capability maps
+ok 661 - rejects arbitrary model text and partial settings objects
+ok 662 - blocks an unavailable effort for its own provider rather than silently changing it
+ok 663 - fails closed for untrusted or stale capability receipts
+ok 664 - validates catalog defaults through the same whole-set guard
+ok 665 - all speed presets retain the non-negotiable consilium invariants and forbid paid acceleration
+ok 666 - creates a deeply immutable snapshot that preserves its catalog version
+ok 667 - MVP presets bound specialists and time while explicitly supplied historical policies stay unresolved
+ok 668 - the Worker-to-DO client passes a typed receipt on a private request, never through browser input
+ok 669 - one verified local gateway wires the settings page and API to the same durable settings object
+ok 670 - the verified gateway still refuses an unsafe mutation and unsupported method
+ok 671 - an Access-verified same-origin request can renew CSRF without persisting or auto-using the token
+ok 672 - orders the verified Claude family by exact model capability, not alias discovery order
+ok 673 - settings page has exactly three labelled groups and only catalog-provided model names
+ok 674 - save is disabled without a whole valid changed set and becomes available for one
+ok 675 - access denial renders no settings values, selectors, credentials or sign-in form
+ok 676 - unverified access receives no protected settings value or selector
+ok 677 - verified access receives the settings document with protective browser headers
+ok 678 - Google owner controls carry separate purpose tokens without altering the three settings groups
+ok 679 - verified Astra and Extra High are labelled in each independent Codex role without inventing options
+ok 680 - missing Claude does not hide the provider selector or block a manually selected valid Codex Critic
+ok 681 - unavailable saved Critic model and effort remain explicit instead of selecting defaults
+ok 682 - a never-configured Critic branch requires an explicit model choice
+ok 683 - server-rendered stale provider warnings agree with the form validity before JavaScript runs
+ok 684 - worker fails closed when its runtime environment is invalid
+ok 685 - worker has no public health or settings route before the private Access boundary is configured
+ok 686 - worker fails closed for a protected route without a complete Access configuration
+ok 687 - worker gives a protected asset to exactly the signed owner and still applies no-store headers
+ok 688 - worker never uses the static binding before the Access assertion verifies
+ok 689 - the local Worker vertical slice serves Settings and commits one CSRF/CAS-protected complete set through its DO boundary
+# tests 882
+# pass 882
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7959.630417
+> personal-ai-consulting-group@0.1.0 check:environment
+> node --experimental-strip-types scripts/check-forbidden-runtime-env.mjs
+environment policy: passed

@@ -5,6 +5,7 @@ import { createConsultationLeadership } from "./consultation-leadership.ts";
 import { createMySqlMatrixConsultationMediaStore, type MatrixConsultationMediaStore } from "./matrix-consultation-media.ts";
 import { createConsultationMediaAdapter } from "./consultation-media-adapter.ts";
 import { matrixSetupEnabled } from "./matrix-setup-operations.ts";
+import { createMatrixWakeGateway, parseMatrixWakeConfiguration } from "./matrix-wake.ts";
 import { parseRuntimeEnvironment } from "../runtime/environment.ts";
 import {
   createGoDaddyMatrixService,
@@ -36,6 +37,7 @@ export type GoDaddyApplicationRuntime = Readonly<{
   consultationService?: MatrixConsultationService;
   runConsilium?: (request: GoDaddyConsiliumRequest) => Promise<GoDaddyConsiliumResult>;
   start: () => Promise<void>;
+  handleMatrixWake?: (request: Request) => Promise<Response>;
   stop: () => Promise<void>;
 }>;
 
@@ -218,11 +220,26 @@ export function createGoDaddyApplicationRuntime(
     return stopPromise;
   };
 
+  const wakeConfiguration = parseMatrixWakeConfiguration(environment);
+  const wakeGateway = wakeConfiguration === undefined ? undefined : createMatrixWakeGateway({
+    configuration: wakeConfiguration,
+    now: () => now().getTime(),
+    async wake(): Promise<boolean> {
+      if (stopping || !configured) return false;
+      await start();
+      // Recheck/start the same service; its generation fencing, retry due time
+      // and single-flight initialization prevent overlapping sync processes.
+      await createdMatrixService.start();
+      return !stopping && createdMatrixService.getReadiness().ready;
+    }
+  });
+
   return Object.freeze({
     configured,
     settings,
     registrarRuntime,
     matrixService: createdMatrixService,
+    ...(wakeGateway === undefined ? {} : { handleMatrixWake: wakeGateway.handle }),
     ...(consultationService === undefined ? {} : { consultationService }),
     async runConsilium(request: GoDaddyConsiliumRequest): Promise<GoDaddyConsiliumResult> {
       if (stopping || settings.consilium === undefined) return { ok: false, code: "runtime_unavailable" };

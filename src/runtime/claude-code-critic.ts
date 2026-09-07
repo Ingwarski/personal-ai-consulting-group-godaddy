@@ -1,4 +1,5 @@
-import type { ConsiliumAgentRuntime, ConsiliumEvidence, ConsiliumPhase, RuntimeEmission } from "../consilium/router.ts";
+import type { ConsiliumAgentRuntime, ConsiliumEvidence, ConsiliumRuntimeInput, RuntimeEmission } from "../consilium/router.ts";
+import { consensusPrompt, parseConsensusOutput } from "../consilium/consensus-prompts.ts";
 import type { AgentRegistration } from "../consilium/roster.ts";
 import type { ProviderReadiness } from "./provider-preflight.ts";
 import type { ProviderModelCapability, ProviderReasoningEffort } from "../settings/types.ts";
@@ -88,13 +89,7 @@ export class ClaudeCodeCriticRuntime implements ConsiliumAgentRuntime {
     this.#signal = input.signal;
   }
 
-  async run(input: Readonly<{
-    phase: ConsiliumPhase;
-    sessionGeneration: number;
-    task: string;
-    assignment: string;
-    evidence: readonly ConsiliumEvidence[];
-  }>, emit: (message: RuntimeEmission) => Promise<void>): Promise<void> {
+  async run(input: ConsiliumRuntimeInput, emit: (message: RuntimeEmission) => Promise<void>): Promise<void> {
     if (this.#signal?.aborted || input.phase !== "critique" || !nonEmpty(input.task) || !nonEmpty(input.assignment) || input.evidence.length < 2) {
       throw new SafeConsiliumFailure("invalid_runtime_emission");
     }
@@ -114,18 +109,20 @@ export class ClaudeCodeCriticRuntime implements ConsiliumAgentRuntime {
       modelId: model.productId,
       runtimeModelId: model.runtimeModelId,
       reasoningEffort: this.#reasoningEffort,
-      prompt: criticPrompt(input.task, input.assignment, input.evidence),
+      prompt: input.consensus === undefined ? criticPrompt(input.task, input.assignment, input.evidence) : consensusPrompt(this.registration.role, input),
       ...(this.#signal === undefined ? {} : { signal: this.#signal })
     });
     const messageId = await deriveInternalEventId("claude", completed.turnRef);
     if (this.#signal?.aborted || messageId === undefined || !nonEmpty(completed.body)) {
       throw new SafeConsiliumFailure("claude_invalid_completion");
     }
+    const content = input.consensus === undefined ? { body: completed.body } : parseConsensusOutput(completed.body, input);
+    if (content === undefined) throw new SafeConsiliumFailure("claude_invalid_completion");
     await emit({
       messageId,
       kind: "critique",
       toAgentId: this.#headAgentId,
-      body: completed.body
+      ...content
     });
   }
 

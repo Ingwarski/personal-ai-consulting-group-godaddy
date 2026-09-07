@@ -7,6 +7,11 @@ import { CriticGatedFinalizer } from "../consilium/final-recommendation.ts";
 import type { CodexTurnImage } from "../runtime/codex-thread-client.ts";
 import type { GoDaddyRegistrarRuntime } from "./registrar-runtime.ts";
 import type { RuntimeBootstrap } from "./runtime-bootstrap.ts";
+import type { SpecialistAssignment } from "../consilium/consultant-roles.ts";
+import { canonicalSessionLanguage } from "../consilium/language.ts";
+import { isSessionId } from "../identity/ids.ts";
+import { translateServiceMessages } from "../runtime/service-message-translator.ts";
+import { extractContinuationImageEvidence } from "../runtime/consultation-image-evidence.ts";
 
 export type GoDaddyConsiliumRequest = Readonly<{
   sessionGeneration: number;
@@ -14,14 +19,20 @@ export type GoDaddyConsiliumRequest = Readonly<{
   head: ConsiliumRole;
   specialists: readonly ConsiliumRole[];
   critic: ConsiliumRole;
+  taskId?: string;
+  taskDigest?: string;
+  language?: string;
+  assignments?: readonly SpecialistAssignment[];
   signal?: AbortSignal;
 }>;
 export type GoDaddyConsiliumResult = PreparedConsiliumExecutionResult | Readonly<{
   ok: false;
   code: "runtime_unavailable" | "session_unavailable" | "session_busy" | "invalid_task" | "catalog_unavailable" | "prepare_failed" | "speed_policy_unresolved";
 }>;
-export type GoDaddyConsultationPlanRequest = Pick<GoDaddyConsiliumRequest, "sessionGeneration" | "task" | "signal"> & Readonly<{ images?: readonly CodexTurnImage[] }>;
+export type GoDaddyConsultationPlanRequest = Pick<GoDaddyConsiliumRequest, "sessionGeneration" | "task" | "signal" | "language" | "taskId"> & Readonly<{ images?: readonly CodexTurnImage[] }>;
 export type GoDaddyConsultationPlanResult = ConsultationIntakeResult | Exclude<GoDaddyConsiliumResult, { ok: true }>;
+type ServiceTranslationResult = Awaited<ReturnType<typeof translateServiceMessages>>;
+type RuntimeOperationResult = GoDaddyConsiliumResult | GoDaddyConsultationPlanResult | ServiceTranslationResult;
 
 /** Internal execution boundary, not a new HTTP entry point. The authorized
  * dispatcher supplies task/roles; the immutable snapshot comes ONLY from the
@@ -34,11 +45,14 @@ export function createGoDaddyConsiliumRuntime(input: Readonly<{
   environment: Record<string, unknown>;
   now: () => Date;
 }>) {
-  const running = new Map<number, Readonly<{ abort: AbortController; completion: Promise<GoDaddyConsiliumResult | GoDaddyConsultationPlanResult> }>>();
+  const running = new Map<number, Readonly<{ abort: AbortController; completion: Promise<RuntimeOperationResult> }>>();
   let closing = false;
 
   const execute = async (request: GoDaddyConsiliumRequest, signal: AbortSignal): Promise<GoDaddyConsiliumResult> => {
     if (signal.aborted) return { ok: false, code: "runtime_unavailable" };
+    const adaptive = request.taskId !== undefined || request.taskDigest !== undefined || request.language !== undefined || request.assignments !== undefined;
+    if (adaptive && (!isSessionId(request.taskId) || canonicalSessionLanguage(request.language) !== request.language ||
+      request.language === undefined || request.assignments === undefined)) return { ok: false, code: "invalid_task" };
     const session = await input.registrarRuntime.registrar.getActiveSession();
     if (session === undefined || session.generation !== request.sessionGeneration || session.phase !== "active") return { ok: false, code: "session_unavailable" };
     const parsedSettings = parseHistoricalOwnerSettings(session.settingsSnapshot.settings);
@@ -70,13 +84,28 @@ export function createGoDaddyConsiliumRuntime(input: Readonly<{
     const prepared = await launcher.prepare({ snapshot, capabilityReceipt: receipt,
       head: request.head, specialists: request.specialists, critic: request.critic, signal });
     if (!prepared.ok) return { ok: false, code: "prepare_failed" };
-    return executePreparedConsilium({ prepared: prepared.value, sessionGeneration: session.generation, task: request.task, signal });
+    return executePreparedConsilium({ prepared: prepared.value, sessionGeneration: session.generation, task: request.task, signal,
+      ...(adaptive ? { taskId: request.taskId!, language: request.language!, assignments: request.assignments!,
+        ...(request.taskDigest === undefined ? {} : { taskDigest: request.taskDigest }) } : {}) });
   };
 
   const plan = async (request: GoDaddyConsultationPlanRequest, signal: AbortSignal): Promise<GoDaddyConsultationPlanResult> => {
     if (signal.aborted) return { ok: false, code: "runtime_unavailable" };
     const session = await input.registrarRuntime.registrar.getActiveSession();
     if (session === undefined || session.generation !== request.sessionGeneration || session.phase !== "active") return { ok: false, code: "session_unavailable" };
+    const boundTask = await input.registrarRuntime.registrar.getConsensusTask(session.generation);
+    let retainedPlan: Extract<ConsultationIntakeResult, { kind: "consilium" }> | undefined;
+    if (boundTask !== undefined) {
+      if (request.taskId !== boundTask) return { ok: false, code: "invalid_task" };
+      const previous = await input.registrarRuntime.registrar.getConsensus(boundTask);
+      if (previous === undefined) return { ok: false, code: "session_unavailable" };
+      // Continue reuses the durable task roster and individual assignments;
+      // re-running intake must never reset counts by inventing a fresh task.
+      retainedPlan = { ok: true, kind: "consilium", language: request.language ?? previous.language,
+        head: previous.head, specialists: previous.specialists, critic: previous.critic,
+        assignments: previous.assignments, extractedEvidence: "" };
+      if (!request.images?.length) return retainedPlan;
+    }
     const settings = parseHistoricalOwnerSettings(session.settingsSnapshot.settings);
     if (!settings.ok) return { ok: false, code: "session_unavailable" };
     const snapshot = Object.freeze({ ...session.settingsSnapshot, settings: settings.value });
@@ -93,12 +122,19 @@ export function createGoDaddyConsiliumRuntime(input: Readonly<{
     if (receipt === undefined) return { ok: false, code: "catalog_unavailable" };
     const codex = await input.bootstrap.getCodexThreadClient?.();
     if (codex === undefined) return { ok: false, code: "runtime_unavailable" };
+    if (retainedPlan !== undefined) {
+      const extracted = await extractContinuationImageEvidence({ task: request.task, language: retainedPlan.language,
+        images: request.images!, snapshot, capabilityReceipt: receipt, codex,
+        environment: input.environment, now: input.now(), signal });
+      return extracted.ok ? { ...retainedPlan, extractedEvidence: extracted.evidence } : extracted;
+    }
     return planConsultation({ task: request.task, snapshot, capabilityReceipt: receipt, codex,
+      ...(request.language === undefined ? {} : { language: request.language }),
       ...(request.images === undefined ? {} : { images: request.images }),
       environment: input.environment, now: input.now(), maximumSpecialists: 2 + policy.maxOptionalSpecialists.value, signal });
   };
 
-  const launch = <T extends GoDaddyConsiliumResult | GoDaddyConsultationPlanResult>(request: GoDaddyConsultationPlanRequest,
+  const launch = <T extends RuntimeOperationResult>(request: GoDaddyConsultationPlanRequest,
     operation: (signal: AbortSignal) => Promise<T>): Promise<T | Exclude<GoDaddyConsiliumResult, { ok: true }>> => {
     if (closing) return Promise.resolve({ ok: false, code: "runtime_unavailable" });
     if (!Number.isSafeInteger(request.sessionGeneration) || request.sessionGeneration < 1 ||
@@ -117,6 +153,20 @@ export function createGoDaddyConsiliumRuntime(input: Readonly<{
   };
 
   return Object.freeze({
+    translateServiceMessages(request: Readonly<{ sessionGeneration: number; language: string; signal?: AbortSignal }>) {
+      // App-authored UI strings only. The worker invokes this after consent;
+      // no owner task, image, history or document enters the translation turn.
+      return launch({ ...request, task: "Translate application interface strings." }, async signal => {
+        const session = await input.registrarRuntime.registrar.getActiveSession();
+        if (session?.generation !== request.sessionGeneration || session.phase !== "active") return { ok: false as const, code: "session_unavailable" as const };
+        const settings = parseHistoricalOwnerSettings(session.settingsSnapshot.settings);
+        const receipt = await input.bootstrap.loadCatalog();
+        const codex = await input.bootstrap.getCodexThreadClient?.();
+        if (!settings.ok || receipt === undefined || codex === undefined) return { ok: false as const, code: "runtime_unavailable" as const };
+        return translateServiceMessages({ language: request.language, snapshot: { ...session.settingsSnapshot, settings: settings.value },
+          capabilityReceipt: receipt, codex, environment: input.environment, now: input.now(), signal });
+      });
+    },
     async canResumeFinalization(sessionGeneration: number): Promise<boolean> {
       return !closing && !running.has(sessionGeneration)
         && await readResumableFinalization(input.registrarRuntime.registrar, sessionGeneration) !== undefined;

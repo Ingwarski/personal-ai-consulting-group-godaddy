@@ -117,6 +117,7 @@ export class CodexHeadSynthesizer {
   }
 
   async synthesize(input: Readonly<{ sessionGeneration: number; task: string }>): Promise<HeadSynthesisResult> {
+    if (await this.#registrar.getConsensusTask(input.sessionGeneration) !== undefined) return { ok: false, code: "critic_not_confirmed" };
     const criticReceipt = await this.#registrar.getCriticReview(input.sessionGeneration);
     if (!criticReceiptMatches(criticReceipt, this.#critic, input.sessionGeneration)) return { ok: false, code: "critic_not_confirmed" };
     const evidence = await this.#registrar.getConfirmedMessages(input.sessionGeneration);

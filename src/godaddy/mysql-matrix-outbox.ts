@@ -335,7 +335,7 @@ async function jsonSha256(value: unknown): Promise<string> {
 
 const allowedConfirmedMessageKeys = new Set([
   "generation", "sequence", "internalEventId", "role", "visibleTime", "body", "bodyFormat",
-  "addressedTo", "bodyHash", "confirmedAt", "authority"
+  "addressedTo", "bodyHash", "confirmedAt", "authority", "language", "consensusKind"
 ]);
 
 async function matrixOutboxDeliveryFingerprint(record: Pick<
@@ -358,7 +358,9 @@ async function matrixOutboxDeliveryFingerprint(record: Pick<
       bodyFormat: message.bodyFormat,
       addressedTo: message.addressedTo ?? null,
       bodyHash: message.bodyHash,
-      confirmedAt: message.confirmedAt
+      confirmedAt: message.confirmedAt,
+      ...(message.language === undefined ? {} : { language: message.language }),
+      ...(message.consensusKind === undefined ? {} : { consensusKind: message.consensusKind })
     },
     replyToEventId: record.replyToEventId ?? null,
     createdAt: record.createdAt
@@ -380,6 +382,8 @@ async function validLeasedRecord(input: Readonly<{
   if (
     !isRecord(message) || !hasOnlyKeys(message, allowedConfirmedMessageKeys) ||
     (message.authority !== undefined && !isConfirmedAgentAuthority(message.authority)) ||
+    (message.language !== undefined && (typeof message.language !== "string" || !/^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8}){0,5}$/.test(message.language))) ||
+    (message.consensusKind !== undefined && !["assignment", "position", "proposal", "specialist_review", "critic_review", "head_review", "unresolved", "final", "safety_handoff"].includes(message.consensusKind)) ||
     message.generation !== input.generation || message.sequence !== input.sequence ||
     message.bodyFormat !== "markdown" || typeof message.role !== "string" || message.role.trim().length === 0 || message.role.length > 160 ||
     typeof message.internalEventId !== "string" || !/^[A-Za-z0-9:_-]{8,255}$/.test(message.internalEventId) ||
@@ -394,7 +398,7 @@ async function validLeasedRecord(input: Readonly<{
     // A shared head assignment can name five 160-character roles separated by
     // "; ". Other message kinds retain the single-recipient bound.
     (message.addressedTo !== undefined && (typeof message.addressedTo !== "string" ||
-      message.addressedTo.length > (message.authority?.kind === "assignment" ? 5 * 160 + 4 * 2 : 160))) ||
+      message.addressedTo.length > (message.language !== undefined ? 7 * 160 + 6 * 2 : message.authority?.kind === "assignment" ? 5 * 160 + 4 * 2 : 160))) ||
     matrixTransactionIdFor(message) !== input.transactionId
   ) return false;
   if (input.recordKind !== "message" && input.recordKind !== "control") return false;
@@ -402,6 +406,8 @@ async function validLeasedRecord(input: Readonly<{
   if (await confirmedMessageFingerprint({
     role: message.role,
     body: message.body,
+    ...(message.language === undefined ? {} : { language: message.language }),
+    ...(message.consensusKind === undefined ? {} : { consensusKind: message.consensusKind }),
     ...(message.addressedTo === undefined ? {} : { addressedTo: message.addressedTo }),
     ...(input.replyToEventId === undefined ? {} : { replyToEventId: input.replyToEventId }),
     ...(message.authority === undefined ? {} : { authority: message.authority })

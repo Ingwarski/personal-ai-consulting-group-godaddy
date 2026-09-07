@@ -826,7 +826,7 @@
   },
   "checker_contract_version": 1,
   "pipeline_version": "1.1.0",
-  "state": "awaiting-implementation-prompt",
+  "state": "implementing",
   "updated_at": "2026-09-07T21:48:15.061Z",
   "language": {
     "working_language": "uk",
@@ -19179,30 +19179,27 @@
     ]
   },
   "implementation_gate": {
-    "state": "awaiting_implementation_prompt",
+    "state": "authorized_for_phase3",
     "development_plan_hash": "271cc18ea9631b7846e687f2228a55e76058b5ebcfe49ef834a15038cc07164f",
     "product_scope_hash": "defc5e24f0dd91be42b984888b157137f4f1ed361459e70f42b832e18c957bd4",
     "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
     "awaiting_at": "2026-09-07T21:48:15.061Z",
-    "prompt_id": null,
-    "prompt_received_at": null,
-    "released_at": null,
-    "reason": "PI-CONSENSUS-20260908 reconciled and definition checks passed. Separate later implementation prompt required; this run changes SDD only, not production.",
+    "prompt_id": "implementation-consensus-20260908-01",
+    "prompt_received_at": "2026-09-07T22:05:54.903Z",
+    "released_at": "2026-09-07T22:05:54.983Z",
+    "reason": "New explicit implementation instruction after the unchanged plan pause; exact plan/scope/baseline revalidated. Local implementation only; live external changes excluded.",
     "supersedes": {
-      "state": "invalidated",
-      "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
+      "state": "awaiting_implementation_prompt",
+      "development_plan_hash": "271cc18ea9631b7846e687f2228a55e76058b5ebcfe49ef834a15038cc07164f",
+      "product_scope_hash": "defc5e24f0dd91be42b984888b157137f4f1ed361459e70f42b832e18c957bd4",
       "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
-      "awaiting_at": "2026-09-05T23:38:24.056Z",
-      "prompt_id": "implementation-matrix-connection-20260906-01",
-      "prompt_received_at": "2026-09-06T12:10:02Z",
-      "released_at": "2026-09-06T12:10:02Z",
-      "prompt_receipt": {
-        "path": "forge/implementation-prompt-matrix-connection-20260906.json",
-        "content_hash": "70634797eefe54e94ce7497da2c86ccff5fa054a6d532bb8a949ade701cbd24e"
-      },
-      "reason": "PI-CONSENSUS-20260908 змінює ролі, делегування, мову, консенсус і автономний Matrix; попередній prompt не дозволяє реалізацію нового плану.",
+      "awaiting_at": "2026-09-07T21:48:15.061Z",
+      "prompt_id": null,
+      "prompt_received_at": null,
+      "released_at": null,
+      "reason": "PI-CONSENSUS-20260908 reconciled and definition checks passed. Separate later implementation prompt required; this run changes SDD only, not production.",
       "supersedes": {
-        "state": "authorized_for_phase3",
+        "state": "invalidated",
         "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
         "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
         "awaiting_at": "2026-09-05T23:38:24.056Z",
@@ -19213,109 +19210,91 @@
           "path": "forge/implementation-prompt-matrix-connection-20260906.json",
           "content_hash": "70634797eefe54e94ce7497da2c86ccff5fa054a6d532bb8a949ade701cbd24e"
         },
-        "reason": "Explicit yes to the retained Matrix connection implementation question; unchanged plan and baseline. Local code and credential-free tests only; publication and production effects excluded.",
+        "reason": "PI-CONSENSUS-20260908 змінює ролі, делегування, мову, консенсус і автономний Matrix; попередній prompt не дозволяє реалізацію нового плану.",
         "supersedes": {
           "state": "authorized_for_phase3",
           "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
           "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
           "awaiting_at": "2026-09-05T23:38:24.056Z",
-          "reason": "Explicit later implementation prompt matches unchanged current plan and baseline; scoped local implementation only.",
+          "prompt_id": "implementation-matrix-connection-20260906-01",
+          "prompt_received_at": "2026-09-06T12:10:02Z",
+          "released_at": "2026-09-06T12:10:02Z",
+          "prompt_receipt": {
+            "path": "forge/implementation-prompt-matrix-connection-20260906.json",
+            "content_hash": "70634797eefe54e94ce7497da2c86ccff5fa054a6d532bb8a949ade701cbd24e"
+          },
+          "reason": "Explicit yes to the retained Matrix connection implementation question; unchanged plan and baseline. Local code and credential-free tests only; publication and production effects excluded.",
           "supersedes": {
-            "state": "awaiting-implementation-prompt",
+            "state": "authorized_for_phase3",
             "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
             "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
             "awaiting_at": "2026-09-05T23:38:24.056Z",
-            "reason": "Critic-provider scope was reconciled across owned SDD artifacts. A separate later explicit implementation prompt is required for this new plan; earlier Google/U-06 authorization is preserved but does not release this scope.",
+            "reason": "Explicit later implementation prompt matches unchanged current plan and baseline; scoped local implementation only.",
             "supersedes": {
-              "state": "invalidated",
-              "reason": "PI-CRITIC-20260906 changes the selected critic provider and readiness/isolation contracts; old authorization does not cover the revised plan.",
-              "invalidated_at": "2026-09-05T23:12:04.223Z",
+              "state": "awaiting-implementation-prompt",
+              "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
+              "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+              "awaiting_at": "2026-09-05T23:38:24.056Z",
+              "reason": "Critic-provider scope was reconciled across owned SDD artifacts. A separate later explicit implementation prompt is required for this new plan; earlier Google/U-06 authorization is preserved but does not release this scope.",
               "supersedes": {
-                "state": "authorized_for_phase3",
-                "development_plan_hash": "f17072dc044dc12ee20039a78f856801df5121aef19922966fece2eebf17d15a",
-                "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
-                "awaiting_at": "2026-09-05T17:35:39.845Z",
-                "prompt_id": "implementation-u04-google-20260905-01",
-                "prompt_received_at": "2026-09-05T17:38:07.954Z",
-                "released_at": "2026-09-05T17:40:02.645Z",
-                "prompt_receipt": {
-                  "path": "forge/implementation-prompt-u04-google-20260905.json",
-                  "content_hash": "9dcd385d98a55682f1b58c0bce4ae3cc06a465db5b0774ca04af49c206ee2b18"
-                },
-                "reason": "Explicit development request after completed-plan pause, revalidated unchanged sources/baseline. Scoped U-04 host execution only; no new external/high-risk authority.",
+                "state": "invalidated",
+                "reason": "PI-CRITIC-20260906 changes the selected critic provider and readiness/isolation contracts; old authorization does not cover the revised plan.",
+                "invalidated_at": "2026-09-05T23:12:04.223Z",
                 "supersedes": {
-                  "state": "awaiting-implementation-prompt",
+                  "state": "authorized_for_phase3",
                   "development_plan_hash": "f17072dc044dc12ee20039a78f856801df5121aef19922966fece2eebf17d15a",
                   "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
                   "awaiting_at": "2026-09-05T17:35:39.845Z",
-                  "reason": "Current SDD migration authorizes documentation only. A separate later explicit implementation prompt must bind this plan and baseline. Prior U-06 authorization is invalidated and retained below.",
+                  "prompt_id": "implementation-u04-google-20260905-01",
+                  "prompt_received_at": "2026-09-05T17:38:07.954Z",
+                  "released_at": "2026-09-05T17:40:02.645Z",
+                  "prompt_receipt": {
+                    "path": "forge/implementation-prompt-u04-google-20260905.json",
+                    "content_hash": "9dcd385d98a55682f1b58c0bce4ae3cc06a465db5b0774ca04af49c206ee2b18"
+                  },
+                  "reason": "Explicit development request after completed-plan pause, revalidated unchanged sources/baseline. Scoped U-04 host execution only; no new external/high-risk authority.",
                   "supersedes": {
-                    "state": "invalidated",
-                    "development_plan_hash": "a38919e0a84c61b081661227bd5ee936744bb9781dba2286ecc25d7d7e3974ca",
+                    "state": "awaiting-implementation-prompt",
+                    "development_plan_hash": "f17072dc044dc12ee20039a78f856801df5121aef19922966fece2eebf17d15a",
                     "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
-                    "prompt_id": "implementation-prompt-u06-20260904-go-01",
-                    "awaiting_at": "2026-09-04T20:55:01+03:00",
-                    "prompt_received_at": "2026-09-04T21:43:42+03:00",
-                    "released_at": "2026-09-04T22:55:31+03:00",
-                    "prompt_receipt": {
-                      "path": "forge/implementation-prompt-u06-20260904.json",
-                      "content_hash": "ec8a4a216b37c7edc6e37d921f102c80714cf8224e884e25b85a9de8e341441c"
-                    },
-                    "reason": "Exact-plan provenance contradicted by retained original events; see forge/authorization-correction-20260905.json. This historical receipt cannot authorize a later plan. Current explicit remediation remains in scope; no next-unit authorization is inferred.",
-                    "correction_ref": "forge/authorization-correction-20260905.json"
+                    "awaiting_at": "2026-09-05T17:35:39.845Z",
+                    "reason": "Current SDD migration authorizes documentation only. A separate later explicit implementation prompt must bind this plan and baseline. Prior U-06 authorization is invalidated and retained below.",
+                    "supersedes": {
+                      "state": "invalidated",
+                      "development_plan_hash": "a38919e0a84c61b081661227bd5ee936744bb9781dba2286ecc25d7d7e3974ca",
+                      "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+                      "prompt_id": "implementation-prompt-u06-20260904-go-01",
+                      "awaiting_at": "2026-09-04T20:55:01+03:00",
+                      "prompt_received_at": "2026-09-04T21:43:42+03:00",
+                      "released_at": "2026-09-04T22:55:31+03:00",
+                      "prompt_receipt": {
+                        "path": "forge/implementation-prompt-u06-20260904.json",
+                        "content_hash": "ec8a4a216b37c7edc6e37d921f102c80714cf8224e884e25b85a9de8e341441c"
+                      },
+                      "reason": "Exact-plan provenance contradicted by retained original events; see forge/authorization-correction-20260905.json. This historical receipt cannot authorize a later plan. Current explicit remediation remains in scope; no next-unit authorization is inferred.",
+                      "correction_ref": "forge/authorization-correction-20260905.json"
+                    }
                   }
                 }
               }
+            },
+            "prompt_id": "implementation-critic-router-20260906-01",
+            "prompt_received_at": "2026-09-05T23:44:05.744Z",
+            "released_at": "2026-09-05T23:44:05.920Z",
+            "prompt_receipt": {
+              "path": "forge/implementation-prompt-critic-router-20260906.json",
+              "content_hash": "51a226066be61255dac63f1fd595434f3acd87dbbae5396ff985f186f639b534"
             }
-          },
-          "prompt_id": "implementation-critic-router-20260906-01",
-          "prompt_received_at": "2026-09-05T23:44:05.744Z",
-          "released_at": "2026-09-05T23:44:05.920Z",
-          "prompt_receipt": {
-            "path": "forge/implementation-prompt-critic-router-20260906.json",
-            "content_hash": "51a226066be61255dac63f1fd595434f3acd87dbbae5396ff985f186f639b534"
           }
         }
       }
+    },
+    "prompt_receipt": {
+      "path": "forge/implementation-prompt-consensus-20260908.json",
+      "content_hash": "1ab86059bbbff0bd8b4385082082d80714aa95ed2d09553cce77d896b1f6fcaf"
     }
   },
-  "prototype_promotions": [
-    {
-      "unit_id": "U-04",
-      "path_mappings": [
-        {
-          "source": "forge/design/candidates/candidate-b/v2/index.html",
-          "destination": "src/settings/ui/template.ts",
-          "strategy": "adapt"
-        },
-        {
-          "source": "forge/design/candidates/candidate-b/v2/styles.css",
-          "destination": "src/settings/ui/styles.css",
-          "strategy": "adapt"
-        },
-        {
-          "source": "forge/design/candidates/candidate-b/v2/app.js",
-          "destination": "src/settings/ui/controller.ts",
-          "strategy": "reimplement"
-        },
-        {
-          "source": "forge/design/candidates/candidate-b/v2/validate.mjs",
-          "destination": "test/settings-ui.test.ts",
-          "strategy": "reimplement"
-        }
-      ],
-      "base_commit": "7d2e944f9500a6c38745ce39b414ffc3b946a37c",
-      "planned_checkout_base_commit": "0f979067458ff369ce2118a8355f2db22289870a",
-      "started_at": "2026-09-05T23:44:05.744Z",
-      "receipt": {
-        "path": "forge/runs/U-04/owner-script-version-20260907/prototype-promotion.json",
-        "content_hash": "ad5a44edfe3c02231a7d188d917ab0116c27984f0a7ecf56ec5ada5fcb9a983a"
-      },
-      "provenance_status": "actual_git_diff_verified_full_fidelity_pending",
-      "historical_limitation": "No historical promotion receipt exists. This run records only a new inspected adaptation; the planned Git comparison anchor is preserved, and prior destination origin is not retroactively certified.",
-      "started_at_basis": "Implementation kickoff observed in immutable prompt receipt before source edits; this operational index was updated during the run, not pre-registered as a separate promotion event."
-    }
-  ],
+  "prototype_promotions": [],
   "implementation": {
     "matrix_publication_preflight": {
       "run_id": "matrix-publication-preflight-20260906",
@@ -19342,7 +19321,39 @@
       "deployment": "not_performed",
       "scope": "Existing U-04/U-07 catalog action contract regression; prior receipts preserved, no new Unit or release acceptance."
     },
-    "status": "new_scope_awaiting_implementation_prompt_prior_evidence_preserved",
+    "adaptive_consultation": {
+      "run_id": "adaptive-consultation-20260908",
+      "owner_invocation_id": "implementation-consensus-20260908-01",
+      "status": "local_implementation_verified_live_acceptance_pending",
+      "recorded_at": "2026-09-07T23:02:36.902Z",
+      "branch": "codex/matrix-connection-20260906",
+      "base_commit": "69772057fd0487e09228aab8939b0be824aa4b00",
+      "receipt": {
+        "path": "forge/runs/U-08/adaptive-consultation-20260908/verification.json",
+        "content_hash": "7fc9a1f35e60b294b12375386a69a043776f32e893279cadd44d14a0b729751b"
+      },
+      "report": {
+        "path": "forge/runs/U-08/adaptive-consultation-20260908/implementation-report.md",
+        "content_hash": "b869f6565d18e1dca01928c95665dd5311985d8ff1052c2c305a19ab362ff0b4"
+      },
+      "tests": {
+        "node": "22.16.0",
+        "total": 882,
+        "passed": 882,
+        "failed": 0
+      },
+      "sdd_checker": "passed",
+      "accepted_units": [],
+      "published": "unchanged",
+      "pusher_registration": "not_performed",
+      "required_next": "Separately authorized Published deployment, dedicated wake configuration/registration, then actual Matrix continuity and representative-owner verification.",
+      "limits": [
+        "Local mocks/scripted adapters do not prove Published, real MySQL/Matrix/provider behavior or Element usability.",
+        "Pinned native initial not_ready is still an ambiguous auth/policy/network diagnostic; same-identity retries never bypass its checks.",
+        "Prior composite QA and blocked release evidence remain open."
+      ]
+    },
+    "status": "adaptive_consultation_local_verified_live_acceptance_pending",
     "owner_invocation_id": "implementation-matrix-connection-20260906-01",
     "matrix_connection": {
       "run_id": "matrix-connection-20260906",
@@ -19421,9 +19432,9 @@
       "U-08",
       "U-09"
     ],
-    "completion_projection_note": "The explicitly authorized Matrix connection now composes durable intake, consent, bounded media processing, session dispatch, selected Critic and preserved final-delivery intent. All 678 local tests pass with simulated external systems. Execution defaults are versioned, historical snapshots preserved. No unit newly accepted; real MySQL/provider/Matrix/GoDaddy and full timing/media/release evidence remain open. Prior Critic router projections and receipts below are historical.",
+    "completion_projection_note": "Current scope is adaptive_consultation above: 882/882 local Node 22 tests passed. Other matrix_connection/local_verification/published fields are preserved historical receipts, not current deployment evidence. No unit is newly accepted. Live Published wake, identity continuity, actual provider/Matrix and Element/user verification remain open.",
     "in_progress_unit": null,
-    "next_unit": "U-06",
+    "next_unit": "U-09",
     "prior_critic_router_local_verification": {
       "node": {
         "result": "passed",
@@ -19671,7 +19682,7 @@
     }
   ],
   "next_ready_nodes": [],
-  "pause_reason": "Нові сім змін узгоджені через SDD; development-plan перевірено. Потрібне окреме наступне доручення на implementation цього hash. Production code/deploy не змінено. Історичний Matrix store_binding_unavailable та непідтверджений фінал залишаються невирішеним live блокером, не новим спостереженням цього запуску.",
+  "pause_reason": null,
   "matrix_production_setup_progress": {
     "authorization_ref": "forge/matrix-production-setup-authorization-20260906.json",
     "evidence_ref": "forge/runs/U-08/matrix-production-setup-20260906/progress.md",
@@ -20017,18 +20028,28 @@
     }
   ],
   "last_resume_event": {
-    "event": "consensus-scope-sdd-reconciled",
-    "recorded_at": "2026-09-07T21:48:15.061Z",
-    "source": "Explicit seven-point user request 2026-09-08; original exact message timestamp not recorded.",
-    "working_base": "bd854ee",
+    "event": "adaptive-consultation-local-verification-completed",
+    "recorded_at": "2026-09-07T23:02:36.902Z",
     "scope": "PI-CONSENSUS-20260908",
+    "base_commit": "69772057fd0487e09228aab8939b0be824aa4b00",
     "development_plan_hash": "271cc18ea9631b7846e687f2228a55e76058b5ebcfe49ef834a15038cc07164f",
-    "next_step": "Separate later implementation prompt",
+    "implementation_prompt": "implementation-consensus-20260908-01",
+    "next_step": "Separately authorized Published deployment, dedicated wake configuration/registration, then actual Matrix continuity and representative-owner verification.",
     "production_changed": false,
-    "prior_implementation_projection": {
-      "status": "matrix_connection_local_verified_pending_live_evidence",
-      "in_progress_unit": "U-04",
-      "next_unit": "U-04"
+    "prior": {
+      "event": "consensus-scope-sdd-reconciled",
+      "recorded_at": "2026-09-07T21:48:15.061Z",
+      "source": "Explicit seven-point user request 2026-09-08; original exact message timestamp not recorded.",
+      "working_base": "bd854ee",
+      "scope": "PI-CONSENSUS-20260908",
+      "development_plan_hash": "271cc18ea9631b7846e687f2228a55e76058b5ebcfe49ef834a15038cc07164f",
+      "next_step": "Separate later implementation prompt",
+      "production_changed": false,
+      "prior_implementation_projection": {
+        "status": "matrix_connection_local_verified_pending_live_evidence",
+        "in_progress_unit": "U-04",
+        "next_unit": "U-04"
+      }
     }
   },
   "prototype_promotion_history": [
@@ -20077,6 +20098,47 @@
       "verification_status": "blocked_pending_full_ui_and_live_evidence",
       "superseded_for": "PI-CRITIC-20260906",
       "preservation_reason": "Prior U-04 receipt belongs to prior Google plan; it cannot certify the new critic-router implementation. Original receipt bytes preserved."
+    },
+    {
+      "recorded_at": "2026-09-07T22:06:23.513Z",
+      "reason": "Prior U-04 prototype adaptation retained as historical evidence. PI-CONSENSUS-20260908 explicitly declares no prototype reuse and affects U-05/U-06/U-08/U-09 only.",
+      "records": [
+        {
+          "unit_id": "U-04",
+          "path_mappings": [
+            {
+              "source": "forge/design/candidates/candidate-b/v2/index.html",
+              "destination": "src/settings/ui/template.ts",
+              "strategy": "adapt"
+            },
+            {
+              "source": "forge/design/candidates/candidate-b/v2/styles.css",
+              "destination": "src/settings/ui/styles.css",
+              "strategy": "adapt"
+            },
+            {
+              "source": "forge/design/candidates/candidate-b/v2/app.js",
+              "destination": "src/settings/ui/controller.ts",
+              "strategy": "reimplement"
+            },
+            {
+              "source": "forge/design/candidates/candidate-b/v2/validate.mjs",
+              "destination": "test/settings-ui.test.ts",
+              "strategy": "reimplement"
+            }
+          ],
+          "base_commit": "7d2e944f9500a6c38745ce39b414ffc3b946a37c",
+          "planned_checkout_base_commit": "0f979067458ff369ce2118a8355f2db22289870a",
+          "started_at": "2026-09-05T23:44:05.744Z",
+          "receipt": {
+            "path": "forge/runs/U-04/owner-script-version-20260907/prototype-promotion.json",
+            "content_hash": "ad5a44edfe3c02231a7d188d917ab0116c27984f0a7ecf56ec5ada5fcb9a983a"
+          },
+          "provenance_status": "actual_git_diff_verified_full_fidelity_pending",
+          "historical_limitation": "No historical promotion receipt exists. This run records only a new inspected adaptation; the planned Git comparison anchor is preserved, and prior destination origin is not retroactively certified.",
+          "started_at_basis": "Implementation kickoff observed in immutable prompt receipt before source edits; this operational index was updated during the run, not pre-registered as a separate promotion event."
+        }
+      ]
     }
   ]
 }

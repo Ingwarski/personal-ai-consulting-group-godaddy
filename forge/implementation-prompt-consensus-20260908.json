@@ -1,0 +1,25 @@
+{
+  "event": "implementation_prompt",
+  "role": "user",
+  "intent": "start_production_implementation",
+  "prompt_id": "implementation-consensus-20260908-01",
+  "message_id": null,
+  "message": "Implement all seven changes. add mentioned fix for #7 as well.",
+  "received_at": "2026-09-07T22:05:54.903Z",
+  "recorded_at": "2026-09-07T22:05:54.903Z",
+  "timestamp_basis": "Observed in the active conversation after the recorded plan pause; original transport timestamp/message ID unavailable.",
+  "development_plan_hash": "271cc18ea9631b7846e687f2228a55e76058b5ebcfe49ef834a15038cc07164f",
+  "product_scope_hash": "defc5e24f0dd91be42b984888b157137f4f1ed361459e70f42b832e18c957bd4",
+  "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+  "scope": {
+    "allowed": "Implement all PI-CONSENSUS-20260908 changes and Matrix storage/network recovery plus same-app HTTP wake integration; scoped local code and credential-free verification.",
+    "excluded": [
+      "GoDaddy publication or production configuration mutation",
+      "live pusher registration or provider calls",
+      "production credentials/keys/DB/history changes",
+      "HappyPro",
+      "paid/local production hosting",
+      "stateful Preview"
+    ]
+  }
+}

@@ -1,7 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { classifyConsultationFailure, type ConsultationFailure } from "./consultation-diagnostics.ts";
 import { isSecretLikeMatrixContent } from "../matrix/bridge.ts";
-import { parseOwnerCommand } from "../session/owner-commands.ts";
+import { parseOwnerCommand, parseConsultationControl } from "../session/owner-commands.ts";
+import { canonicalSessionLanguage, explicitSessionLanguage, initialLanguageHint } from "../consilium/language.ts";
+import { LANGUAGE_QUESTION, parseLanguageAnswer, serviceMessage, supportedServiceLanguage, validateServiceTranslationCatalog, type ServiceTranslationCatalog } from "../consilium/service-messages.ts";
+import { consensusDigest } from "../consilium/consensus-contract.ts";
 import type { RegistrarDO } from "../session/registrar-do.ts";
 import type { RegistrarStorage } from "../session/storage.ts";
 import type { EffectiveSessionSnapshot } from "../settings/types.ts";
@@ -12,12 +15,9 @@ import type { LeasedMatrixIngressIntent, MatrixIngressIntent, MySqlMatrixIngress
 const KEY = "worker";
 const MAX_TASK_BYTES = 24_000;
 const MAX_HANDLED = 64;
-const CONSENT = "Погоджуюсь на обробку";
-const CONFIRM_DOCUMENT = "Підтверджую документ без секретів";
 const NOTICE_CONSENT = "Перед початком потрібна ваша одноразова згода на обробку звичайних бізнес-даних обраними ШІ-провайдерами. Не надсилайте паролі, ключі доступу, повні банківські реквізити чи державні ідентифікатори. Напишіть «Погоджуюсь на обробку» або «Не погоджуюсь». Це не дозвіл на зовнішні дії чи чутливі документи.";
 const NOTICE_DOCUMENT = "Вкладення ще не передано ШІ. Його чутливість не визначена. Перевірте, що в ньому немає секретів, і дайте відповідь саме на повідомлення з вкладенням: «Підтверджую документ без секретів». Для відмови: «Відхиляю документ». Підтвердження стосується лише цього вкладення.";
 const NOTICE_CONTINUE = "Роботу призупинено до стандартної десятихвилинної межі; готової відповіді ще немає. Потрібен додатковий час. Напишіть «Продовжити», щоб дозволити наступний обмежений цикл, або «Стоп».";
-const equalText = (a: string, b: string): boolean => a.trim().toLocaleLowerCase("uk-UA") === b.toLocaleLowerCase("uk-UA");
 const byteLength = (s: string): number => Buffer.byteLength(s, "utf8");
 
 export type ConsultationDocument = Readonly<{
@@ -36,7 +36,7 @@ export interface ConsultationMediaPort {
   erase(eventHash: string): Promise<void>;
   purgeExpired(): Promise<void>;
 }
-type JobStatus = "awaiting_consent" | "awaiting_document" | "awaiting_clarification" | "queued" | "planning" | "running"
+type JobStatus = "awaiting_language" | "awaiting_consent" | "awaiting_document" | "awaiting_clarification" | "queued" | "planning" | "running"
   | "awaiting_continuation" | "interrupted" | "completed" | "stopped" | "failed";
 type Job = {
   id: string;
@@ -45,6 +45,8 @@ type Job = {
   documents: ConsultationDocument[];
   status: JobStatus;
   attempt: number;
+  language?: string;
+  languageConfirmed?: boolean;
   generation?: number;
   sessionId?: string;
   resumeFinalization?: true;
@@ -56,6 +58,9 @@ type PendingInput = {
   consent: boolean;
   job: Job | null;
   notice: string;
+  renderedNotice?: string;
+  noticeLanguage?: string;
+  skipNotice?: true;
   cancelGeneration?: number;
   revisionGeneration?: number;
   erase: string[];
@@ -89,7 +94,7 @@ export function createMatrixConsultationService(input: Readonly<{
   storage: RegistrarStorage;
   ingress: Pick<MySqlMatrixIngressReceipts, "leaseNext" | "markProcessed">;
   registrar: RegistrarDO;
-  executor: Pick<GoDaddyConsiliumRuntime, "plan" | "run"> & Partial<Pick<GoDaddyConsiliumRuntime, "canResumeFinalization" | "resumeFinalization">>;
+  executor: Pick<GoDaddyConsiliumRuntime, "plan" | "run"> & Partial<Pick<GoDaddyConsiliumRuntime, "canResumeFinalization" | "resumeFinalization" | "translateServiceMessages">>;
   prepareSnapshot(sessionId: string): Promise<EffectiveSessionSnapshot | undefined>;
   resolveReplySession?: (matrixEventId: string) => Promise<string | undefined>;
   afterConfirmed: () => void | Promise<void>;
@@ -119,17 +124,24 @@ export function createMatrixConsultationService(input: Readonly<{
   let controller: AbortController | undefined;
   let ownedGeneration: number | undefined;
   let publishing = 0;
+  const translatedNotices = new Map<string, ServiceTranslationCatalog>();
   let serial = Promise.resolve();
   const empty = (): WorkerState => ({ version: 1, bindingHash: input.bindingHash, consent: false, job: null, handled: [], pending: null });
   const validate = (state: WorkerState): WorkerState => {
+    // Jobs already dispatched by the pre-language protocol were Ukrainian.
+    // Carry that legacy choice forward without rewriting any transcript.
+    if (state?.job !== null && state?.job !== undefined && state.job.language === undefined && state.job.generation !== undefined
+      && state.job.status !== "awaiting_language") state.job.language = "uk";
     const hash = (value: unknown): value is string => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
     const validJob = (job: Job | null): boolean => job === null || (
       typeof job === "object" && hash(job.id) && typeof job.eventId === "string"
       && /^\$[A-Za-z0-9$:_-]{8,255}$/.test(job.eventId)
       && typeof job.task === "string" && byteLength(job.task) <= MAX_TASK_BYTES
       && Number.isSafeInteger(job.attempt) && job.attempt >= 0
+      && (job.language === undefined || canonicalSessionLanguage(job.language) === job.language)
+      && (job.languageConfirmed === undefined || typeof job.languageConfirmed === "boolean")
       && (job.resumeFinalization === undefined || job.resumeFinalization === true)
-      && ["awaiting_consent", "awaiting_document", "awaiting_clarification", "queued", "planning", "running",
+      && ["awaiting_language", "awaiting_consent", "awaiting_document", "awaiting_clarification", "queued", "planning", "running",
         "awaiting_continuation", "interrupted", "completed", "stopped", "failed"].includes(job.status)
       && (job.generation === undefined || (Number.isSafeInteger(job.generation) && job.generation > 0
         && typeof job.sessionId === "string" && /^[A-Za-z0-9_-]{1,128}$/.test(job.sessionId)))
@@ -151,6 +163,9 @@ export function createMatrixConsultationService(input: Readonly<{
       || (state.pending !== null && (!hash(state.pending.hash) || !validJob(state.pending.job)
         || typeof state.pending.mutatesJob !== "boolean" || typeof state.pending.consent !== "boolean"
         || typeof state.pending.notice !== "string" || byteLength(state.pending.notice) > 4000
+        || (state.pending.renderedNotice !== undefined && (typeof state.pending.renderedNotice !== "string" || byteLength(state.pending.renderedNotice) > 8192))
+        || (state.pending.noticeLanguage !== undefined && canonicalSessionLanguage(state.pending.noticeLanguage) !== state.pending.noticeLanguage)
+        || (state.pending.skipNotice !== undefined && state.pending.skipNotice !== true)
         || !Array.isArray(state.pending.erase) || state.pending.erase.length > 4 || !state.pending.erase.every(hash)))) throw new Error("Consultation state is invalid.");
     return state;
   };
@@ -165,6 +180,12 @@ export function createMatrixConsultationService(input: Readonly<{
     return result;
   };
   const read = (): Promise<WorkerState> => mutate(state => structuredClone(state));
+  const hasDurableConsensusOutcome = async (job: Job): Promise<boolean> => {
+    if (job.generation === undefined) return false;
+    const consensus = await input.registrar.getConsensus(job.id);
+    return consensus !== undefined && consensus.generation === job.generation &&
+      ["published", "unresolved"].includes(consensus.status) && typeof consensus.finalBody === "string" && consensus.finalBody.length > 0;
+  };
   // A short DB-only publication boundary. Provider calls never hold it. It
   // prevents a control's copied decision racing a completed model result.
   const withInputBarrier = async <T>(operation: () => Promise<T>): Promise<T> => {
@@ -172,21 +193,34 @@ export function createMatrixConsultationService(input: Readonly<{
     publishing += 1;
     try { return await operation(); } finally { publishing -= 1; }
   };
-  const notice = async (id: string, body: string, replyToEventId?: string) => {
+  const renderNotice = async (body: string, language?: string): Promise<string> => {
+    if (language !== undefined && supportedServiceLanguage(language) === undefined && !translatedNotices.has(language)) {
+      const cached = await validateServiceTranslationCatalog(await input.storage.get(`service-translation:${language}`), language);
+      if (cached !== undefined) translatedNotices.set(language, cached);
+    }
+    return body === LANGUAGE_QUESTION ? body : serviceMessage(body, language, language === undefined ? undefined : translatedNotices.get(language));
+  };
+  const notice = async (id: string, body: string, replyToEventId?: string, selectedLanguage?: string, alreadyRendered = false) => {
+    const language = selectedLanguage ?? (await read()).job?.language;
     const result = await input.registrar.appendControlNotice({
-      eventId: id, body, ...(replyToEventId === undefined ? {} : { replyToEventId })
+      eventId: id, body: alreadyRendered ? body : await renderNotice(body, language),
+      ...(language === undefined ? {} : { language }), ...(replyToEventId === undefined ? {} : { replyToEventId })
     });
     if (!result.ok) throw new Error("Consultation notice was not committed.");
     await input.afterConfirmed();
     return result.value;
   };
   const readyStatus = (job: Job, consent: boolean): JobStatus =>
-    !consent ? "awaiting_consent" : job.documents.some(d => !d.confirmed) ? "awaiting_document" : "queued";
+    job.language === undefined ? "awaiting_language"
+      : !consent ? "awaiting_consent" : job.documents.some(d => !d.confirmed) ? "awaiting_document" : "queued";
   const newJob = (lease: LeasedMatrixIngressIntent, consent: boolean): Job => {
     const e = lease.workIntent;
+    const explicitLanguage = explicitSessionLanguage(e.body ?? "");
+    const language = explicitLanguage ?? initialLanguageHint(e.body ?? "");
     const job: Job = { id: lease.eventHash, eventId: e.eventId, task: e.body ?? "",
       documents: e.media.length === 0 ? [] : [{ eventHash: lease.eventHash, eventId: e.eventId, manifest: e.media, confirmed: false }],
-      status: "queued", attempt: 0 };
+      status: "queued", attempt: 0,
+      ...(language === null ? {} : { language, languageConfirmed: explicitLanguage !== undefined }) };
     job.status = readyStatus(job, consent);
     return job;
   };
@@ -198,6 +232,7 @@ export function createMatrixConsultationService(input: Readonly<{
     const job = pending.job;
     // Controls are exact text-only owner events, never instructions in files.
     const command = e.media.length === 0 ? parseOwnerCommand(body) : { kind: "ordinary_message" as const };
+    const control = e.media.length === 0 ? parseConsultationControl(body) : undefined;
     if (command.kind === "stop" || command.kind === "new_task") {
       pending.mutatesJob = true;
       pending.cancelExecution = true;
@@ -217,14 +252,30 @@ export function createMatrixConsultationService(input: Readonly<{
       pending.erase = e.media.length === 0 ? [] : [lease.eventHash];
       return pending;
     }
-    if (!state.consent && equalText(body, CONSENT) && e.media.length === 0) {
+    if (job !== null && job.status === "awaiting_language" && e.media.length === 0) {
+      const selected = explicitSessionLanguage(body) ?? parseLanguageAnswer(body) ?? initialLanguageHint(body);
+      pending.mutatesJob = true;
+      if (selected !== null && selected !== undefined) {
+        job.language = selected;
+        job.languageConfirmed = true;
+        if (parseLanguageAnswer(body) === undefined) {
+          const amended = `${job.task}\n\nOwner clarification:\n${body}`;
+          if (byteLength(amended) > MAX_TASK_BYTES) { pending.notice = LANGUAGE_QUESTION; return pending; }
+          job.task = amended;
+        }
+        job.status = readyStatus(job, state.consent);
+        pending.notice = !state.consent ? NOTICE_CONSENT : job.status === "awaiting_document" ? NOTICE_DOCUMENT : "Запит прийнято. Визначаю потрібний формат консультації.";
+      } else pending.notice = LANGUAGE_QUESTION;
+      return pending;
+    }
+    if (!state.consent && control === "consent") {
       pending.mutatesJob = true;
       pending.consent = true;
       if (job !== null) job.status = readyStatus(job, true);
       pending.notice = job?.status === "awaiting_document" ? NOTICE_DOCUMENT : "Згоду збережено. " + (job === null ? "Надішліть задачу." : "Запит прийнято.");
       return pending;
     }
-    if (!state.consent && equalText(body, "Не погоджуюсь") && e.media.length === 0) {
+    if (!state.consent && control === "decline_consent") {
       pending.mutatesJob = true;
       pending.erase = job?.documents.map(d => d.eventHash) ?? [];
       pending.job = null;
@@ -232,13 +283,13 @@ export function createMatrixConsultationService(input: Readonly<{
       return pending;
     }
     if (job !== null && e.media.length === 0
-      && (equalText(body, CONFIRM_DOCUMENT) || equalText(body, "Відхиляю документ"))) {
+      && (control === "confirm_document" || control === "reject_document")) {
       const document = job.documents.find(d => d.eventId === e.relationEventId && !d.confirmed);
       if (document === undefined || !state.consent || job.status !== "awaiting_document") {
         pending.notice = "Дозвіл не застосовано. Спершу надайте загальну згоду, потім дайте відповідь саме на непідтверджене вкладення.";
         return pending;
       }
-      if (equalText(body, CONFIRM_DOCUMENT)) {
+      if (control === "confirm_document") {
         job.documents = job.documents.map(d => d === document ? { ...d, confirmed: true } : d);
       } else {
         job.documents = job.documents.filter(d => d !== document);
@@ -251,7 +302,7 @@ export function createMatrixConsultationService(input: Readonly<{
         ? "Вкладення відхилено. Обробку не розпочато." : "Рішення щодо вкладення збережено. Запит прийнято.";
       return pending;
     }
-    if (equalText(body, "Продовжити") && e.media.length === 0) {
+    if (control === "continue") {
       if (job === null || !["awaiting_continuation", "interrupted", "failed"].includes(job.status)) {
         pending.notice = "Немає призупиненої роботи, що очікує цього дозволу.";
         return pending;
@@ -272,7 +323,9 @@ export function createMatrixConsultationService(input: Readonly<{
         pending.erase = e.media.length ? [lease.eventHash] : [];
         return pending;
       }
-      const amended = job.task + (body.trim() ? "\n\nУточнення власника:\n" + body : "");
+      const explicitLanguage = explicitSessionLanguage(body);
+      if (explicitLanguage !== undefined) { job.language = explicitLanguage; job.languageConfirmed = true; }
+      const amended = job.task + (body.trim() ? "\n\nOwner clarification:\n" + body : "");
       // Changed owner input requires a fresh reviewed generation.
       delete job.resumeFinalization;
       const mediaBytes = job.documents.reduce((n, d) => n + d.manifest.reduce((size, m) => size + m.length, 0), 0)
@@ -289,31 +342,42 @@ export function createMatrixConsultationService(input: Readonly<{
       if (e.media.length) job.documents.push({ eventHash: lease.eventHash, eventId: e.eventId, manifest: e.media, confirmed: false });
       if (job.generation !== undefined) pending.revisionGeneration = job.generation;
       job.status = readyStatus(job, state.consent);
-      pending.notice = !state.consent ? NOTICE_CONSENT : job.status === "awaiting_document" ? NOTICE_DOCUMENT
+      pending.notice = job.status === "awaiting_language" ? LANGUAGE_QUESTION : !state.consent ? NOTICE_CONSENT : job.status === "awaiting_document" ? NOTICE_DOCUMENT
         : "Уточнення прийнято до поточної задачі. Попереднє виконання скасовується; чинні налаштування сесії збережено.";
       return pending;
     }
     pending.job = newJob(lease, state.consent);
     pending.mutatesJob = true;
-    pending.notice = !state.consent ? NOTICE_CONSENT : pending.job.status === "awaiting_document" ? NOTICE_DOCUMENT : "Запит прийнято. Визначаю потрібний формат консультації.";
+    pending.notice = pending.job.status === "awaiting_language" ? LANGUAGE_QUESTION : !state.consent ? NOTICE_CONSENT : pending.job.status === "awaiting_document" ? NOTICE_DOCUMENT : "Запит прийнято. Визначаю потрібний формат консультації.";
     return pending;
   };
 
   const processInput = async (lease: LeasedMatrixIngressIntent): Promise<void> => {
     diagnosticStage = "input_state";
-    const prior = await read();
+    let prior = await read();
     let handled = prior.handled.find(h => h.hash === lease.eventHash);
+    if (handled === undefined && prior.pending === null && prior.job !== null && await hasDurableConsensusOutcome(prior.job)) {
+      const completed = prior.job;
+      await mutate(state => { if (state.job?.id === completed.id && state.job.generation === completed.generation) state.job.status = "completed"; });
+      // A delayed Continue racing an already committed final is an ACK-only
+      // replay, not authority to create another generation or repeat models.
+      if (lease.workIntent.media.length === 0 && parseConsultationControl(lease.workIntent.body ?? "") === "continue") {
+        handled = { hash: lease.eventHash, sessionId: completed.sessionId!, generation: completed.generation! };
+        const result = handled;
+        await mutate(state => { state.handled = [...state.handled, result].slice(-MAX_HANDLED); });
+      }
+      prior = await read();
+    }
     if (handled === undefined) {
       let pending = prior.pending;
       if (pending !== null && pending.hash !== lease.eventHash) throw new Error("Consultation input order changed.");
       if (pending === null) {
         const relation = lease.workIntent.relationEventId;
         const text = lease.workIntent.body ?? "";
-        const isControl = parseOwnerCommand(text).kind !== "ordinary_message"
-          || [CONSENT, CONFIRM_DOCUMENT, "Не погоджуюсь", "Відхиляю документ", "Продовжити"].some(command => equalText(text, command));
+        const isControl = parseOwnerCommand(text).kind !== "ordinary_message" || parseConsultationControl(text) !== undefined;
         const confirmedReplySession = relation === undefined || isControl ? undefined : await input.resolveReplySession?.(relation);
         pending = planInput(prior, lease, confirmedReplySession);
-        if (equalText(text, "Продовжити") && lease.workIntent.media.length === 0 && pending.revisionGeneration !== undefined
+        if (parseConsultationControl(text) === "continue" && lease.workIntent.media.length === 0 && pending.revisionGeneration !== undefined
           && pending.job !== null && pending.job.documents.length === 0 && input.executor.resumeFinalization !== undefined
           && await input.executor.canResumeFinalization?.(pending.revisionGeneration)) {
           // Do not mint a new generation or substitute its Critic. Reuse only
@@ -332,8 +396,23 @@ export function createMatrixConsultationService(input: Readonly<{
       if (pending.revisionGeneration !== undefined) {
         const revision = await input.registrar.reviseSession({ generation: pending.revisionGeneration, revisionId: "mx-revision-" + pending.hash });
         if (!revision.ok) {
-          if (pending.job !== null) pending.job.status = "stopped";
-          pending.notice = "Попередню сесію вже зупинено. Щоб почати нову роботу, надішліть «Нова задача».";
+          if (pending.job !== null && await hasDurableConsensusOutcome(pending.job)) {
+            if (lease.workIntent.media.length === 0 && parseConsultationControl(lease.workIntent.body ?? "") === "continue") {
+              pending.job.status = "completed";
+              pending.skipNotice = true;
+            } else {
+              // A real new message racing completion still needs its own
+              // work intent; never discard it as a failed old-generation edit.
+              pending.job = newJob(lease, pending.consent);
+              pending.notice = pending.job.status === "awaiting_language" ? LANGUAGE_QUESTION : !pending.consent ? NOTICE_CONSENT
+                : pending.job.status === "awaiting_document" ? NOTICE_DOCUMENT : "Запит прийнято. Визначаю потрібний формат консультації.";
+              delete pending.renderedNotice; delete pending.noticeLanguage;
+            }
+          } else {
+            if (pending.job !== null) pending.job.status = "stopped";
+            pending.notice = "Попередню сесію вже зупинено. Щоб почати нову роботу, надішліть «Нова задача».";
+            delete pending.renderedNotice; delete pending.noticeLanguage;
+          }
         } else if (pending.job !== null) {
           pending.job.generation = revision.value.generation;
           pending.job.sessionId = revision.value.sessionId;
@@ -342,7 +421,16 @@ export function createMatrixConsultationService(input: Readonly<{
       }
       for (const hash of pending.erase) await input.media?.erase(hash);
       diagnosticStage = "input_notice";
-      const committed = await notice("mx-notice-" + pending.hash, pending.notice, pending.eventId);
+      if (!pending.skipNotice && pending.renderedNotice === undefined) {
+        const language = pending.job?.language ?? prior.job?.language;
+        pending.renderedNotice = await renderNotice(pending.notice, language);
+        if (language !== undefined) pending.noticeLanguage = language;
+        // Freeze the actual displayed bytes before registrar publication. A
+        // cache refresh or deployment must not change an in-flight retry hash.
+        await mutate(state => { state.pending = pending; });
+      }
+      const committed = pending.skipNotice ? { generation: pending.job!.generation! }
+        : await notice("mx-notice-" + pending.hash, pending.renderedNotice!, pending.eventId, pending.noticeLanguage, true);
       diagnosticStage = "input_state";
       handled = { hash: pending.hash, sessionId: pending.job?.sessionId ?? "control-" + committed.generation, generation: committed.generation };
       const result = handled;
@@ -365,7 +453,8 @@ export function createMatrixConsultationService(input: Readonly<{
     const job = state.job;
     if (job !== null && ["planning", "running"].includes(job.status)) {
       const session = job.generation === undefined ? undefined : await input.registrar.getSession(job.generation);
-      const completed = session?.phase === "closed";
+      const consensus = await input.registrar.getConsensus(job.id);
+      const completed = consensus === undefined ? session?.phase === "closed" : await hasDurableConsensusOutcome(job);
       await mutate(s => { if (s.job?.id === job.id) s.job.status = completed ? "completed" : "interrupted"; });
       if (!completed) {
         if (session?.phase === "active") await input.registrar.closeSession(session.generation);
@@ -383,17 +472,44 @@ export function createMatrixConsultationService(input: Readonly<{
     let progress: ReturnType<typeof setInterval> | undefined;
     let expired = false;
     const abort = new AbortController();
+    const attemptedTranslations = new Set<string>();
     controller = abort;
     const matches = (state: WorkerState) => (state.pending === null || !state.pending.mutatesJob) && state.job?.id === job.id
       && state.job.attempt === job.attempt && state.job.generation === job.generation
       && ["planning", "running"].includes(state.job.status);
     const fail = async (body: string, status: "failed" | "awaiting_continuation" | "interrupted") => {
+      if (await hasDurableConsensusOutcome(job)) {
+        await withInputBarrier(() => mutate(state => {
+          if (state.job?.id === job.id && state.job.generation === job.generation && state.job.attempt === job.attempt) state.job.status = "completed";
+        }));
+        return;
+      }
       const changed = await withInputBarrier(() => mutate(state => {
         if (!matches(state)) return false;
         state.job!.status = status;
         return true;
       }));
       if (changed) await notice("mx-outcome-" + job.id + "-" + job.attempt, body, job.eventId);
+    };
+    const ensureNoticeTranslation = async (): Promise<void> => {
+      const language = job.language;
+      if (language === undefined || supportedServiceLanguage(language) !== undefined || translatedNotices.has(language) ||
+        attemptedTranslations.has(language) || input.executor.translateServiceMessages === undefined || job.generation === undefined) return;
+      const cached = await validateServiceTranslationCatalog(await input.storage.get(`service-translation:${language}`), language);
+      if (cached !== undefined) { translatedNotices.set(language, cached); return; }
+      const state = await read();
+      if (!state.consent || !matches(state) || abort.signal.aborted) return;
+      attemptedTranslations.add(language);
+      // Only language, session binding and app-owned strings cross this seam.
+      // User task, attachments, prior transcript and personal details do not.
+      let translated: Awaited<ReturnType<NonNullable<typeof input.executor.translateServiceMessages>>>;
+      try { translated = await input.executor.translateServiceMessages({ sessionGeneration: job.generation, language, signal: abort.signal }); }
+      catch { return; }
+      if (!translated.ok || abort.signal.aborted) return;
+      const catalog = await validateServiceTranslationCatalog(translated.catalog, language);
+      if (catalog === undefined) return;
+      await input.storage.transaction(async storage => { await storage.put(`service-translation:${language}`, catalog); });
+      translatedNotices.set(language, catalog);
     };
     try {
       input.assertReady();
@@ -430,6 +546,8 @@ export function createMatrixConsultationService(input: Readonly<{
         });
         if (!attached) return;
       }
+      await ensureNoticeTranslation();
+      if (abort.signal.aborted) return;
       let progressNumber = 0, progressBusy = false;
       progress = setInterval(() => {
         if (progressBusy || abort.signal.aborted) return;
@@ -474,7 +592,7 @@ export function createMatrixConsultationService(input: Readonly<{
         const previous = await input.registrar.getSession(ancestor);
         if (previous === undefined || previous.sessionId !== job.sessionId) throw new Error("Consultation history mismatch.");
         const messages = await input.registrar.getConfirmedMessages(ancestor);
-        history.unshift(...messages.filter(m => m.role !== "Система" && m.authority?.kind !== "assignment")
+        history.unshift(...messages.filter(m => !["Система", "System", "Service"].includes(m.role) && m.authority?.kind !== "assignment")
           .map(m => m.role + ":\n" + m.body));
         ancestor = previous.previousGeneration;
       }
@@ -485,6 +603,7 @@ export function createMatrixConsultationService(input: Readonly<{
         await fail("Дані не передано агентам: перевищено межу контексту або знайдено можливий секрет.", "failed"); return;
       }
       const planned = await input.executor.plan({ sessionGeneration: job.generation!, task, signal: abort.signal,
+        taskId: job.id, ...(job.language === undefined || job.languageConfirmed === false ? {} : { language: job.language }),
         ...(media?.images.length ? { images: media.images } : {}) });
       if (abort.signal.aborted) {
         if (expired) await fail(NOTICE_CONTINUE, "awaiting_continuation");
@@ -493,12 +612,20 @@ export function createMatrixConsultationService(input: Readonly<{
       if (!planned.ok) { await fail("Консультацію не завершено: обраний ШІ-провайдер або його відповідь зараз недоступні. Перевірте runtime і напишіть «Продовжити» для явної повторної спроби.", "failed"); return; }
       await ticking;
       if (!matches(await read()) || abort.signal.aborted) return;
+      if (planned.language !== null && canonicalSessionLanguage(planned.language) !== undefined) {
+        const plannedLanguage = planned.language;
+        job = { ...job, language: plannedLanguage, languageConfirmed: true };
+        await mutate(state => { if (matches(state)) { state.job!.language = plannedLanguage; state.job!.languageConfirmed = true; } });
+      }
+      await ensureNoticeTranslation();
+      if (abort.signal.aborted) return;
       if (planned.kind === "direct" || planned.kind === "clarification") {
         if (isSecretLikeMatrixContent(planned.answer)) { await fail("Відповідь заблоковано перевіркою конфіденційності.", "failed"); return; }
         await withInputBarrier(async () => {
         if (!matches(await read()) || abort.signal.aborted) return;
         const appended = await input.registrar.appendConfirmedMessage({ generation: job.generation!, eventId: "mx-direct-" + job.id + "-" + job.attempt,
-          role: "Головний консультант", body: planned.answer, replyToEventId: job.eventId });
+          role: "Head Consultant", body: planned.answer, replyToEventId: job.eventId,
+          ...(job.language === undefined ? {} : { language: job.language }) });
         if (!appended.ok) return;
         await input.afterConfirmed();
         if (planned.kind === "direct") {
@@ -512,13 +639,24 @@ export function createMatrixConsultationService(input: Readonly<{
         const combined = task + (extraction ? "\n\nПідтверджена видима інтерпретація зображень головним консультантом (може містити помилки):\n" + extraction : "");
         if (byteLength(combined) > 32_000 || isSecretLikeMatrixContent(combined)) { await fail("Отриманий матеріал перевищує межу контексту або не пройшов перевірку конфіденційності.", "failed"); return; }
         if (extraction) {
-          const appended = await input.registrar.appendConfirmedMessage({ generation: job.generation!, eventId: "mx-image-" + job.id + "-" + job.attempt,
-            role: "Головний консультант", body: extraction, replyToEventId: job.eventId });
+          const observation = { eventId: "mx-image-" + job.id + "-" + job.attempt, body: extraction, replyToEventId: job.eventId,
+            ...(job.language === undefined ? {} : { language: job.language }) };
+          const bound = await input.registrar.getConsensusTask(job.generation!);
+          // Fresh image reading is an intake observation, not an approval from
+          // the previous head context. Preserve it verbatim with a service
+          // observation header, then feed it to the actual consensus run.
+          const appended = bound === undefined
+            ? await input.registrar.appendConfirmedMessage({ ...observation, generation: job.generation!, role: "Head Consultant" })
+            : await input.registrar.appendControlNotice(observation);
           if (!appended.ok) return;
           await input.afterConfirmed();
         }
         await mutate(state => { if (matches(state)) state.job!.status = "running"; });
         const result = await input.executor.run({ sessionGeneration: job.generation!, task: combined,
+          taskId: job.id, taskDigest: await consensusDigest(job.documents.length === 0 ? job.task : JSON.stringify({ task: job.task,
+            documents: job.documents.filter(document => document.confirmed).map(document => ({ eventId: document.eventId, eventHash: document.eventHash,
+              manifest: document.manifest.map(item => ({ declaredMime: item.declaredMime, length: item.length, sha256: item.sha256 })) })) })),
+          language: planned.language, assignments: planned.assignments,
           head: planned.head, specialists: planned.specialists, critic: planned.critic, signal: abort.signal });
         if (abort.signal.aborted) { if (expired) await fail(NOTICE_CONTINUE, "awaiting_continuation"); return; }
         if (!result.ok) { await fail("Консультацію не завершено. Критичний або фінальний етап не підтверджено; готову рекомендацію не оголошено. Напишіть «Продовжити» для явної повторної спроби або «Стоп».", "failed"); return; }

@@ -6,6 +6,8 @@ import { preflightSessionSubscriptions, type SessionSubscriptionPreflightFailure
 import type { CapabilityReceipt, EffectiveSessionSnapshot } from "../settings/types.ts";
 import type { RegistrarDO } from "../session/registrar-do.ts";
 import { ConsiliumRouter } from "./router.ts";
+import { ConsensusRouter } from "./consensus-router.ts";
+import type { SpecialistAssignment } from "./consultant-roles.ts";
 import { CriticGatedFinalizer } from "./final-recommendation.ts";
 import type { FinalRecommendationResult } from "./final-recommendation.ts";
 import type { ConfirmedMessageObserver } from "./a2a.ts";
@@ -21,6 +23,7 @@ export type PreparedConsilium = Readonly<{
   specialists: readonly AgentRegistration[];
   critic: AgentRegistration;
   router: ConsiliumRouter;
+  consensusRouter: ConsensusRouter;
   synthesizer: CodexHeadSynthesizer;
   finalizer: CriticGatedFinalizer;
   cleanup: () => Promise<void>;
@@ -35,11 +38,12 @@ export type SessionLaunchResult =
     }>;
 
 export type PreparedConsiliumExecutionResult =
-  | Readonly<{ ok: true; final: FinalRecommendationResult & Readonly<{ ok: true }> }>
+  | Readonly<{ ok: true; final: FinalRecommendationResult & Readonly<{ ok: true }>; outcome?: "consensus" | "unresolved" | "safety_handoff" }>
   | Readonly<{
       ok: false;
       code: "consilium_route_failed" | "head_synthesis_failed" | "finalization_failed";
       cause?: ConsiliumFailureCause;
+      ledgerCode?: string;
       retryAt?: string;
     }>;
 
@@ -160,7 +164,8 @@ export class ConsiliumSessionLauncher {
       if (!roster.ok) return { ok: false, code: "invalid_roles" };
 
       const runtimes = Object.freeze([
-        new CodexHeadThreadRuntime({ registration: head, lease: headLease.value }),
+        new CodexHeadThreadRuntime({ registration: head, lease: headLease.value, threadClient: this.#codex,
+          reasoningEffort: snapshot.settings.codex.reasoningEffort, signal: controller.signal }),
         ...specialists.map((registration, index) => new CodexConsiliumAgentRuntime({
           registration,
           lease: specialistLeases[index]!,
@@ -191,6 +196,11 @@ export class ConsiliumSessionLauncher {
         specialists,
         critic,
         cleanup,
+        consensusRouter: new ConsensusRouter({
+          registrar: this.#registrar, ledger: this.#registrar, head, specialists, critic, runtimes,
+          stopRuntimes: abort,
+          ...(this.#afterConfirmed === undefined ? {} : { afterConfirmed: this.#afterConfirmed })
+        }),
         router: new ConsiliumRouter({
           registrar: this.#registrar,
           head,
@@ -230,12 +240,29 @@ export async function executePreparedConsilium(input: Readonly<{
   prepared: PreparedConsilium;
   sessionGeneration: number;
   task: string;
+  taskId?: string;
+  taskDigest?: string;
+  language?: string;
+  assignments?: readonly SpecialistAssignment[];
   signal?: AbortSignal;
 }>): Promise<PreparedConsiliumExecutionResult> {
   const cancel = (): void => { void input.prepared.cleanup(); };
   input.signal?.addEventListener("abort", cancel, { once: true });
   try {
     if (input.signal?.aborted) return { ok: false, code: "consilium_route_failed", cause: "codex_turn_cancelled" };
+    if (input.taskId !== undefined || input.taskDigest !== undefined || input.language !== undefined || input.assignments !== undefined) {
+      if (input.taskId === undefined || input.language === undefined || input.assignments === undefined) {
+        return { ok: false, code: "consilium_route_failed", cause: "invalid_runtime_emission" };
+      }
+      const result = await input.prepared.consensusRouter.run({ sessionGeneration: input.sessionGeneration,
+        taskId: input.taskId, task: input.task, language: input.language, assignments: input.assignments,
+        ...(input.taskDigest === undefined ? {} : { taskDigest: input.taskDigest }),
+        ...(input.signal === undefined ? {} : { signal: input.signal }) });
+      return result.ok ? { ok: true, outcome: result.outcome, final: { ok: true, visibleSequence: result.visibleSequence, replayed: result.replayed } } :
+        { ok: false, code: "consilium_route_failed", cause: result.cause,
+          ...(result.ledgerCode === undefined ? {} : { ledgerCode: result.ledgerCode }),
+          ...(result.retryAt === undefined ? {} : { retryAt: result.retryAt }) };
+    }
     const routed = await input.prepared.router.run({ sessionGeneration: input.sessionGeneration, task: input.task });
     if (!routed.ok) return {
       ok: false,

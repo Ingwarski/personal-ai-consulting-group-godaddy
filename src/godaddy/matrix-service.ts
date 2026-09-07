@@ -127,6 +127,7 @@ export type GoDaddyMatrixServiceDependencies = Readonly<{
   pollMilliseconds?: number;
   probeTimeoutMilliseconds?: number;
   stopTimeoutMilliseconds?: number;
+  random?: () => number;
 }>;
 
 export type GoDaddyMatrixService = Readonly<{
@@ -618,6 +619,9 @@ export function createGoDaddyMatrixService(
   let stopped = false;
   let lifecycleGeneration = 0;
   let terminalReason: ServiceReason | undefined;
+  let recoveryReason: ServiceReason | undefined;
+  let recoveryAttempt = 0;
+  let recoveryDueAt = 0;
   let publicationReconciliationPending = false;
   let mediaConsumerUnavailable = dependencies.mediaConsumer === undefined;
   let database: GoDaddyMatrixDatabaseProbe = Object.freeze({
@@ -709,11 +713,22 @@ export function createGoDaddyMatrixService(
     clearTimerSlot(ingressTimer);
   };
 
+  const deferRecovery = (reason: ServiceReason): void => {
+    recoveryReason = reason;
+    recoveryAttempt = Math.min(recoveryAttempt + 1, 16);
+    const random = (dependencies.random ?? Math.random)();
+    const jitter = Number.isFinite(random) ? Math.max(0, Math.min(1, random)) : 0.5;
+    recoveryDueAt = clock.now() + Math.min(MAX_RETRY_MILLISECONDS,
+      Math.ceil(retryDelay(recoveryAttempt) * (0.75 + 0.25 * jitter)));
+    scheduleMaintenance(recoveryDueAt - clock.now());
+  };
+
   const currentReadiness = (): GoDaddyMatrixServiceReadiness => {
     if (stopped) return Object.freeze({ configured: true, ready: false, reason: terminalReason ?? "stopped" });
     if (stopping) return Object.freeze({ configured: true, ready: false, reason: "stopping" });
     if (!started) return Object.freeze({ configured: true, ready: false, reason: "not_started" });
     if (terminalReason !== undefined) return Object.freeze({ configured: true, ready: false, reason: terminalReason });
+    if (recoveryReason !== undefined) return Object.freeze({ configured: true, ready: false, reason: recoveryReason });
     if (!database.mysqlAvailable) return Object.freeze({ configured: true, ready: false, reason: "database_unavailable" });
     if (!database.schemaAvailable) return Object.freeze({ configured: true, ready: false, reason: "schema_unavailable" });
     if (!database.outboxAvailable) return Object.freeze({ configured: true, ready: false, reason: "outbox_blocked" });
@@ -860,7 +875,7 @@ export function createGoDaddyMatrixService(
       return;
     }
     if (transientSidecarError(code)) {
-      scheduleMaintenance(retryDelay(1));
+      deferRecovery("sidecar_not_ready");
       return;
     }
     setTerminal("sidecar_not_ready");
@@ -868,6 +883,7 @@ export function createGoDaddyMatrixService(
 
   const ensureRuntimeStarted = (generation: number): Promise<void> => {
     if (initializationPromise !== undefined) return initializationPromise;
+    if (clock.now() < recoveryDueAt) return Promise.resolve();
     const operation = (async (): Promise<void> => {
       if (!active(generation) || !database.mysqlAvailable || !database.schemaAvailable) return;
       if (runtime === undefined) {
@@ -877,7 +893,8 @@ export function createGoDaddyMatrixService(
         });
         if (!active(generation)) return;
         if (!storeBinding.ok) {
-          setTerminal(storeBinding.code);
+          if (storeBinding.code === "store_binding_transient") deferRecovery(storeBinding.code);
+          else setTerminal(storeBinding.code);
           return;
         }
         try {
@@ -952,6 +969,9 @@ export function createGoDaddyMatrixService(
       if (!active(generation)) return;
       try {
         await runtime.start();
+        recoveryReason = undefined;
+        recoveryAttempt = 0;
+        recoveryDueAt = 0;
       } catch (error) {
         classifyStartError(error, generation);
       }

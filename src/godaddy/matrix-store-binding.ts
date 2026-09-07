@@ -15,7 +15,19 @@ export type MatrixStoreBinding = Readonly<{
 
 export type MatrixStoreBindingResult =
   | Readonly<{ ok: true; value: MatrixStoreBinding }>
-  | Readonly<{ ok: false; code: "store_binding_unavailable" | "store_binding_invalid" }>;
+  | Readonly<{ ok: false; code: "store_binding_unavailable" | "store_binding_invalid"
+    | "store_binding_missing" | "store_binding_access_denied" | "store_binding_transient" }>;
+
+/** Only known temporary OS failures may retry. Never treat missing identity as provisioning. */
+export function classifyMatrixStoreReadError(error: unknown): Extract<MatrixStoreBindingResult, { ok: false }>["code"] {
+  const code = typeof error === "object" && error !== null && "code" in error ? error.code : undefined;
+  if (code === "ENOENT" || code === "ENOTDIR") return "store_binding_missing";
+  if (code === "EACCES" || code === "EPERM") return "store_binding_access_denied";
+  if (["EIO", "EAGAIN", "EBUSY", "EINTR", "EMFILE", "ENFILE", "ESTALE", "ETIMEDOUT"].includes(String(code))) {
+    return "store_binding_transient";
+  }
+  return "store_binding_unavailable";
+}
 
 export type MatrixBindingStat = Readonly<{
   mode: number;
@@ -190,8 +202,8 @@ export async function readExistingMatrixStoreBinding(input: Readonly<{
     return binding === undefined
       ? { ok: false, code: "store_binding_invalid" }
       : { ok: true, value: binding };
-  } catch {
-    return { ok: false, code: "store_binding_unavailable" };
+  } catch (error) {
+    return { ok: false, code: classifyMatrixStoreReadError(error) };
   } finally {
     await handle?.close().catch(() => undefined);
   }

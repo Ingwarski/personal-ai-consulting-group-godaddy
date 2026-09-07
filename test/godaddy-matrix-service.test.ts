@@ -504,7 +504,7 @@ type HarnessOptions = Readonly<{
   runtime?: FakeMatrixRuntime;
   outbox?: FakeOutbox;
   receipts?: FakeIngressReceipts;
-  readBinding?: () => Promise<Readonly<{ ok: true; value: Readonly<{ deviceId: string; storeFingerprint: string }> }>>;
+  readBinding?: () => Promise<import("../src/godaddy/matrix-store-binding.ts").MatrixStoreBindingResult>;
   publicationSynchronizer?: MatrixPublicationSynchronizer;
 }>;
 
@@ -561,7 +561,8 @@ function harness(options: HarnessOptions = {}) {
     clock,
     pollMilliseconds: 1_000,
     probeTimeoutMilliseconds: 5_000,
-    stopTimeoutMilliseconds: 8_000
+    stopTimeoutMilliseconds: 8_000,
+    random: () => 1
   });
   return {
     service,
@@ -602,6 +603,42 @@ test("Preview is inert before parser, pool, filesystem, randomness, timers or si
     reason: "matrix_disabled_for_runtime"
   });
   assert.equal(touches, 0);
+});
+
+test("transient binding I/O automatically recovers with exponential backoff and one fenced runtime", async () => {
+  let attempts = 0;
+  const h = harness({ readBinding: async () => ++attempts <= 3
+    ? { ok: false, code: "store_binding_transient" }
+    : { ok: true, value: { deviceId: configuration.botDeviceId, storeFingerprint: "1".repeat(64) } } });
+  await h.service.start();
+  assert.equal(h.service.getReadiness().reason, "store_binding_transient");
+  await Promise.all([h.service.start(), h.service.start()]);
+  assert.equal(attempts, 1);
+  await h.clock.advance(1_000);
+  assert.equal(attempts, 2);
+  await h.clock.advance(1_000);
+  assert.equal(attempts, 2);
+  await h.clock.advance(1_000);
+  assert.equal(attempts, 3);
+  await h.clock.advance(3_000);
+  assert.equal(attempts, 3);
+  await h.clock.advance(1_000);
+  assert.equal(h.service.getReadiness().ready, true);
+  assert.equal(h.runtimeInputs.length, 1);
+  await h.service.stop();
+});
+
+test("missing, corrupt and inaccessible identity stay blocked despite timers and wake attempts", async () => {
+  for (const code of ["store_binding_missing", "store_binding_invalid", "store_binding_access_denied"] as const) {
+    const h = harness({ readBinding: async () => ({ ok: false, code }) });
+    await h.service.start();
+    await h.clock.advance(300_000);
+    await h.service.start();
+    assert.equal(h.service.getReadiness().reason, code);
+    assert.equal(h.bindingReads(), 1);
+    assert.equal(h.runtimeInputs.length, 0);
+    await h.service.stop();
+  }
 });
 
 test("Published startup fails closed before state or sidecar work when the shared publication fence is absent", async () => {

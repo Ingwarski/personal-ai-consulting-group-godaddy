@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 import { FORBIDDEN_RUNTIME_ENVIRONMENT_NAMES } from "./forbidden-environment.mjs";
 import { createGoDaddyApplicationRuntime } from "./application-runtime.ts";
 import { createGoDaddySettingsRuntime } from "./settings-runtime.ts";
+import { MATRIX_WAKE_PATH } from "./matrix-wake.ts";
 
 export const GODADDY_NODE_MAJOR = 22;
 
@@ -109,7 +110,8 @@ const createRequestTracker = () => {
 export function createGodaddyServer({
   environment = process.env,
   nodeVersion = process.version,
-  settingsRuntime
+  settingsRuntime,
+  handleMatrixWake
 } = {}) {
   const status = getGodaddyRuntimeStatus({ environment, nodeVersion });
   const settings = status.ok ? settingsRuntime ?? createGoDaddySettingsRuntime(environment) : undefined;
@@ -134,6 +136,15 @@ export function createGodaddyServer({
         return json(response, status.ok ? 200 : 503, status.ok
           ? { status: "runtime_ready", code: "personal_consultant_settings_slice_pending_configuration" }
           : { status: "blocked", code: status.code });
+      }
+
+      // Matrix push is deliberately independent of owner browser sessions.
+      // The gateway accepts only bounded authenticated wake hints, not work.
+      if (url.pathname === MATRIX_WAKE_PATH) {
+        if (!status.ok || status.runtimeMode !== "production" || handleMatrixWake === undefined) {
+          return json(response, 404, { status: "not_found" });
+        }
+        return await writeResponse(await handleMatrixWake(nodeRequest(request)), response);
       }
 
       if (status.ok && settings !== undefined) {
@@ -180,7 +191,8 @@ export async function startGodaddyServer({
   const server = createGodaddyServer({
     environment,
     nodeVersion,
-    ...(application === undefined ? {} : { settingsRuntime: application.settings })
+    ...(application === undefined ? {} : { settingsRuntime: application.settings,
+      handleMatrixWake: application.handleMatrixWake })
   });
   try {
     await new Promise((resolveListen, rejectListen) => {

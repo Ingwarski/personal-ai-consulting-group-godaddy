@@ -262,6 +262,32 @@ test("leases the full bounded five-recipient assignment while rejecting overlong
   }
 });
 
+test("consensus locale and final-state metadata survive the SQL outbox and reject tampering", async () => {
+  const authority = { agentId: "head", provider: "codex" as const, runtimeSessionRef: "consensus-head", kind: "answer" as const };
+  const fields = { role: "Head Consultant", body: message.body, replyToEventId, authority, language: "uk", consensusKind: "final" as const };
+  const bodyHash = await confirmedMessageFingerprint(fields);
+  const candidate = { ...message, role: fields.role, authority, language: fields.language, consensusKind: fields.consensusKind, bodyHash };
+  const transactionId = `pc-1-1-${bodyHash.slice(0, 24)}`;
+  const deliveryHash = jsonHash({ generation: 1, sequence: 1, transactionId, recordKind: "message",
+    message: { generation: 1, sequence: 1, internalEventId: candidate.internalEventId, role: candidate.role,
+      visibleTime: candidate.visibleTime, body: candidate.body, bodyFormat: candidate.bodyFormat,
+      addressedTo: null, bodyHash, confirmedAt: candidate.confirmedAt, language: "uk", consensusKind: "final" }, replyToEventId, createdAt: candidate.confirmedAt });
+  for (const [label, changed] of [
+    ["valid", candidate], ["language", { ...candidate, language: "en" }],
+    ["kind", { ...candidate, consensusKind: "proposal" }],
+    ["stripped", Object.fromEntries(Object.entries(candidate).filter(([key]) => key !== "consensusKind"))]
+  ] as const) {
+    const pool = new ScriptedPool({ transaction: async statement => {
+      if (statement.startsWith("SELECT generation")) return [[canonicalOutboxRow({ transactionId, bodyHash, deliveryHash, messageJson: JSON.stringify(changed) })], []];
+      if (statement.startsWith("UPDATE personal_consultant_matrix_outbox")) return [{ affectedRows: 1 }, []];
+      throw new Error("Unexpected SQL");
+    } });
+    const leased = new MySqlMatrixOutbox(pool).leaseHead({ leaseOwner: "node-worker-01", now: new Date(message.confirmedAt), leaseMilliseconds: 30_000 });
+    if (label === "valid") assert.deepEqual((await leased)?.message, candidate);
+    else await assert.rejects(leased, MatrixOutboxCorruptionError);
+  }
+});
+
 test("a blocked strict head intentionally halts all later publication, as does an active head lease", async () => {
   for (const row of [
     canonicalOutboxRow({ state: "blocked", leaseEpoch: 1 }),

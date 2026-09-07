@@ -1,0 +1,213 @@
+{
+  "run_id": "adaptive-consultation-20260908",
+  "schema_version": 1,
+  "scope": "PI-CONSENSUS-20260908",
+  "authorization": "forge/implementation-prompt-consensus-20260908.json",
+  "status": "local_implementation_verified_live_acceptance_pending",
+  "executor": "Codex main agent with bounded implementation and independent-review agents",
+  "recorded_at": "2026-09-07T23:02:36.902Z",
+  "branch": "codex/matrix-connection-20260906",
+  "base_commit": "69772057fd0487e09228aab8939b0be824aa4b00",
+  "evaluated_revision": "Base commit plus the exact changed file hashes below; no subsequent implementation edits permitted without rerun.",
+  "source_hashes": {
+    "scripts/matrix-wake-operator.md": "410cd2b27de3f41aa62b4e4e9560cfe5cd41fac7c5146a787005b0b54c03767d",
+    "scripts/register-matrix-wake.ts": "1992f9ef201935ffcecfd65997336ce0ea24dfe71ba619052df15f8f7a30b0dd",
+    "src/consilium/consensus-contract.ts": "4bb8ae42c0cbc673bda08024636921d30170ac54291cdf7e88cea0b1bdc751e5",
+    "src/consilium/consensus-prompts.ts": "0b400e39325548772f5182e20bd2e876c7acbd9320b02efc575c40b617a2d4b9",
+    "src/consilium/consensus-router.ts": "91c90588c545fa3e3d0084d25ab6b0d5ecb54bd19389ff1f83671cf3c7324d90",
+    "src/consilium/consultant-roles.ts": "b7f79886fa801ca0449a32eb9c47c5f929436e39b3dfbcc3949f6c460afa8c2d",
+    "src/consilium/final-recommendation.ts": "d7c28a2b045a61e1220659e390925cc6b734722d3ddb1b3eee7214e8376c35ff",
+    "src/consilium/language.ts": "f95116ef7a55904cc6ae78df876f74eb377fe680779d6da6f16bc31decedb04f",
+    "src/consilium/resumable-finalization.ts": "e668382da53d8c30c530afe2e6fca8624b89c31e07cadbaebcd8e46e6ae42f2d",
+    "src/consilium/router.ts": "562762504d4913d65cd8126f8713dfcb8228479e58e0deb0dbc89c35267f0860",
+    "src/consilium/service-messages.ts": "f78f9e14016daf4ffbb776373d59a6c325fc7e9b8dc04948e75a3b4009a0958c",
+    "src/consilium/session-launcher.ts": "ee84b3e848252df6bd0e8b9513eb4e5192f2983ffbe967d4a148ea2a1c3f31cf",
+    "src/godaddy/application-runtime.ts": "d3115603dec828cbcf56d8ed7887fc1c230ca904c78947fda1bef62226dbb35b",
+    "src/godaddy/consilium-runtime.ts": "8107f4e2b456d9065ad829e3f18ec9c1c6391401e56b9f39ebd8cca35ff5fb99",
+    "src/godaddy/matrix-consultation-service.ts": "1556aef043a9aa587d7ad91359e97b9876a791f2ac5ede84d6baef73b0d8a05a",
+    "src/godaddy/matrix-service.ts": "28652b5b19c256f10351dcb0c09c46f6ddbc5825c189b08e6b7ebb8f02b2e968",
+    "src/godaddy/matrix-sidecar-supervisor.ts": "bc3ad54b1c70e492ca5accfc15eb2669f02cc844c498a281e2db440a3af9151c",
+    "src/godaddy/matrix-store-binding.ts": "4a44fcb911c4141bf594fccd1fb21186cf1664836dfe5b30e164acc7b12bfa8a",
+    "src/godaddy/matrix-wake-registration.ts": "d51094d26d0ccb7bf61ec45e41d6ff17ce3752caf99b026683cd83b1be57b368",
+    "src/godaddy/matrix-wake.ts": "be842667e0142a2b9af8f60d408e25fd0adcbf872d4db5fb4f67498b44a7e053",
+    "src/godaddy/mysql-matrix-outbox.ts": "9d29466a1d36f5e665696dd9cab6bad39a4ff93282c594f871c17ea98389db1d",
+    "src/godaddy/server.mjs": "9e0536e8c84220d9a1428c9df46e2a39934d724836b87ca385a2a02ca93b4597",
+    "src/matrix/bridge.ts": "a8ec7ed115cbe43a06ec91f1ad8bd536ef711fdde58dce9e4214026e79dbe7c8",
+    "src/runtime/claude-code-critic.ts": "c5b2059cf6b2777e253a67dc944d0b1c8440ce6dde104433c3dfa2c31433a958",
+    "src/runtime/codex-consilium-agent.ts": "517e6181ff3948e4ef13999f37669e0754247ebecc5145463cb48880d4a80f36",
+    "src/runtime/codex-head-synthesizer.ts": "a995d33559674284635a4f6b32d541601b6f975a4b3c6d9287a04c2081847b10",
+    "src/runtime/consultation-image-evidence.ts": "d6548e4525b3c780f6379e46e663296511946f144a1dedad34508bb5fbc28df5",
+    "src/runtime/consultation-intake.ts": "ddf4a1f8ede248de94e691849a4ac51048818ee29f6b170a0c64bc5e6fd62262",
+    "src/runtime/service-message-translator.ts": "f67e689d72325ddc654fe88c4b0154c5d0c7ff18a7c62b5c0913617408e5beb8",
+    "src/session/consensus-ledger.ts": "e16e89e3389cc1df2f8570f6876de5a90a15d7f9695e24c23ee221219f77a30f",
+    "src/session/owner-commands.ts": "808e37c61a477d92ebf595db979db5bbb845438b49ae31a87f81e2955539838b",
+    "src/session/registrar-do.ts": "3425be21c7d562984acbb4d4beda1859a0392f25d016d94d60eee5c305b95af3",
+    "test/consensus-ledger-review.test.ts": "e7fe82258911b03a70677a7a471f3e15e28a01946c7b4be72631a55d686ac7f0",
+    "test/consensus-ledger.test.ts": "c1794256fb143c1cb15a1582b5af5df573262f52db882f57b3adf2b203c65c36",
+    "test/consensus-providers.test.ts": "daa258166fd4554b5e9da3a49a7fbb0fa0ac399e575f4a3f10d9be3ead9f0e76",
+    "test/consensus-runtime-recovery.test.ts": "b791375ace4d831e2053e6e0fd3e994972e89d1bb79a34e73a163721b708c43b",
+    "test/consensus-workflow.test.ts": "7565d4518a8987f469bda94715b3e07cd8c34e26dceae4e26cc4a4ad4379386e",
+    "test/consultation-intake.test.ts": "2a562ce3fabb144fe8c84de6467d612933475c5252d19ea071ad11124b05dec6",
+    "test/fixtures/memory-registrar-storage.ts": "bb1c5e17053af5a40eb7989ded9881cb26921562a813267e7abab2e88f979990",
+    "test/godaddy-consilium-runtime.test.ts": "481d8ca7cca7db5eeeb2ddda5a54bfc186e7ac5425796713ca11f8c4a9075b97",
+    "test/godaddy-matrix-service.test.ts": "aeb7e2d28d06f308260a34964b6502756614534bb56ac487c9cc2150017a05d4",
+    "test/godaddy-matrix-sidecar-supervisor.test.ts": "5e830a67c637cd70077297d36a6b3acaaff0b651f39b49da96a8446e17bb94c5",
+    "test/godaddy-matrix-store-binding.test.ts": "4d2a4199ada717d2a3a3e004560329ce1a5b7f8b2079564ed0dcb4c4d84eceaa",
+    "test/godaddy-matrix-wake.test.ts": "d24e28a96c2f96e7620971174a21da9afa3a956db6dda1d9ceaa80b0dff98b61",
+    "test/godaddy-mysql-matrix-outbox.test.ts": "f3042745da7d67377520329f6c1e342aa332c4e7325a892f5ec48ca4a8bd96dd",
+    "test/godaddy-server.test.mjs": "4d0964835b6eee3f11c2a7411dc850b1c4c3e51817f3fe36a94b93a4e5a39294",
+    "test/matrix-bridge.test.ts": "5eda7e9c2c9d8cd17fa889adc3b593b6fbab7f83d62e4004e69db387cc3cec7b",
+    "test/matrix-consultation-races.test.ts": "53eac7a13399bca85df365a771dc09cb8d2437662724e204b11568d868d8221b",
+    "test/owner-commands.test.ts": "32dbb8793302368de6cac6f952d1010e071eac9aa589a64656be36d306577340",
+    "test/registrar-controls.test.ts": "d2a62448871ea1e3b3e0da50fccf36ddc9a467421e31eab892ac835b1213d590",
+    "test/service-message-translator.test.ts": "ff16f42ee0f5f03efcdbfbfe0e687a6f3e11534476e4c8bc6eca6a1aad9a82d4"
+  },
+  "source_contracts": {
+    "docs/development-plan.md": "271cc18ea9631b7846e687f2228a55e76058b5ebcfe49ef834a15038cc07164f",
+    "forge/implementation-prompt-consensus-20260908.json": "1ab86059bbbff0bd8b4385082082d80714aa95ed2d09553cce77d896b1f6fcaf"
+  },
+  "environment": {
+    "node": "22.16.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "external_credentials": "not used",
+    "providers": "fake JSON-RPC/process fixtures",
+    "matrix": "synthetic gateway/sidecar/transport",
+    "database": "in-memory transactional and scripted MySQL adapter; no real MySQL"
+  },
+  "verification": {
+    "command": "npm run check",
+    "path_setup": "prepend SHA256-verified official Node.js 22.16.0 binary directory to PATH",
+    "started_at": {
+      "current_time": "2026-09-07 23:01:22 UTC"
+    },
+    "finished_at": {
+      "current_time": "2026-09-07 23:02:18 UTC"
+    },
+    "exit_code": 0,
+    "build": "passed",
+    "typecheck": "passed",
+    "tests": 882,
+    "passed": 882,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "environment_policy": "passed",
+    "output": {
+      "path": "forge/runs/U-08/adaptive-consultation-20260908/test-output.txt",
+      "content_hash": "3634aba2b49f2159c5b185647fbea76e0862292f0cb3a63cbd9fbf9da0be2e18",
+      "format": "Filtered actual TAP outcome log; omits per-test timing blocks and experimental warnings."
+    }
+  },
+  "pipeline": {
+    "command": "sdd_check.py --project . --after implementation",
+    "result": {
+      "result": "passed",
+      "node": "implementation",
+      "mode": "after",
+      "skipped_artifacts": [],
+      "checked_artifacts": [
+        "architecture",
+        "canonical-terms",
+        "design-brief",
+        "development-plan",
+        "dod-evals",
+        "guardrails",
+        "prd",
+        "product-idea",
+        "project-context",
+        "qa-checklist",
+        "screen-map",
+        "user-journey",
+        "wireframes"
+      ],
+      "affected_artifacts": [],
+      "issues": [],
+      "warnings": [],
+      "limits": "Checks declared metadata, file integrity, stages and evidence references; not semantic quality, research authenticity or runner enforcement."
+    },
+    "note": "Declared source/plan/baseline/prompt integrity only; not live or release acceptance."
+  },
+  "regression_fixes": [
+    "Atomic count/message/outbox with replay, rollback, SQL key-order and corrupted-state rejection",
+    "Terminal consensus wins deadline and delayed Continue; atomic revision rejects reopening a final",
+    "Authorized media manifests change task digest; resumed images are observed and reach real consultation composition",
+    "Partial adaptive metadata cannot silently select legacy execution",
+    "Locale/final-state metadata protected at SQL outbox boundary",
+    "Rendered translation notice bytes persist across retries; no owner material enters translator"
+  ],
+  "check_evidence": [
+    {
+      "ids": [
+        "QA-CNS-001"
+      ],
+      "local": "test/matrix-bridge.test.ts; English registry, verbatim headers/bodies, emoji fallback and seven colour slots",
+      "remaining": "Actual Element desktop/mobile/theme/contrast captures"
+    },
+    {
+      "ids": [
+        "QA-CNS-002"
+      ],
+      "local": "test/consultation-intake.test.ts, test/service-message-translator.test.ts, test/matrix-consultation-races.test.ts; retained locale, explicit commands, content-free translation, restart",
+      "remaining": "Actual provider language quality and real Matrix locale observation"
+    },
+    {
+      "ids": [
+        "QA-CNS-003",
+        "QA-CNS-004"
+      ],
+      "local": "Intake/assignment schema and synthetic safety tests; typed crisis stop during actual consensus state machine",
+      "remaining": "Live lineage and professional-boundary acceptance; prompts/tests do not prove universal clinical safety"
+    },
+    {
+      "ids": [
+        "QA-CNS-005",
+        "QA-CNS-006"
+      ],
+      "local": "test/consensus-{workflow,providers,ledger,ledger-review,runtime-recovery}.test.ts and test/godaddy-consilium-runtime.test.ts; both Critic adapters, same proposal, 7 cap, stale/Stop/Continue",
+      "remaining": "Real selected provider/Matrix exchange and controlled unresolved demonstration"
+    },
+    {
+      "ids": [
+        "QA-CNS-007",
+        "QA-CNS-008"
+      ],
+      "local": "Isolated binding/supervisor/service/gateway/registration fault and protocol tests including authenticating fake hints, no agents from push, preserved identity, recovery",
+      "remaining": "Authorized registration, actual homeserver/WAF delivery, idle/restart/redeploy proof with unchanged store/device/cursor; pinned native initial not_ready remains diagnostically ambiguous"
+    },
+    {
+      "ids": [
+        "QA-CNS-009",
+        "QA-CNS-010"
+      ],
+      "local": "not_run",
+      "remaining": "Actual representative owner tasks and Element H1-H10 review"
+    }
+  ],
+  "gate_projection": "No QA-CNS check is newly marked fully passed; local evidence is partial for composite checks. Historical blocked release remains blocked.",
+  "report": {
+    "path": "forge/runs/U-08/adaptive-consultation-20260908/implementation-report.md",
+    "content_hash": "b869f6565d18e1dca01928c95665dd5311985d8ff1052c2c305a19ab362ff0b4"
+  },
+  "external_effects": {
+    "godaddy_publication": "not_performed",
+    "production_secrets": "unchanged",
+    "pusher_registration": "not_performed",
+    "provider_calls": "not_performed",
+    "real_matrix": "not_performed",
+    "real_mysql": "not_accessed",
+    "crypto_store_device": "unchanged",
+    "rust_artifact": "unchanged",
+    "happypro": "untouched",
+    "domain": "unchanged",
+    "preview": "unchanged",
+    "git": "Branch commit/push only; no main merge or deployment."
+  },
+  "preserved_limits": [
+    "An interrupted ambiguous provider call requires explicit Matrix Continue to fence a new generation while preserving Critic counts, not a Settings visit.",
+    "Native initial not_ready may represent auth/policy/network; retries use the existing identity and never waive native checks.",
+    "Historical document/media, archive, live browser and release evidence limitations are not superseded by this local suite."
+  ],
+  "next_action": "Separate authorization to deploy existing Published app, enable dedicated same-app wake key, register preserved-owner-room pusher/rule and perform live delivery/continuity tests."
+}

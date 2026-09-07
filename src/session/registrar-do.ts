@@ -2,6 +2,9 @@ import type { EffectiveSessionSnapshot } from "../settings/types.ts";
 import { isAgentId, isExternalRuntimeId, isInternalEventId, isSessionId } from "../identity/ids.ts";
 import type { AgentRegistration } from "../consilium/roster.ts";
 import type { RegistrarStorage } from "./storage.ts";
+import type { ConsensusLedger, ConsensusConfirmation, ConsensusDispatch, ConsensusDispatchKind } from "../consilium/consensus-contract.ts";
+import { initializeConsensusState, readConsensusState, reserveConsensusMessage, prepareConsensusConfirmation, commitConsensusConfirmation, consensusTaskKey } from "./consensus-ledger.ts";
+import { canonicalSessionLanguage } from "../consilium/language.ts";
 
 const ACTIVE_SESSION_KEY = "registrar:active-session";
 const GENERATION_KEY = "registrar:generation";
@@ -42,6 +45,8 @@ export type ConfirmedAgentMessage = Readonly<{
   bodyHash: string;
   confirmedAt: string;
   authority?: ConfirmedAgentAuthority;
+  language?: string;
+  consensusKind?: ConsensusDispatchKind | "safety_handoff";
 }>;
 
 export type ConfirmedAgentAuthority = Readonly<{
@@ -165,12 +170,16 @@ export async function confirmedMessageFingerprint(input: Readonly<{
   addressedTo?: string;
   replyToEventId?: string;
   authority?: ConfirmedAgentAuthority;
+  language?: string;
+  consensusKind?: ConsensusDispatchKind | "safety_handoff";
 }>): Promise<string> {
   return hashValue({
     role: input.role,
     body: input.body,
     addressedTo: input.addressedTo ?? null,
     replyToEventId: input.replyToEventId ?? null,
+    ...(input.language === undefined ? {} : { language: input.language }),
+    ...(input.consensusKind === undefined ? {} : { consensusKind: input.consensusKind }),
     // JSON columns may reorder nested keys. Keep the existing producer order
     // explicitly so persisted agent identity still verifies after a DB read.
     ...(input.authority === undefined ? {} : { authority: {
@@ -253,60 +262,104 @@ export class RegistrarDO {
     addressedTo?: string;
     replyToEventId?: string;
     authority?: ConfirmedAgentAuthority;
+    language?: string;
+  }>): Promise<RegistrarResult<ConfirmedAgentMessage>> {
+    return this.#storage.transaction(async storage => {
+      // New workflow messages must pass its durable approval/counter gate.
+      if (await storage.get<string>(consensusTaskKey(input.generation)) !== undefined) return { ok: false as const, code: "invalid_event" as const };
+      return this.#appendConfirmedMessage(storage, input);
+    });
+  }
+
+  async #appendConfirmedMessage(storage: RegistrarStorage, input: Readonly<{
+    generation: number; eventId: string; role: string; body: string;
+    addressedTo?: string; replyToEventId?: string; authority?: ConfirmedAgentAuthority; language?: string; consensusKind?: ConsensusDispatchKind | "safety_handoff";
   }>): Promise<RegistrarResult<ConfirmedAgentMessage>> {
     if (
       !isInternalEventId(input.eventId) || !isVisibleRole(input.role) || input.body.length === 0 ||
-      utf8Length(input.body) > 65_536 || (input.authority !== undefined && !isConfirmedAgentAuthority(input.authority))
+      utf8Length(input.body) > 65_536 || (input.authority !== undefined && !isConfirmedAgentAuthority(input.authority)) ||
+      (input.language !== undefined && canonicalSessionLanguage(input.language) !== input.language)
     ) {
       return { ok: false, code: "invalid_event" };
     }
 
     const immutableBody = input.body;
     const bodyHash = await confirmedMessageFingerprint(input);
-    return this.#storage.transaction(async (storage) => {
-      const recordedEvent = await storage.get<EventLedgerEntry>(eventKey(input.eventId));
-      if (recordedEvent !== undefined) {
-        if (recordedEvent.message.generation !== input.generation) return { ok: false, code: "obsolete_generation" };
-        if (recordedEvent.kind === "control" || recordedEvent.bodyHash !== bodyHash) return { ok: false, code: "idempotency_conflict" };
-        return { ok: true, value: recordedEvent.message, replayed: true };
+    const recordedEvent = await storage.get<EventLedgerEntry>(eventKey(input.eventId));
+    if (recordedEvent !== undefined) {
+      if (recordedEvent.message.generation !== input.generation) return { ok: false, code: "obsolete_generation" };
+      if (recordedEvent.kind === "control" || recordedEvent.bodyHash !== bodyHash) return { ok: false, code: "idempotency_conflict" };
+      return { ok: true, value: recordedEvent.message, replayed: true };
+    }
+
+    const active = await storage.get<SessionGeneration>(ACTIVE_SESSION_KEY);
+    if (active === undefined) return { ok: false, code: "no_active_session" };
+    if (active.generation !== input.generation) return { ok: false, code: "obsolete_generation" };
+    if (active.phase !== "active") return { ok: false, code: "session_not_active" };
+
+    const now = this.#now();
+    const message: ConfirmedAgentMessage = deepFreeze({
+      generation: active.generation,
+      sequence: active.nextSequence,
+      internalEventId: input.eventId,
+      role: input.role,
+      visibleTime: formatVisibleTime(now),
+      body: immutableBody,
+      bodyFormat: "markdown",
+      ...(input.addressedTo === undefined ? {} : { addressedTo: input.addressedTo }),
+      bodyHash,
+      confirmedAt: now.toISOString(),
+      ...(input.authority === undefined ? {} : { authority: input.authority }),
+      ...(input.language === undefined ? {} : { language: input.language }),
+      ...(input.consensusKind === undefined ? {} : { consensusKind: input.consensusKind })
+    });
+    const updated = Object.freeze({ ...active, nextSequence: active.nextSequence + 1 });
+    const outboxRecord: MatrixOutboxRecord = deepFreeze({
+      generation: message.generation,
+      sequence: message.sequence,
+      transactionId: matrixTransactionIdFor(message),
+      state: "pending",
+      kind: "message",
+      message,
+      ...(input.replyToEventId === undefined ? {} : { replyToEventId: input.replyToEventId }),
+      createdAt: now.toISOString()
+    });
+    await storage.put(messageKey(active.generation, message.sequence), message);
+    await storage.put(eventKey(input.eventId), { bodyHash, message });
+    await storage.put(sessionKey(active.generation), updated);
+    await storage.put(ACTIVE_SESSION_KEY, updated);
+    await this.#projectConfirmedMessage(storage, outboxRecord);
+    return { ok: true, value: message, replayed: false };
+  }
+
+  initializeConsensus(input: Parameters<ConsensusLedger["initializeConsensus"]>[0]) {
+    return this.#storage.transaction(async storage => initializeConsensusState(storage, input,
+      await storage.get<SessionGeneration>(ACTIVE_SESSION_KEY), await storage.get<DesignatedCriticBinding>(criticBindingKey(input.generation))));
+  }
+
+  getConsensus(taskId: string) { return readConsensusState(this.#storage, taskId); }
+  getConsensusTask(generation: number) { return this.#storage.get<string>(consensusTaskKey(generation)); }
+
+  reserveConsensusDispatch(input: ConsensusDispatch) {
+    return this.#storage.transaction(async storage => reserveConsensusMessage(storage, input,
+      await storage.get<SessionGeneration>(ACTIVE_SESSION_KEY)));
+  }
+
+  confirmConsensusMessage(input: ConsensusConfirmation) {
+    return this.#storage.transaction(async storage => {
+      const prepared = await prepareConsensusConfirmation(storage, input, await storage.get<SessionGeneration>(ACTIVE_SESSION_KEY));
+      if (!prepared.ok) return prepared;
+      if (prepared.value.confirmed !== undefined) return { ok: true as const, value: prepared.value.confirmed, replayed: true };
+      const confirmed = await this.#appendConfirmedMessage(storage, prepared.value.message);
+      if (!confirmed.ok) return confirmed;
+      await commitConsensusConfirmation(storage, input, prepared.value.state, confirmed.value);
+      if (input.kind === "final" || input.kind === "unresolved" || input.safetyHandoff === true) {
+        const active = (await storage.get<SessionGeneration>(ACTIVE_SESSION_KEY))!;
+        const closed = { ...active, phase: "closed" as const, closedAt: this.#now().toISOString() };
+        await storage.put(sessionKey(active.generation), closed);
+        await storage.put(ACTIVE_SESSION_KEY, closed);
       }
-
-      const active = await storage.get<SessionGeneration>(ACTIVE_SESSION_KEY);
-      if (active === undefined) return { ok: false, code: "no_active_session" };
-      if (active.generation !== input.generation) return { ok: false, code: "obsolete_generation" };
-      if (active.phase !== "active") return { ok: false, code: "session_not_active" };
-
-      const now = this.#now();
-      const message: ConfirmedAgentMessage = deepFreeze({
-        generation: active.generation,
-        sequence: active.nextSequence,
-        internalEventId: input.eventId,
-        role: input.role,
-        visibleTime: formatVisibleTime(now),
-        body: immutableBody,
-        bodyFormat: "markdown",
-        ...(input.addressedTo === undefined ? {} : { addressedTo: input.addressedTo }),
-        bodyHash,
-        confirmedAt: now.toISOString(),
-        ...(input.authority === undefined ? {} : { authority: input.authority })
-      });
-      const updated = Object.freeze({ ...active, nextSequence: active.nextSequence + 1 });
-      const outboxRecord: MatrixOutboxRecord = deepFreeze({
-        generation: message.generation,
-        sequence: message.sequence,
-        transactionId: matrixTransactionIdFor(message),
-        state: "pending",
-        kind: "message",
-        message,
-        ...(input.replyToEventId === undefined ? {} : { replyToEventId: input.replyToEventId }),
-        createdAt: now.toISOString()
-      });
-      await storage.put(messageKey(active.generation, message.sequence), message);
-      await storage.put(eventKey(input.eventId), { bodyHash, message });
-      await storage.put(sessionKey(active.generation), updated);
-      await storage.put(ACTIVE_SESSION_KEY, updated);
-      await this.#projectConfirmedMessage(storage, outboxRecord);
-      return { ok: true, value: message, replayed: false };
+      return confirmed;
     });
   }
 
@@ -320,15 +373,18 @@ export class RegistrarDO {
     eventId: string;
     body: string;
     replyToEventId?: string;
+    language?: string;
   }>): Promise<RegistrarResult<ConfirmedAgentMessage>> {
     if (
       !isInternalEventId(input.eventId) || typeof input.body !== "string" || input.body.length === 0 ||
-      utf8Length(input.body) > 65_536 || Object.keys(input).some((key) => !["eventId", "body", "replyToEventId"].includes(key)) ||
+      utf8Length(input.body) > 65_536 || Object.keys(input).some((key) => !["eventId", "body", "replyToEventId", "language"].includes(key)) ||
+      (input.language !== undefined && canonicalSessionLanguage(input.language) !== input.language) ||
       (input.replyToEventId !== undefined && !/^\$[A-Za-z0-9$:_-]{8,255}$/.test(input.replyToEventId))
     ) return { ok: false, code: "invalid_event" };
 
     const controlInput = {
-      role: "Система", body: input.body,
+      role: "Service", body: input.body,
+      ...(input.language === undefined ? {} : { language: input.language }),
       ...(input.replyToEventId === undefined ? {} : { replyToEventId: input.replyToEventId })
     };
     const bodyHash = await confirmedMessageFingerprint(controlInput);
@@ -358,6 +414,7 @@ export class RegistrarDO {
         visibleTime: formatVisibleTime(now),
         body: controlInput.body,
         bodyFormat: "markdown",
+        ...(input.language === undefined ? {} : { language: input.language }),
         bodyHash,
         confirmedAt: now.toISOString()
       });
@@ -425,6 +482,15 @@ export class RegistrarDO {
       if (active.generation !== input.generation) return { ok: false, code: "obsolete_generation" };
       if (active.phase !== "active" && active.phase !== "closed") return { ok: false, code: "session_not_active" };
 
+      // A worker deadline can race the final transaction. Re-check its durable
+      // outcome inside this same transaction, before fencing/reopening anything.
+      const consensusTask = await storage.get<string>(consensusTaskKey(active.generation));
+      if (consensusTask !== undefined) {
+        const consensus = await readConsensusState(storage, consensusTask);
+        if (consensus === undefined) throw new Error("Registrar consensus task is missing.");
+        if (["published", "unresolved"].includes(consensus.status) && consensus.finalBody !== undefined) return { ok: false, code: "session_not_active" };
+      }
+
       const now = this.#now().toISOString();
       await this.#fenceGeneration(storage, { generation: active.generation, reason: "revision", fencedAt: now });
       const priorGeneration = (await storage.get<number>(GENERATION_KEY)) ?? active.generation;
@@ -442,6 +508,7 @@ export class RegistrarDO {
       await storage.put(GENERATION_KEY, replacement.generation);
       await storage.put(sessionKey(replacement.generation), replacement);
       await storage.put(ACTIVE_SESSION_KEY, replacement);
+      if (consensusTask !== undefined) await storage.put(consensusTaskKey(replacement.generation), consensusTask);
       await storage.put(revisionKey(input.revisionId), { sourceGeneration: active.generation, targetGeneration: replacement.generation });
       return { ok: true, value: replacement, replayed: false };
     });
