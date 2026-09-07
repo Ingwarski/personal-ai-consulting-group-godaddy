@@ -26,6 +26,7 @@ import { createRuntimeBootstrap, type RuntimeBootstrap } from "./runtime-bootstr
 import { createMatrixSetupOperations, type MatrixSetupOperations } from "./matrix-setup-operations.ts";
 import { MATRIX_SETUP_ACTION, MATRIX_SETUP_ACTIONS, MATRIX_SETUP_PAGE, matrixSetupDocument, type MatrixSetupAction } from "./matrix-setup-page.ts";
 import { matrixPreviewVerifierResponse } from "./matrix-browser-isolation.ts";
+import { matrixPositiveControlResponse } from "./matrix-positive-control.ts";
 
 type SettingsAsset = "settings.css" | "settings.js";
 type CatalogFailureCode = Extract<RuntimeCapabilityCatalogResult, { ok: false }>["code"];
@@ -344,6 +345,8 @@ export function createGoDaddySettingsRuntime(
         // Static, read-only verifier: no pool, owner session, state or credentials.
         const verifier = matrixPreviewVerifierResponse(request);
         if (verifier !== undefined) return verifier;
+        const control = await matrixPositiveControlResponse(request);
+        if (control !== undefined) return control;
         return isManagedPath(new URL(request.url).pathname) || new URL(request.url).pathname.startsWith("/auth/") || isOwnerAuthScriptPath(new URL(request.url).pathname)
           ? plain("Settings are temporarily unavailable.", 503)
           : undefined;
@@ -434,6 +437,8 @@ export function createGoDaddySettingsRuntime(
       const url = new URL(request.url);
       const verifier = matrixPreviewVerifierResponse(request);
       if (verifier !== undefined) return verifier;
+      const control = await matrixPositiveControlResponse(request);
+      if (control !== undefined) return control;
       const cookieHeader = request.headers.get("cookie");
 
       if (isOwnerAuthScriptPath(url.pathname)) {
