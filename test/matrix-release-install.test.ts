@@ -75,6 +75,24 @@ test("inspection is read-only and does not turn missing installation into a prov
   assert.deepEqual(await readdir(join(f.root, "public", "assets")), []);
 });
 
+test("unsafe state diagnostics expose only fixed metadata labels and never repair or read state", async (t) => {
+  const f = await fixture(t);
+  assert.equal((await prepareMatrixRelease(f.root, f.expected)).ok, true);
+  for (const name of ["matrix-sdk-crypto.sqlite3-wal", "private-unknown-identity"]) {
+    const path = join(f.store, name);
+    await writeFile(path, "SECRET-CONTENTS", { mode: 0o644 }); await chmod(path, 0o644);
+    const before = await lstat(path);
+    let observed: unknown;
+    assert.deepEqual(await inspectMatrixRelease(f.root, f.expected, { observeUnsafePath: d => { observed = d; } }),
+      { ok: false, code: "matrix_release_unsafe_path" });
+    assert.deepEqual(observed, { stage: "store", target: name.startsWith("matrix-sdk") ? name : "other", mode: "644",
+      ownerMatches: true, file: true, directory: false, symlink: false, links: 1 });
+    assert.doesNotMatch(JSON.stringify(observed), /SECRET|private-unknown|matrix-release-install-/);
+    const after = await lstat(path); assert.equal(after.mode, before.mode); assert.equal(after.ctimeMs, before.ctimeMs);
+    await rm(path);
+  }
+});
+
 test("preparation is idempotent, preserving binary inodes and existing encrypted data bytes/modes", async (t) => {
   const f = await fixture(t);
   assert.equal((await prepareMatrixRelease(f.root, f.expected)).ok, true);

@@ -2,7 +2,7 @@ import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 import { parseGoDaddyMatrixConfiguration } from "./matrix-service-config.ts";
 import { inspectMatrixRelease, prepareMatrixRelease, verifyMatrixHttpIsolation,
-  type MatrixReleaseExpectation, type MatrixIsolationDiagnostics } from "./matrix-release-install.ts";
+  type MatrixReleaseExpectation, type MatrixIsolationDiagnostics, type MatrixReleaseDiagnostic } from "./matrix-release-install.ts";
 import { MATRIX_RELEASE_PIN } from "./matrix-release-pin.ts";
 import type { MatrixBrowserChallenge } from "./matrix-browser-isolation.ts";
 import { spawnMatrixSetupProcess, type MatrixSetupProcess, type MatrixSetupCommand } from "./matrix-setup-process.ts";
@@ -54,9 +54,15 @@ export function createMatrixSetupOperations(environment: Record<string, unknown>
       if (browserPending !== undefined) { browserPending.resolve(undefined); await isolationRun; }
       isolationConfirmed = false;
       view = { state: "unprepared" };
-      const prepared = await (dependencies.prepare ?? prepareMatrixRelease)(root, pin);
+      let releaseDiagnostic: MatrixReleaseDiagnostic | undefined;
+      const prepared = await (dependencies.prepare ?? prepareMatrixRelease)(root, pin, {
+        observeUnsafePath: value => { releaseDiagnostic = value; }
+      });
       if (closed) throw new Error("matrix_setup_disabled");
-      if (!prepared.ok) throw new Error(prepared.code);
+      if (!prepared.ok) {
+        view = { state: "unprepared", error: prepared.code,
+          ...(releaseDiagnostic === undefined ? {} : { releaseDiagnostic }) }; return view;
+      }
       let announce: (view: MatrixSetupView) => void = () => {};
       const awaitingBrowser = new Promise<MatrixSetupView>(resolve => { announce = resolve; });
       const browserCheck = ownerBinding === undefined ? undefined : (challenge: MatrixBrowserChallenge): Promise<unknown> =>

@@ -17,7 +17,9 @@ export type MatrixReleaseExpectation = Readonly<{
   sourceCommit: string;
 }>;
 
-export type MatrixReleaseOptions = Readonly<{ expectedOwnerUid?: number }>;
+export type MatrixReleaseDiagnostic = Readonly<{ stage: string; target: string; mode: string; ownerMatches: boolean;
+  file: boolean; directory: boolean; symlink: boolean; links: number }>;
+export type MatrixReleaseOptions = Readonly<{ expectedOwnerUid?: number; observeUnsafePath?: (value: MatrixReleaseDiagnostic) => void }>;
 
 export type MatrixReleaseInspection = Readonly<{
   sidecarPath: string;
@@ -48,7 +50,23 @@ type MatrixReleaseErrorCode =
 
 class ReleaseFailure extends Error {
   readonly code: MatrixReleaseErrorCode;
-  constructor(code: MatrixReleaseErrorCode) { super(code); this.code = code; }
+  readonly diagnostic?: Omit<MatrixReleaseDiagnostic, "stage">;
+  constructor(code: MatrixReleaseErrorCode, diagnostic?: Omit<MatrixReleaseDiagnostic, "stage">) {
+    super(code); this.code = code;
+    if (diagnostic !== undefined) this.diagnostic = diagnostic;
+  }
+}
+
+// Fixed labels only: never expose arbitrary on-disk names, paths or contents.
+function unsafePath(path: string, stat: Stats, uid: number): ReleaseFailure {
+  const labels = [".runtime", "matrix", ".runtime-release", "public", "assets", ".personal-consultant-matrix-v1",
+    "crypto-store", "media-spool", "device-binding.json", "provisioning-intent.json", "store.lock",
+    "matrix-sdk-state.sqlite3", "matrix-sdk-state.sqlite3-wal", "matrix-sdk-state.sqlite3-shm",
+    "matrix-sdk-crypto.sqlite3", "matrix-sdk-crypto.sqlite3-wal", "matrix-sdk-crypto.sqlite3-shm",
+    "matrix-sdk-event-cache.sqlite3", "matrix-sdk-event-cache.sqlite3-wal", "matrix-sdk-event-cache.sqlite3-shm"];
+  return new ReleaseFailure("matrix_release_unsafe_path", { target: labels.find(label => path.endsWith("/" + label)) ?? "other",
+    mode: (stat.mode & 0o7777).toString(8), ownerMatches: stat.uid === uid, file: stat.isFile(),
+    directory: stat.isDirectory(), symlink: stat.isSymbolicLink(), links: stat.nlink });
 }
 
 type BinaryEntry = Readonly<{ sha256: string; size: number }>;
@@ -98,7 +116,7 @@ async function directory(path: string, uid: number, privateMode: boolean): Promi
   const stat = await lstat(path);
   if (!stat.isDirectory() || stat.isSymbolicLink() || stat.uid !== uid || (stat.mode & 0o7000) !== 0
     || (stat.mode & 0o022) !== 0 || (privateMode && (stat.mode & 0o777) !== 0o700)
-    || await realpath(path) !== path) throw new ReleaseFailure("matrix_release_unsafe_path");
+    || await realpath(path) !== path) throw unsafePath(path, stat, uid);
   return stat;
 }
 
@@ -270,13 +288,13 @@ async function privateState(path: string, uid: number): Promise<"empty" | "conta
     if (++seen > 4096 || next.depth > 32) throw new ReleaseFailure("matrix_release_unsafe_path");
     const stat = await lstat(next.path);
     if (stat.uid !== uid || stat.isSymbolicLink() || (stat.mode & 0o7000) !== 0 || await realpath(next.path) !== next.path) {
-      throw new ReleaseFailure("matrix_release_unsafe_path");
+      throw unsafePath(next.path, stat, uid);
     }
     if (stat.isDirectory()) {
       await directory(next.path, uid, true);
       queue.push(...(await readdir(next.path)).map((name) => ({ path: join(next.path, name), depth: next.depth + 1 })));
     } else if (!stat.isFile() || stat.nlink !== 1 || (stat.mode & 0o777) !== 0o600) {
-      throw new ReleaseFailure("matrix_release_unsafe_path");
+      throw unsafePath(next.path, stat, uid);
     }
   }
   if (!identity(root, await directory(path, uid, true))) throw new ReleaseFailure("matrix_release_unsafe_path");
@@ -301,21 +319,27 @@ async function provisioningState(path: string, uid: number, state: "empty" | "co
 }
 
 async function run(applicationRoot: string, expected: MatrixReleaseExpectation, options: MatrixReleaseOptions, prepare: boolean): Promise<MatrixReleaseResult> {
+  let stage = "release";
   try {
     const paths = layout(applicationRoot);
     const uid = currentUid(options);
     const metadata = await release(paths, expected, uid);
     // Validate public ancestors without modifying them or their permissions.
+    stage = "public_ancestors";
     await directory(join(applicationRoot, "public"), uid, false);
     await directory(join(applicationRoot, "public", "assets"), uid, false);
     const sourceSidecar = prepare ? await verifiedBinary(join(paths.bundleDir, SIDECAR), metadata.sidecar, uid, false) : undefined;
     const sourceSetup = prepare ? await verifiedBinary(join(paths.bundleDir, SETUP), metadata.setup, uid, false) : undefined;
+    stage = "private_directories";
     for (const path of [paths.runtimeRoot, paths.runtimeDir, paths.persistentRoot, paths.storeDir, paths.mediaSpoolDir]) {
       await dedicatedDirectory(path, uid, prepare);
     }
+    stage = "store";
     const storeState = await privateState(paths.storeDir, uid);
     const storeProvisioning = await provisioningState(paths.storeDir, uid, storeState);
+    stage = "spool";
     const mediaSpoolState = await privateState(paths.mediaSpoolDir, uid);
+    stage = "installed_binaries";
     const sidecarPath = join(paths.runtimeDir, SIDECAR);
     const setupPath = join(paths.runtimeDir, SETUP);
     if (prepare && sourceSidecar !== undefined && sourceSetup !== undefined) {
@@ -331,6 +355,7 @@ async function run(applicationRoot: string, expected: MatrixReleaseExpectation, 
       credentialReadiness: "requires_http_isolation"
     } };
   } catch (error) {
+    if (error instanceof ReleaseFailure && error.diagnostic !== undefined) options.observeUnsafePath?.({ stage, ...error.diagnostic });
     return { ok: false, code: error instanceof ReleaseFailure ? error.code : "matrix_release_unavailable" };
   }
 }
