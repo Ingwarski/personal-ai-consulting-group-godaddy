@@ -1,5 +1,36 @@
 # План розробки
 
+## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix
+
+Чинний наступний обсяг після нового окремого implementation prompt. Джерела: однойменні PRD, контекст/терміни/guardrails, journey, screen-map, wireframes, DB-D21, AD-25, DoD і QA. Старий Critic router/Matrix план нижче зберігається як історія попереднього scope. Нових numbered units немає: уточнюються U-05/U-06/U-08/U-09, без переписування Google auth, provider settings або Rust crypto.
+
+### Послідовність реалізації PI-CONSENSUS-20260908
+
+1. **Автономне Matrix-приймання — U-06, integration з U-05.** Runner встановлює точну причину store binding failure, розділяє transient I/O/network та integrity/auth errors, додає bounded backoff/half-open з одним fenced worker, перевіряє startup без Settings і store/cursor continuity. Додатковий same-app pusher/wake endpoint: isolated tests, потім окремо дозволена перевірка реальних pusher/rules/WAF. Ознака виконання — QA-CNS-007/008 та застосовні QA-INT-019–024, перевірена подія без входу в Settings. Невідоме/пошкоджене сховище не reset: блокувати залежний live запуск, зберегти identity/history. Немає local/paid сервера.
+2. **Повний процес консультації — U-05/U-08 разом, renderer U-06.** Runner реалізує versioned language/roster/assignments/positions/proposal/approvals/counts; сім нових ролей, English labels, emoji/colour fallback; конкретні різні доручення Head; constructive revisions, early consensus, максимум сім Critic-повідомлень кожному та чесний unresolved. Registrar атомарно зв'язує message/count/outbox. Ознака — QA-CNS-001–006, реальний intake→specialist→Critic→proposal→approval→final seam і A2A/Stop/provider regressions. Race, stale approval, clinical/privacy bypass або повторний фінал блокують готовність. Не зупинятися після labels/dropdown; це пов'язаний наскрізний scope.
+3. **Приймання й доставка — U-09, runner + Власник.** Node 22 full check, застосовні Rust/MySQL fault tests, actual Element visual/heuristic review, дві мовні задачі й controlled unresolved case. Після окремо дозволеного Published release перевірити idle/restart/redeploy із закритими Settings, збереження store/device та відсутність повторів. Ознака — QA-CNS-007/009/010, applicable security/regression, точні source/host/runtime/client fingerprints і фактичний результат. Відсутність live/human proof або blocking finding не дозволяє назвати прототип готовим; branch push не є Published.
+
+Контрольні точки, не вигаданий ETA: no-Settings intake перевіряється перед залежним live консиліумом; bounded local roster/router work може йти паралельно з безпечними read-only transport перевірками. Після нового implementation prompt весь пов'язаний scope виконується без штучної зупинки між дрібними змінами. До release acceptance потрібні реальна user observation і delivery evidence. Нову external authority запитувати лише для конкретної дії, не приховувати її за completed unit.
+
+### Точне unit → clause трасування
+
+| Unit | Implements |
+|---|---|
+| U-05 | FR-048.b, FR-050.b, FR-051.b, FR-051.c, FR-051.d, FR-052.c |
+| U-06 | FR-047.a, FR-047.b, FR-052.a, FR-052.b, FR-052.c, FR-052.d |
+| U-08 | FR-047.a, FR-047.b, FR-048.a, FR-048.b, FR-049.a, FR-049.b, FR-050.a, FR-050.b, FR-051.a, FR-051.b, FR-051.c, FR-051.d |
+| U-09 | FR-052.a, FR-052.c, FR-051.a, FR-051.b, FR-051.c, FR-051.d |
+
+U-05 володіє durable session/registrar/count/approval lifecycle; U-06 — delivery, role formatting, transport і wake; U-08 — selection, prompts, мова, domain safety й iterative routing; U-09 — integrated completion/continuity та докази. Усі 16 нових пунктів мають незалежні QA-CNS bindings. Спільна інтеграція не створює двох авторів одного durable запису.
+
+### Межі та критерій передачі
+
+- Baseline PC-MATRIX-CANDIDATE-B-V2-20260816-R1, target 07e3675265e8cadef1e65c132f32e3cbbf4d6537cbfd316ea16a6bacd56f1bd6, render aggregate 57d103c5ed17bcc9a9d95a58718f83c33b8257229fc825b756367321eaa33199 збережені. DB-D18/19/20 лишаються, DB-D21 додає тільки SUR-01 correction. Frozen files не змінювати; для нового scope немає prototype-code reuse або нової promotion authority.
+- Без destructive cleanup, DB wipe, crypto reset, іншого Google app, HappyPro, domain changes, paid/local hosting, stateful Preview або API/PAYG. Чинні model/provider choices і квоти збережені. Нові особисті ролі не дозволяють передавати медичні записи.
+- Попередні receipts — історія. Останній Published code receipt fcbe5462fcce3deb37cf016ad1d6c8ac7cb63a34 успадкований з попереднього запуску; робочий base bd854ee. Цей запуск не перевіряє новий Published стан і не змінює production.
+- QA-CNS-001–010 prepared/not_run, actual_evidence null. Новий release scope не оцінений; попереднє blocked не скасоване. Після цього плану стан awaiting-implementation-prompt. Наступне окреме доручення прив'язується до фактичного hash плану; старий Matrix/Critic prompt автоматично не переноситься.
+
+
 - `status`: `awaiting-implementation-prompt`; цей перегляд SDD не дозволяє реалізацію, deployment або зовнішні зміни
 - `definition_status`: `prepared`
 - `execution_status`: `not_run`

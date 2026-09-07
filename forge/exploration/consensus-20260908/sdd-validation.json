@@ -1,0 +1,40 @@
+{
+  "scope": "PI-CONSENSUS-20260908",
+  "recorded_at": "2026-09-07T21:49:47.361Z",
+  "base_revision": "bd854ee",
+  "development_plan_hash": "271cc18ea9631b7846e687f2228a55e76058b5ebcfe49ef834a15038cc07164f",
+  "product_scope_hash": "defc5e24f0dd91be42b984888b157137f4f1ed361459e70f42b832e18c957bd4",
+  "command": "python3 <installed-to-sdd-pipeline>/scripts/sdd_check.py --project . --after development-plan",
+  "result": {
+    "result": "passed",
+    "node": "development-plan",
+    "mode": "after",
+    "skipped_artifacts": [],
+    "checked_artifacts": [
+      "architecture",
+      "canonical-terms",
+      "design-brief",
+      "development-plan",
+      "dod-evals",
+      "guardrails",
+      "prd",
+      "product-idea",
+      "project-context",
+      "qa-checklist",
+      "screen-map",
+      "user-journey",
+      "wireframes"
+    ],
+    "affected_artifacts": [],
+    "issues": [],
+    "warnings": [],
+    "limits": "Checks declared metadata, file integrity, stages and evidence references; not semantic quality, research authenticity or runner enforcement."
+  },
+  "production_changed": false,
+  "tests_for_new_behavior": "not_run",
+  "browser_verification": "not_run",
+  "user_observation": "not_run",
+  "live_wake_verification": "not_run",
+  "baseline_render_hash": "57d103c5ed17bcc9a9d95a58718f83c33b8257229fc825b756367321eaa33199",
+  "note": "Definition/source-integrity validation only. Ten QA-CNS checks are prepared; no implementation, publication, credential changes, pusher registration or crypto/DB cleanup."
+}

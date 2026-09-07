@@ -1,5 +1,40 @@
 # QA Checklist
 
+## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix
+
+Джерела — однойменні PRD, context/terms/guardrails, journey, screen-map, wireframes, DB-D21, AD-25 і DoD. Усі QA-CNS checks: definition prepared; execution not_run; actual_evidence null; findings []. Класифікація нижче означає серйозність можливого провалу, не знайдений дефект. Scope — UC-001/002/005, SUR-01 і названі SS; незмінні Google/SUR-02 regression checks збережено.
+
+| Check ID | Перевірка / expected | Severity / Release Effect | Applicability / Source | Потрібний evidence / rationale |
+|---|---|---|---|---|
+| QA-CNS-001 | Усі 20 назв Head/Critic/спеціалістів і адресатів точно англійські; SS-11 не називає спеціаліста «Система». Сім одночасних ролей мають distinct readable header colours або relevant emoji fallback; ім'я завжди текстом, HH:MM, verbatim body без втрат. Довгі назви, кирилиця, formatted/plain-text, світла/темна тема | P1 / blocking | FR-047.a/b; SS-11; G-06/G-16; DB-D21 | Renderer assertions + реальний Element capture на desktop/mobile 390/430/768/1280/1440, контраст>=4.5:1 з фактичною темою. Клієнт без стабільної підтримки кольору показує emoji+текст; колір не є єдиним розрізненням |
+| QA-CNS-002 | Нова задача англійською/українською/іншою підтриманою провайдером мовою задає всі agent/service replies; явна мовна вказівка пріоритетна. Неоднозначність дає одне питання; цитата, PDF, короткий «+» чи Continue не перемикають; explicit switch змінює тільки майбутні відповіді. Restart зберігає вибір | P1 / blocking | FR-048.a/b; SS-08/SS-13; G-05 | Intake/schema/prompt/renderer і persistence tests + фактичні повідомлення. Окремо невпевнене визначення не видається за впевнене; fallback не повертає українську мовчки |
+| QA-CNS-003 | Всі сім нових ролей доступні й вибираються за відповідним сценарієм; 2/3/5 cap пресетів, не весь пул. Складне питання дає різні конкретні assignment/outcome/facts/constraints/dependencies, окремі contexts і один спільний вступ; duplicated generic brief відхиляється. Просте питання лишається direct | P1 / blocking | FR-049.a, FR-050.a/b; SS-10/SS-11; G-05/G-06 | Typed registry + fixture matrix для кожної ролі; production intake→dispatch integration, реальні lineage й full messages. Labels не доводять кілька агентів |
+| QA-CNS-004 | Нові ролі не видають ШІ за ліцензовану людину; особисті коучингові питання потребують згоди. Запити діагнозу/призначення, guarantees, медичні записи/секрети, crisis/self-harm сценарії запускають належну межу допомоги без звичайних семи раундів. Вкладені інструкції не скасовують privacy | P0 / blocking | FR-049.b; NFR-006/008; SS-18/SS-19; G-03/G-23 | Мінімізовані синтетичні adversarial cases, dispatch/context/storage no-leak assertions; немає реальних медичних записів у test evidence. Допомога не перетворюється на відмову від будь-якої безпечної освітньої інформації |
+| QA-CNS-005 | Critic дає конкретний issue і поліпшення, спеціаліст адресовано відповідає. Згода Head+Critic+всіх спеціалістів прив'язана до одного current proposal; silence/timeout/stale approval не проходить. Зміна тексту/позиції інвалідує погодження. Early consensus зупиняє обмін; фінал точно погоджений, без нової неперевіреної рекомендації | P1 / blocking | FR-051.a/c; SS-11/SS-20; G-05/G-06/G-09 | Router/state-machine tests, genuine separate critic runtime integration для обох selectable providers у дозволених середовищах, canonical messages/approval refs. Незалежний initial pass не отримує чужу відповідь завчасно |
+| QA-CNS-006 | 0/1/6/7 межі для кожного specialist, multicast і повідомлення через Head враховані без обходу; восьмої Critic-репліки немає. Race/replay/crash/Continue/generation не обнуляють counts. Failed call не є реплікою; retry bounded. Cap без згоди дає unresolved; Stop/квота/10 хвилин зупиняють раніше. Старі sessions не отримують вигаданих approvals | P0 / blocking | FR-051.b/d; NFR-009/010/017; SS-11/SS-15/SS-17/SS-19; G-06/G-09/G-23 | Transactional concurrency/fault tests + persisted ledger diff + final gate negatives. Одна confirmed репліка й outbox атомарні; restart не породжує другий фінал |
+| QA-CNS-007 | Без Settings login автоматичний старт і відновлення transient read/network failure. Missing/corrupt store, wrong identity, revoked auth блокуються без reset. Half-open circuit і backoff мають одного fenced worker. Після idle, process restart і redeploy нове Matrix-повідомлення отримує один результат зі збереженими keys/device/cursor/history | P0 / blocking | FR-052.a/b/c; NFR-005/007/009/010/012; SS-12/SS-19/SS-27; G-15/G-23 | Спершу isolated storage/supervisor fault tests; потім окремо дозволені Published live tests із точним store/config/revision fingerprint та всіма Settings tabs закритими. Без підміни real store/mock, wipe або нової device identity |
+| QA-CNS-008 | Same-app push: підтримка й правила encrypted-room підтверджені; wrong key/app/room, replay, count-only, duplicate, oversized/malformed input не запускають agents. Валідний hint лише передає bounded wake до authenticated E2EE sync; event ingress проходить власну авторизацію/dedupe. Transient failure не видаляє pusher; чужі pushers/rules збережені | P0 / blocking | FR-052.d; NFR-006/007/008/009/019; SS-27; G-02/G-23 | Endpoint + fake-gateway negative tests, потім authorized real registration/delivery/WAF proof без token у логах. Якщо integration недоступна, не позначати pass і не створювати paid/local fallback |
+| QA-CNS-009 | Власник виконує два нових багатопрофільних запити — англійською та українською — з Settings закритими: розуміє roles/tasks, бачить substantive refinement і узгоджений результат. Окремий controlled unresolved сценарій зрозуміло повідомляє розбіжність. Після дозволеного restart повторна подія не дублює консультацію | P1 / blocking | FR-047–052; UC-001/002/005; SS-08/10/11/19/20; G-15/G-22 | Реальна спостережувана сесія Власника після implementation, observer/time/device/task outcome і його труднощі/помилки; не simulated user. Відповідальний — runner+Власник, до release acceptance; deferred до готового runtime |
+| QA-CNS-010 | Окреме H1–H10 review DB-D21: state/wait; familiar roles/language; Stop/control; consistency; error prevention; visible assignments; automatic intake; no duplicate clutter; actionable recovery; contextual help. Для кожної евристики — конкретний екран/стан, висновок, severity/release effect/recommendation або мотивоване N/A | P1 / blocking | FR-047/048/050/051/052; SS-10/11/12/19/20; G-21 | Review фактичного implementation у потрібних desktop/mobile/theme/long-text/fallback станах. Не прирівнювати visual screenshot або unit suite до usability audit |
+
+Канонічне точне трасування (verifies):
+
+| Check | Вимоги й стани |
+|---|---|
+| QA-CNS-001 | FR-047.a, FR-047.b, SS-11 |
+| QA-CNS-002 | FR-048.a, FR-048.b, SS-08, SS-13 |
+| QA-CNS-003 | FR-049.a, FR-050.a, FR-050.b, SS-10, SS-11 |
+| QA-CNS-004 | FR-049.b, NFR-006, NFR-008, SS-18, SS-19 |
+| QA-CNS-005 | FR-051.a, FR-051.c, SS-11, SS-20 |
+| QA-CNS-006 | FR-051.b, FR-051.d, NFR-009, NFR-010, NFR-017, SS-11, SS-15, SS-17, SS-19 |
+| QA-CNS-007 | FR-052.a, FR-052.b, FR-052.c, NFR-005, NFR-007, NFR-009, NFR-010, NFR-012, SS-12, SS-19, SS-27 |
+| QA-CNS-008 | FR-052.d, NFR-006, NFR-007, NFR-008, NFR-009, NFR-019, SS-27 |
+| QA-CNS-009 | FR-047.a, FR-047.b, FR-048.a, FR-048.b, FR-049.a, FR-049.b, FR-050.a, FR-050.b, FR-051.a, FR-051.b, FR-051.c, FR-051.d, FR-052.a, FR-052.b, FR-052.c, FR-052.d, SS-08, SS-10, SS-11, SS-19, SS-20 |
+| QA-CNS-010 | FR-047.a, FR-047.b, FR-048.a, FR-048.b, FR-050.a, FR-050.b, FR-051.a, FR-051.c, FR-051.d, FR-052.a, FR-052.b, SS-10, SS-11, SS-12, SS-19, SS-20 |
+
+QA-CNS-009 інтегрує всі 16 пунктів, а QA-CNS-010 не замінює функціональні перевірки. За відмови evidence називає причину, збережений стан, наступну дозволену дію, retry/undo і фактичну ознаку успіху. Інтеграція ще не запущена; старі green tests і historical Published receipt не є evidence цього scope.
+
+
 - Продукт: `Personal Consultant`
 - Фаза: V1, узгодження SDD перед новим дозволом на реалізацію
 - Статус артефакту: reconciled, checks prepared; tests not run

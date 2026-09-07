@@ -1,5 +1,27 @@
 # DoD And Evals
 
+## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix
+
+Чинна зміна визначень за однойменними PRD, контекстом, термінами, guardrails, journey, screen-map, wireframes, DB-D21 та AD-25. Старі гейти збережено й уточнено, не замінено одним «консенсус працює». Нових продуктового runtime/test/user evidence цей owner не створює.
+
+| Чинний gate | Додатковий обов'язок для FR-047–052 | Потрібні нові checks |
+|---|---|---|
+| G-05 real_consilium_runtime | Нові окремі ролі, визначена мова, індивідуальні задачі, реальні constructive revisions і поточні явні approvals, не імітація ролей | QA-CNS-002/003/005 |
+| G-06 canonical_a2a_verbatim_order | Англійські role headers не змінюють дослівний body; спільний вступ один раз; кожний обмін/погодження має підтверджений запис | QA-CNS-001/003/005/006 |
+| G-09 truthful_result_and_action_contract | Семиповідомленнєва межа кожному, early consensus, no stale/missing approval; unresolved не називається консенсусом; фінал не додає нового непогодженого рішення | QA-CNS-005/006 |
+| G-15 v1_real_matrix_e2e | Повідомлення після idle/restart/redeploy з усіма Settings tabs закритими автоматично доходить до одного результату; identity/history/cursors збережені | QA-CNS-007/009 |
+| G-16 approved_visual_baseline_fidelity | DB-D21: англійські назви, доступні кольори або emoji fallback, повний текст мовою сесії; frozen baseline не змінений | QA-CNS-001 |
+| G-21 heuristic_usability_review | Окремі H1–H10 findings для delegation/review/language/recovery; не підміна screenshot-порівнянням | QA-CNS-010 |
+| G-22 representative_user_task_validation | Фактичне спостереження за Власником: перше повідомлення → зрозумілі ролі/доручення → review → правильний результат, без Settings wake | QA-CNS-009 |
+| G-23 product_security_requirements | Нові особисті/психологічні ролі не обходять safety/privacy; wake hint не є command/owner authority; count/retry/lease/cursor concurrency перевірені негативними випадками | QA-CNS-004/006/007/008 |
+
+G-02/03/04/07/08/14/17/18/19 та решта застосовних гейтів залишаються активними: авторизація, згода, idempotency, часові межі, Stop, E2EE, квоти, Google й settings не послаблюються заради консенсусу. G-23 зберігає точні 11 чинних security NFR IDs і попереднє ASVS покриття; нові checks уточнюють їхні seams, а не оголошують сертифікацію чи новий scan.
+
+Definition status нового scope: prepared. Execution QA-CNS-001–010: not_run, actual_evidence null, findings []; це класифікація неоціненої роботи, не «нуль дефектів». Новий release scope ще не оцінено; попередній відомий blocked release не скасовується. Не переносити старі 816 локальних tests або чужий Published hash на цю зміну. Expected evidence: точні revision/runtime/host/client/time fingerprints, input→registration→review decisions→final/publication lineage без секретів, actual vs expected і replay/restart cases. Human observation має окремого виконавця/час і не підміняється агентом.
+
+Готовність нового scope потребує всіх застосовних checks та відсутності blocking findings, включно з реальним no-Settings Matrix сценарієм. Статика або прийнята HTTP pusher registration самі по собі не доводять wake/delivery. Успішна критика означає досягнення обґрунтованої згоди, не гарантію істини або медичного/фінансового результату.
+
+
 - Продукт: `Personal Consultant`
 - Версія контракту: V1, reconciled GoDaddy/Rust-sidecar target after approved visual baseline
 - Дата: 06.09.2026

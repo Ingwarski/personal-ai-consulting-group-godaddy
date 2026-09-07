@@ -1,5 +1,43 @@
 # Архітектура Personal Consultant
 
+## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix
+
+Джерела: однойменні зміни PRD → контекст/терміни/guardrails → journey/screen-map/wireframes → DB-D21, а також forge/exploration/consensus-20260908/matrix-wake-research.md. Цей AD-25 замінює лише однопрохідний review та пов'язані рольові/мовні/availability припущення. Rust E2EE, один бот, MySQL, Google owner auth і незалежні налаштування провайдерів збережено. Baseline PC-MATRIX-CANDIDATE-B-V2-20260816-R1 має незмінний render hash і вузький DB-D21, без prototype-code reuse.
+
+### AD-25.1 — Мова, ролі й індивідуальне делегування
+
+Session/task state отримує версію workflow, визначену мову та її джерело, roster зі сталими role IDs і display metadata, окремий assignment кожному спеціалісту. Intake Head Consultant повертає структурований поділ: ціль, підпитання, очікуваний результат, потрібні факти, обмеження, залежності й роль-власник. Перевірка схеми відхиляє відсутні/однакові generic assignments, зайві ролі та перевищення 2/3/5 preset cap; пряма відповідь для простого запиту збережена. Нові сім ролей додаються в typed registry, без перейменування наявних internal IDs.
+
+Мова визначається з першого змістовного повідомлення нової задачі; явний вибір пріоритетний. Низька впевненість дає одне уточнення. Подальші цитати/вкладення не змінюють мову; явний user switch версіонує тільки наступні відповіді. Head, specialist, critic prompts і службовий renderer беруть однакове поле, не default українську. Це не зміна SDD working_language. Англійські role labels і emoji відділені від незмінного body; presentation slots DB-D21 збережені в roster.
+
+Особисті ролі мають domain-specific межі: освітня інформація/коучинг, не діагноз, лікування, лікарські призначення чи гарантії багатства. Не просити медичні записи, секрети, державні ідентифікатори. Crisis/safety gate має перевагу над маршрутом до критики; особиста психологічна розмова потребує згоди. Жодного нового зовнішнього API або передачі медичних даних.
+
+### AD-25.2 — Конструктивна критика, версії та консенсус
+
+1. Head реєструє один спільний вступ і персональні assignment messages. Незалежні перші позиції виконуються паралельно в окремих реальних agent contexts, після обов'язкового preflight.
+2. State містить поточні версії позицій і спільного proposal, відкриті питання, явні agree/revise/unresolved рішення та durable critique_count за task+specialist. Зберігається стислий висновок/обґрунтування агента, не приховані внутрішні міркування. Critic працює в designated окремому контексті обраного provider, не підміняється Head або іншою моделлю.
+3. Кожне Critic-повідомлення має конкретні affected specialists, issue і рекомендоване уточнення або явну згоду з поточним текстом. Загальна/мультиадресна критика враховується кожному зачепленому спеціалісту; адресування лише Head не обходить ліміт критики їхніх позицій. Повтор однієї підтвердженої репліки не витрачає ліміт вдруге; нова восьма репліка не реєструється й не запускається.
+4. Резервування допустимого critic dispatch і fencing атомарні; confirmed message + зміна лічильника + canonical outbox фіксуються разом. Failed provider attempt не є повідомленням, але має окремий обмежений retry budget. Crash/replay/parallel replies не обходять count<=7. Stop, часова межа й квота перевіряються до кожного залежного виклику.
+5. Спеціаліст відповідає на конкретну критику, не повторює загальний brief. Head синтезує актуальний proposal; всі спеціалісти, Critic і Head явно погоджують цю саму версію. Approval зв'язане з task, actor, proposal digest і актуальними позиціями. Зміна тексту/залежної позиції інвалідує непридатне погодження; для нового фіналу потрібні актуальні погодження всіх, не мовчазне перенесення.
+6. Final gate перевіряє approvals, нерозв'язані питання, count bounds, active generation і safety. Згода досягнута → рівно одна публікація погодженого proposal, без нових неперевірених рекомендацій у фінальному переписуванні. Межа досягнута без згоди → partial/unresolved summary, ніколи false consensus. Немає циклу до семи, якщо всі погодились раніше.
+
+Часові паузи, reconnect і Continue зберігають task identity й counts. Сумісне читання старих сесій не вигадує approvals: legacy workflow або безпечно завершується за своєю версією без ярлика нового консенсусу, або явно переходить через новий погоджений task; історію не переписувати. Весь міжагентний обмін проходить через реєстратора та потрапляє в Matrix після канонічної реєстрації; SDK completion не є доказом доставки.
+
+### AD-25.3 — Автономний Matrix та no-extra-host wake
+
+Primary path — автоматичний application.start() і постійний authenticated Rust sync, незалежні від Settings cookies. Зараз store_binding_unavailable згортає різні filesystem failures і прибирає retry timers, а crash circuit не має half-open recovery. Точна причина попередньої live-помилки ще не підтверджена; GoDaddy описує persistent Node, тому «Published засинає» не є доведеним діагнозом.
+
+Ремонт: типізувати transient I/O/network, missing/corrupt binding, identity mismatch і revoked authorization; transient дає bounded exponential backoff із jitter і half-open перевіркою одного fenced worker. Missing/corrupt keys або непідтверджена identity не перетворюються на fresh provisioning. Верифікувати persistence фактичного store path після restart/redeploy; збережена identity, sync cursor і MySQL ingress/outbox мають відновлюватися разом. Немає wipe або заміни ключів, немає дубльованих pollers.
+
+Додатковий same-app wake: account-scoped Matrix HTTP pusher, event_id_only, на Published HTTPS /_matrix/push/v1/notify. Не потребує окремого платного/локального сервера. До приймання необхідно перевірити реальну підтримку pusher, правила для дозволеної encrypted room, GoDaddy/WAF ingress і lifecycle. Continuous sync/recovery лишаються primary; push — додатковий сигнал, не гарантована черга.
+
+Endpoint поза owner browser auth, але не command API: dedicated app_id/high-entropy pushkey, allowlisted room, bounded body/device list, rate limits/coalescing/replay handling, без логування секретів/контенту. Hint лише будить existing validated transport; model call можливий виключно після authenticated sync, E2EE decrypt, owner/room/device checks і durable ingress dedupe. HTTP success — тільки після підтвердженого bounded handoff; transient failure не додає валідний pushkey до rejected. Зберігати чужі pushers/rules; реєстрація/зміна production конфігурації виконується лише у відповідно дозволеній implementation/live фазі.
+
+### AD-25.4 — Перевірка й межа доказів
+
+FR-047/048 → renderer + task locale persistence; FR-049/050 → typed roles + intake assignments + safety; FR-051 → router/registrar/versioned approval/count ledger; FR-052 → Node startup/store binding/supervisor/Rust sync/wake endpoint та live no-Settings acceptance. Існуючі NFR-005/006/007/008/009/010/011/012/017/019 поширюються на ці seams. Provider/token/quota faults не маскувати consensus failure або hosting sleep. Нові реальні тести, browser sessions, restart/redeploy і deployment не виконані; архітектурна можливість pusher не є live готовністю. Якщо same-host шлях не проходить перевірку, блокувати release й назвати обмеження без прихованої покупки, API fallback чи послаблення E2EE.
+
+
 ## Метадані
 
 - `status`: reconciled all-GoDaddy target; implementation and destructive cleanup remain separately gated
