@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, realpath, rm, writeFile, symlink, link, utimes, chmod, readFile } from "node:fs/promises";
+import fs, { mkdir, mkdtemp, realpath, rm, writeFile, symlink, link, utimes, chmod, readFile, rename } from "node:fs/promises";
+import { syncBuiltinESMExports } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -63,6 +64,25 @@ test("safe marker diagnostics distinguish missing or unsafe ancestors without re
   const response = await matrixPositiveControlResponse(request(), f.root);
   assert.equal(response?.headers.get("x-matrix-control-result"), "unsafe_directory");
   assert.equal(await response!.text(), "Not found.");
+});
+
+test("ENOENT after an ancestor is replaced cannot be classified as missing_file", async t => {
+  const f = await fixture(t); const originalOpen = fs.open;
+  let changed = false;
+  const mocked = t.mock.method(fs, "open", async (...args: Parameters<typeof fs.open>) => {
+    if (args[0] === f.target && !changed) {
+      changed = true;
+      await rename(join(f.root, "public", "assets"), join(f.root, "original-assets"));
+      await mkdir(join(f.root, "public", "assets"), { mode: 0o700 });
+    }
+    return originalOpen(...args);
+  });
+  syncBuiltinESMExports();
+  try {
+    const response = await matrixPositiveControlResponse(request(), f.root);
+    assert.equal(changed, true); assert.equal(response?.status, 404);
+    assert.equal(response?.headers.get("x-matrix-control-result"), "unsafe_directory");
+  } finally { mocked.mock.restore(); syncBuiltinESMExports(); }
 });
 
 test("control route rejects state-bearing requests and does not configure stateless Preview or open a pool", async () => {

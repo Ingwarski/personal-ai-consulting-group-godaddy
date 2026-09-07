@@ -4,6 +4,7 @@ import { securityHeaders } from "../http/security-headers.ts";
 export const MATRIX_PREVIEW_ORIGIN = "https://wy2v0putg6.preview.c35.airoapp.ai";
 export const MATRIX_PUBLISHED_ORIGIN = "https://wy2v0putg6.c35.airoapp.ai";
 export const MATRIX_PREVIEW_VERIFIER = "/operations/matrix/preview-isolation";
+export type MatrixControlVisibility = "published_control_visible_in_preview" | "published_control_not_visible_in_preview";
 export type MatrixBrowserChallenge = Readonly<{
   nonce: string; expiresAt: number; verifierHash: string;
   paths: readonly string[]; canaries: readonly string[];
@@ -11,13 +12,14 @@ export type MatrixBrowserChallenge = Readonly<{
 }>;
 export type MatrixBrowserReport = Readonly<{
   nonce: string; verifierHash: string; positive: boolean;
+  controlVisibility: MatrixControlVisibility | "unconfirmed";
   results: readonly Readonly<{ path: string; status: number; denied: boolean }>[];
 }>;
 
 // Exported so the exact function tested in Node is serialized into the fixed
 // browser asset. No response body, cookies or platform share token leave Preview.
 export async function runMatrixBrowserChecks(challenge: MatrixBrowserChallenge, fetchImpl: typeof fetch): Promise<MatrixBrowserReport> {
-  const read = async (path: string): Promise<{ status: number; bytes: Uint8Array } | undefined> => {
+  const read = async (path: string): Promise<{ status: number; bytes: Uint8Array; controlResult: string | null } | undefined> => {
     try {
       const response = await fetchImpl(path, { method: "GET", credentials: "same-origin", redirect: "error",
         cache: "no-store", referrerPolicy: "no-referrer", signal: AbortSignal.timeout(5_000),
@@ -31,11 +33,18 @@ export async function runMatrixBrowserChecks(challenge: MatrixBrowserChallenge, 
       } finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }
       const bytes = new Uint8Array(length); let offset = 0;
       for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
-      return { status: response.status, bytes };
+      return { status: response.status, bytes, controlResult: response.headers.get("x-matrix-control-result") };
     } catch { return undefined; }
   };
   const positive = await read(challenge.positivePath);
-  const positiveOk = positive?.status === 200 && new TextDecoder().decode(positive.bytes) === challenge.positiveBody;
+  const controlBody = positive === undefined ? "" : new TextDecoder().decode(positive.bytes);
+  // Published proves the exact marker exists over HTTP before and after this
+  // report. Preview need not share its files; a generic 404 is never sufficient.
+  const controlVisibility = positive?.status === 200 && positive.controlResult === "ok" && controlBody === challenge.positiveBody
+    ? "published_control_visible_in_preview"
+    : positive?.status === 404 && positive.controlResult === "missing_file" && controlBody === "Not found."
+      ? "published_control_not_visible_in_preview" : "unconfirmed";
+  const positiveOk = controlVisibility !== "unconfirmed";
   const signatures = ["\u007fELF", '"device_id"', '"store_fingerprint"', '"bot_mxid"', ...challenge.canaries];
   const results = await Promise.all(challenge.paths.map(async path => {
     const response = positiveOk ? await read(path) : undefined;
@@ -43,14 +52,15 @@ export async function runMatrixBrowserChecks(challenge: MatrixBrowserChallenge, 
     return { path, status: response?.status ?? 0, denied: response !== undefined
       && (response.status === 403 || response.status === 404) && signatures.every(value => !body.includes(value)) };
   }));
-  return { nonce: challenge.nonce, verifierHash: challenge.verifierHash, positive: positiveOk, results };
+  return { nonce: challenge.nonce, verifierHash: challenge.verifierHash, positive: positiveOk, controlVisibility, results };
 }
 
 export function validMatrixBrowserReport(value: unknown, challenge: MatrixBrowserChallenge): value is MatrixBrowserReport {
   if (typeof value !== "object" || value === null) return false;
   const report = value as MatrixBrowserReport;
-  return Object.keys(report).sort().join() === "nonce,positive,results,verifierHash"
+  return Object.keys(report).sort().join() === "controlVisibility,nonce,positive,results,verifierHash"
     && report.nonce === challenge.nonce && report.verifierHash === challenge.verifierHash && report.positive === true
+    && (report.controlVisibility === "published_control_visible_in_preview" || report.controlVisibility === "published_control_not_visible_in_preview")
     && Array.isArray(report.results) && report.results.length === challenge.paths.length
     && report.results.every((item, index) => typeof item === "object" && item !== null
       && Object.keys(item).sort().join() === "denied,path,status" && item.path === challenge.paths[index]

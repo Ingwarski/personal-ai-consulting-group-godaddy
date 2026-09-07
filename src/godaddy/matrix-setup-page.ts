@@ -1,6 +1,6 @@
 import type { MatrixSetupStatus } from "./matrix-setup-process.ts";
 import { OWNER_AUTH_SCRIPT_PATH } from "./owner-auth-client.ts";
-import { MATRIX_PREVIEW_ORIGIN, MATRIX_PREVIEW_VERIFIER, type MatrixBrowserChallenge } from "./matrix-browser-isolation.ts";
+import { MATRIX_PREVIEW_ORIGIN, MATRIX_PREVIEW_VERIFIER, type MatrixBrowserChallenge, type MatrixControlVisibility } from "./matrix-browser-isolation.ts";
 import type { MatrixIsolationDiagnostics } from "./matrix-release-install.ts";
 
 export const MATRIX_SETUP_PAGE = "/operations/matrix";
@@ -9,6 +9,7 @@ export const MATRIX_SETUP_ACTIONS = ["prepare", "complete_preview", "start_fresh
 export type MatrixSetupAction = typeof MATRIX_SETUP_ACTIONS[number];
 export type MatrixSetupView = Readonly<{ state: string; status?: MatrixSetupStatus; error?: string;
   browserChallenge?: MatrixBrowserChallenge; isolationEvidence?: "browser_assisted_http_isolation";
+  controlVisibility?: MatrixControlVisibility;
   isolationDiagnostics?: MatrixIsolationDiagnostics }>;
 const escape = (value: string): string => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
   .replaceAll('"', "&quot;").replaceAll("'", "&#39;");
@@ -53,6 +54,7 @@ export function matrixSetupDocument(view: MatrixSetupView, token: string): strin
   ${view.error === undefined ? "" : `<p role="alert">Дію не завершено. Секрети й наявні дані не видалялися. Код: <code>${escape(view.error)}</code>. ${escape(errorGuidance[view.error] ?? "Перевірте конфігурацію Published та оновіть стан; не створюйте заміну наявного сховища.")}</p>`}
   ${view.isolationDiagnostics === undefined ? "" : `<section><h2>Діагностика перевірки приватності</h2><p>Етап: <code>${escape(view.isolationDiagnostics.stage)}</code>. Нижче лише HTTP-статуси; вміст відповідей і секрети не показуються.</p><ul>${view.isolationDiagnostics.probes.map(probe => `<li>${escape(probe.environment)} · ${escape(probe.target)} · ${probe.status === null ? "відповідь не отримано" : `HTTP ${probe.status}`} · ${probe.denied ? "приватність підтверджено" : "приватність не підтверджено"}</li>`).join("")}</ul></section>`}
   <p>Ця сторінка не приймає паролів, токенів або ключів відновлення. Секретні значення вводяться лише в GoDaddy → Published → Секрети.</p>
+  ${view.controlVisibility === undefined ? "" : `<p>Контрольний файл Published: ${view.controlVisibility === "published_control_visible_in_preview" ? "видимий у Preview" : "не видимий у Preview"}. Перевірено лише доступ до конкретних файлів під час цієї спроби, а не загальну ізоляцію сховищ.</p>`}
   ${["unprepared", "stopped", "prepared"].includes(view.state) ? form("prepare", "1. Перевірити програми й приватність каталогів") : ""}
   ${view.state !== "awaiting_preview" || view.browserChallenge === undefined ? "" : `<section><h2>Перевірка через Preview</h2><p>Відкрийте Preview через GoDaddy в цьому самому браузері, щоб увійти. Потім натисніть кнопку нижче. Cookies залишаються в Preview. Перевірка діє три хвилини; прострочена спроба не дозволяє створювати пристрій.</p><script type="application/json" id="matrix-preview-challenge">${JSON.stringify(view.browserChallenge).replaceAll("<", "\\u003c")}</script><button type="button" data-matrix-preview-verifier="${MATRIX_PREVIEW_ORIGIN}${MATRIX_PREVIEW_VERIFIER}">Перевірити авторизований Preview</button><div hidden data-matrix-preview-result>${form("complete_preview", "Передати результат перевірки", { previewReport: "pending" })}</div>${form("stop", "Скасувати перевірку й прибрати контрольні файли")}</section>`}
   ${view.isolationEvidence === undefined ? "" : `<p>Доказ приватності: Published перевірив сервер; Preview перевірив браузер через авторизований HTTP-доступ. Це браузерна перевірка, не серверна атестація Preview.</p>`}

@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { constants, type Stats } from "node:fs";
 import { link, lstat, mkdir, open, readdir, realpath, unlink, type FileHandle } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
-import { MATRIX_VERIFIER_HASH, validMatrixBrowserReport, type MatrixBrowserChallenge } from "./matrix-browser-isolation.ts";
+import { MATRIX_VERIFIER_HASH, validMatrixBrowserReport, type MatrixBrowserChallenge, type MatrixControlVisibility } from "./matrix-browser-isolation.ts";
 
 const SIDECAR = "personal-consultant-matrix-sidecar";
 const SETUP = "personal-consultant-matrix-setup";
@@ -346,7 +346,8 @@ export async function inspectMatrixRelease(applicationRoot: string, expected: Ma
 }
 
 export type MatrixHttpIsolationResult =
-  | Readonly<{ ok: true; checkedPaths: 12; credentialReadiness: "http_isolation_verified"; evidenceKind?: "browser_assisted_http_isolation" }>
+  | Readonly<{ ok: true; checkedPaths: 12; credentialReadiness: "http_isolation_verified";
+    evidenceKind?: "browser_assisted_http_isolation"; controlVisibility?: MatrixControlVisibility }>
   | Readonly<{ ok: false; code: MatrixReleaseErrorCode | "isolation_probe_requires_empty_state" | "isolation_probe_requires_binding" | "matrix_http_isolation_failed" | "matrix_http_isolation_cleanup_failed" }>;
 
 type Canary = Readonly<{ path: string; name: string; bytes: Buffer; stat: Stats; handle: FileHandle }>;
@@ -364,6 +365,27 @@ const HTTP_ORIGINS = Object.freeze([
   "https://wy2v0putg6.c35.airoapp.ai",
   "https://wy2v0putg6.preview.c35.airoapp.ai"
 ]);
+
+async function publishedControlResponse(challenge: MatrixBrowserChallenge, fetchImpl: typeof fetch): Promise<boolean> {
+  try {
+    const response = await fetchImpl(HTTP_ORIGINS[0] + challenge.positivePath, {
+      method: "GET", credentials: "omit", redirect: "error", cache: "no-store", referrerPolicy: "no-referrer",
+      signal: AbortSignal.timeout(5_000), headers: { Accept: "text/plain", "Cache-Control": "no-cache" }
+    });
+    const reader = response.body?.getReader();
+    if (reader === undefined) return false;
+    try {
+      if (response.status !== 200 || response.redirected || response.headers.get("x-matrix-control-result") !== "ok") return false;
+      const chunks: Uint8Array[] = []; let length = 0;
+      for (;;) {
+        const next = await reader.read(); if (next.done) break;
+        length += next.value.byteLength; if (length > 128) return false;
+        chunks.push(next.value);
+      }
+      return Buffer.concat(chunks).equals(Buffer.from(challenge.positiveBody, "ascii"));
+    } finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }
+  } catch { return false; }
+}
 
 async function deniedHttpResponse(url: string, canaries: readonly Canary[], fetchImpl: typeof fetch, statuses?: Map<string, number>): Promise<boolean> {
   let response: Response | undefined;
@@ -479,6 +501,7 @@ export async function verifyMatrixHttpIsolation(
       target: PROBE_TARGETS[index % 6]!, status: statuses.get(urls[index]!) ?? null, denied }));
     stage("anonymous_http");
     let browserPassed = false;
+    let controlVisibility: MatrixControlVisibility | undefined;
     // Never use browser evidence to override a leak, a Published failure, a
     // redirect or an upstream error. Only the Preview 401 login boundary qualifies.
     if (browserCheck !== undefined && checks.slice(0, 6).every(Boolean) && !checks.slice(6).every(Boolean)
@@ -501,11 +524,14 @@ export async function verifyMatrixHttpIsolation(
         positivePath: `/assets/${name}`, positiveBody: bytes.toString("ascii") });
       let timer: ReturnType<typeof setTimeout> | undefined;
       try {
+        if (!await publishedControlResponse(challenge, fetchImpl)) throw new Error("public_control_failed");
         stage("browser_proof");
         const report = await Promise.race([browserCheck(challenge), new Promise(resolve => {
           timer = setTimeout(() => resolve(undefined), 180_000); timer.unref();
         })]);
-        browserPassed = Date.now() < challenge.expiresAt && validMatrixBrowserReport(report, challenge);
+        if (Date.now() < challenge.expiresAt && validMatrixBrowserReport(report, challenge)) {
+          browserPassed = true; controlVisibility = report.controlVisibility as MatrixControlVisibility;
+        }
         for (const canary of canaries) {
           if (!sameFile(snapshots.get(canary.path)!, await lstat(canary.path))
             || !sameFile(snapshots.get(canary.path)!, await canary.handle.stat())) browserPassed = false;
@@ -519,7 +545,12 @@ export async function verifyMatrixHttpIsolation(
           probes = [...repeat.map((denied, index) => ({ environment: "published" as const,
             target: PROBE_TARGETS[index]!, status: repeatStatuses.get(urls[index]!) ?? null, denied })), ...probes.slice(6)];
           stage("published_recheck");
-          browserPassed = repeat.every(Boolean);
+          browserPassed = repeat.every(Boolean) && await publishedControlResponse(challenge, fetchImpl)
+            && Date.now() < challenge.expiresAt;
+          for (const canary of canaries) {
+            if (!sameFile(snapshots.get(canary.path)!, await lstat(canary.path))
+              || !sameFile(snapshots.get(canary.path)!, await canary.handle.stat())) browserPassed = false;
+          }
         }
       } finally { if (timer !== undefined) clearTimeout(timer); }
     }
@@ -530,7 +561,8 @@ export async function verifyMatrixHttpIsolation(
     }
     if (checks.length === 12 && (checks.every(Boolean) || browserPassed)) {
       result = { ok: true, checkedPaths: 12, credentialReadiness: "http_isolation_verified",
-        ...(browserPassed ? { evidenceKind: "browser_assisted_http_isolation" as const } : {}) };
+        ...(browserPassed && controlVisibility !== undefined
+          ? { evidenceKind: "browser_assisted_http_isolation" as const, controlVisibility } : {}) };
     }
   } catch { /* Report only the safe failure code; never response bodies or local paths. */ }
   finally {

@@ -6,6 +6,8 @@ import { join } from "node:path";
 import test from "node:test";
 import { inspectMatrixRelease, prepareMatrixRelease, verifyMatrixHttpIsolation, type MatrixReleaseExpectation, type MatrixIsolationDiagnostics } from "../src/godaddy/matrix-release-install.ts";
 import { runMatrixBrowserChecks } from "../src/godaddy/matrix-browser-isolation.ts";
+import { matrixPositiveControlResponse } from "../src/godaddy/matrix-positive-control.ts";
+import { createGodaddyServer } from "../src/godaddy/server.mjs";
 
 const SIDECAR = "personal-consultant-matrix-sidecar";
 const SETUP = "personal-consultant-matrix-setup";
@@ -384,9 +386,15 @@ test("a misleading 404 containing the actual harmless canary is rejected", async
   assert.deepEqual(await readdir(f.spool), []);
 });
 
-test("authenticated browser proof retains exact files, proves shared public mount and cleans all owned probes", async (t) => {
+test("authenticated browser proof retains exact files, checks Published control twice and cleans owned probes", async (t) => {
   const f = await fixture(t); await prepareMatrixRelease(f.root, f.expected);
-  const anonymous: typeof fetch = async input => new Response("Denied", { status: String(input).includes(".preview.") ? 401 : 404 });
+  let controls = 0;
+  const anonymous: typeof fetch = async input => {
+    if (String(input).includes("/assets/matrix-isolation-positive-")) {
+      controls++; return (await matrixPositiveControlResponse(new Request(String(input)), f.root))!;
+    }
+    return new Response("Denied", { status: String(input).includes(".preview.") ? 401 : 404 });
+  };
   let challenges = 0;
   const result = await verifyMatrixHttpIsolation(f.root, f.expected, anonymous, {}, async challenge => {
     challenges++;
@@ -394,10 +402,12 @@ test("authenticated browser proof retains exact files, proves shared public moun
       .every(path => !path.split("/").at(-1)!.startsWith(".")));
     assert.equal((await readdir(f.store)).length, 1); assert.equal((await readdir(f.spool)).length, 1);
     return runMatrixBrowserChecks(challenge, async path => String(path) === challenge.positivePath
-      ? new Response(new Uint8Array(await readFile(join(f.root, "public", challenge.positivePath))))
+      ? (await matrixPositiveControlResponse(new Request("https://preview.test" + path), f.root))!
       : new Response("Not found", { status: 404 }));
   });
-  assert.deepEqual(result, { ok: true, checkedPaths: 12, credentialReadiness: "http_isolation_verified", evidenceKind: "browser_assisted_http_isolation" });
+  assert.deepEqual(result, { ok: true, checkedPaths: 12, credentialReadiness: "http_isolation_verified", evidenceKind: "browser_assisted_http_isolation",
+    controlVisibility: "published_control_visible_in_preview" });
+  assert.equal(controls, 2);
   assert.equal(challenges, 1); assert.deepEqual(await readdir(f.store), []); assert.deepEqual(await readdir(f.spool), []);
   assert.deepEqual(await readdir(join(f.root, "public", "assets")), [".personal-consultant-matrix-v1"]);
 });
@@ -409,6 +419,63 @@ test("browser fallback cannot override Published denial failure, Preview leakage
     const result = await verifyMatrixHttpIsolation(f.root, f.expected, async input => new Response(String(input).includes(".preview.") ? body : "not found",
       { status: String(input).includes(".preview.") ? preview : published }), {}, async () => { called = true; return {}; });
     assert.equal(result.ok, false); assert.equal(called, false); assert.deepEqual(await readdir(f.store), []);
+  }
+});
+
+test("real HTTP with separate Published and stateless Preview roots verifies exact private paths without shared-file assumptions", async t => {
+  const published = await fixture(t); const preview = await fixture(t);
+  await prepareMatrixRelease(published.root, published.expected);
+  const serve = async (root: string) => {
+    const server = createGodaddyServer({ environment: { RUNTIME_MODE: "development" }, nodeVersion: "v22.23.2",
+      settingsRuntime: { configured: false, handle: (request: Request) => matrixPositiveControlResponse(request, root), close: async () => {} } });
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve));
+    t.after(async () => { await new Promise<void>((resolve, reject) => server.close((error?: Error) => error ? reject(error) : resolve())); });
+    const address = server.address(); assert.ok(address && typeof address !== "string");
+    return `http://127.0.0.1:${address.port}`;
+  };
+  const publishedOrigin = await serve(published.root); const previewOrigin = await serve(preview.root);
+  let controls = 0; let previewReads = 0;
+  const result = await verifyMatrixHttpIsolation(published.root, published.expected, async (input, init) => {
+    const url = new URL(String(input));
+    if (url.hostname.includes(".preview.")) return new Response("GoDaddy login boundary fixture", { status: 401 });
+    if (url.pathname.includes("matrix-isolation-positive-")) controls++;
+    return fetch(publishedOrigin + url.pathname, init);
+  }, {}, challenge => runMatrixBrowserChecks(challenge, async (input, init) => {
+    previewReads++; return fetch(previewOrigin + input, init);
+  }));
+  assert.deepEqual(result, { ok: true, checkedPaths: 12, credentialReadiness: "http_isolation_verified",
+    evidenceKind: "browser_assisted_http_isolation", controlVisibility: "published_control_not_visible_in_preview" });
+  assert.equal(controls, 2); assert.equal(previewReads, 7);
+  assert.deepEqual(await readdir(published.store), []); assert.deepEqual(await readdir(published.spool), []);
+  assert.deepEqual(await readdir(join(published.root, "public", "assets")), [".personal-consultant-matrix-v1"]);
+  assert.deepEqual(await readdir(join(preview.root, "public", "assets")), []);
+});
+
+test("safe Preview missing_file cannot waive an invalid Published positive control before or after browser proof", async t => {
+  for (const when of ["before", "after"] as const) for (const kind of ["404", "header", "body", "oversized", "network"] as const) {
+    const f = await fixture(t); await prepareMatrixRelease(f.root, f.expected);
+    let controls = 0; let called = false;
+    const result = await verifyMatrixHttpIsolation(f.root, f.expected, async (input, init) => {
+      if (String(input).includes("/assets/matrix-isolation-positive-")) {
+        assert.equal(init?.credentials, "omit"); assert.equal(init?.redirect, "error"); assert.ok(init?.signal);
+        controls++;
+        const actual = (await matrixPositiveControlResponse(new Request(String(input)), f.root))!;
+        if (controls === (when === "before" ? 1 : 2)) {
+          if (kind === "network") throw new Error("test network failure");
+          return new Response(kind === "header" ? await actual.text() : kind === "oversized" ? "x".repeat(129) : "wrong",
+            { status: kind === "404" ? 404 : 200, headers: kind === "header" ? {} : { "x-matrix-control-result": "ok" } });
+        }
+        return actual;
+      }
+      return new Response("Not found", { status: String(input).includes(".preview.") ? 401 : 404 });
+    }, {}, challenge => {
+      called = true;
+      return runMatrixBrowserChecks(challenge, async path => new Response("Not found.", { status: 404,
+        headers: String(path) === challenge.positivePath ? { "x-matrix-control-result": "missing_file" } : {} }));
+    });
+    assert.equal(result.ok, false, `${when}/${kind}`); assert.equal(called, when === "after");
+    assert.deepEqual(await readdir(f.store), []); assert.deepEqual(await readdir(f.spool), []);
+    assert.deepEqual(await readdir(join(f.root, "public", "assets")), [".personal-consultant-matrix-v1"]);
   }
 });
 
@@ -434,13 +501,18 @@ test("owner diagnostics identify a failed probe without returning URL, canary, r
 test("browser abort, mismatched challenge and tampered retained canary never grant readiness", async (t) => {
   for (const kind of ["abort", "nonce", "canary"] as const) {
     const f = await fixture(t); await prepareMatrixRelease(f.root, f.expected);
-    const result = await verifyMatrixHttpIsolation(f.root, f.expected, async input => new Response("denied", { status: String(input).includes(".preview.") ? 401 : 404 }), {}, async challenge => {
+    let called = false;
+    const result = await verifyMatrixHttpIsolation(f.root, f.expected, async input =>
+      (await matrixPositiveControlResponse(new Request(String(input)), f.root))
+        ?? new Response("denied", { status: String(input).includes(".preview.") ? 401 : 404 }), {}, async challenge => {
+      called = true;
       if (kind === "abort") return undefined;
-      const report = await runMatrixBrowserChecks(challenge, async path => new Response(String(path) === challenge.positivePath ? challenge.positiveBody : "not found", { status: String(path) === challenge.positivePath ? 200 : 404 }));
+      const report = await runMatrixBrowserChecks(challenge, async path =>
+        (await matrixPositiveControlResponse(new Request("https://preview.test" + path), f.root)) ?? new Response("not found", { status: 404 }));
       if (kind === "nonce") return { ...report, nonce: "stale" };
       await writeFile(join(f.store, (await readdir(f.store))[0]!), "changed"); return report;
     });
-    assert.equal(result.ok, false); assert.deepEqual(await readdir(f.store), []); assert.deepEqual(await readdir(f.spool), []);
+    assert.equal(called, true); assert.equal(result.ok, false); assert.deepEqual(await readdir(f.store), []); assert.deepEqual(await readdir(f.spool), []);
   }
 });
 

@@ -15,22 +15,36 @@ test("browser verifier checks actual shared-mount positive body and six denial b
   const report = await runMatrixBrowserChecks(c, async (input, init) => {
     paths.push(String(input)); assert.equal(init?.credentials, "same-origin"); assert.equal(init?.redirect, "error");
     assert.equal(init?.cache, "no-store"); assert.ok(init?.signal);
-    return String(input) === c.positivePath ? new Response(c.positiveBody) : new Response("Not found", { status: 404 });
+    return String(input) === c.positivePath ? new Response(c.positiveBody, { headers: { "x-matrix-control-result": "ok" } }) : new Response("Not found", { status: 404 });
   });
   assert.equal(validMatrixBrowserReport(report, c), true); assert.equal(paths.length, 7);
   assert.ok(!JSON.stringify(report).includes(c.positiveBody)); assert.ok(!JSON.stringify(report).includes(c.canaries[0]!));
   for (const changed of [{ ...report, nonce: "wrong" }, { ...report, positive: false }, { ...report, verifierHash: "old" },
+    { ...report, controlVisibility: "unconfirmed" }, { ...report, controlVisibility: undefined },
     { ...report, results: report.results.slice(1) }, { ...report, results: [...report.results].reverse() },
     { ...report, results: report.results.map(r => ({ ...r, status: 401 })) }, { ...report, cookies: "forbidden" }]) {
     assert.equal(validMatrixBrowserReport(changed, c), false);
   }
 });
-test("wrong/missing public control proves neither authentication nor shared storage and makes no private requests", async () => {
-  for (const response of [new Response("wrong"), new Response("login", { status: 401 }), new Response("Not found", { status: 404 })]) {
+test("generic, unsafe or malformed control results make no private requests", async () => {
+  for (const response of [new Response("wrong"), new Response("login", { status: 401 }), new Response("Not found.", { status: 404 }),
+    new Response(challenge().positiveBody),
+    ...["unsafe_directory", "missing_directory", "unavailable", "expired_file", "unsafe_file"].map(result =>
+      new Response("Not found.", { status: 404, headers: { "x-matrix-control-result": result } })),
+    new Response("different", { status: 404, headers: { "x-matrix-control-result": "missing_file" } })]) {
     let calls = 0; const c = challenge();
     const report = await runMatrixBrowserChecks(c, async () => { calls++; return response; });
     assert.equal(validMatrixBrowserReport(report, c), false); assert.equal(calls, 1);
   }
+});
+test("exact safe missing_file control still checks all six private responses and labels only visibility", async () => {
+  const c = challenge(); let calls = 0;
+  const report = await runMatrixBrowserChecks(c, async path => { calls++;
+    return new Response("Not found.", { status: 404, headers: String(path) === c.positivePath
+      ? { "x-matrix-control-result": "missing_file" } : {} });
+  });
+  assert.equal(calls, 7); assert.equal(validMatrixBrowserReport(report, c), true);
+  assert.equal(report.controlVisibility, "published_control_not_visible_in_preview");
 });
 test("Preview rejects login/redirect/errors, overlong bodies, leaked canaries/ELF/binding and opaque results", async () => {
   const c = challenge();
@@ -42,7 +56,7 @@ test("Preview rejects login/redirect/errors, overlong bodies, leaked canaries/EL
       const r = new Response("Not found", { status: 404 }); Object.defineProperty(r, "type", { value: "opaque" }); return r;
     }];
   for (const make of cases) {
-    const report = await runMatrixBrowserChecks(c, async input => String(input) === c.positivePath ? new Response(c.positiveBody) : make());
+    const report = await runMatrixBrowserChecks(c, async input => String(input) === c.positivePath ? new Response(c.positiveBody, { headers: { "x-matrix-control-result": "ok" } }) : make());
     assert.equal(validMatrixBrowserReport(report, c), false);
   }
 });
@@ -52,7 +66,7 @@ test("fixed Preview asset binds opener/origin/nonce and rejects service-worker s
   const context = { window: { opener, addEventListener: (name: string, fn: Function) => listeners.set(name, fn) },
     location: { origin: "https://wy2v0putg6.preview.c35.airoapp.ai", hash: `#${c.nonce}` },
     navigator: { serviceWorker: { controller: null } }, document: { querySelector: () => ({ textContent: "" }) },
-    TextDecoder, Uint8Array, AbortSignal, Date, fetch: async (path: string) => { calls++; return path === c.positivePath ? new Response(c.positiveBody) : new Response("Not found", { status: 404 }); } };
+    TextDecoder, Uint8Array, AbortSignal, Date, fetch: async (path: string) => { calls++; return path === c.positivePath ? new Response(c.positiveBody, { headers: { "x-matrix-control-result": "ok" } }) : new Response("Not found", { status: 404 }); } };
   runInNewContext(matrixVerifierJavaScript, context);
   assert.equal(messages.length, 1);
   const listener = listeners.get("message")!;

@@ -37,9 +37,20 @@ export async function matrixPositiveControlResponse(request: Request, root = app
         || await realpath(path) !== path) throw new ControlFailure("unsafe_directory");
       return stat;
     }));
+    const revalidateAncestors = async (): Promise<void> => {
+      for (const [index, ancestor] of ancestors.entries()) {
+        if (!same(snapshots[index]!, await lstat(ancestor)) || await realpath(ancestor) !== ancestor) {
+          throw new ControlFailure("unsafe_directory");
+        }
+      }
+    };
     const path = join(parent, url.pathname.slice("/assets/".length));
-    handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK).catch(error => {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") throw new ControlFailure("missing_file");
+    handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK).catch(async error => {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        // ENOENT can also mean a parent disappeared or was replaced mid-check.
+        await revalidateAncestors();
+        throw new ControlFailure("missing_file");
+      }
       if ((error as NodeJS.ErrnoException).code === "ELOOP") throw new ControlFailure("unsafe_file");
       throw error;
     });
@@ -57,9 +68,7 @@ export async function matrixPositiveControlResponse(request: Request, root = app
       || before.ctimeMs !== after.ctimeMs || before.ctimeMs !== current.ctimeMs
       || bytesRead !== before.size) return denied("changed_file");
     if (!/^matrix-isolation-positive:[a-f0-9]{32}$/u.test(text)) return denied("invalid_marker");
-    for (const [index, ancestor] of ancestors.entries()) {
-      if (!same(snapshots[index]!, await lstat(ancestor)) || await realpath(ancestor) !== ancestor) return denied("unsafe_directory");
-    }
+    await revalidateAncestors();
     return reply(text, 200, "ok");
   } catch (error) { return denied(error instanceof ControlFailure ? error.result : "unavailable"); }
   finally { await handle?.close(); }

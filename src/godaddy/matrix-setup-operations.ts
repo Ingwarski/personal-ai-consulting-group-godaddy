@@ -73,7 +73,8 @@ export function createMatrixSetupOperations(environment: Record<string, unknown>
           if (!isolation.ok) { view = { state: "unprepared", error: isolation.code,
             ...(diagnostics === undefined ? {} : { isolationDiagnostics: diagnostics }) }; return view; }
           isolationConfirmed = true; isolationExpiresAt = Date.now() + 300_000;
-          view = { state: "prepared", ...(isolation.evidenceKind === undefined ? {} : { isolationEvidence: isolation.evidenceKind }) };
+          view = { state: "prepared", ...(isolation.evidenceKind === undefined ? {} : { isolationEvidence: isolation.evidenceKind }),
+            ...(isolation.controlVisibility === undefined ? {} : { controlVisibility: isolation.controlVisibility }) };
           return view;
         }).catch(() => { browserPending = undefined; view = { state: "unprepared", error: "matrix_http_isolation_failed" }; return view; });
       return Promise.race([isolationRun, awaitingBrowser]);
