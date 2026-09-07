@@ -87,7 +87,7 @@ async function fixture(input: { approved?: boolean; missingSession?: boolean; mi
         const params = message.params as { threadId: string; model: string; outputSchema?: { properties?: Record<string, unknown> } };
         firstTurn();
         const body = input.matrixIntake && params.outputSchema?.properties?.kind !== undefined
-          ? JSON.stringify({ kind: "consilium", answer: "", specialists: ["finance", "strategy"], extractedEvidence: "" })
+          ? JSON.stringify({ kind: "consilium", answer: "", specialists: ["finance", "strategy"], extractedEvidence: "", independentReviewRequested: true })
           : input.intakeBody ?? (params.outputSchema?.properties?.decision !== undefined ? JSON.stringify({ decision: "Перевірити попит до інвестицій.",
           actions: [{ action: "Провести інтерв'ю", owner: "Власник", timeframe: "Цього тижня", evidence: "П'ять відповідей" }],
           riskOrAssumption: "Попит ще не підтверджено.", reviewCondition: "Після п'яти відповідей." }) :
@@ -253,7 +253,7 @@ test("unapproved speed policy, missing or stale generation fail before any catal
 });
 
 test("head intake produces a direct answer with exact immutable head model and effort without acquiring the selected Claude Critic", async () => {
-  const h = await fixture({ selectedClaude: true, intakeBody: JSON.stringify({ kind: "direct", answer: "Коротка пряма відповідь.", specialists: [], extractedEvidence: "" }) });
+  const h = await fixture({ selectedClaude: true, intakeBody: JSON.stringify({ kind: "direct", answer: "Коротка пряма відповідь.", specialists: [], extractedEvidence: "", independentReviewRequested: false }) });
   assert.deepEqual(await h.runtime.plan(request), { ok: true, kind: "direct", answer: "Коротка пряма відповідь." });
   assert.equal(h.calls().claudeCalls, 0);
   assert.equal(h.confirmed.length, 0); // Publication is the authorized dispatcher's responsibility.
@@ -269,8 +269,23 @@ test("head intake produces a direct answer with exact immutable head model and e
   await h.runtime.close();
 });
 
+test("declared independent review cannot publish an unreviewed direct result through the production planner", async () => {
+  const h = await fixture({ intakeBody: JSON.stringify({ kind: "direct", answer: "Three actions. No Critic review was performed.",
+    specialists: [], extractedEvidence: "", independentReviewRequested: true }) });
+  assert.deepEqual(await h.runtime.plan({ ...request, task: "Give a short coffee-shop recommendation reviewed by the Critic." }),
+    { ok: false, code: "intake_output_invalid" });
+  assert.equal(h.confirmed.length, 0);
+  assert.equal(h.sent.filter(message => message.method === "thread/unsubscribe").length, 1);
+  const turn = h.sent.find(message => message.method === "turn/start")!.params as Record<string, unknown>;
+  const instructions = JSON.stringify(turn.input);
+  assert.match(instructions, /independentReviewRequested/u);
+  assert.match(instructions, /навіть для простої задачі чи короткої відповіді/u);
+  assert.match(instructions, /допустимим вибором робочого режиму/u);
+  await h.runtime.close();
+});
+
 test("head intake chooses the bounded specialist catalog via structured model decision", async () => {
-  const h = await fixture({ intakeBody: JSON.stringify({ kind: "consilium", answer: "", specialists: ["strategy", "finance", "risk"], extractedEvidence: "" }) });
+  const h = await fixture({ intakeBody: JSON.stringify({ kind: "consilium", answer: "", specialists: ["strategy", "finance", "risk"], extractedEvidence: "", independentReviewRequested: false }) });
   const result = await h.runtime.plan(request);
   assert.equal(result.ok && result.kind, "consilium");
   if (result.ok && result.kind === "consilium") assert.deepEqual(result.specialists.map(role => role.agentId), ["strategy", "finance", "risk"]);
@@ -279,7 +294,7 @@ test("head intake chooses the bounded specialist catalog via structured model de
 });
 
 test("critical missing information returns clarification without closing or altering the immutable active snapshot", async () => {
-  const h = await fixture({ intakeBody: JSON.stringify({ kind: "clarification", answer: "Який строк для цього рішення?", specialists: [], extractedEvidence: "" }) });
+  const h = await fixture({ intakeBody: JSON.stringify({ kind: "clarification", answer: "Який строк для цього рішення?", specialists: [], extractedEvidence: "", independentReviewRequested: false }) });
   const result = await h.runtime.plan(request);
   assert.deepEqual(result, { ok: true, kind: "clarification", answer: "Який строк для цього рішення?" });
   assert.equal((await h.registrar.getActiveSession())?.phase, "active");
@@ -291,7 +306,7 @@ test("critical missing information returns clarification without closing or alte
 
 test("approved image reaches only the head intake and returns visible extraction for later specialist context", async () => {
   const h = await fixture({ intakeBody: JSON.stringify({ kind: "consilium", answer: "", specialists: ["strategy", "finance"],
-    extractedEvidence: "На зображенні три категорії витрат; суми не читаються." }) });
+    extractedEvidence: "На зображенні три категорії витрат; суми не читаються.", independentReviewRequested: false }) });
   const result = await h.runtime.plan({ ...request, images: [{ mime: "image/png", bytes: Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10, 0]) }] });
   assert.equal(result.ok && result.kind === "consilium" && result.extractedEvidence.includes("суми не читаються"), true);
   const turn = h.sent.find(message => message.method === "turn/start")!.params as { model: string; input: { type: string; path?: string }[] };

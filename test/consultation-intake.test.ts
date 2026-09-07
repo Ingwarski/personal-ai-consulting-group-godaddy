@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { parseConsultationIntake, consultationIntakeSchema } from "../src/runtime/consultation-intake.ts";
 
-const direct = { kind: "direct", answer: "Валовий прибуток — виручка мінус собівартість продажів.", specialists: [], extractedEvidence: "" };
-const consilium = { kind: "consilium", answer: "", specialists: ["strategy", "finance"], extractedEvidence: "" };
+const direct = { kind: "direct", answer: "Валовий прибуток — виручка мінус собівартість продажів.", specialists: [], extractedEvidence: "", independentReviewRequested: false };
+const consilium = { kind: "consilium", answer: "", specialists: ["strategy", "finance"], extractedEvidence: "", independentReviewRequested: false };
 test("strict intake returns exact direct prose or fixed catalog roles, never model-authored role authority", () => {
   assert.deepEqual(parseConsultationIntake(JSON.stringify(direct), 2), { ok: true, kind: "direct", answer: direct.answer });
   const result = parseConsultationIntake(JSON.stringify(consilium), 2);
@@ -38,11 +38,28 @@ test("image consilium requires factual extraction and text-only input cannot fab
 });
 
 test("clarification is a distinct bounded question outcome, never a completed direct answer", () => {
-  const question = { kind: "clarification", answer: "Який бюджет доступний для цієї перевірки?", specialists: [], extractedEvidence: "" };
+  const question = { kind: "clarification", answer: "Який бюджет доступний для цієї перевірки?", specialists: [], extractedEvidence: "", independentReviewRequested: false };
   assert.deepEqual(parseConsultationIntake(JSON.stringify(question), 2), { ok: true, kind: "clarification", answer: question.answer });
   assert.deepEqual(parseConsultationIntake(JSON.stringify({ ...question, answer: "ї".repeat(501) }), 2), { ok: false, code: "intake_output_invalid" });
   assert.deepEqual(parseConsultationIntake(JSON.stringify({ ...question, specialists: ["finance"] }), 2), { ok: false, code: "intake_output_invalid" });
   assert.deepEqual(parseConsultationIntake(JSON.stringify({ ...question, answer: "" }), 2), { ok: false, code: "intake_output_invalid" });
   assert.deepEqual(parseConsultationIntake(JSON.stringify({ ...question, answer: "This is not a question." }), 2), { ok: false, code: "intake_output_invalid" });
   assert.deepEqual(parseConsultationIntake(JSON.stringify({ ...question, answer: "Бюджет? Строк?" }), 2), { ok: false, code: "intake_output_invalid" });
+});
+
+test("an explicit independent review cannot be downgraded to a direct final answer", () => {
+  assert.deepEqual(parseConsultationIntake(JSON.stringify({ ...direct, independentReviewRequested: true }), 2),
+    { ok: false, code: "intake_output_invalid" });
+  assert.deepEqual(parseConsultationIntake(JSON.stringify({ ...direct, independentReviewRequested: "false" }), 2),
+    { ok: false, code: "intake_output_invalid" });
+  const { independentReviewRequested: _missing, ...legacy } = direct;
+  assert.deepEqual(parseConsultationIntake(JSON.stringify(legacy), 2), { ok: false, code: "intake_output_invalid" });
+  const result = parseConsultationIntake(JSON.stringify({ ...consilium, independentReviewRequested: true }), 2);
+  assert.equal(result.ok && result.kind === "consilium" && result.critic.agentId === "critic", true);
+  const clarification = { ...direct, kind: "clarification", answer: "Який строк для незалежної перевірки?", independentReviewRequested: true };
+  assert.deepEqual(parseConsultationIntake(JSON.stringify(clarification), 2),
+    { ok: true, kind: "clarification", answer: clarification.answer });
+  const schema = consultationIntakeSchema(2) as { required: string[]; properties: Record<string, { type: string }> };
+  assert.equal(schema.required.includes("independentReviewRequested"), true);
+  assert.equal(schema.properties.independentReviewRequested?.type, "boolean");
 });
