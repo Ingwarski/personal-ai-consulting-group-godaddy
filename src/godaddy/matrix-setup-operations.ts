@@ -1,7 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 import { parseGoDaddyMatrixConfiguration } from "./matrix-service-config.ts";
-import { inspectMatrixRelease, prepareMatrixRelease, verifyMatrixHttpIsolation,
+import { inspectMatrixRelease, prepareMatrixRelease, verifyMatrixHttpIsolation, restrictMatrixMediaPermissions,
   type MatrixReleaseExpectation, type MatrixIsolationDiagnostics, type MatrixReleaseDiagnostic } from "./matrix-release-install.ts";
 import { MATRIX_RELEASE_PIN } from "./matrix-release-pin.ts";
 import type { MatrixBrowserChallenge } from "./matrix-browser-isolation.ts";
@@ -49,6 +49,19 @@ export function createMatrixSetupOperations(environment: Record<string, unknown>
   const run = async (action: MatrixSetupAction, fields: MatrixSetupFields, ownerBinding?: string): Promise<MatrixSetupView> => {
     if (!enabled || closed) throw new Error("matrix_setup_disabled");
     if (pin === undefined) throw new Error("matrix_release_unavailable");
+    if (action === "restrict_media_permissions") {
+      if (process !== undefined || browserPending !== undefined || !["unprepared", "stopped"].includes(view.state)) {
+        throw new Error("matrix_setup_busy");
+      }
+      const diagnostic = view.releaseDiagnostic;
+      if (diagnostic?.stage !== "store" || !/^matrix-sdk-media\.sqlite3(?:-wal|-shm)?$/u.test(diagnostic.target)
+        || diagnostic.mode !== "644" || !diagnostic.ownerMatches || !diagnostic.file || diagnostic.symlink || diagnostic.links !== 1) {
+        throw new Error("matrix_setup_invalid_request");
+      }
+      isolationConfirmed = false;
+      const result = await restrictMatrixMediaPermissions(root, pin);
+      view = { state: "unprepared", ...(result.ok ? {} : { error: result.code }) }; return view;
+    }
     if (action === "prepare") {
       if (process !== undefined) throw new Error("matrix_setup_busy");
       if (browserPending !== undefined) { browserPending.resolve(undefined); await isolationRun; }

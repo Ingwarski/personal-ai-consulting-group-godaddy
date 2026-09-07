@@ -5,7 +5,7 @@ import type { MatrixIsolationDiagnostics, MatrixReleaseDiagnostic } from "./matr
 
 export const MATRIX_SETUP_PAGE = "/operations/matrix";
 export const MATRIX_SETUP_ACTION = "/operations/matrix/action";
-export const MATRIX_SETUP_ACTIONS = ["prepare", "complete_preview", "start_fresh", "resume", "status", "verify_self", "verify_owner", "confirm", "cancel", "finish", "stop"] as const;
+export const MATRIX_SETUP_ACTIONS = ["prepare", "complete_preview", "restrict_media_permissions", "start_fresh", "resume", "status", "verify_self", "verify_owner", "confirm", "cancel", "finish", "stop"] as const;
 export type MatrixSetupAction = typeof MATRIX_SETUP_ACTIONS[number];
 export type MatrixSetupView = Readonly<{ state: string; status?: MatrixSetupStatus; error?: string;
   expiresAt?: number;
@@ -63,6 +63,10 @@ export function matrixSetupDocument(view: MatrixSetupView, token: string): strin
   ${view.error === undefined ? "" : `<p role="alert">Дію не завершено. Секрети й наявні дані не видалялися. Код: <code>${escape(view.error)}</code>. ${escape(errorGuidance[view.error] ?? "Перевірте конфігурацію Published та оновіть стан; не створюйте заміну наявного сховища.")}</p>`}
   ${view.isolationDiagnostics === undefined ? "" : `<section><h2>Діагностика перевірки приватності</h2><p>Етап: <code>${escape(view.isolationDiagnostics.stage)}</code>. Нижче лише HTTP-статуси; вміст відповідей і секрети не показуються.</p><ul>${view.isolationDiagnostics.probes.map(probe => `<li>${escape(probe.environment)} · ${escape(probe.target)} · ${probe.status === null ? "відповідь не отримано" : `HTTP ${probe.status}`} · ${probe.denied ? "приватність підтверджено" : "приватність не підтверджено"}</li>`).join("")}</ul></section>`}
   ${view.releaseDiagnostic === undefined ? "" : `<section><h2>Діагностика прав доступу</h2><p>Лише технічні ознаки, без шляхів або вмісту файлів:</p><pre>${escape(JSON.stringify(view.releaseDiagnostic))}</pre></section>`}
+  ${view.releaseDiagnostic?.stage === "store" && /^matrix-sdk-media\.sqlite3(?:-wal|-shm)?$/u.test(view.releaseDiagnostic.target)
+    && view.releaseDiagnostic.mode === "644" && view.releaseDiagnostic.ownerMatches && view.releaseDiagnostic.file
+    && !view.releaseDiagnostic.symlink && view.releaseDiagnostic.links === 1
+    ? `<p>Виявлено надмірні права кешу медіа Matrix SDK. Окрема дія нижче лише обмежує права трьох відомих файлів до 600, не змінюючи даних, ключів або пристрою.</p>${form("restrict_media_permissions", "Обмежити права файлів кешу медіа до 600")}` : ""}
   <p>Ця сторінка не приймає паролів, токенів або ключів відновлення. Секретні значення вводяться лише в GoDaddy → Published → Секрети.</p>
   ${view.controlVisibility === undefined ? "" : `<p>Контрольний файл Published: ${view.controlVisibility === "published_control_visible_in_preview" ? "видимий у Preview" : "не видимий у Preview"}. Перевірено лише доступ до конкретних файлів під час цієї спроби, а не загальну ізоляцію сховищ.</p>`}
   ${["unprepared", "stopped", "prepared"].includes(view.state) ? form("prepare", "1. Перевірити програми й приватність каталогів") : ""}

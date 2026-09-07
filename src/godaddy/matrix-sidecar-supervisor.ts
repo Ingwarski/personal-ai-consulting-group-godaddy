@@ -3,6 +3,7 @@ import { constants } from "node:fs";
 import { lstat, open } from "node:fs/promises";
 import { isAbsolute, resolve } from "node:path";
 import { spawn } from "node:child_process";
+import { withMatrixPrivateUmask } from "./matrix-private-spawn.ts";
 
 export const MATRIX_SIDECAR_MAX_LINE_BYTES = 256 * 1024;
 export const MATRIX_SIDECAR_MAX_OUTSTANDING_REQUESTS = 32;
@@ -292,12 +293,12 @@ const nativeClock: MatrixSidecarClock = Object.freeze({
 });
 
 const nativeSpawn: MatrixSidecarSpawn = (executable, argumentsList, options) =>
-  spawn(executable, [...argumentsList], {
+  withMatrixPrivateUmask(() => spawn(executable, [...argumentsList], {
     ...(options.cwd === undefined ? {} : { cwd: options.cwd }),
     env: options.env,
     shell: false,
     stdio: ["pipe", "pipe", "pipe"]
-  }) as unknown as MatrixSidecarChildProcess;
+  })) as unknown as MatrixSidecarChildProcess;
 
 function deferred(): Deferred {
   let resolvePromise: (() => void) | undefined;

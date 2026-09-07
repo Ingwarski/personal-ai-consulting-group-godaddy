@@ -4,7 +4,7 @@ import { chmod, link, lstat, mkdir, mkdtemp, readFile, readdir, realpath, rename
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { inspectMatrixRelease, prepareMatrixRelease, verifyMatrixHttpIsolation, type MatrixReleaseExpectation, type MatrixIsolationDiagnostics } from "../src/godaddy/matrix-release-install.ts";
+import { inspectMatrixRelease, prepareMatrixRelease, restrictMatrixMediaPermissions, verifyMatrixHttpIsolation, type MatrixReleaseExpectation, type MatrixIsolationDiagnostics } from "../src/godaddy/matrix-release-install.ts";
 import { runMatrixBrowserChecks } from "../src/godaddy/matrix-browser-isolation.ts";
 import { matrixPositiveControlResponse } from "../src/godaddy/matrix-positive-control.ts";
 import { createGodaddyServer } from "../src/godaddy/server.mjs";
@@ -90,6 +90,48 @@ test("unsafe state diagnostics expose only fixed metadata labels and never repai
     assert.doesNotMatch(JSON.stringify(observed), /SECRET|private-unknown|matrix-release-install-/);
     const after = await lstat(path); assert.equal(after.mode, before.mode); assert.equal(after.ctimeMs, before.ctimeMs);
     await rm(path);
+  }
+});
+
+test("explicit repair only tightens the SDK media cache and preserves all bytes and inodes", async t => {
+  const f = await fixture(t); await prepareMatrixRelease(f.root, f.expected);
+  await writeFile(join(f.store, "device-binding.json"), "synthetic-binding", { mode: 0o600 });
+  const names = ["matrix-sdk-media.sqlite3", "matrix-sdk-media.sqlite3-wal", "matrix-sdk-media.sqlite3-shm"];
+  const before = new Map();
+  for (const name of names) {
+    const path = join(f.store, name); await writeFile(path, `synthetic-${name}`, { mode: 0o644 }); await chmod(path, 0o644);
+    before.set(name, await lstat(path));
+  }
+  let target = "";
+  assert.equal((await inspectMatrixRelease(f.root, f.expected, { observeUnsafePath: d => { target = d.target; } })).ok, false);
+  assert.ok(names.includes(target));
+  assert.equal((await restrictMatrixMediaPermissions(f.root, f.expected)).ok, true);
+  for (const name of names) {
+    const path = join(f.store, name); const after = await lstat(path);
+    assert.equal(after.mode & 0o7777, 0o600); assert.equal(after.ino, before.get(name).ino);
+    assert.equal(after.mtimeMs, before.get(name).mtimeMs); assert.equal(await readFile(path, "utf8"), `synthetic-${name}`);
+  }
+  assert.equal((await restrictMatrixMediaPermissions(f.root, f.expected)).ok, true);
+});
+
+test("media repair refuses unrelated unsafe files, links, wrong modes, ancestors and absent binding before mutation", async t => {
+  for (const bad of ["unrelated", "symlink", "hardlink", "directory", "mode", "ancestor", "binding"] as const) {
+    await t.test(bad, async child => {
+      const f = await fixture(child); await prepareMatrixRelease(f.root, f.expected);
+      if (bad !== "binding") await writeFile(join(f.store, "device-binding.json"), "synthetic", { mode: 0o600 });
+      const file = join(f.store, "matrix-sdk-media.sqlite3");
+      const external = join(f.root, "outside"); await writeFile(external, "outside", { mode: 0o600 });
+      if (bad === "symlink") await symlink(external, file);
+      else if (bad === "directory") await mkdir(file, { mode: 0o700 });
+      else { await writeFile(file, "preserve", { mode: 0o644 }); await chmod(file, bad === "mode" ? 0o666 : 0o644); }
+      if (bad === "hardlink") await link(file, join(f.root, "second-link"));
+      if (bad === "unrelated") { await writeFile(join(f.store, "unrelated"), "preserve", { mode: 0o644 }); await chmod(join(f.store, "unrelated"), 0o644); }
+      if (bad === "ancestor") await chmod(f.store, 0o755);
+      const before = await lstat(file);
+      assert.equal((await restrictMatrixMediaPermissions(f.root, f.expected)).ok, false);
+      const after = await lstat(file); assert.equal(after.mode, before.mode); assert.equal(after.ctimeMs, before.ctimeMs);
+      assert.equal(await readFile(external, "utf8"), "outside");
+    });
   }
 });
 

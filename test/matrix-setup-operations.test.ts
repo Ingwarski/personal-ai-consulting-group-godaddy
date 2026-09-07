@@ -49,6 +49,17 @@ test("Published setup mode is explicit and Preview cannot prepare files or start
     assert.equal((await setup.action("prepare", {})).error, "matrix_setup_disabled"); assert.deepEqual(calls, []);
   }
 });
+
+test("permission repair cannot be invoked without the exact diagnostic or during active setup", async () => {
+  const { setup } = fixture();
+  assert.equal((await setup.action("restrict_media_permissions", {})).error, "matrix_setup_invalid_request");
+  await setup.action("prepare", {}); await setup.action("start_fresh", {});
+  assert.equal((await setup.action("restrict_media_permissions", {})).error, "matrix_setup_busy");
+  await setup.close();
+  const preview = fixture({ environment: { ...env(), RUNTIME_MODE: "development" } });
+  assert.equal((await preview.setup.action("restrict_media_permissions", {})).error, "matrix_setup_disabled");
+  assert.deepEqual(preview.calls, []);
+});
 test("safe native errors retain actionable guidance but arbitrary SDK text is never exposed", async () => {
   for (const [code, guidance] of [
     ["self_verification_required", "Спочатку завершіть порівняння"],

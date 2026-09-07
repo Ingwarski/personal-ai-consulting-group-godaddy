@@ -1,6 +1,7 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { TextDecoder } from "node:util";
+import { withMatrixPrivateUmask } from "./matrix-private-spawn.ts";
 
 export type MatrixSetupDevice = Readonly<{ device_id: string; ed25519: string | null; verified: boolean; blacklisted: boolean; cross_signed_by_owner: boolean; deleted: boolean }>;
 export type MatrixSetupStatus = Readonly<{
@@ -73,10 +74,10 @@ export function spawnMatrixSetupProcess(input: Readonly<{
 }>, dependencies: Readonly<{ spawn?: typeof spawn; requestTimeoutMs?: number; now?: () => number }> = {}): MatrixSetupProcess {
   const now = dependencies.now ?? Date.now;
   const expiresAt = now() + 15 * 60_000;
-  const child = (dependencies.spawn ?? spawn)(input.binaryPath,
+  const child = withMatrixPrivateUmask(() => (dependencies.spawn ?? spawn)(input.binaryPath,
     ["--application-root", input.applicationRoot, ...(input.fresh ? ["--provision-fresh"] : [])],
     { cwd: input.applicationRoot, env: { ...input.environment }, stdio: ["pipe", "pipe", "pipe"], shell: false }
-  ) as ChildProcessWithoutNullStreams;
+  )) as ChildProcessWithoutNullStreams;
   let pending: { id: string; resolve: (value: MatrixSetupStatus) => void; reject: (error: Error) => void } | undefined;
   let bytes = Buffer.alloc(0);
   let ready = false;

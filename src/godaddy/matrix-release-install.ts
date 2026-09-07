@@ -10,6 +10,7 @@ const SHA256 = /^[a-f0-9]{64}$/u;
 const COMMIT = /^[a-f0-9]{40}$/u;
 const MAX_BINARY_BYTES = 256 * 1024 * 1024;
 const MAX_MANIFEST_BYTES = 1024 * 1024;
+const SDK_MEDIA_FILES = ["matrix-sdk-media.sqlite3", "matrix-sdk-media.sqlite3-wal", "matrix-sdk-media.sqlite3-shm"] as const;
 
 /** This pin must come from reviewed, committed release metadata, never a request or environment override. */
 export type MatrixReleaseExpectation = Readonly<{
@@ -60,7 +61,7 @@ class ReleaseFailure extends Error {
 // Fixed labels only: never expose arbitrary on-disk names, paths or contents.
 function unsafePath(path: string, stat: Stats, uid: number): ReleaseFailure {
   const labels = [".runtime", "matrix", ".runtime-release", "public", "assets", ".personal-consultant-matrix-v1",
-    "crypto-store", "media-spool", "device-binding.json", "provisioning-intent.json", "store.lock",
+    "crypto-store", "media-spool", "device-binding.json", "provisioning-intent.json", "sidecar.lock", ...SDK_MEDIA_FILES,
     "matrix-sdk-state.sqlite3", "matrix-sdk-state.sqlite3-wal", "matrix-sdk-state.sqlite3-shm",
     "matrix-sdk-crypto.sqlite3", "matrix-sdk-crypto.sqlite3-wal", "matrix-sdk-crypto.sqlite3-shm",
     "matrix-sdk-event-cache.sqlite3", "matrix-sdk-event-cache.sqlite3-wal", "matrix-sdk-event-cache.sqlite3-shm"];
@@ -277,7 +278,7 @@ async function installBinary(path: string, bytes: Buffer, entry: BinaryEntry, ui
   await verifiedBinary(path, entry, uid, true);
 }
 
-async function privateState(path: string, uid: number): Promise<"empty" | "contains_state"> {
+async function privateState(path: string, uid: number, repairableMedia = false): Promise<"empty" | "contains_state"> {
   const root = await directory(path, uid, true);
   const names = await readdir(path);
   const queue = names.map((name) => ({ path: join(path, name), depth: 0 }));
@@ -293,7 +294,8 @@ async function privateState(path: string, uid: number): Promise<"empty" | "conta
     if (stat.isDirectory()) {
       await directory(next.path, uid, true);
       queue.push(...(await readdir(next.path)).map((name) => ({ path: join(next.path, name), depth: next.depth + 1 })));
-    } else if (!stat.isFile() || stat.nlink !== 1 || (stat.mode & 0o777) !== 0o600) {
+    } else if (!stat.isFile() || stat.nlink !== 1 || ((stat.mode & 0o777) !== 0o600
+      && !(repairableMedia && SDK_MEDIA_FILES.some(name => next.path === join(path, name)) && (stat.mode & 0o777) === 0o644))) {
       throw unsafePath(next.path, stat, uid);
     }
   }
@@ -368,6 +370,50 @@ export async function prepareMatrixRelease(applicationRoot: string, expected: Ma
 /** Read-only validation immediately before a separately authorized provisioning/spawn operation. */
 export async function inspectMatrixRelease(applicationRoot: string, expected: MatrixReleaseExpectation, options: MatrixReleaseOptions = {}): Promise<MatrixReleaseResult> {
   return run(applicationRoot, expected, options, false);
+}
+
+/** Explicit owner repair only. Tighten the pinned SDK's three media-cache files
+ * from 0644 to 0600; do not read bytes, follow links, create files, or touch other modes. */
+export async function restrictMatrixMediaPermissions(applicationRoot: string, expected: MatrixReleaseExpectation): Promise<MatrixReleaseResult> {
+  try {
+    const paths = layout(applicationRoot); const uid = currentUid({});
+    const metadata = await release(paths, expected, uid);
+    await directory(join(applicationRoot, "public"), uid, false);
+    await directory(join(applicationRoot, "public", "assets"), uid, false);
+    for (const path of [paths.runtimeRoot, paths.runtimeDir, paths.persistentRoot, paths.storeDir, paths.mediaSpoolDir]) {
+      await directory(path, uid, true);
+    }
+    await verifiedBinary(join(paths.runtimeDir, SIDECAR), metadata.sidecar, uid, true);
+    await verifiedBinary(join(paths.runtimeDir, SETUP), metadata.setup, uid, true);
+    if (await privateMarker(join(paths.storeDir, "device-binding.json"), uid) === undefined) {
+      throw new ReleaseFailure("matrix_release_unrecognized_state");
+    }
+    await privateState(paths.storeDir, uid, true);
+    await privateState(paths.mediaSpoolDir, uid);
+    for (const name of SDK_MEDIA_FILES) {
+      const path = join(paths.storeDir, name);
+      if (await missing(path)) continue;
+      const parent = await directory(paths.storeDir, uid, true);
+      const before = await lstat(path);
+      if (!before.isFile() || before.isSymbolicLink() || before.uid !== uid || before.nlink !== 1
+        || ![0o600, 0o644].includes(before.mode & 0o7777) || await realpath(path) !== path) throw unsafePath(path, before, uid);
+      const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+      try {
+        if (!sameFile(before, await handle.stat()) || !sameFile(before, await lstat(path))
+          || !identity(parent, await directory(paths.storeDir, uid, true))) throw new ReleaseFailure("matrix_release_unsafe_path");
+        if ((before.mode & 0o777) === 0o644) await handle.chmod(0o600);
+        const after = await handle.stat();
+        if (after.dev !== before.dev || after.ino !== before.ino || after.uid !== uid || after.nlink !== 1
+          || (after.mode & 0o7777) !== 0o600 || after.size !== before.size || after.mtimeMs !== before.mtimeMs
+          || !sameFile(after, await lstat(path)) || !identity(parent, await directory(paths.storeDir, uid, true))) {
+          throw new ReleaseFailure("matrix_release_unsafe_path");
+        }
+      } finally { await handle.close(); }
+    }
+    return inspectMatrixRelease(applicationRoot, expected);
+  } catch (error) {
+    return { ok: false, code: error instanceof ReleaseFailure ? error.code : "matrix_release_unavailable" };
+  }
 }
 
 export type MatrixHttpIsolationResult =
