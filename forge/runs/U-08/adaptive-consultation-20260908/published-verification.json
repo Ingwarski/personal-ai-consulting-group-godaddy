@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-07T23:40:10Z",
+  "scope": "Authorized Published deployment and non-destructive Matrix storage diagnosis; no new unit acceptance",
+  "sourceCommit": "252815600a84922e74d5b650a07687af1c04fa5d",
+  "previousImplementationCommit": "71f908a1296bcf7bf6b6a759436ffe38ae5b84d9",
+  "files": {
+    "src/godaddy/matrix-storage-diagnostics.ts": "5d56540600caa5814b442343bba3640029688b1af6d36731058c40496c8c709e",
+    "src/godaddy/settings-runtime.ts": "95fb6429dbc58fa124067a31a8ca648bc8808a02e647c16a1baaf07607eb1cdd",
+    "test/matrix-storage-diagnostics.test.ts": "a5916fb47766c77f77e71cb7083473413a6867af32f3f5606ce15596086f9fd1",
+    "test/godaddy-settings-runtime.test.ts": "7fe40271fd7e3ffb37069dd95cff36996eaaca775f5d393aaf2cd5d71b0b9fa7"
+  },
+  "local": {
+    "node": "22.16.0",
+    "platform": "darwin-arm64",
+    "command": "npm run check",
+    "exitCode": 0,
+    "tests": 893,
+    "passed": 893,
+    "failed": 0,
+    "build": "passed",
+    "typecheck": "passed",
+    "environment": "passed",
+    "diffCheck": "passed",
+    "sdd": {
+      "command": "sdd_check.py --project . --after implementation",
+      "result": "passed",
+      "artifacts": 13,
+      "issues": [],
+      "warnings": []
+    }
+  },
+  "published": {
+    "host": "wy2v0putg6.c35.airoapp.ai",
+    "project": "wy2v0putg6",
+    "observedNodeVersion": "22.23.2",
+    "exactDashboardRevisionsConfirmed": [
+      "71f908a1296bcf7bf6b6a759436ffe38ae5b84d9",
+      "63d06ca7c6ae0e3ec4a9bc64e4d24ed7dc803e96"
+    ],
+    "lastPulledRevision": "252815600a84922e74d5b650a07687af1c04fa5d",
+    "lastPublishAction": "submitted",
+    "finalLiveEvidence": "Fresh authenticated Published browser response includes all nine storagePaths fields unique to the final diagnostic code",
+    "finalDashboardHashRecheck": "not_completed_mac_locked",
+    "liveness": {
+      "httpStatus": 200,
+      "body": {
+        "status": "alive",
+        "runtime": "godaddy-node22"
+      }
+    },
+    "protectedMatrixResponse": {
+      "setupMode": "disabled",
+      "configured": true,
+      "ready": false,
+      "reason": "store_binding_missing",
+      "consultationWorking": false,
+      "consultationBlocked": true,
+      "storagePaths": {
+        "application": "directory",
+        "public": "directory",
+        "assets": "directory",
+        "privateRoot": "missing",
+        "cryptoStore": "not_checked",
+        "deviceBinding": "not_checked",
+        "cryptoDatabase": "not_checked",
+        "stateDatabase": "not_checked",
+        "provisioningIntent": "not_checked"
+      },
+      "consultationFailure": {
+        "stage": "readiness",
+        "code": "unknown"
+      }
+    },
+    "controlledRestart": "Performed once after 63d06ca; missing-store error persisted",
+    "rootCauseLimit": "Original private root absent from current filesystem view; underlying volume/snapshot state and permanent data loss are not established"
+  },
+  "status": "published_diagnostics_live_blocked_original_store_unavailable",
+  "wake": {
+    "secretCreated": false,
+    "registration": "not_run",
+    "liveDelivery": "not_run"
+  },
+  "preserved": {
+    "databaseWipe": false,
+    "cryptoStoreReset": false,
+    "newDevice": false,
+    "secretsChanged": false,
+    "nativeRebuild": false,
+    "otherRepositoryChanged": false,
+    "statefulPreview": false
+  },
+  "next": "Provider diagnosis and original-data recovery; dedicated wake secret/registration after prerequisites; live acceptance remains open",
+  "supportDraft": {
+    "path": "forge/runs/U-08/adaptive-consultation-20260908/godaddy-storage-support-draft.md",
+    "status": "not_sent"
+  },
+  "limitations": [
+    "No live consultation or provider model call in this follow-up.",
+    "No original-store continuity or fingerprint could be verified while the ancestor is missing.",
+    "The Mac locked before the last dashboard recheck; no lock bypass attempted.",
+    "External support coordination and any rollback are not authorized by this evidence record."
+  ]
+}

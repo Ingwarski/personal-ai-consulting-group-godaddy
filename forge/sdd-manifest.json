@@ -19353,7 +19353,27 @@
         "Prior composite QA and blocked release evidence remain open."
       ]
     },
-    "status": "adaptive_consultation_local_verified_live_acceptance_pending",
+    "adaptive_consultation_published_followup": {
+      "recorded_at": "2026-09-07T23:40:10Z",
+      "status": "published_diagnostics_live_blocked_original_store_unavailable",
+      "source_commit": "252815600a84922e74d5b650a07687af1c04fa5d",
+      "receipt": {
+        "path": "forge/runs/U-08/adaptive-consultation-20260908/published-verification.json",
+        "content_hash": "080fa472b8e1120e2f85424f92fd58feedb843dc735b63a9368ef96a08cd572a"
+      },
+      "report": {
+        "path": "forge/runs/U-08/adaptive-consultation-20260908/published-followup.md",
+        "content_hash": "fdea6d660e12964ffe8698fc739876e4dae2828deff5037de9ded44135240493"
+      },
+      "local_tests": { "node": "22.16.0", "total": 893, "passed": 893, "failed": 0 },
+      "live_matrix_readiness": "blocked_store_binding_missing_private_root_missing",
+      "pusher_registration": "not_performed",
+      "support_request": "draft_not_sent",
+      "accepted_units": [],
+      "required_next": "Provider storage diagnosis and preservation of original identity; dedicated wake setup and actual Matrix acceptance remain outstanding.",
+      "limits": ["Earlier local-only records remain historical and unchanged.", "Live metadata establishes current path absence, not permanent data loss or provider root cause.", "Mac lock prevented the last Published dashboard hash recheck; final diagnostic behavior was observed live."]
+    },
+    "status": "adaptive_consultation_published_original_store_blocked",
     "owner_invocation_id": "implementation-matrix-connection-20260906-01",
     "matrix_connection": {
       "run_id": "matrix-connection-20260906",
