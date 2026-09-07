@@ -16975,11 +16975,11 @@
     },
     "browser_isolation_repair_ref": "forge/runs/U-08/matrix-production-setup-20260906/browser-isolation-repair.md",
     "native_setup": {
-      "recorded_at": "2026-09-07T12:00:06Z",
+      "recorded_at": "2026-09-07T12:29:33Z",
       "existing_store_resume_verified": true,
       "sdk_media_permissions_restricted": true,
       "actual_godaddy_execution": true,
-      "observed_state": "verifying",
+      "observed_state": "complete",
       "new_device_store_initialized": true,
       "self_verification_phase": "done",
       "manual_bot_confirmation": "confirmed_by_user_and_verified_in_published",
