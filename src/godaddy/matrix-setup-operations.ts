@@ -20,6 +20,8 @@ const nativeSetupErrors = new Set(["configuration_invalid", "input_unavailable",
   "store_or_device_quarantined", "too_many_devices", "transport_or_store_unavailable", "transport_unavailable",
   "verification_already_active", "verification_peer_changed"]);
 const isolationErrors = new Set(["matrix_http_isolation_failed", "matrix_http_isolation_cleanup_failed"]);
+const terminalProcessErrors = new Set(["matrix_setup_unavailable", "matrix_setup_process_failed", "matrix_setup_protocol_error",
+  "matrix_setup_timeout", "matrix_setup_expired", "matrix_setup_needs_resume", "matrix_setup_closed", "setup_expired"]);
 export const matrixSetupEnabled = (environment: Record<string, unknown>): boolean =>
   environment.RUNTIME_MODE === "production" && environment.GODADDY_STATE_DATABASE_ROLE === "published"
   && environment.MATRIX_SETUP_MODE === "provision";
@@ -109,7 +111,7 @@ export function createMatrixSetupOperations(environment: Record<string, unknown>
       process = (dependencies.spawn ?? spawnMatrixSetupProcess)({ binaryPath: inspection.value.setupPath,
         applicationRoot: root, fresh: action === "start_fresh" || inspection.value.storeProvisioning === "incomplete",
         environment: configuration.value.spawnEnvironment });
-      view = { state: "starting" }; return view;
+      view = { state: "starting", ...(process.expiresAt === undefined ? {} : { expiresAt: process.expiresAt }) }; return view;
     }
     if (process === undefined) throw new Error("matrix_setup_not_running");
     if (action === "stop") {
@@ -132,7 +134,7 @@ export function createMatrixSetupOperations(environment: Record<string, unknown>
       await process.close(); process = undefined; isolationConfirmed = false;
       view = { state: "complete", status }; return view;
     }
-    view = { state: "verifying", status }; return view;
+    view = { state: "verifying", status, ...(process.expiresAt === undefined ? {} : { expiresAt: process.expiresAt }) }; return view;
   };
   return Object.freeze({
     view: () => view,
@@ -142,6 +144,20 @@ export function createMatrixSetupOperations(environment: Record<string, unknown>
       try { activeAction = run(action, fields, ownerBinding); return await activeAction; }
       catch (error) {
         const message = error instanceof Error ? error.message : "";
+        if (process !== undefined && terminalProcessErrors.has(message)) {
+          isolationConfirmed = false;
+          // Revoke all displayed SAS data before awaiting shutdown; never retain
+          // a live-looking confirmation for a dead or expiring process.
+          view = { state: "stopping", error: message };
+          try {
+            await process.close(); process = undefined;
+            view = { state: "stopped", error: message };
+          } catch { view = { state: "stopping", error: "matrix_setup_termination_failed" }; }
+          return view;
+        }
+        if ((message === "stale_comparison" || message === "no_active_verification") && view.status !== undefined) {
+          view = { ...view, status: { ...view.status, verification: null } };
+        }
         // Only stable content-free codes; never child/library error details.
         const allowed = /^(?:matrix_(?:setup|release|configuration|store)_[a-z_]{1,48}|policy_not_ready|verification_[a-z_]{1,40}|isolation_[a-z_]{1,48})$/u;
         view = { ...view, error: allowed.test(message) || nativeSetupErrors.has(message) || isolationErrors.has(message) ? message : "matrix_setup_failed" };

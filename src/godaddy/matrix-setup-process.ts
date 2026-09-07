@@ -62,6 +62,7 @@ export function parseMatrixSetupStatus(value: unknown): MatrixSetupStatus | unde
 }
 
 export type MatrixSetupProcess = Readonly<{
+  expiresAt?: number;
   request: (command: MatrixSetupCommand) => Promise<MatrixSetupStatus>;
   close: () => Promise<void>;
 }>;
@@ -69,7 +70,9 @@ export type MatrixSetupProcess = Readonly<{
 /** Caller first validates the pinned executable and exclusive setup mode. No inherited secrets. */
 export function spawnMatrixSetupProcess(input: Readonly<{
   binaryPath: string; applicationRoot: string; fresh: boolean; environment: Readonly<Record<string, string>>;
-}>, dependencies: Readonly<{ spawn?: typeof spawn; requestTimeoutMs?: number }> = {}): MatrixSetupProcess {
+}>, dependencies: Readonly<{ spawn?: typeof spawn; requestTimeoutMs?: number; now?: () => number }> = {}): MatrixSetupProcess {
+  const now = dependencies.now ?? Date.now;
+  const expiresAt = now() + 15 * 60_000;
   const child = (dependencies.spawn ?? spawn)(input.binaryPath,
     ["--application-root", input.applicationRoot, ...(input.fresh ? ["--provision-fresh"] : [])],
     { cwd: input.applicationRoot, env: { ...input.environment }, stdio: ["pipe", "pipe", "pipe"], shell: false }
@@ -78,6 +81,7 @@ export function spawnMatrixSetupProcess(input: Readonly<{
   let bytes = Buffer.alloc(0);
   let ready = false;
   let dead = false;
+  let failureCode = "matrix_setup_unavailable";
   let closing: Promise<void> | undefined;
   let exited = false;
   let onExit!: () => void;
@@ -91,7 +95,7 @@ export function spawnMatrixSetupProcess(input: Readonly<{
   };
   const startup = setTimeout(fail, 60_000);
   startup.unref();
-  const lifetime = setTimeout(fail, 15 * 60_000);
+  const lifetime = setTimeout(() => { failureCode = "matrix_setup_expired"; fail(); }, 15 * 60_000);
   lifetime.unref();
   child.on("error", fail);
   child.on("exit", () => { exited = true; onExit(); clearTimeout(startup); clearTimeout(lifetime); });
@@ -140,9 +144,16 @@ export function spawnMatrixSetupProcess(input: Readonly<{
     })]).finally(() => clearTimeout(timer));
   })();
   return Object.freeze({
+    expiresAt,
     async request(command: MatrixSetupCommand): Promise<MatrixSetupStatus> {
-      if (dead || exited || pending !== undefined) throw new Error("matrix_setup_unavailable");
+      if (now() >= expiresAt) { failureCode = "matrix_setup_expired"; fail(); }
+      if (dead || exited) throw new Error(failureCode);
+      if (pending !== undefined) throw new Error("matrix_setup_busy");
       if (!ready) throw new Error("matrix_setup_starting");
+      // A fresh SAS exchange needs its full five-minute lifetime plus handshake time.
+      // Do not invite the user into a flow that the fixed native deadline will kill.
+      if ((command.type === "start_self_verification" || command.type === "start_owner_verification")
+        && expiresAt - now() < 6 * 60_000) throw new Error("matrix_setup_needs_resume");
       const id = randomUUID();
       let timer: ReturnType<typeof setTimeout> | undefined;
       try {

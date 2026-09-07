@@ -30,7 +30,7 @@ test("setup comparison has an exact flow, bounded SAS and one-time comparison to
     { ...flow, comparison_token: "wrong" }]) assert.equal(parseMatrixSetupStatus({ ...status(), verification: bad }), undefined);
 });
 
-function childFixture() {
+function childFixture(now?: () => number) {
   const child = new EventEmitter() as EventEmitter & { stdout: PassThrough; stderr: PassThrough; stdin: Writable; kill: () => boolean };
   child.stdout = new PassThrough(); child.stderr = new PassThrough();
   const requests: Record<string, unknown>[] = [];
@@ -43,7 +43,7 @@ function childFixture() {
   let options: unknown;
   const process = spawnMatrixSetupProcess(input, { spawn: ((_file: string, _args: string[], captured: unknown) => {
     options = captured; return child;
-  }) as unknown as typeof spawn, requestTimeoutMs: 100 });
+  }) as unknown as typeof spawn, requestTimeoutMs: 100, now });
   return { child, frames, process, requests, options };
 }
 
@@ -87,4 +87,22 @@ test("owner setup markup shows codes for comparison, no secret inputs or automat
   assert.doesNotMatch(document, /name="action" value="confirm"/u);
   const escaped = matrixSetupDocument({ state: "verifying", error: "<script>evil</script>" }, "token");
   assert.doesNotMatch(escaped, /<script>evil/);
+});
+
+test("a near-expiry process refuses new SAS without sending an invitation", async () => {
+  let now = 1_000;
+  const fixture = childFixture(() => now); fixture.frames({ version: 1, type: "setup_ready" });
+  assert.equal(fixture.process.expiresAt, 901_000);
+  now += 10 * 60_000;
+  for (const type of ["start_self_verification", "start_owner_verification"] as const) {
+    await assert.rejects(fixture.process.request({ type, device_id: "TRUSTED_DEVICE" }), /matrix_setup_needs_resume/);
+  }
+  assert.deepEqual(fixture.requests, []);
+  // Existing exchanges can still finish inside the deadline.
+  const pending = fixture.process.request({ type: "status" });
+  fixture.frames({ version: 1, id: fixture.requests[0]!.id, ok: true, status: status() });
+  await pending;
+  now = 901_000;
+  await assert.rejects(fixture.process.request({ type: "status" }), /matrix_setup_expired/);
+  await fixture.process.close();
 });

@@ -8,12 +8,18 @@ export const MATRIX_SETUP_ACTION = "/operations/matrix/action";
 export const MATRIX_SETUP_ACTIONS = ["prepare", "complete_preview", "start_fresh", "resume", "status", "verify_self", "verify_owner", "confirm", "cancel", "finish", "stop"] as const;
 export type MatrixSetupAction = typeof MATRIX_SETUP_ACTIONS[number];
 export type MatrixSetupView = Readonly<{ state: string; status?: MatrixSetupStatus; error?: string;
+  expiresAt?: number;
   browserChallenge?: MatrixBrowserChallenge; isolationEvidence?: "browser_assisted_http_isolation";
   controlVisibility?: MatrixControlVisibility;
   isolationDiagnostics?: MatrixIsolationDiagnostics }>;
 const escape = (value: string): string => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
   .replaceAll('"', "&quot;").replaceAll("'", "&#39;");
 const errorGuidance: Readonly<Record<string, string>> = {
+  matrix_setup_expired: "Час сеансу налаштування минув. Перевірте програми й приватність каталогів, потім оберіть «Продовжити з наявним сховищем цього пристрою». Новий пристрій не створюйте.",
+  setup_expired: "Час сеансу налаштування минув. Відновіть налаштування з наявним сховищем; старі символи більше не діють.",
+  matrix_setup_needs_resume: "До завершення сеансу замало часу для нового порівняння. Перевірте програми й приватність каталогів, потім продовжіть із наявним сховищем цього пристрою.",
+  matrix_setup_unavailable: "Процес налаштування завершився. Перевірте програми й приватність каталогів, потім продовжіть із наявним сховищем цього пристрою. Секрети не потрібно вводити повторно.",
+  matrix_setup_process_failed: "Процес налаштування зупинився. Продовжіть із наявним сховищем після перевірки програм і приватності; старе порівняння не діє.",
   self_verification_required: "Спочатку завершіть порівняння з наявним довіреним пристроєм бота в Element, потім оновіть стан.",
   peer_not_cross_signed: "Обраний пристрій ще не підписаний його власником. Перевірте його в Element або оберіть інший довірений пристрій.",
   stale_comparison: "Це порівняння вже неактуальне. Оновіть стан і почніть нове порівняння; не підтверджуйте старі числа.",
@@ -42,7 +48,8 @@ export function matrixSetupDocument(view: MatrixSetupView, token: string): strin
     starting: "Програма налаштування запускається. Натисніть «Оновити стан перевірки» за кілька секунд.",
     verifying: "Режим перевірки пристроїв. Консультації не запускаються.",
     complete: "Перевірки Matrix пройдено. Вимкніть MATRIX_SETUP_MODE у Published і опублікуйте знову, щоб запустити консультації.",
-    stopped: "Перевірку зупинено. Обліковий запис, пристрої, повідомлення та сховище збережено."
+    stopped: "Перевірку зупинено. Обліковий запис, пристрої, повідомлення та сховище збережено.",
+    stopping: "Процес налаштування зупиняється. Порівняння недійсне; не створюйте новий пристрій."
   };
   const devices = status === undefined ? "" : (["self", "owner"] as const).map(target => {
     const title = target === "self" ? "Наявні пристрої облікового запису бота" : "Пристрої вашого облікового запису";
@@ -51,6 +58,7 @@ export function matrixSetupDocument(view: MatrixSetupView, token: string): strin
   const comparison = flow == null ? "" : `<section><h2>Порівняння в Element</h2><p>Обліковий запис: ${flow.target === "self" ? "бот" : "Власник"}; пристрій <code>${escape(flow.other_device_id)}</code>.</p><p>Стан: <code>${escape(flow.phase)}</code>.</p>${flow.emojis === null ? "" : `<ol>${flow.emojis.map(emoji => `<li>${escape(emoji.symbol)} ${escape(emoji.description)}</li>`).join("")}</ol>`}${flow.decimals === null ? "" : `<p>Числа: <strong>${flow.decimals.join(" · ")}</strong></p>`}<p>Звірте всі символи або числа з Element на зазначеному пристрої. Не підтверджуйте, якщо вони відрізняються або ви не починали цю перевірку.</p>${flow.comparison_token === null || flow.confirmed ? "" : form("confirm", "Усі символи або числа збігаються", { flowId: flow.flow_id, comparisonToken: flow.comparison_token })}${form("cancel", "Скасувати це порівняння", { flowId: flow.flow_id })}</section>`;
   return `<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Підключення Matrix</title><script src="${OWNER_AUTH_SCRIPT_PATH}" defer></script></head><body><main>
   <h1>Підключення Matrix</h1><p role="alert" tabindex="-1" data-owner-action-status></p><p role="status">${escape(stateLabels[view.state] ?? "Стан не підтверджено.")}</p>
+  ${view.expiresAt === undefined ? "" : `<p>Сеанс налаштування обмежений 15 хвилинами від запуску. На момент оновлення сторінки залишилося приблизно ${Math.max(0, Math.floor((view.expiresAt - Date.now()) / 60_000))} хв. Нове порівняння не поновлює цей час.</p>`}
   ${view.error === undefined ? "" : `<p role="alert">Дію не завершено. Секрети й наявні дані не видалялися. Код: <code>${escape(view.error)}</code>. ${escape(errorGuidance[view.error] ?? "Перевірте конфігурацію Published та оновіть стан; не створюйте заміну наявного сховища.")}</p>`}
   ${view.isolationDiagnostics === undefined ? "" : `<section><h2>Діагностика перевірки приватності</h2><p>Етап: <code>${escape(view.isolationDiagnostics.stage)}</code>. Нижче лише HTTP-статуси; вміст відповідей і секрети не показуються.</p><ul>${view.isolationDiagnostics.probes.map(probe => `<li>${escape(probe.environment)} · ${escape(probe.target)} · ${probe.status === null ? "відповідь не отримано" : `HTTP ${probe.status}`} · ${probe.denied ? "приватність підтверджено" : "приватність не підтверджено"}</li>`).join("")}</ul></section>`}
   <p>Ця сторінка не приймає паролів, токенів або ключів відновлення. Секретні значення вводяться лише в GoDaddy → Published → Секрети.</p>
@@ -61,6 +69,6 @@ export function matrixSetupDocument(view: MatrixSetupView, token: string): strin
   ${view.state === "prepared" ? `<p>Новий пристрій має бути окремою сесією бота без попередніх ключів шифрування. Порожнє сховище для наявного пристрою не допускається.</p>${form("start_fresh", "2. Підготувати новий окремий пристрій бота")}${form("resume", "Продовжити з наявним сховищем цього пристрою")}` : ""}
   ${["starting", "verifying"].includes(view.state) ? form("status", "Оновити стан перевірки") : ""}
   ${status === undefined ? "" : `<p>Пристрій бота: <code>${escape(status.own_bot_device_id)}</code>. Відбиток: <code>${escape(status.own_bot_ed25519 ?? "очікування ключа")}</code>.</p><p>Довіра до бота: ${yes(status.self_identity_verified)}. Ключі перехресного підписування: ${yes(status.private_cross_signing_ready)}. Довіра до Власника: ${yes(status.owner_identity_verified)}.</p>${comparison}${devices}${form("finish", "Завершити перевірку всіх умов Matrix")}`}
-  ${["starting", "verifying"].includes(view.state) ? form("stop", "Зупинити налаштування без видалення даних") : ""}
+  ${["starting", "verifying", "stopping"].includes(view.state) ? form("stop", "Зупинити налаштування без видалення даних") : ""}
   <p><a href="/operations/runtime">Повернутися до підписок ШІ</a></p><noscript>Для захищених дій увімкніть JavaScript.</noscript></main></body></html>`;
 }

@@ -138,6 +138,47 @@ test("existing state cannot be freshly initialized; exact incomplete intent sele
   }
 });
 
+test("dead setup revokes old SAS and supports a checked existing-store resume", async () => {
+  for (const code of ["matrix_setup_unavailable", "matrix_setup_expired", "matrix_setup_needs_resume",
+    "matrix_setup_process_failed", "matrix_setup_timeout", "matrix_setup_protocol_error", "setup_expired"]) {
+    const options = { provisioning: "bound" as const, requestError: "" };
+    const { setup, calls } = fixture(options);
+    await setup.action("prepare", {}); await setup.action("resume", {});
+    await setup.action("status", {});
+    options.requestError = code;
+    const stopped = await setup.action("status", {});
+    assert.deepEqual(stopped, { state: "stopped", error: code });
+    assert.equal(calls.at(-1), "close");
+    const html = matrixSetupDocument(stopped, "synthetic-csrf");
+    assert.doesNotMatch(html, /value="(?:confirm|verify_self|verify_owner|start_fresh)"/);
+    assert.match(html, /value="prepare"/);
+    assert.equal((await setup.action("resume", {})).error, "matrix_setup_not_prepared");
+    options.requestError = "";
+    await setup.action("prepare", {});
+    assert.equal((await setup.action("resume", {})).state, "starting");
+    assert.equal((calls.at(-1) as { fresh: boolean }).fresh, false);
+    await setup.close();
+  }
+});
+
+test("a stale SAS error removes its confirmation token but preserves device status", async () => {
+  const options = { requestError: "" };
+  const { setup } = fixture(options);
+  await setup.action("prepare", {}); await setup.action("start_fresh", {});
+  const current = await setup.action("status", {});
+  // Inject only a synthetic previously-rendered flow into this fixture's status.
+  Object.assign(current.status!, { verification: { phase: "compare", target: "self", other_device_id: "TRUSTED_DEVICE",
+    other_user_id: "@test-bot:matrix.org", generation: "c".repeat(32), flow_id: "old-flow",
+    comparison_token: "d".repeat(32), emojis: null, decimals: [1234, 2345, 3456], confirmed: false } });
+  assert.match(matrixSetupDocument(current, "synthetic-csrf"), /value="confirm"/);
+  options.requestError = "stale_comparison";
+  const stale = await setup.action("confirm", { flowId: "old-flow", comparisonToken: "d".repeat(32) });
+  assert.equal(stale.state, "verifying"); assert.equal(stale.status?.verification, null);
+  assert.equal(stale.status?.own_bot_device_id, "NEW_DEVICE");
+  assert.doesNotMatch(matrixSetupDocument(stale, "synthetic-csrf"), /value="confirm"|1234 · 2345 · 3456/);
+  await setup.close();
+});
+
 const browserChallenge = (): MatrixBrowserChallenge => ({ nonce: "a".repeat(32), expiresAt: Date.now() + 180000,
   verifierHash: "b".repeat(64), paths: [], canaries: [], positivePath: "/assets/test.txt", positiveBody: "test" });
 test("cancelling a browser challenge cannot conceal a temporary-file cleanup failure", async () => {

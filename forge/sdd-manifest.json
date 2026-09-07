@@ -16930,7 +16930,7 @@
     }
   ],
   "next_ready_nodes": [],
-  "pause_reason": "User reported the new-device secrets saved. Names-only inspection identified missing MATRIX_PROTOCOL_VERSION; the operator added only the non-secret protocol string using the provider's quoted-string form and completed Published restart. Fresh live Published/Preview privacy proof and cleanup passed again. The pinned native Rust setup accepted the configuration, initialized the new device and returned verifying status. Exact existing-bot Safari device comparison reached compare with manual buttons visible in both Safari Element and Chrome. Await the user's own comparison and confirmation on both interfaces; the agent has not confirmed trust. Preserve the new device/store; never rerun the login helper or start a replacement. On setup expiry, perform a fresh privacy check and resume existing state. Bot/private-cross-signing/owner readiness and consultation delivery are not yet confirmed. See chrome-isolation-followup.md. This is not Product V1 release readiness.",
+  "pause_reason": "Після ручних підтверджень користувач повідомив помилку Element; Published повторно повертав matrix_setup_unavailable, зберігаючи недійсне порівняння. Користувач дозволив виправлення для демонстрації протягом години. Вузьке виправлення Node прибирає старі SAS-дані після зупинки, не починає порівняння перед близьким завершенням загального сеансу та скеровує до наявного сховища. 774 тести пройдено під Node 22.23.2 і 24.16.0; 29 вхідних файлів Rust незмінні. Далі публікація, перевірка приватності та відновлення того самого пристрою. Не створювати заміну чи автоматично підтверджувати довіру. Довіру й доставку консультації ще не підтверджено; це не готовність Product V1. Див. setup-expiry-repair.md.",
   "matrix_production_setup_progress": {
     "authorization_ref": "forge/matrix-production-setup-authorization-20260906.json",
     "evidence_ref": "forge/runs/U-08/matrix-production-setup-20260906/progress.md",
@@ -16951,14 +16951,15 @@
     },
     "existing_bot_session_verified_in_ui": true,
     "room_history_visibility_joined_verified": true,
-    "status": "native-setup-running-awaiting-user-bot-sas-confirmation",
+    "status": "repairing-expired-setup-before-existing-store-resume",
+    "setup_expiry_repair_ref": "forge/runs/U-08/matrix-production-setup-20260906/setup-expiry-repair.md",
     "godaddy_browser": "chrome",
     "chrome_followup_ref": "forge/runs/U-08/matrix-production-setup-20260906/chrome-isolation-followup.md",
     "published_changes_performed": true,
     "published_changes_scope": "MATRIX_SETUP_MODE=provision retained. User saved new-device credentials; operator added only missing non-secret MATRIX_PROTOCOL_VERSION and restarted Published. Fresh privacy checks passed before native initialization. Preview remains stateless, native bundle unchanged; no token/passphrase read or replaced, no automated trust confirmation.",
     "published_commit": "372fddfc2caf37825316f3bc11db14ab23101e49",
     "live_verifier_script": "/assets/matrix-preview-isolation.867a03539fd93dbd533918a456d76ff58bec2548366488d3faaf80ee9ba5b9d8.js",
-    "latest_local_test_count": 771,
+    "latest_local_test_count": 774,
     "private_path_proof": {
       "recorded_at": "2026-09-07T10:00:51Z",
       "repeated_after_credential_save_and_protocol_correction": true,
