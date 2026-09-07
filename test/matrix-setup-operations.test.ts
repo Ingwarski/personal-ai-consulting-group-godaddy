@@ -140,6 +140,20 @@ test("existing state cannot be freshly initialized; exact incomplete intent sele
 
 const browserChallenge = (): MatrixBrowserChallenge => ({ nonce: "a".repeat(32), expiresAt: Date.now() + 180000,
   verifierHash: "b".repeat(64), paths: [], canaries: [], positivePath: "/assets/test.txt", positiveBody: "test" });
+test("cancelling a browser challenge cannot conceal a temporary-file cleanup failure", async () => {
+  const setup = createMatrixSetupOperations(env(), {
+    releasePin: { manifestSha256: "d".repeat(64), sourceCommit: "e".repeat(40) }, applicationRoot: root,
+    prepare: async () => ({ ok: true, value: inspection() }),
+    isolation: async (_root, _pin, _fetch, _options, browser) => {
+      await browser!(browserChallenge()); return { ok: false, code: "matrix_http_isolation_cleanup_failed" };
+    }, spawn: () => { assert.fail("cleanup failure cannot start provisioning"); }
+  });
+  await setup.action("prepare", {}, "owner");
+  const result = await setup.action("stop", {}, "owner");
+  assert.equal(result.state, "unprepared"); assert.equal(result.error, "matrix_http_isolation_cleanup_failed");
+  assert.equal((await setup.action("start_fresh", {})).error, "matrix_setup_not_prepared");
+  await setup.close();
+});
 test("pending browser check is bound to the initiating owner session and cannot start a child or replay", async () => {
   let cleanup = false;
   const setup = createMatrixSetupOperations(env(), {

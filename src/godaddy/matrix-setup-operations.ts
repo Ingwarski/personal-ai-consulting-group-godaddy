@@ -89,6 +89,7 @@ export function createMatrixSetupOperations(environment: Record<string, unknown>
     if (action === "stop" && browserPending !== undefined) {
       if (ownerBinding !== browserPending.ownerBinding) throw new Error("matrix_setup_invalid_request");
       browserPending.resolve(undefined); await isolationRun;
+      if (view.error === "matrix_http_isolation_cleanup_failed") return view;
       view = { state: "stopped" }; return view;
     }
     if (action === "start_fresh" || action === "resume") {

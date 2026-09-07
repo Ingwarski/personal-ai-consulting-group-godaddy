@@ -27,6 +27,7 @@ test("actual HTTP server serves only the fresh harmless public control, not arbi
   const origin = `http://127.0.0.1:${address.port}`;
   const response = await fetch(origin + path);
   assert.equal(response.status, 200); assert.equal(await response.text(), marker);
+  assert.equal(response.headers.get("x-matrix-control-result"), "ok");
   assert.equal(response.headers.get("cache-control"), "no-store");
   assert.match(response.headers.get("content-type")!, /text\/plain/);
   for (const privatePath of ["/assets/.personal-consultant-matrix-v1/crypto-store/device-binding.json",
@@ -47,7 +48,21 @@ test("control reader rejects missing, stale, malformed, oversized, linked and un
     if (kind === "hardlink") await link(f.target, join(f.root, "linked"));
     const response = await matrixPositiveControlResponse(request(), f.root);
     assert.equal(response?.status, 404, kind); assert.doesNotMatch(await response!.text(), /MUST_NOT_LEAK|matrix-isolation-positive:/);
+    const expected = { missing: "missing_file", stale: "expired_file", body: "invalid_marker",
+      large: "unsafe_file", symlink: "unsafe_file", hardlink: "unsafe_file", permissions: "unsafe_file" };
+    assert.equal(response?.headers.get("x-matrix-control-result"), expected[kind]);
   }
+});
+
+test("safe marker diagnostics distinguish missing or unsafe ancestors without revealing paths", async t => {
+  const f = await fixture(t);
+  await rm(join(f.root, "public", "assets"), { recursive: true });
+  assert.equal((await matrixPositiveControlResponse(request(), f.root))?.headers.get("x-matrix-control-result"), "missing_directory");
+  await mkdir(join(f.root, "public", "assets"), { mode: 0o700 });
+  await chmod(join(f.root, "public", "assets"), 0o777);
+  const response = await matrixPositiveControlResponse(request(), f.root);
+  assert.equal(response?.headers.get("x-matrix-control-result"), "unsafe_directory");
+  assert.equal(await response!.text(), "Not found.");
 });
 
 test("control route rejects state-bearing requests and does not configure stateless Preview or open a pool", async () => {
