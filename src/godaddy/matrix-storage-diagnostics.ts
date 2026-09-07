@@ -9,7 +9,10 @@ const PATHS = [
   ["assets", ["public", "assets"]],
   ["privateRoot", ["public", "assets", ".personal-consultant-matrix-v1"]],
   ["cryptoStore", ["public", "assets", ".personal-consultant-matrix-v1", "crypto-store"]],
-  ["deviceBinding", ["public", "assets", ".personal-consultant-matrix-v1", "crypto-store", "device-binding.json"]]
+  ["deviceBinding", ["public", "assets", ".personal-consultant-matrix-v1", "crypto-store", "device-binding.json"]],
+  ["cryptoDatabase", ["public", "assets", ".personal-consultant-matrix-v1", "crypto-store", "matrix-sdk-crypto.sqlite3"]],
+  ["stateDatabase", ["public", "assets", ".personal-consultant-matrix-v1", "crypto-store", "matrix-sdk-state.sqlite3"]],
+  ["provisioningIntent", ["public", "assets", ".personal-consultant-matrix-v1", "crypto-store", "provisioning-intent.json"]]
 ] as const;
 export type MatrixStoragePathState = "directory" | "file" | "symlink" | "other" | "missing" | "denied" | "unavailable" | "not_checked";
 export type MatrixStoragePaths = Readonly<Record<typeof PATHS[number][0], MatrixStoragePathState>>;
@@ -33,7 +36,9 @@ export async function inspectMatrixStoragePaths(dependencies: Readonly<{
       result[label] = code === "ENOENT" || code === "ENOTDIR" ? "missing"
         : code === "EACCES" || code === "EPERM" ? "denied" : "unavailable";
     }
-    parentIsDirectory = result[label] === "directory";
+    // The last four paths are siblings: a missing marker must not suppress
+    // existence checks of the original SQLite files or provisioning marker.
+    if (parts.length <= 4) parentIsDirectory = result[label] === "directory";
   }
   return Object.freeze(result);
 }

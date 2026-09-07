@@ -6,17 +6,30 @@ const directory = { isDirectory: () => true, isFile: () => false, isSymbolicLink
 const file = { isDirectory: () => false, isFile: () => true, isSymbolicLink: () => false };
 const symlink = { isDirectory: () => false, isFile: () => false, isSymbolicLink: () => true };
 
-test("storage existence diagnostics check only the fixed six paths and never read contents", async () => {
+test("storage existence diagnostics check only the fixed nine paths and never read contents", async () => {
   const paths: string[] = [];
   const result = await inspectMatrixStoragePaths({ stat: async path => {
-    paths.push(path); return path.endsWith("device-binding.json") ? file : directory;
+    paths.push(path); return /\.(json|sqlite3)$/u.test(path) ? file : directory;
   } });
-  assert.equal(paths.length, 6);
+  assert.equal(paths.length, 9);
   assert.deepEqual(result, { application: "directory", public: "directory", assets: "directory",
-    privateRoot: "directory", cryptoStore: "directory", deviceBinding: "file" });
+    privateRoot: "directory", cryptoStore: "directory", deviceBinding: "file",
+    cryptoDatabase: "file", stateDatabase: "file", provisioningIntent: "file" });
   assert.deepEqual(paths.slice(1), ["public", "public/assets", "public/assets/.personal-consultant-matrix-v1",
-    "public/assets/.personal-consultant-matrix-v1/crypto-store", "public/assets/.personal-consultant-matrix-v1/crypto-store/device-binding.json"]
+    "public/assets/.personal-consultant-matrix-v1/crypto-store",
+    ...["device-binding.json", "matrix-sdk-crypto.sqlite3", "matrix-sdk-state.sqlite3", "provisioning-intent.json"]
+      .map(name => `public/assets/.personal-consultant-matrix-v1/crypto-store/${name}`)]
     .map(path => `${paths[0]}/${path}`));
+});
+
+test("a missing binding marker does not hide the existence of its original database siblings", async () => {
+  const result = await inspectMatrixStoragePaths({ stat: async path => {
+    if (path.endsWith("device-binding.json")) throw Object.assign(new Error("missing"), { code: "ENOENT" });
+    return /\.(json|sqlite3)$/u.test(path) ? file : directory;
+  } });
+  assert.equal(result.deviceBinding, "missing");
+  assert.equal(result.cryptoDatabase, "file"); assert.equal(result.stateDatabase, "file");
+  assert.equal(result.provisioningIntent, "file");
 });
 
 for (const [code, expected] of [["ENOENT", "missing"], ["ENOTDIR", "missing"], ["EACCES", "denied"],

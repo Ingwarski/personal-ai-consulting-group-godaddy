@@ -254,7 +254,8 @@ test("Matrix diagnostics are read-only, owner-only, uncached, and project fixed 
   let reads = 0;
   let storageReads = 0;
   const storagePaths = { application: "directory", public: "directory", assets: "directory",
-    privateRoot: "missing", cryptoStore: "not_checked", deviceBinding: "not_checked" } as const;
+    privateRoot: "missing", cryptoStore: "not_checked", deviceBinding: "not_checked",
+    cryptoDatabase: "not_checked", stateDatabase: "not_checked", provisioningIntent: "not_checked" } as const;
   let reason = "schema_unavailable";
   const { runtime } = fixture({ environment: { MATRIX_SETUP_MODE: "disabled" }, matrixDiagnostics: () => {
     reads += 1;
