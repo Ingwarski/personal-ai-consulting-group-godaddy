@@ -11,6 +11,7 @@ import type { RuntimeCapabilityCatalogResult } from "../src/runtime/capability-c
 import { activeNow, createCapabilityReceipt } from "./fixtures/capability-receipt.ts";
 import { OwnerAuthPool } from "./fixtures/owner-auth-pool.ts";
 import { MatrixSchemaPool } from "./fixtures/matrix-schema-pool.ts";
+import { MatrixCollationPool } from "./fixtures/matrix-collation-pool.ts";
 import { browser, Form } from "./fixtures/owner-action-browser.ts";
 import { createHash } from "node:crypto";
 import { OWNER_AUTH_SCRIPT_PATH, ownerAuthClientJavaScript } from "../src/godaddy/owner-auth-client.ts";
@@ -140,6 +141,55 @@ function fixture(options: { pool?: OwnerAuthPool; runtime?: RuntimeBootstrap; go
   });
   return { runtime, pool };
 }
+
+test("state collation repair is a distinct owner-only same-origin CSRF action, not an additive-schema side effect", async () => {
+  const path = "/operations/matrix/state-collation";
+  const pool = new MatrixCollationPool(); const { runtime } = fixture({ pool });
+  for (const method of ["GET", "POST"]) assert.equal((await runtime.handle(request(path, undefined, { method })))?.status, 403);
+  assert.equal(pool.queries.length, 0);
+  const { jar } = await login(runtime);
+  assert.equal(pool.queries.length, 0);
+  const page = await runtime.handle(request(path, jar));
+  assert.equal(page?.headers.get("cache-control"), "no-store");
+  const token = formToken(await page!.text(), path);
+  assert.equal(pool.alters.length, 0);
+  assert.equal((await runtime.handle(actionRequest(path, token, jar, { origin: "https://evil.test" })))?.status, 403);
+  assert.equal((await runtime.handle(actionRequest(path, token, jar, { "sec-fetch-site": "cross-site" })))?.status, 403);
+  assert.equal((await runtime.handle(actionRequest(path, "x".repeat(64), jar)))?.status, 403);
+  const operations = await runtime.handle(request("/operations/runtime", jar));
+  const wrongToken = formToken(await operations!.text(), "/auth/sign-out");
+  assert.equal((await runtime.handle(actionRequest(path, wrongToken, jar)))?.status, 403);
+  assert.equal((await runtime.handle(actionRequest(path + "?sql=bad", token, jar)))?.status, 400);
+  assert.equal((await runtime.handle(request(path, jar, { method: "DELETE" })))?.status, 405);
+  const badBody = request(path, jar, { method: "POST", headers: {
+    origin, "sec-fetch-site": "same-origin", "content-type": "application/x-www-form-urlencoded"
+  }, body: new URLSearchParams({ formToken: token, sql: "arbitrary" }).toString() });
+  assert.equal((await runtime.handle(badBody))?.status, 403);
+  assert.equal(pool.alters.length, 0);
+  const client = browser(async (actionPath, init) => {
+    const headers = new Headers(init.headers); headers.set("origin", origin); headers.set("sec-fetch-site", "same-origin");
+    return (await runtime.handle(request(actionPath, jar, { ...init, headers })))!;
+  });
+  const form = new Form(path); form.token = token; await client.submit(form);
+  assert.equal(pool.alters.length, 1); assert.equal(client.state().replaced, true);
+  assert.equal(client.state().message, "");
+  assert.ok(!(await (await runtime.handle(request(path, jar)))!.text()).includes("<form"));
+  await runtime.close();
+  const inert = fixture({ pool, environment: { RUNTIME_MODE: "development" } }).runtime;
+  const count = pool.queries.length;
+  for (const method of ["GET", "POST"]) assert.equal((await inert.handle(request(path, undefined, { method })))?.status, 503);
+  assert.equal(pool.queries.length, count); await inert.close();
+});
+
+test("collation migration errors are sanitized and never report success", async () => {
+  const pool = new MatrixCollationPool(); pool.failAlter = true;
+  const { runtime } = fixture({ pool }); const { jar } = await login(runtime);
+  const path = "/operations/matrix/state-collation";
+  const page = await runtime.handle(request(path, jar));
+  const response = await runtime.handle(actionRequest(path, formToken(await page!.text()), jar));
+  assert.equal(response?.status, 503); assert.ok(!(await response!.text()).includes("private alter"));
+  await runtime.close();
+});
 
 test("additive schema route requires owner, same origin and purpose CSRF; GET never creates tables", async () => {
   const path = "/operations/matrix/schema";

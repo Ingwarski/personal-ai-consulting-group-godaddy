@@ -28,6 +28,7 @@ import { MATRIX_SETUP_ACTION, MATRIX_SETUP_ACTIONS, MATRIX_SETUP_PAGE, matrixSet
 import { matrixPreviewVerifierResponse } from "./matrix-browser-isolation.ts";
 import { matrixPositiveControlResponse } from "./matrix-positive-control.ts";
 import { inspectMatrixSchema, createMissingMatrixTables } from "./matrix-additive-schema.ts";
+import { inspectStateKeyCollation, repairStateKeyCollation } from "./matrix-state-collation.ts";
 
 type SettingsAsset = "settings.css" | "settings.js";
 type CatalogFailureCode = Extract<RuntimeCapabilityCatalogResult, { ok: false }>["code"];
@@ -254,6 +255,7 @@ async function isEmptyJsonAction(request: Request): Promise<boolean> {
 const isSettingsPath = (pathname: string): boolean => settingsPaths.has(pathname);
 const MATRIX_STATUS_PATH = "/operations/matrix/status";
 const MATRIX_SCHEMA_PATH = "/operations/matrix/schema";
+const MATRIX_COLLATION_PATH = "/operations/matrix/state-collation";
 const MATRIX_STATUS_REASONS = new Set([
   "matrix_disabled_for_runtime", "matrix_state_database_not_enabled", "matrix_not_configured",
   "matrix_configuration_incomplete", "matrix_configuration_invalid", "store_binding_unavailable", "store_binding_invalid",
@@ -261,7 +263,7 @@ const MATRIX_STATUS_REASONS = new Set([
   "ingress_blocked", "media_consumer_unavailable", "sidecar_not_ready", "lock_contended", "circuit_open",
   "retry_exhausted", "publication_fence_unavailable", "stopping", "stopped", "termination_failed"
 ]);
-const isManagedPath = (pathname: string): boolean => isSettingsPath(pathname) || runtimeOperationPaths.has(pathname) || pathname === MATRIX_SETUP_PAGE || pathname === MATRIX_SETUP_ACTION || pathname === MATRIX_STATUS_PATH || pathname === MATRIX_SCHEMA_PATH;
+const isManagedPath = (pathname: string): boolean => isSettingsPath(pathname) || runtimeOperationPaths.has(pathname) || pathname === MATRIX_SETUP_PAGE || pathname === MATRIX_SETUP_ACTION || pathname === MATRIX_STATUS_PATH || pathname === MATRIX_SCHEMA_PATH || pathname === MATRIX_COLLATION_PATH;
 
 function defaultPool(configuration: GodaddyDatabaseConfiguration): MySqlPool {
   return createGodaddyMySqlPool(configuration);
@@ -513,6 +515,26 @@ export function createGoDaddySettingsRuntime(
         const form = await parseActionForm(request);
         return form !== undefined && await owner.verifyActionToken(cookieHeader, url.pathname, form.formToken);
       };
+      if (url.pathname === MATRIX_COLLATION_PATH) {
+        if (url.search) return plain("Invalid request.", 400);
+        if (request.method !== "GET" && request.method !== "POST") return plain("Method not allowed.", 405, { allow: "GET, POST" });
+        if (request.method === "POST" && !await verifyAction()) return plain("Access denied.", 403);
+        const result = request.method === "POST" ? await repairStateKeyCollation(pool) : undefined;
+        const status = await inspectStateKeyCollation(pool);
+        const token = await owner.issueActionToken(cookieHeader, MATRIX_COLLATION_PATH);
+        if (token === undefined) return plain("Access denied.", 403);
+        return html(`<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Порівняння ключів Matrix</title><script src="${OWNER_AUTH_SCRIPT_PATH}" defer></script></head><body><main>
+          <h1>Порівняння ключів Matrix</h1>
+          <p>Лише state_namespace і state_key у personal_consultant_state: utf8mb4_unicode_ci → utf8mb4_bin. Кодування utf8mb4, підтримка кирилиці та вміст записів зберігаються. Текст повідомлень не змінюється.</p>
+          <p role="status">${status.compatible ? "Обидві ключові колонки вже використовують utf8mb4_bin." : status.repairable ? "Потрібне виправлення порівняння ключів." : "Визначення колонок не відповідає дозволеній міграції. Зміни заблоковано."}</p>
+          ${result === undefined ? "" : "<p>Кирилиця пройшла перевірку на сервері MySQL. Наявні ключі збережено. Перевірку після операції пройдено.</p>"}
+          <p role="alert" tabindex="-1" data-owner-action-status></p>
+          ${status.compatible || !status.repairable ? "" : `<form action="${MATRIX_COLLATION_PATH}" method="post" data-owner-action><input type="hidden" name="formToken" value="${escapeHtml(token)}"><button type="submit">Виправити лише порівняння двох ключових колонок</button></form>`}
+          <p><a href="${MATRIX_STATUS_PATH}">Перевірити готовність Matrix</a></p>
+          <noscript>Для захищеної операції увімкніть JavaScript і оновіть сторінку.</noscript>
+          </main></body></html>`, 200);
+      }
       if (url.pathname === MATRIX_SCHEMA_PATH) {
         if (url.search) return plain("Invalid request.", 400);
         if (request.method !== "GET" && request.method !== "POST") return plain("Method not allowed.", 405, { allow: "GET, POST" });

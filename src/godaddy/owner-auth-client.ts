@@ -9,7 +9,7 @@ export const ownerAuthClientJavaScript = String.raw`(() => {
   const actions = new Set([
     "/auth/google/start", "/auth/sign-out", "/auth/sessions/revoke",
     "/operations/runtime/codex", "/operations/runtime/codex/reconnect",
-    "/operations/runtime/catalog", "/operations/matrix/action", "/operations/matrix/schema"
+    "/operations/runtime/catalog", "/operations/matrix/action", "/operations/matrix/schema", "/operations/matrix/state-collation"
   ]);
   const localDestinations = new Set(["/auth/sign-in", "/settings", "/operations/runtime"]);
   const showError = (message) => {
@@ -87,7 +87,7 @@ export const ownerAuthClientJavaScript = String.raw`(() => {
         body
       });
       const type = response.headers.get("content-type") || "";
-      if (type.startsWith("text/html") && (action.pathname.startsWith("/operations/runtime/") || action.pathname === "/operations/matrix/action" || action.pathname === "/operations/matrix/schema")) {
+      if (type.startsWith("text/html") && (action.pathname.startsWith("/operations/runtime/") || action.pathname === "/operations/matrix/action" || action.pathname === "/operations/matrix/schema" || action.pathname === "/operations/matrix/state-collation")) {
         const parsed = new DOMParser().parseFromString(await response.text(), "text/html");
         const next = parsed.querySelector("main");
         const current = document.querySelector("main");

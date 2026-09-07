@@ -1,0 +1,18 @@
+{
+  "event": "scoped_state_key_collation_authorization",
+  "role": "user",
+  "original_message": "yes if it will be normal for cyrillic",
+  "question_answered": "May I change only its state_namespace and state_key columns from utf8mb4_unicode_ci to utf8mb4_bin, preserving all records, then retry the consultation test?",
+  "condition": "Cyrillic remains supported. Character set must remain utf8mb4; verify Unicode round-trip and Cyrillic case distinction before ALTER.",
+  "source": "Active Codex conversation",
+  "original_transport_message_id": null,
+  "original_transport_received_at": null,
+  "recorded_at": "2026-09-07T12:47:21Z",
+  "provenance_limit": "Recording time is not the original message receipt time; unavailable identifiers are not invented.",
+  "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
+  "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+  "allowed_table": "personal_consultant_state",
+  "allowed_columns": ["state_namespace", "state_key"],
+  "allowed_change": "Collation only, from utf8mb4_unicode_ci to utf8mb4_bin. Preserve utf8mb4, column types/lengths/nullability, primary key and all records.",
+  "excluded": ["DROP", "TRUNCATE", "DELETE", "DML on existing records", "Other schema changes", "SQL importer", "Preview state", "Matrix trust or crypto resets", "Other apps/repos", "Product V1 readiness claims"]
+}
