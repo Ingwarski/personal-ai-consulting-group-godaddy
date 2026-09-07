@@ -43,6 +43,9 @@ test("control reader rejects missing, stale, malformed, oversized, linked and un
     const f = await fixture(t);
     if (kind !== "missing") await writeFile(f.target, kind === "body" ? '{"access_token":"MUST_NOT_LEAK"}'
       : kind === "large" ? "x".repeat(129) : marker, { mode: 0o644 });
+    // Filesystem sub-millisecond mtime can be ahead of integer Date.now().
+    // Keep non-expiry fixtures unambiguously in the past; test stale separately.
+    if (kind !== "missing") { const past = new Date(Date.now() - 1_000); await utimes(f.target, past, past); }
     if (kind === "stale") await utimes(f.target, new Date(0), new Date(0));
     if (kind === "permissions") await chmod(f.target, 0o666);
     if (kind === "symlink") { await rm(f.target); await writeFile(join(f.root, "secret"), marker); await symlink(join(f.root, "secret"), f.target); }

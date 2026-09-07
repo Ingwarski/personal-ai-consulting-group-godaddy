@@ -29,6 +29,7 @@ import { matrixPreviewVerifierResponse } from "./matrix-browser-isolation.ts";
 import { matrixPositiveControlResponse } from "./matrix-positive-control.ts";
 import { inspectMatrixSchema, createMissingMatrixTables } from "./matrix-additive-schema.ts";
 import { inspectStateKeyCollation, repairStateKeyCollation } from "./matrix-state-collation.ts";
+import { safeConsultationFailure } from "./consultation-diagnostics.ts";
 
 type SettingsAsset = "settings.css" | "settings.js";
 type CatalogFailureCode = Extract<RuntimeCapabilityCatalogResult, { ok: false }>["code"];
@@ -62,6 +63,7 @@ export type GoDaddySettingsRuntimeDependencies = Readonly<{
   matrixDiagnostics?: () => Readonly<{
     configured: boolean; ready: boolean; reason: string;
     consultationWorking: boolean; consultationBlocked: boolean;
+    consultationFailure?: unknown;
   }>;
   /** A process-owned pool supplied by the application composition root. */
   pool?: MySqlPool;
@@ -566,7 +568,8 @@ export function createGoDaddySettingsRuntime(
           configured: status?.configured === true, ready: status?.ready === true,
           reason: status !== undefined && MATRIX_STATUS_REASONS.has(status.reason) ? status.reason : "unavailable",
           consultationWorking: status?.consultationWorking === true,
-          consultationBlocked: status?.consultationBlocked !== false
+          consultationBlocked: status?.consultationBlocked !== false,
+          ...(safeConsultationFailure(status?.consultationFailure) === undefined ? {} : { consultationFailure: safeConsultationFailure(status?.consultationFailure) })
         });
       }
       if (url.pathname === MATRIX_SETUP_PAGE || url.pathname === MATRIX_SETUP_ACTION) {

@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { classifyConsultationFailure, type ConsultationFailure } from "./consultation-diagnostics.ts";
 import { isSecretLikeMatrixContent } from "../matrix/bridge.ts";
 import { parseOwnerCommand } from "../session/owner-commands.ts";
 import type { RegistrarDO } from "../session/registrar-do.ts";
@@ -76,7 +77,7 @@ export type MatrixConsultationService = Readonly<{
   requestStop(): void;
   /** Deterministic credential-free adapter verification; not an HTTP route. */
   tick(): Promise<void>;
-  status(): Readonly<{ working: boolean; blocked: boolean }>;
+  status(): Readonly<{ working: boolean; blocked: boolean; lastFailure?: ConsultationFailure }>;
 }>;
 
 /** Drains durable intents, not ephemeral sidecar callbacks. It commits each
@@ -109,6 +110,8 @@ export function createMatrixConsultationService(input: Readonly<{
     || budgetMs > 540_000 || intervalMs > 1_000 || progressMs > 45_000) throw new Error("Invalid consultation limits.");
   const owner = randomUUID().replaceAll("-", "");
   let started = false, stopping = false, acquired = false, recovered = false, blocked = false;
+  let diagnosticStage = "readiness";
+  let lastFailure: ConsultationFailure | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let ticking: Promise<void> | undefined;
   let execution: Promise<void> | undefined;
@@ -292,6 +295,7 @@ export function createMatrixConsultationService(input: Readonly<{
   };
 
   const processInput = async (lease: LeasedMatrixIngressIntent): Promise<void> => {
+    diagnosticStage = "input_state";
     const prior = await read();
     let handled = prior.handled.find(h => h.hash === lease.eventHash);
     if (handled === undefined) {
@@ -323,7 +327,9 @@ export function createMatrixConsultationService(input: Readonly<{
         await mutate(state => { state.pending = pending; });
       }
       for (const hash of pending.erase) await input.media?.erase(hash);
+      diagnosticStage = "input_notice";
       const committed = await notice("mx-notice-" + pending.hash, pending.notice, pending.eventId);
+      diagnosticStage = "input_state";
       handled = { hash: pending.hash, sessionId: pending.job?.sessionId ?? "control-" + committed.generation, generation: committed.generation };
       const result = handled;
       await mutate(state => {
@@ -333,9 +339,11 @@ export function createMatrixConsultationService(input: Readonly<{
         state.pending = null;
       });
     }
+    diagnosticStage = "input_ack";
     if (!await input.ingress.markProcessed({ eventId: lease.eventId, eventHash: lease.eventHash,
       leaseOwner: lease.leaseOwner, leaseEpoch: lease.leaseEpoch, sessionId: handled.sessionId,
       generation: handled.generation, now: now() })) throw new Error("Consultation input lease was lost.");
+    lastFailure = undefined;
   };
 
   const recover = async (): Promise<void> => {
@@ -516,8 +524,10 @@ export function createMatrixConsultationService(input: Readonly<{
     try {
       // Short-lived encrypted plaintext staging expires even when room or
       // provider readiness is blocked. Maintenance does not contact Matrix.
+      diagnosticStage = "readiness";
       await input.media?.purgeExpired();
       input.assertReady();
+      diagnosticStage = "leadership";
       if (!acquired) { acquired = await input.leadership.acquire(); if (!acquired) return; }
       if (!await input.leadership.check()) {
         controller?.abort();
@@ -526,20 +536,24 @@ export function createMatrixConsultationService(input: Readonly<{
         acquired = false; recovered = false; blocked = true;
         return;
       }
+      diagnosticStage = "recovery";
       if (!recovered && execution === undefined) await recover();
       // Inputs stay responsive while provider calls run in the separate promise.
       for (let count = 0; count < 8; count++) {
+        diagnosticStage = "ingress_lease";
         const lease = await input.ingress.leaseNext({ leaseOwner: owner, now: now(), leaseMilliseconds: 60_000 });
         if (lease === undefined) break;
         await processInput(lease);
       }
+      diagnosticStage = "worker_state";
       const state = await read();
       if (recovered && execution === undefined && state.pending === null && state.job?.status === "queued") {
-        execution = execute(state.job).catch(() => { blocked = true; }).finally(() => { execution = undefined; });
+        execution = execute(state.job).catch(error => { blocked = true; lastFailure = classifyConsultationFailure("execution", error); }).finally(() => { execution = undefined; });
       }
       blocked = false;
-    } catch {
+    } catch (error) {
       blocked = true;
+      lastFailure = classifyConsultationFailure(diagnosticStage, error);
       // No provider work may continue across lost room/DB readiness.
       controller?.abort();
       recovered = false;
@@ -571,6 +585,6 @@ export function createMatrixConsultationService(input: Readonly<{
     },
     tick,
     requestStop,
-    status: () => Object.freeze({ working: execution !== undefined, blocked })
+    status: () => Object.freeze({ working: execution !== undefined, blocked, ...(lastFailure === undefined ? {} : { lastFailure }) })
   });
 }

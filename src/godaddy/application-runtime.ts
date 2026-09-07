@@ -141,7 +141,8 @@ export function createGoDaddyApplicationRuntime(
     matrixDiagnostics: () => ({
       ...(matrixService?.getReadiness() ?? { configured: false, ready: false, reason: "not_started" }),
       consultationWorking: consultationService?.status().working === true,
-      consultationBlocked: consultationService === undefined || consultationService.status().blocked
+      consultationBlocked: consultationService === undefined || consultationService.status().blocked,
+      ...(consultationService?.status().lastFailure === undefined ? {} : { consultationFailure: consultationService.status().lastFailure })
     })
   });
   let mediaStore: MatrixConsultationMediaStore | undefined;
