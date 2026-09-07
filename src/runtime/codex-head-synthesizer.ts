@@ -17,7 +17,7 @@ const nonEmpty = (value: unknown, limit = 8_000): value is string =>
 const finalSchema = Object.freeze({
   type: "object",
   additionalProperties: false,
-  required: ["decision", "actions", "riskOrAssumption", "reviewCondition"],
+  required: ["decision", "actions", "riskOrAssumption", "reviewCondition", "technicalPart"],
   properties: {
     decision: { type: "string", minLength: 1, maxLength: 8000 },
     actions: {
@@ -37,7 +37,7 @@ const finalSchema = Object.freeze({
     },
     riskOrAssumption: { type: "string", minLength: 1, maxLength: 8000 },
     reviewCondition: { type: "string", minLength: 1, maxLength: 8000 },
-    technicalPart: { type: "string", minLength: 1, maxLength: 8000 }
+    technicalPart: { type: ["string", "null"], minLength: 1, maxLength: 8000 }
   }
 });
 
@@ -58,13 +58,13 @@ function parseRecommendation(body: string): FinalRecommendation | undefined {
     return Object.freeze({ action: action.action, owner: action.owner, timeframe: action.timeframe, evidence: action.evidence });
   });
   if (actions.some((action) => action === undefined)) return undefined;
-  if (value.technicalPart !== undefined && !nonEmpty(value.technicalPart)) return undefined;
+  if (value.technicalPart !== undefined && value.technicalPart !== null && !nonEmpty(value.technicalPart)) return undefined;
   const recommendation: FinalRecommendation = Object.freeze({
     decision: value.decision,
     actions: Object.freeze(actions as Exclude<(typeof actions)[number], undefined>[]),
     riskOrAssumption: value.riskOrAssumption,
     reviewCondition: value.reviewCondition,
-    ...(value.technicalPart === undefined ? {} : { technicalPart: value.technicalPart })
+    ...(value.technicalPart === undefined || value.technicalPart === null ? {} : { technicalPart: value.technicalPart })
   });
   return isValidFinalRecommendation(recommendation) ? recommendation : undefined;
 }
@@ -75,7 +75,7 @@ function synthesisPrompt(task: string, evidence: readonly Readonly<{ role: strin
     "Ви — головний консультант приватного бізнес-консиліуму.",
     `Завдання власника:\n${task}`,
     `Повний підтверджений консиліум:\n${transcript}`,
-    "Синтезуйте одну практичну рекомендацію. Відповідь має бути виключно валідним JSON за заданою схемою. `technicalPart` додавайте лише тоді, коли власник прямо потребує технічного втілення; інакше не включайте це поле. Не вигадуйте факти, не скорочуйте дії та не показуйте прихований хід міркувань."
+    "Синтезуйте одну практичну рекомендацію. Відповідь має бути виключно валідним JSON за заданою схемою. `technicalPart` заповнюйте лише тоді, коли власник прямо потребує технічного втілення; інакше передайте null. Не вигадуйте факти, не скорочуйте дії та не показуйте прихований хід міркувань."
   ].join("\n\n");
 }
 

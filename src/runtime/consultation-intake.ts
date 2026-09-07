@@ -76,6 +76,29 @@ export function parseConsultationIntake(body: string, maximumSpecialists: number
 
 /** Head-only, content-free preflight. A direct answer does not depend on a
  * selected Critic's availability and never acquires a Claude process. */
+export async function preflightCodexForSnapshot(input: Readonly<{
+  snapshot: EffectiveSessionSnapshot; capabilityReceipt: CapabilityReceipt;
+  codex: CodexAppServerThreadClient; environment: Record<string, unknown>; now: Date;
+  signal: AbortSignal;
+}>): Promise<string | undefined> {
+  const selected = input.snapshot.settings.codex;
+  const receipt = input.capabilityReceipt;
+  const providerReceipt = receipt.providerReceipts?.codex;
+  if (input.signal.aborted || FORBIDDEN_RUNTIME_ENVIRONMENT_NAMES.some(name => Object.hasOwn(input.environment, name)) ||
+    input.snapshot.catalogVersion !== receipt.catalogVersion || validateCatalogTiming(receipt, input.now) !== null ||
+    (providerReceipt !== undefined && (providerReceipt.status !== "ready" || validateCatalogTiming(providerReceipt, input.now) !== null))) return undefined;
+  const recorded = receipt.codexModels.find(model => model.productId === selected.modelId);
+  if (recorded === undefined || recorded.availability !== "available") return undefined;
+  const probe = await probeCodexAppServer(input.codex.transport, { privateSingleOwner: true });
+  const current = probe.models.find(model => model.productId === selected.modelId);
+  if (input.signal.aborted || probe.runtime.authMode !== "chatgpt_oauth" || probe.runtime.readiness !== "ready" ||
+    !probe.runtime.privateSingleOwner || current === undefined || current.availability !== "available" ||
+    recorded.runtimeModelId !== current.runtimeModelId ||
+    (selected.reasoningEffort !== null && (![recorded, current].every(model => model.supportedReasoningEfforts.includes(selected.reasoningEffort!) &&
+      model.reasoningMappings[selected.reasoningEffort!] === selected.reasoningEffort)))) return undefined;
+  return current.runtimeModelId;
+}
+
 export async function planConsultation(input: Readonly<{
   task: string; snapshot: EffectiveSessionSnapshot; capabilityReceipt: CapabilityReceipt;
   codex: CodexAppServerThreadClient; environment: Record<string, unknown>; now: Date;
@@ -84,20 +107,8 @@ export async function planConsultation(input: Readonly<{
 }>): Promise<ConsultationIntakeResult> {
   const failure = (): ConsultationIntakeFailure => ({ ok: false, code: "intake_preflight_failed" });
   const selected = input.snapshot.settings.codex;
-  const receipt = input.capabilityReceipt;
-  const providerReceipt = receipt.providerReceipts?.codex;
-  if (input.signal.aborted || FORBIDDEN_RUNTIME_ENVIRONMENT_NAMES.some(name => Object.hasOwn(input.environment, name)) ||
-    input.snapshot.catalogVersion !== receipt.catalogVersion || validateCatalogTiming(receipt, input.now) !== null ||
-    (providerReceipt !== undefined && (providerReceipt.status !== "ready" || validateCatalogTiming(providerReceipt, input.now) !== null))) return failure();
-  const recorded = receipt.codexModels.find(model => model.productId === selected.modelId);
-  if (recorded === undefined || recorded.availability !== "available") return failure();
-  const probe = await probeCodexAppServer(input.codex.transport, { privateSingleOwner: true });
-  const current = probe.models.find(model => model.productId === selected.modelId);
-  if (input.signal.aborted || probe.runtime.authMode !== "chatgpt_oauth" || probe.runtime.readiness !== "ready" ||
-    !probe.runtime.privateSingleOwner || current === undefined || current.availability !== "available" ||
-    recorded.runtimeModelId !== current.runtimeModelId ||
-    (selected.reasoningEffort !== null && (![recorded, current].every(model => model.supportedReasoningEfforts.includes(selected.reasoningEffort!) &&
-      model.reasoningMappings[selected.reasoningEffort!] === selected.reasoningEffort)))) return failure();
+  const runtimeModelId = await preflightCodexForSnapshot(input);
+  if (runtimeModelId === undefined) return failure();
   const body = [
     "Ти головний консультант приватного бізнес-консультанта й коуча. Визнач найменший достатній режим за суттю запиту, а не за ключовими словами чи довжиною.",
     "Спершу визнач independentReviewRequested за змістом запиту: true, якщо власник просить незалежну перевірку Критиком або консиліум. Такий запит вимагає consilium навіть для простої задачі чи короткої відповіді. Не замінюй замовлену перевірку прямою відповіддю з приміткою, що Критик не працював. Якщо запиту на незалежну перевірку немає, поле false; це не забороняє consilium для складного або високоризикового питання.",
@@ -110,7 +121,7 @@ export async function planConsultation(input: Readonly<{
     "Запит користувача (JSON string): " + JSON.stringify(input.task)
   ].join("\n");
   if (body.length > 32_000) return { ok: false, code: "invalid_task" };
-  const started = await input.codex.startIsolatedThread({ modelId: current.runtimeModelId });
+  const started = await input.codex.startIsolatedThread({ modelId: runtimeModelId });
   if (!started.ok) return { ok: false, code: "intake_failed" };
   try {
     if (input.signal.aborted) return { ok: false, code: "intake_failed" };

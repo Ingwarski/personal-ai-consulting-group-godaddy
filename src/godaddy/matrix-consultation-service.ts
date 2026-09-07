@@ -47,6 +47,7 @@ type Job = {
   attempt: number;
   generation?: number;
   sessionId?: string;
+  resumeFinalization?: true;
 };
 type Handled = { hash: string; sessionId: string; generation: number };
 type PendingInput = {
@@ -88,7 +89,7 @@ export function createMatrixConsultationService(input: Readonly<{
   storage: RegistrarStorage;
   ingress: Pick<MySqlMatrixIngressReceipts, "leaseNext" | "markProcessed">;
   registrar: RegistrarDO;
-  executor: Pick<GoDaddyConsiliumRuntime, "plan" | "run">;
+  executor: Pick<GoDaddyConsiliumRuntime, "plan" | "run"> & Partial<Pick<GoDaddyConsiliumRuntime, "canResumeFinalization" | "resumeFinalization">>;
   prepareSnapshot(sessionId: string): Promise<EffectiveSessionSnapshot | undefined>;
   resolveReplySession?: (matrixEventId: string) => Promise<string | undefined>;
   afterConfirmed: () => void | Promise<void>;
@@ -127,6 +128,7 @@ export function createMatrixConsultationService(input: Readonly<{
       && /^\$[A-Za-z0-9$:_-]{8,255}$/.test(job.eventId)
       && typeof job.task === "string" && byteLength(job.task) <= MAX_TASK_BYTES
       && Number.isSafeInteger(job.attempt) && job.attempt >= 0
+      && (job.resumeFinalization === undefined || job.resumeFinalization === true)
       && ["awaiting_consent", "awaiting_document", "awaiting_clarification", "queued", "planning", "running",
         "awaiting_continuation", "interrupted", "completed", "stopped", "failed"].includes(job.status)
       && (job.generation === undefined || (Number.isSafeInteger(job.generation) && job.generation > 0
@@ -255,6 +257,7 @@ export function createMatrixConsultationService(input: Readonly<{
         return pending;
       }
       if (job.generation !== undefined) pending.revisionGeneration = job.generation;
+      delete job.resumeFinalization;
       pending.mutatesJob = true;
       pending.cancelExecution = true;
       job.status = readyStatus(job, state.consent);
@@ -270,6 +273,8 @@ export function createMatrixConsultationService(input: Readonly<{
         return pending;
       }
       const amended = job.task + (body.trim() ? "\n\nУточнення власника:\n" + body : "");
+      // Changed owner input requires a fresh reviewed generation.
+      delete job.resumeFinalization;
       const mediaBytes = job.documents.reduce((n, d) => n + d.manifest.reduce((size, m) => size + m.length, 0), 0)
         + e.media.reduce((n, m) => n + m.length, 0);
       if (byteLength(amended) > MAX_TASK_BYTES || job.documents.reduce((n,d) => n + d.manifest.length, 0) + e.media.length > 4
@@ -308,6 +313,15 @@ export function createMatrixConsultationService(input: Readonly<{
           || [CONSENT, CONFIRM_DOCUMENT, "Не погоджуюсь", "Відхиляю документ", "Продовжити"].some(command => equalText(text, command));
         const confirmedReplySession = relation === undefined || isControl ? undefined : await input.resolveReplySession?.(relation);
         pending = planInput(prior, lease, confirmedReplySession);
+        if (equalText(text, "Продовжити") && lease.workIntent.media.length === 0 && pending.revisionGeneration !== undefined
+          && pending.job !== null && pending.job.documents.length === 0 && input.executor.resumeFinalization !== undefined
+          && await input.executor.canResumeFinalization?.(pending.revisionGeneration)) {
+          // Do not mint a new generation or substitute its Critic. Reuse only
+          // the complete verified review in this exact still-active session.
+          delete pending.revisionGeneration;
+          pending.job.resumeFinalization = true;
+          pending.notice = "Продовжую лише фінальний підсумок. Підтверджені позиції, окрему критику й доопрацювання збережено; повторних викликів спеціалістів або Критика не буде.";
+        }
         await mutate(state => { state.pending = pending; });
       }
       if (pending.cancelExecution) controller?.abort();
@@ -430,6 +444,16 @@ export function createMatrixConsultationService(input: Readonly<{
             "Очікую завершення поточного запиту до обраного ШІ-провайдера. Нової підтвердженої репліки ще немає.", job.eventId);
         })().catch(() => abort.abort()).finally(() => { progressBusy = false; });
       }, progressMs);
+      if (job.resumeFinalization && job.documents.length === 0 && input.executor.resumeFinalization !== undefined) {
+        const result = await input.executor.resumeFinalization({ sessionGeneration: job.generation!, task: job.task, signal: abort.signal });
+        if (abort.signal.aborted) { if (expired) await fail(NOTICE_CONTINUE, "awaiting_continuation"); return; }
+        if (!result.ok) {
+          await fail("Фінальний підсумок ще не підтверджено. Збережену критику не повторювали. Напишіть «Продовжити» для повтору лише фінального етапу або «Стоп».", "failed");
+          return;
+        }
+        await withInputBarrier(() => mutate(state => { if (matches(state)) state.job!.status = "completed"; }));
+        return;
+      }
       if (job.documents.length > 0) {
         if (job.documents.some(d => !d.confirmed) || input.media === undefined) throw new Error("Document not authorized.");
         media = await input.media.prepare(job.documents, abort.signal);

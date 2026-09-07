@@ -8,7 +8,7 @@ import type { RuntimeBootstrap } from "../src/godaddy/runtime-bootstrap.ts";
 import { MySqlMatrixIngressReceipts, MySqlMatrixOutbox } from "../src/godaddy/mysql-matrix-outbox.ts";
 import { CodexAppServerThreadClient } from "../src/runtime/codex-thread-client.ts";
 import { JsonRpcClient } from "../src/runtime/json-rpc-client.ts";
-import { RegistrarDO } from "../src/session/registrar-do.ts";
+import { RegistrarDO, confirmedMessageFingerprint } from "../src/session/registrar-do.ts";
 import type { ConfirmedAgentMessage } from "../src/session/registrar-do.ts";
 import { resolveEffectiveSessionSnapshot } from "../src/settings/snapshot.ts";
 import { activeNow, createCapabilityReceipt, createResolvedTestSpeedPolicyCatalog } from "./fixtures/capability-receipt.ts";
@@ -37,7 +37,7 @@ const productionEnvironment = {
   DB_PORT: "3306", DB_NAME: "test_only", DB_USER: "test_only", DB_PASSWORD: "fixture-only"
 };
 
-async function fixture(input: { approved?: boolean; missingSession?: boolean; missingCatalog?: boolean; holdTurns?: boolean; intakeBody?: string; selectedClaude?: boolean; matrixIntake?: boolean;
+async function fixture(input: { approved?: boolean; missingSession?: boolean; missingCatalog?: boolean; holdTurns?: boolean; intakeBody?: string; selectedClaude?: boolean; matrixIntake?: boolean; failFirstFinal?: boolean;
   forbiddenEnvironment?: boolean; staleCatalog?: boolean; untrustedCatalog?: boolean; auth?: "apikey"; quotaBlocked?: boolean; changedModel?: boolean; removedEffort?: boolean } = {}) {
   const base = createCapabilityReceipt();
   const receipt = createCapabilityReceipt({ codexModels: [...base.codexModels, {
@@ -50,7 +50,8 @@ async function fixture(input: { approved?: boolean; missingSession?: boolean; mi
     settings: receipt.defaults, capabilityReceipt: receipt,
     speedPolicyCatalog: input.approved === false ? UNAPPROVED_SPEED_POLICY_CATALOG : createResolvedTestSpeedPolicyCatalog() }, activeNow);
   if (!snapshot.ok) throw new Error("Invalid test snapshot");
-  const registrar = new RegistrarDO({ storage: new MemoryRegistrarStorage(), now: () => activeNow });
+  const registrarStorage = new MemoryRegistrarStorage();
+  const registrar = new RegistrarDO({ storage: registrarStorage, now: () => activeNow });
   if (!input.missingSession) {
     const session = await registrar.startSession({ sessionId: "production-session", settingsSnapshot: snapshot.value });
     assert.equal(session.ok, true);
@@ -65,6 +66,7 @@ async function fixture(input: { approved?: boolean; missingSession?: boolean; mi
   const turnStarted = new Promise<void>(resolve => { firstTurn = resolve; });
   let nextThread = 0;
   let nextTurn = 0;
+  let finalTurns = 0;
   let listener: ((line: string) => void) | undefined;
   const channel = {
     onLine: (callback: (line: string) => void) => { listener = callback; return () => { listener = undefined; }; },
@@ -86,7 +88,9 @@ async function fixture(input: { approved?: boolean; missingSession?: boolean; mi
       if (message.method === "turn/start") {
         const params = message.params as { threadId: string; model: string; outputSchema?: { properties?: Record<string, unknown> } };
         firstTurn();
-        const body = input.matrixIntake && params.outputSchema?.properties?.kind !== undefined
+        const final = params.outputSchema?.properties?.decision !== undefined;
+        if (final) finalTurns++;
+        const body = input.failFirstFinal && final && finalTurns === 1 ? "invalid structured final" : input.matrixIntake && params.outputSchema?.properties?.kind !== undefined
           ? JSON.stringify({ kind: "consilium", answer: "", specialists: ["finance", "strategy"], extractedEvidence: "", independentReviewRequested: true })
           : input.intakeBody ?? (params.outputSchema?.properties?.decision !== undefined ? JSON.stringify({ decision: "Перевірити попит до інвестицій.",
           actions: [{ action: "Провести інтерв'ю", owner: "Власник", timeframe: "Цього тижня", evidence: "П'ять відповідей" }],
@@ -126,9 +130,113 @@ async function fixture(input: { approved?: boolean; missingSession?: boolean; mi
   };
   const runtime = createGoDaddyConsiliumRuntime({ bootstrap, registrarRuntime, environment: { ...productionEnvironment,
     ...(input.forbiddenEnvironment ? { OPENAI_API_KEY: "never-used-fixture" } : {}) }, now: () => activeNow });
-  return { runtime, registrarRuntime, registrar, sent, confirmed, turnStarted, pool, lifecycle,
+  return { runtime, registrarRuntime, registrar, registrarStorage, sent, confirmed, turnStarted, pool, lifecycle,
     calls: () => ({ loadCalls, clientCalls, claudeCalls }), snapshot: snapshot.value };
 }
+
+test("final-only recovery reuses the same designated review, creates one head context, and closes the same generation", async () => {
+  const h = await fixture({ failFirstFinal: true });
+  assert.deepEqual(await h.runtime.run(request), { ok: false, code: "head_synthesis_failed" });
+  const review = await h.registrar.getCriticReview(1);
+  assert.ok(review);
+  assert.equal(await h.runtime.canResumeFinalization(1), true);
+  const before = h.sent.length;
+  const result = await h.runtime.resumeFinalization(request);
+  assert.equal(result.ok, true);
+  const recovery = h.sent.slice(before);
+  assert.equal(recovery.filter(m => m.method === "thread/start").length, 1);
+  assert.equal(recovery.filter(m => m.method === "turn/start").length, 1);
+  assert.equal(h.confirmed.filter(m => m.authority?.kind === "critique").length, 1);
+  assert.equal((await h.registrar.getActiveSession())?.generation, 1);
+  assert.equal((await h.registrar.getActiveSession())?.phase, "closed");
+  assert.equal(await h.runtime.canResumeFinalization(1), false);
+  assert.equal(h.calls().claudeCalls, 0);
+  await h.runtime.close();
+});
+
+test("partial, tampered, substituted or obsolete reviews cannot qualify for final-only recovery", async () => {
+  for (const corruption of ["missing_revision", "changed_body", "substituted_runtime", "obsolete", "stopped"] as const) {
+    const h = await fixture({ failFirstFinal: true });
+    await h.runtime.run(request);
+    const revisions = (await h.registrar.getConfirmedMessages(1)).filter(m => m.authority?.kind === "revision");
+    const revision = revisions[0]!;
+    const key = "registrar:message:1:" + revision.sequence;
+    if (corruption === "missing_revision") await h.registrarStorage.put(key, undefined);
+    if (corruption === "changed_body") await h.registrarStorage.put(key, { ...revision, body: "tampered" });
+    if (corruption === "substituted_runtime") {
+      const changed = { ...revision, authority: { ...revision.authority!, runtimeSessionRef: "other-runtime" } };
+      await h.registrarStorage.put(key, { ...changed, bodyHash: await confirmedMessageFingerprint(changed) });
+    }
+    if (corruption === "obsolete") await h.registrar.reviseSession({ generation: 1, revisionId: "new-revision-test" });
+    if (corruption === "stopped") await h.registrar.stopSession(1);
+    assert.equal(await h.runtime.canResumeFinalization(1), false, corruption);
+    const before = h.sent.length;
+    assert.deepEqual(await h.runtime.resumeFinalization(request), { ok: false, code: "session_unavailable" }, corruption);
+    assert.equal(h.sent.slice(before).some(m => m.method === "thread/start" || m.method === "turn/start"), false);
+    await h.runtime.close();
+  }
+});
+
+test("final-only recovery still rejects changed subscription eligibility and model mappings", async () => {
+  for (const failure of ["staleCatalog", "untrustedCatalog", "quotaBlocked", "changedModel", "removedEffort", "auth"] as const) {
+    const options: NonNullable<Parameters<typeof fixture>[0]> = { failFirstFinal: true };
+    const h = await fixture(options);
+    await h.runtime.run(request);
+    if (failure === "auth") options.auth = "apikey";
+    else options[failure] = true;
+    const before = h.sent.length;
+    assert.deepEqual(await h.runtime.resumeFinalization(request), { ok: false, code: "catalog_unavailable" }, failure);
+    assert.equal(h.sent.slice(before).some(m => m.method === "thread/start"), false, failure);
+    await h.runtime.close();
+  }
+});
+
+test("cancelling final-only recovery interrupts and releases its sole head context without publishing a late final", async () => {
+  const options = { failFirstFinal: true, holdTurns: false };
+  const h = await fixture(options);
+  await h.runtime.run(request);
+  options.holdTurns = true;
+  const before = h.sent.length;
+  const abort = new AbortController();
+  const recovery = h.runtime.resumeFinalization({ ...request, signal: abort.signal });
+  await waitFor("one final-only turn", async () => h.sent.slice(before).some(m => m.method === "turn/start"));
+  abort.abort();
+  assert.equal((await recovery).ok, false);
+  const calls = h.sent.slice(before);
+  assert.equal(calls.filter(m => m.method === "thread/start").length, 1);
+  assert.ok(calls.some(m => m.method === "turn/interrupt"));
+  assert.ok(calls.some(m => m.method === "thread/unsubscribe"));
+  assert.equal((await h.registrar.getActiveSession())?.phase, "active");
+  assert.equal(h.confirmed.filter(m => m.body.startsWith("## Рішення")).length, 0);
+  await h.runtime.close();
+});
+
+test("Matrix Continue resumes verified final-only work without a new generation, snapshot, intake or Critic", async () => {
+  const h = await fixture({ failFirstFinal: true });
+  await h.runtime.run(request);
+  const storage = new MemoryRegistrarStorage();
+  const bindingHash = "b".repeat(64);
+  await storage.put("worker", { version: 1, bindingHash, consent: true, pending: null, handled: [],
+    job: { id: "a".repeat(64), eventId: "$original-task-001", task: request.task, documents: [], status: "failed", attempt: 1, generation: 1, sessionId: "production-session" } });
+  const queue: LeasedMatrixIngressIntent[] = [{ eventId: "$continue-final-001", eventHash: "c".repeat(64), leaseOwner: "test-lease", leaseEpoch: 1,
+    workIntent: { eventId: "$continue-final-001", roomId: "!fixture:matrix.test", ownerMxid: "@owner:matrix.test", senderDeviceId: "DEVICE", body: "Продовжити", media: [] } }];
+  const before = h.sent.length;
+  const service = createMatrixConsultationService({ storage, registrar: h.registrar, bindingHash, now: () => activeNow,
+    ingress: { async leaseNext() { return queue.shift(); }, async markProcessed() { return true; } }, executor: h.runtime,
+    async prepareSnapshot() { throw new Error("Must preserve existing snapshot"); }, afterConfirmed() {},
+    leadership: { async acquire() { return true; }, async check() { return true; }, async release() {} }, assertReady() {} });
+  try {
+    await service.tick();
+    assert.equal(service.status().blocked, false, JSON.stringify(service.status()));
+    await waitFor("final-only worker completion", async () => !service.status().working && (await storage.get<{ job: { status: string } }>("worker"))?.job.status === "completed");
+    const session = await h.registrar.getActiveSession();
+    assert.equal(session?.generation, 1);
+    assert.equal(session?.phase, "closed");
+    assert.equal(h.sent.slice(before).filter(m => m.method === "turn/start").length, 1);
+    assert.equal(h.confirmed.filter(m => m.authority?.kind === "critique").length, 1);
+    assert.ok((await h.registrar.getConfirmedMessages(1)).some(m => m.body.includes("Продовжую лише фінальний підсумок")));
+  } finally { await service.stop(); await h.runtime.close(); }
+});
 
 test("production application runner reaches fresh Astra critic, registered full critique and final through the shared registrar", async () => {
   const h = await fixture();

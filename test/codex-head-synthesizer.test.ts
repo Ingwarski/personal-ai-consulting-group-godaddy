@@ -42,6 +42,15 @@ function headClient(body: string) {
       const reply = (value: unknown): void => listener?.(JSON.stringify(value));
       if (message.method === "initialize") reply({ id: message.id, result: {} });
       if (message.method === "turn/start") {
+        const checkSchema = (schema: Record<string, unknown>): void => {
+          if (schema.type === "object") {
+            assert.equal(schema.additionalProperties, false);
+            assert.deepEqual([...(schema.required as string[])].sort(), Object.keys(schema.properties as object).sort(), "Structured Outputs requires every object property");
+            for (const child of Object.values(schema.properties as Record<string, Record<string, unknown>>)) checkSchema(child);
+          }
+          if (schema.type === "array") checkSchema(schema.items as Record<string, unknown>);
+        };
+        checkSchema((message.params as { outputSchema: Record<string, unknown> }).outputSchema);
         reply({ id: message.id, result: { turn: { id: "head-turn-0001", status: "inProgress", items: [] } } });
         queueMicrotask(() => reply({ method: "item/completed", params: {
           threadId: "thread-head-01", turnId: "head-turn-0001", item: { type: "agentMessage", id: "head-item", text: body }
@@ -72,6 +81,24 @@ test("the head turns confirmed specialist and critic messages into one schema-va
   const turn = harness.sent.find((message) => message.method === "turn/start");
   assert.ok(turn !== undefined);
   assert.equal((turn.params as { outputSchema?: unknown }).outputSchema !== undefined, true);
+});
+
+test("a null technical section is accepted and omitted from the domain recommendation", async () => {
+  const registrar = await preparedRegistrar();
+  const response = { ...JSON.parse(jsonFinal), technicalPart: null };
+  const harness = headClient(JSON.stringify(response));
+  const head = new CodexHeadSynthesizer({
+    registrar,
+    head: { agentId: "head", role: "Головний консультант", provider: "codex", runtimeSessionRef: "thread-head-01" },
+    critic: { agentId: "critic", role: "Критик", provider: "claude_code", runtimeSessionRef: "claude-critic-process-01" },
+    lease: { threadId: "thread-head-01", modelId: "codex-runtime-primary" },
+    threadClient: harness.client, reasoningEffort: "high"
+  });
+  const result = await head.synthesize({ sessionGeneration: 1, task: "Коротка бізнес-рекомендація без технічного втілення." });
+  const { technicalPart: _technicalPart, ...expected } = response;
+  assert.deepEqual(result, { ok: true, messageId: "pc-head-turn-0001", recommendation: expected });
+  const schema = (harness.sent.find(message => message.method === "turn/start")!.params as { outputSchema: { properties: { technicalPart: { type: unknown } } } }).outputSchema;
+  assert.deepEqual(schema.properties.technicalPart.type, ["string", "null"]);
 });
 
 test("does not synthesize before a confirmed Claude critique and rejects malformed model output", async () => {

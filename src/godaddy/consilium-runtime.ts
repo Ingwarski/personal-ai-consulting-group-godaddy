@@ -1,6 +1,9 @@
 import { ConsiliumSessionLauncher, executePreparedConsilium, type ConsiliumRole, type PreparedConsiliumExecutionResult } from "../consilium/session-launcher.ts";
 import { parseHistoricalOwnerSettings } from "../settings/schema.ts";
-import { planConsultation, type ConsultationIntakeResult } from "../runtime/consultation-intake.ts";
+import { planConsultation, preflightCodexForSnapshot, type ConsultationIntakeResult } from "../runtime/consultation-intake.ts";
+import { readResumableFinalization } from "../consilium/resumable-finalization.ts";
+import { CodexHeadSynthesizer } from "../runtime/codex-head-synthesizer.ts";
+import { CriticGatedFinalizer } from "../consilium/final-recommendation.ts";
 import type { CodexTurnImage } from "../runtime/codex-thread-client.ts";
 import type { GoDaddyRegistrarRuntime } from "./registrar-runtime.ts";
 import type { RuntimeBootstrap } from "./runtime-bootstrap.ts";
@@ -114,6 +117,45 @@ export function createGoDaddyConsiliumRuntime(input: Readonly<{
   };
 
   return Object.freeze({
+    async canResumeFinalization(sessionGeneration: number): Promise<boolean> {
+      return !closing && !running.has(sessionGeneration)
+        && await readResumableFinalization(input.registrarRuntime.registrar, sessionGeneration) !== undefined;
+    },
+    resumeFinalization(request: GoDaddyConsultationPlanRequest): Promise<GoDaddyConsiliumResult> {
+      return launch(request, async (signal): Promise<GoDaddyConsiliumResult> => {
+        const registrar = input.registrarRuntime.registrar;
+        const completed = await readResumableFinalization(registrar, request.sessionGeneration);
+        const session = await registrar.getActiveSession();
+        if (completed === undefined || session?.generation !== request.sessionGeneration || session.phase !== "active") return { ok: false, code: "session_unavailable" };
+        const settings = parseHistoricalOwnerSettings(session.settingsSnapshot.settings);
+        if (!settings.ok) return { ok: false, code: "session_unavailable" };
+        const snapshot = { ...session.settingsSnapshot, settings: settings.value };
+        const policy = snapshot.speedPolicy;
+        if (policy.internalBudgetMilliseconds.status !== "resolved" || !Number.isSafeInteger(policy.internalBudgetMilliseconds.value) ||
+          policy.internalBudgetMilliseconds.value < 1 || policy.internalBudgetMilliseconds.value > 540_000 ||
+          policy.paidAcceleration !== "forbidden" || Object.values(policy.invariants).some(value => value !== true)) return { ok: false, code: "speed_policy_unresolved" };
+        signal = AbortSignal.any([signal, AbortSignal.timeout(policy.internalBudgetMilliseconds.value)]);
+        const receipt = await input.bootstrap.loadCatalog();
+        const codex = await input.bootstrap.getCodexThreadClient?.();
+        if (receipt === undefined || codex === undefined) return { ok: false, code: "runtime_unavailable" };
+        const modelId = await preflightCodexForSnapshot({ snapshot, capabilityReceipt: receipt, codex,
+          environment: input.environment, now: input.now(), signal });
+        if (modelId === undefined) return { ok: false, code: "catalog_unavailable" };
+        const started = await codex.startIsolatedThread({ modelId });
+        if (!started.ok) return { ok: false, code: "prepare_failed" };
+        try {
+          const head = { ...completed.head, runtimeSessionRef: started.value.threadId };
+          const synthesized = await new CodexHeadSynthesizer({ registrar, head, critic: completed.critic,
+            lease: started.value, threadClient: codex, reasoningEffort: snapshot.settings.codex.reasoningEffort, signal
+          }).synthesize({ sessionGeneration: request.sessionGeneration, task: request.task });
+          if (!synthesized.ok || signal.aborted) return { ok: false, code: "head_synthesis_failed" };
+          const finalized = await new CriticGatedFinalizer({ registrar, head, critic: completed.critic,
+            afterConfirmed: input.registrarRuntime.afterConfirmed
+          }).publish({ sessionGeneration: request.sessionGeneration, messageId: synthesized.messageId, recommendation: synthesized.recommendation });
+          return finalized.ok ? { ok: true, final: finalized } : { ok: false, code: "finalization_failed" };
+        } finally { await codex.releaseThread(started.value); }
+      });
+    },
     run(request: GoDaddyConsiliumRequest): Promise<GoDaddyConsiliumResult> {
       return launch(request, signal => execute(request, signal));
     },
