@@ -16930,7 +16930,7 @@
     }
   ],
   "next_ready_nodes": [],
-  "pause_reason": "Published підтвердив завершене ручне порівняння бота, його довіру та приватні ключі перехресного підписування. Відновлення того самого сховища після обмеженого setup-сеансу зберегло довіру. Поточний verified-пристрій Власника ідентифіковано в Element Desktop; порівняння дійшло до compare у Chrome. Очікується ручне порівняння та підтвердження Власником в Element Desktop і Chrome. Не підтверджувати автоматично. Після фактичного успіху: finish, MATRIX_SETUP_MODE=disabled лише в Published і один дозволений тест консультації. Доставку та готовність Product V1 ще не підтверджено. Див. setup-expiry-repair.md.",
+  "pause_reason": "Довіру до бота й Власника, приватні signing keys та фінальний Matrix finish підтверджено на Published. Guest access кімнати змінено лише з can_join на forbidden. Effective MATRIX_SETUP_MODE=disabled перевірено новим owner-only GET status. Поточний блокер: schema_unavailable; read-only GoDaddy inventory підтверджує відсутність personal_consultant_matrix_outbox та personal_consultant_matrix_ingress. GoDaddy SQL import видаляє наявні таблиці, тому його не запускали. Потрібен конкретний дозвіл на окрему additive owner-authenticated Published-міграцію лише двох таблиць зі збереженням усіх наявних даних. Відповідь на нешкідливий тест, роботу Критика й готовність демонстрації/Product V1 ще не підтверджено. Див. setup-expiry-repair.md.",
   "matrix_production_setup_progress": {
     "authorization_ref": "forge/matrix-production-setup-authorization-20260906.json",
     "evidence_ref": "forge/runs/U-08/matrix-production-setup-20260906/progress.md",
@@ -16951,15 +16951,15 @@
     },
     "existing_bot_session_verified_in_ui": true,
     "room_history_visibility_joined_verified": true,
-    "status": "bot-verified-awaiting-user-owner-sas-confirmation",
+    "status": "verification-complete-awaiting-additive-matrix-schema-authorization",
     "setup_expiry_repair_ref": "forge/runs/U-08/matrix-production-setup-20260906/setup-expiry-repair.md",
     "godaddy_browser": "chrome",
     "chrome_followup_ref": "forge/runs/U-08/matrix-production-setup-20260906/chrome-isolation-followup.md",
     "published_changes_performed": true,
-    "published_changes_scope": "MATRIX_SETUP_MODE=provision retained. User saved new-device credentials; operator added only missing non-secret MATRIX_PROTOCOL_VERSION and restarted Published. Fresh privacy checks passed before native initialization. Preview remains stateless, native bundle unchanged; no token/passphrase read or replaced, no automated trust confirmation.",
-    "published_commit": "fb1b667263376cde6013a8930b236c91e48f48b2",
+    "published_changes_scope": "User confirmed both SAS comparisons. Existing room guest_access restricted to forbidden; final native finish passed. Published MATRIX_SETUP_MODE=disabled saved separately and verified in effective runtime after restart. Owner-only read-only readiness diagnostic deployed. Preview remains stateless; native bundle, credentials and database data/schema unchanged. Destructive GoDaddy SQL import was inspected and closed without execution.",
+    "published_commit": "cdeca1e9b843372aefdba675a0032a36e33ae7df",
     "live_verifier_script": "/assets/matrix-preview-isolation.867a03539fd93dbd533918a456d76ff58bec2548366488d3faaf80ee9ba5b9d8.js",
-    "latest_local_test_count": 786,
+    "latest_local_test_count": 787,
     "private_path_proof": {
       "recorded_at": "2026-09-07T10:00:51Z",
       "repeated_after_credential_save_and_protocol_correction": true,
@@ -16985,10 +16985,20 @@
       "manual_bot_confirmation": "confirmed_by_user_and_verified_in_published",
       "private_cross_signing_ready": true,
       "bot_trust_preserved_after_existing_store_resume": true,
-      "owner_verification_phase": "compare",
+      "owner_verification_phase": "done",
       "owner_device_selection": "current_verified_element_desktop_session_identified_in_ui",
-      "owner_identity_verified": false,
+      "owner_identity_verified": true,
+      "final_policy_validation": "passed_after_guest_access_forbidden",
       "recovery": "Preserve existing device and encrypted store. If the bounded setup process expires, recheck private paths and resume existing state; do not rerun credential creation or reset crypto."
+    },
+    "live_runtime_readiness": {
+      "setup_mode": "disabled",
+      "configured": true,
+      "ready": false,
+      "reason": "schema_unavailable",
+      "missing_tables_observed_in_read_only_ui": ["personal_consultant_matrix_outbox", "personal_consultant_matrix_ingress"],
+      "database_schema_changed": false,
+      "destructive_import_executed": false
     },
     "live_consultation_verified": false
   },
