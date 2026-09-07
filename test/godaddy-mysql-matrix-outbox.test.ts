@@ -214,6 +214,9 @@ test("leases identity-bound critic messages and rejects altered, malformed or st
       addressedTo: null, bodyHash, confirmedAt: identityMessage.confirmedAt }, replyToEventId, createdAt: identityMessage.confirmedAt });
   for (const [caseName, candidate] of [
     ["valid", identityMessage],
+    ["mysql-key-order", { ...identityMessage, authority: {
+      kind: authority.kind, agentId: authority.agentId, provider: authority.provider, runtimeSessionRef: authority.runtimeSessionRef
+    } }],
     ["changed", { ...identityMessage, authority: { ...authority, runtimeSessionRef: "thread-other" } }],
     ["unknown-field", { ...identityMessage, authority: { ...authority, token: "must-be-rejected" } }],
     ["stripped", { ...message, bodyHash }]
@@ -224,7 +227,7 @@ test("leases identity-bound critic messages and rejects altered, malformed or st
       throw new Error("Unexpected SQL");
     } });
     const pending = new MySqlMatrixOutbox(pool).leaseHead({ leaseOwner: "node-worker-01", now: new Date(message.confirmedAt), leaseMilliseconds: 30_000 });
-    if (caseName === "valid") assert.deepEqual((await pending)?.message.authority, authority);
+    if (caseName === "valid" || caseName === "mysql-key-order") assert.deepEqual((await pending)?.message.authority, authority);
     else await assert.rejects(pending, MatrixOutboxCorruptionError);
   }
 });

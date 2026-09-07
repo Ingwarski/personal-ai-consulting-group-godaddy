@@ -171,7 +171,14 @@ export async function confirmedMessageFingerprint(input: Readonly<{
     body: input.body,
     addressedTo: input.addressedTo ?? null,
     replyToEventId: input.replyToEventId ?? null,
-    ...(input.authority === undefined ? {} : { authority: input.authority })
+    // JSON columns may reorder nested keys. Keep the existing producer order
+    // explicitly so persisted agent identity still verifies after a DB read.
+    ...(input.authority === undefined ? {} : { authority: {
+      agentId: input.authority.agentId,
+      provider: input.authority.provider,
+      runtimeSessionRef: input.authority.runtimeSessionRef,
+      kind: input.authority.kind
+    } })
   });
 }
 
