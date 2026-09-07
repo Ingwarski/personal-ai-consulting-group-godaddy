@@ -16930,7 +16930,7 @@
     }
   ],
   "next_ready_nodes": [],
-  "pause_reason": "Chrome remains the user-selected GoDaddy browser. Deployed 372fddfc2caf37825316f3bc11db14ab23101e49: corrected the extra shared-file assumption, requiring exact Published HTTP control checks before and after authenticated Preview proof; generic 404 remains rejected and all private-path/inode/cleanup checks remain mandatory. Fixed missing-file ancestor race and preserved cleanup errors. All 771 local tests, build/typecheck/environment policy and the 13-artifact SDD precheck passed; independent scoped review found no blocker. Preview dashboard confirmed the commit and Published served the new content-addressed verifier over HTTP 200. Native Chrome then reported the Mac locked. Await manual unlock to run the actual protected privacy check; no new challenge or Matrix credential/device/trust/consultation was started. See chrome-isolation-followup.md. This is not Product V1 release readiness.",
+  "pause_reason": "The user unlocked the Mac. Actual authenticated Chrome privacy proof on deployed 372fddfc2caf37825316f3bc11db14ab23101e49 passed: Preview sent its successful report and Published returned prepared after its rechecks, inode validation, owned-canary cleanup and post-cleanup inspection. Visibility is published_control_not_visible_in_preview, not general storage isolation. Chrome is positioned at this app's Published-only empty .env paste input. Await the user-only hidden bot-password/local-clipboard handoff; no real credentials, new bot device, native crypto initialization, trust confirmation or consultation were performed. The helper omits the existing MATRIX_SETUP_MODE row with an explicit flag; its sixteen synthetic tests pass. Recheck privacy after secret save/restart before starting the new device. See chrome-isolation-followup.md. This is not Product V1 release readiness.",
   "matrix_production_setup_progress": {
     "authorization_ref": "forge/matrix-production-setup-authorization-20260906.json",
     "evidence_ref": "forge/runs/U-08/matrix-production-setup-20260906/progress.md",
@@ -16951,7 +16951,7 @@
     },
     "existing_bot_session_verified_in_ui": true,
     "room_history_visibility_joined_verified": true,
-    "status": "corrected-verifier-deployed-awaiting-mac-unlock-for-live-proof",
+    "status": "live-private-path-proof-passed-awaiting-user-credential-handoff",
     "godaddy_browser": "chrome",
     "chrome_followup_ref": "forge/runs/U-08/matrix-production-setup-20260906/chrome-isolation-followup.md",
     "published_changes_performed": true,
@@ -16959,6 +16959,18 @@
     "published_commit": "372fddfc2caf37825316f3bc11db14ab23101e49",
     "live_verifier_script": "/assets/matrix-preview-isolation.867a03539fd93dbd533918a456d76ff58bec2548366488d3faaf80ee9ba5b9d8.js",
     "latest_local_test_count": 771,
+    "private_path_proof": {
+      "recorded_at": "2026-09-07T10:00:51Z",
+      "result": "passed",
+      "evaluated_commit": "372fddfc2caf37825316f3bc11db14ab23101e49",
+      "evidence_kind": "browser_assisted_http_isolation",
+      "browser": "chrome",
+      "checked_paths": 12,
+      "control_visibility": "published_control_not_visible_in_preview",
+      "observed_final_state": "prepared",
+      "cleanup_evidence": "Deployed runtime reaches prepared only after owned-canary cleanup and post-cleanup inspection; observed through the authenticated Published UI.",
+      "limitation": "Time-bounded exact-path observation; not general filesystem isolation, Preview server attestation, Matrix readiness or Product V1 acceptance. Fresh check required before provisioning after a secret save/restart or latch expiry."
+    },
     "browser_isolation_repair_ref": "forge/runs/U-08/matrix-production-setup-20260906/browser-isolation-repair.md",
     "live_consultation_verified": false
   },

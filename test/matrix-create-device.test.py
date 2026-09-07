@@ -125,6 +125,20 @@ class HandoffTests(unittest.TestCase):
     def test_verifies_pinned_release(self):
         self.assertEqual(HELPER.verified_sidecar_hash(self.path, self.pin), "d" * 64)
 
+    def test_existing_setup_mode_can_be_preserved_without_duplicate_import(self):
+        device = HELPER.NewDevice(BOT, "NEW_DEVICE", TOKEN)
+        regular = HELPER.arguments(self.argv())
+        preserve = HELPER.arguments(self.argv() + ["--setup-mode-already-configured"])
+        for args, expected_count in [(regular, 14), (preserve, 13)]:
+            group = HELPER.dotenv_group(args, "d" * 64, device).decode()
+            values = dict(line.split("=", 1) for line in group.splitlines())
+            self.assertEqual(len(values), expected_count)
+            self.assertEqual(json.loads(values["MATRIX_ACCESS_TOKEN"]), TOKEN)
+            self.assertEqual(json.loads(values["MATRIX_BOT_DEVICE_ID"]), "NEW_DEVICE")
+            self.assertEqual("MATRIX_SETUP_MODE" in values, not args.setup_mode_already_configured)
+            if not args.setup_mode_already_configured:
+                self.assertEqual(json.loads(values["MATRIX_SETUP_MODE"]), "provision")
+
     def test_invalid_pin_fails_before_password_or_login(self):
         code, _, passwords, logins, clipboard = self.run_main(pin="0" * 64)
         self.assertEqual(code, 1)
