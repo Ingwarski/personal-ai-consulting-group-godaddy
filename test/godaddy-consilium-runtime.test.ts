@@ -262,12 +262,12 @@ test("production application runner reaches fresh Astra critic, registered full 
   assert.equal(result?.ok, true);
   assert.equal(readinessChecks, 2);
   const messages = await h.registrar.getConfirmedMessages(1);
-  assert.equal(messages.length, 11);
-  assert.equal(h.confirmed.length, 11);
-  assert.equal(messages[5]?.authority?.agentId, "critic");
-  assert.equal(messages[5]?.authority?.provider, "codex");
-  assert.equal(messages[5]?.authority?.runtimeSessionRef, "prod-thread-4");
-  assert.equal(messages[5]?.body, "Повна критика Astra: перевірити припущення про попит.");
+  assert.equal(messages.length, 9);
+  assert.equal(h.confirmed.length, 9);
+  assert.equal(messages[4]?.authority?.agentId, "critic");
+  assert.equal(messages[4]?.authority?.provider, "codex");
+  assert.equal(messages[4]?.authority?.runtimeSessionRef, "prod-thread-4");
+  assert.equal(messages[4]?.body, "Повна критика Astra: перевірити припущення про попит.");
   assert.match(messages.at(-1)?.body ?? "", /Перевірити попит до інвестицій/u);
   assert.equal((await h.registrar.getActiveSession())?.phase, "closed");
   assert.deepEqual((await h.registrar.getActiveSession())?.settingsSnapshot, h.snapshot);

@@ -14,12 +14,12 @@ const finance: AgentRegistration = { agentId: "finance", role: "Фінансов
 const strategy: AgentRegistration = { agentId: "strategy", role: "Стратег", provider: "codex", runtimeSessionRef: "codex-strategy-thread" };
 const critic: AgentRegistration = { agentId: "critic", role: "Критик", provider: "claude_code", runtimeSessionRef: "claude-critic-process" };
 
-async function activeRegistrar(): Promise<RegistrarDO> {
+async function activeRegistrar(speedPreset: "збалансовано" | "ретельно" = "збалансовано"): Promise<RegistrarDO> {
   const receipt = createCapabilityReceipt();
   const snapshot = resolveEffectiveSessionSnapshot({
     sessionId: "router-settings",
     settingsRevision: 1,
-    settings: receipt.defaults,
+    settings: { ...receipt.defaults, speedPreset },
     capabilityReceipt: receipt,
     speedPolicyCatalog: createResolvedTestSpeedPolicyCatalog()
   }, activeNow);
@@ -71,10 +71,10 @@ test("starts independent specialist passes, records the critic, then records eac
   const result = await router.run({ sessionGeneration: 1, task: "Дай практичне рішення." });
   assert.equal(result.ok, true);
   if (!result.ok) throw new Error("Expected a routed consilium.");
-  assert.deepEqual([...result.assignmentVisibleSequences].sort((left, right) => left - right), [1, 2, 5, 7, 8]);
-  assert.deepEqual([...result.initialVisibleSequences].sort((left, right) => left - right), [3, 4]);
-  assert.equal(result.critiqueVisibleSequence, 6);
-  assert.deepEqual([...result.revisionVisibleSequences].sort((left, right) => left - right), [9, 10]);
+  assert.deepEqual([...result.assignmentVisibleSequences].sort((left, right) => left - right), [1, 4, 6]);
+  assert.deepEqual([...result.initialVisibleSequences].sort((left, right) => left - right), [2, 3]);
+  assert.equal(result.critiqueVisibleSequence, 5);
+  assert.deepEqual([...result.revisionVisibleSequences].sort((left, right) => left - right), [7, 8]);
   assert.deepEqual(new Set(started.slice(0, 2)), new Set(["initial_position:finance", "initial_position:strategy"]));
   assert.equal(started[2], "critique:critic");
   assert.deepEqual(new Set(started.slice(3)), new Set(["revision:finance", "revision:strategy"]));
@@ -83,14 +83,55 @@ test("starts independent specialist passes, records the critic, then records eac
     { fromRole: "Стратег", body: "Повний стратегічний висновок." }
   ]);
   const messages = await registrar.getConfirmedMessages(1);
-  assert.deepEqual(new Set(messages.slice(2, 4).map((message) => message.body)), new Set([
+  assert.deepEqual(new Set(messages.slice(1, 3).map((message) => message.body)), new Set([
     "Повний фінансовий висновок.", "Повний стратегічний висновок."
   ]));
-  assert.equal(messages[5]?.body, "Критична перевірка обох висновків.");
-  assert.deepEqual(new Set(messages.slice(8).map((message) => message.body)), new Set([
+  assert.equal(messages[4]?.body, "Критична перевірка обох висновків.");
+  assert.deepEqual(new Set(messages.slice(6).map((message) => message.body)), new Set([
     "Фінансовий висновок доопрацьовано після критики.",
     "Стратегічний висновок доопрацьовано після критики."
   ]));
+});
+
+test("two or five specialists consume one verbatim visible head instruction per phase, never duplicate broadcasts", async () => {
+  for (const count of [2, 5]) {
+    const registrar = await activeRegistrar("ретельно");
+    const selected = Array.from({ length: count }, (_, i): AgentRegistration => ({
+      agentId: `expert-${i}`, role: `Консультант напряму ${i}`, provider: "codex", runtimeSessionRef: `expert-thread-${i}`
+    }));
+    const delivered: string[] = [];
+    const task = "Фікстура: кав’ярня, 20 відвідувачів на день.";
+    const router = new ConsiliumRouter({
+      registrar, head, specialists: selected, critic,
+      afterConfirmed: async message => { delivered.push(message.body); },
+      runtimes: [runtime(head, async () => {}), ...[...selected, critic].map(agent => runtime(agent, async (input, emit) => {
+        const recorded = (await registrar.getConfirmedMessages(1)).filter(message => message.authority?.kind === "assignment");
+        assert.equal(recorded.filter(message => message.body === input.assignment).length, 1);
+        assert.equal(delivered.filter(body => body === input.assignment).length, 1);
+        assert.equal(input.task, task);
+        if (input.phase !== "critique") {
+          for (const recipient of selected) assert.ok(input.assignment.includes(recipient.role));
+          assert.equal(recorded.at(-1)?.addressedTo, selected.map(item => item.role).join("; "));
+        }
+        await emit({ messageId: `broadcast-${agent.agentId}-${input.phase}`, kind: input.phase,
+          toAgentId: input.phase === "initial_position" ? critic.agentId : head.agentId,
+          body: `${agent.role}: повна ${input.phase} репліка.` });
+      }))]
+    });
+    const result = await router.run({ sessionGeneration: 1, task });
+    assert.equal(result.ok, true);
+    const messages = await registrar.getConfirmedMessages(1);
+    const assignments = messages.filter(message => message.authority?.kind === "assignment");
+    assert.equal(assignments.length, 3);
+    assert.equal(new Set(assignments.map(message => message.body)).size, 3);
+    assert.equal(assignments.filter(message => message.body.includes(task)).length, 1);
+    assert.equal(messages.length, 3 + count * 2 + 1);
+    assert.equal(delivered.length, messages.length);
+    assert.equal(new Set(delivered).size, delivered.length);
+    assert.equal(messages.filter(message => message.authority?.kind === "initial_position").length, count);
+    assert.equal(messages.filter(message => message.authority?.kind === "revision").length, count);
+    assert.equal(messages.filter(message => message.authority?.kind === "critique").length, 1);
+  }
 });
 
 test("does not fabricate a consilium when a runtime is missing, mismatched or returns no complete visible message", async () => {

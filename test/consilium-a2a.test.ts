@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { routeA2AEnvelope } from "../src/consilium/a2a.ts";
+import { routeA2AEnvelope, routeHeadAssignment } from "../src/consilium/a2a.ts";
 import { validateConsiliumRoster, type AgentRegistration } from "../src/consilium/roster.ts";
 import { resolveEffectiveSessionSnapshot } from "../src/settings/snapshot.ts";
 import { RegistrarDO } from "../src/session/registrar-do.ts";
@@ -34,6 +34,43 @@ test("requires two to five registered Codex specialists and one separate Claude 
   assert.deepEqual(validateConsiliumRoster([specialists[0]], critic), { ok: false, code: "invalid_specialist_count" });
   assert.equal(validateConsiliumRoster(specialists, { ...critic, provider: "codex" }).ok, true);
   assert.deepEqual(validateConsiliumRoster(specialists, { ...critic, provider: "codex", runtimeSessionRef: specialists[0]!.runtimeSessionRef }), { ok: false, code: "invalid_agent_registration" });
+});
+
+test("shared head assignment is a single idempotent record with all recipients bound to its fingerprint", async () => {
+  const registrar = await startedRegistrar();
+  const head: AgentRegistration = { agentId: "head", role: "Головний консультант", provider: "codex", runtimeSessionRef: "head-thread" };
+  const roster = [head, ...specialists, critic];
+  const input = { messageId: "head-broadcast-one", sessionGeneration: 1, toAgentIds: specialists.map(agent => agent.agentId), body: "Кожен надішліть свою первинну позицію." };
+  assert.deepEqual(await routeHeadAssignment(registrar, roster, head, input), { ok: true, visibleSequence: 1, replayed: false });
+  assert.deepEqual(await routeHeadAssignment(registrar, roster, head, input), { ok: true, visibleSequence: 1, replayed: true });
+  assert.deepEqual(await routeHeadAssignment(registrar, roster, head, { ...input, toAgentIds: [critic.agentId] }),
+    { ok: false, code: "registrar_rejected", cause: "idempotency_conflict" });
+  const messages = await registrar.getConfirmedMessages(1);
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0]?.addressedTo, "Фінансовий консультант; Стратег");
+  assert.equal(messages[0]?.authority?.kind, "assignment");
+  assert.equal(await registrar.getCriticReview(1), undefined);
+  const outbox = await registrar.getLocalMatrixOutboxRecordForTest(1, 1);
+  assert.equal(outbox?.message.internalEventId, input.messageId);
+  assert.equal(await registrar.getLocalMatrixOutboxRecordForTest(1, 2), undefined);
+});
+
+test("shared assignment rejects invalid recipients, substituted head, unsafe content and stopped generations", async () => {
+  const registrar = await startedRegistrar();
+  const head: AgentRegistration = { agentId: "head", role: "Головний консультант", provider: "codex", runtimeSessionRef: "head-thread" };
+  const roster = [head, ...specialists, critic];
+  const input = { messageId: "head-broadcast-invalid", sessionGeneration: 1, toAgentIds: ["finance", "strategy"], body: "Первинні позиції." };
+  let delivered = 0;
+  const observe = async () => { delivered++; };
+  for (const toAgentIds of [[], ["finance", "finance"], ["head"], ["unknown"], ["invalid id"], ["a", "b", "c", "d", "e", "f"]]) {
+    assert.equal((await routeHeadAssignment(registrar, roster, head, { ...input, toAgentIds }, observe)).ok, false);
+  }
+  assert.equal((await routeHeadAssignment(registrar, roster, { ...head, runtimeSessionRef: "substituted" }, input, observe)).ok, false);
+  assert.equal((await routeHeadAssignment(registrar, roster, head, { ...input, body: "password=private-value" }, observe)).ok, false);
+  assert.deepEqual(await registrar.getConfirmedMessages(1), []);
+  await registrar.stopSession(1);
+  assert.deepEqual(await routeHeadAssignment(registrar, roster, head, input, observe), { ok: false, code: "registrar_rejected", cause: "session_not_active" });
+  assert.equal(delivered, 0);
 });
 
 test("routes a complete addressed A2A message through the sole registrar", async () => {

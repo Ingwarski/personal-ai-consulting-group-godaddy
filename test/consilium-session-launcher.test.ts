@@ -119,16 +119,16 @@ test("preflights before it creates a head, two real specialist threads and one i
   const run = await prepared.value.router.run({ sessionGeneration: 1, task: "Дай практичну рекомендацію." });
   assert.equal(run.ok, true);
   if (!run.ok) throw new Error("Expected routed consilium.");
-  assert.deepEqual([...run.assignmentVisibleSequences].sort((left, right) => left - right), [1, 2, 5, 7, 8]);
-  assert.deepEqual([...run.initialVisibleSequences].sort((left, right) => left - right), [3, 4]);
-  assert.equal(run.critiqueVisibleSequence, 6);
-  assert.deepEqual([...run.revisionVisibleSequences].sort((left, right) => left - right), [9, 10]);
+  assert.deepEqual([...run.assignmentVisibleSequences].sort((left, right) => left - right), [1, 4, 6]);
+  assert.deepEqual([...run.initialVisibleSequences].sort((left, right) => left - right), [2, 3]);
+  assert.equal(run.critiqueVisibleSequence, 5);
+  assert.deepEqual([...run.revisionVisibleSequences].sort((left, right) => left - right), [7, 8]);
   const messages = await registrar.getConfirmedMessages(1);
-  assert.deepEqual(new Set(messages.slice(2, 4).map((message) => message.body)), new Set([
+  assert.deepEqual(new Set(messages.slice(1, 3).map((message) => message.body)), new Set([
     "Повна позиція thread-finance-01, ітерація 1.", "Повна позиція thread-strategy-01, ітерація 1."
   ]));
-  assert.equal(messages[5]?.body, "Повна критика двох позицій.");
-  assert.deepEqual(new Set(messages.slice(8).map((message) => message.body)), new Set([
+  assert.equal(messages[4]?.body, "Повна критика двох позицій.");
+  assert.deepEqual(new Set(messages.slice(6).map((message) => message.body)), new Set([
     "Повна позиція thread-finance-01, ітерація 2.", "Повна позиція thread-strategy-01, ітерація 2."
   ]));
   await prepared.value.cleanup();
@@ -168,8 +168,8 @@ test("executes the whole prepared path through finalization after the registered
   const result = await executePreparedConsilium({ prepared: prepared.value, sessionGeneration: 1, task: "Дай рішення." });
   assert.equal(result.ok, true);
   const messages = await registrar.getConfirmedMessages(1);
-  assert.equal(messages.length, 11);
-  assert.match(messages[10]?.body ?? "", /Синтезоване рішення/);
+  assert.equal(messages.length, 9);
+  assert.match(messages[8]?.body ?? "", /Синтезоване рішення/);
   assert.equal((await registrar.getActiveSession())?.phase, "closed");
 });
 
@@ -217,9 +217,9 @@ test("Astra Extra High critic uses a fourth fresh read-only workspace, independe
   assert.equal(criticTurn?.effort, "xhigh");
   assert.ok(turns.filter((params) => params.threadId !== "thread-critic-01").every((params) => params.model === "codex-runtime-primary" && params.effort === "high"));
   const messages = await registrar.getConfirmedMessages(1);
-  assert.equal(messages[5]?.authority?.agentId, "critic");
-  assert.equal(messages[5]?.authority?.provider, "codex");
-  assert.equal(messages[5]?.body, "Повна позиція thread-critic-01, ітерація 1.");
+  assert.equal(messages[4]?.authority?.agentId, "critic");
+  assert.equal(messages[4]?.authority?.provider, "codex");
+  assert.equal(messages[4]?.body, "Повна позиція thread-critic-01, ітерація 1.");
   assert.equal(messages.at(-1)?.role, "Головний консультант");
   assert.equal(claudeCalls, 0);
   assert.equal(harness.sent.filter((message) => message.method === "thread/unsubscribe").length, 4);

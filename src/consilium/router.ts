@@ -1,5 +1,5 @@
 import type { RegistrarDO } from "../session/registrar-do.ts";
-import { routeA2AEnvelope, type A2AEnvelope, type ConfirmedMessageObserver } from "./a2a.ts";
+import { routeA2AEnvelope, routeHeadAssignment, type A2AEnvelope, type ConfirmedMessageObserver } from "./a2a.ts";
 import type { AgentRegistration } from "./roster.ts";
 import { validateConsiliumRoster } from "./roster.ts";
 import { SafeConsiliumFailure, safeFailureDetails, type ConsiliumFailureCause } from "./failures.ts";
@@ -51,14 +51,15 @@ const meaningfulBody = (value: string): boolean => value.trim().length > 0 && va
 const assignmentMessageId = (generation: number, phase: ConsiliumPhase, targetAgentId: string): string =>
   `assignment-${generation}-${phase}-${targetAgentId}`;
 
-function assignmentBody(phase: ConsiliumPhase, task: string, recipientRole: string): string {
+function assignmentBody(phase: ConsiliumPhase, task: string, recipientRoles: readonly string[]): string {
+  const addressees = `Адресати: ${recipientRoles.join("; ")}.`;
   if (phase === "initial_position") {
-    return `Проаналізуйте завдання власника у вашій спеціалізації та надішліть повну незалежну первинну позицію для Критика.\n\nЗавдання власника:\n${task}`;
+    return `${addressees}\n\nПрошу кожного проаналізувати завдання у своїй спеціалізації та надіслати окрему повну незалежну первинну позицію для Критика.\n\nЗавдання власника:\n${task}`;
   }
   if (phase === "critique") {
-    return `Перевірте повні первинні позиції спеціалістів: припущення, суперечності, ризики й відсутні дані. Надішліть повну критичну репліку для Головного консультанта.\n\nЗавдання власника:\n${task}`;
+    return `${addressees}\n\nПеревірте повні первинні позиції спеціалістів щодо цього завдання: припущення, суперечності, ризики й відсутні дані. Надішліть повну критичну репліку для Головного консультанта.`;
   }
-  return `Після повної критичної репліки доопрацюйте свою позицію. Надішліть повну переглянуту репліку для Головного консультанта; не повторюйте приховані міркування.\n\nЗавдання власника:\n${task}\n\nАдресат: ${recipientRole}.`;
+  return `${addressees}\n\nПісля повної критичної репліки прошу кожного доопрацювати свою позицію щодо цього завдання та надіслати окрему повну переглянуту репліку для Головного консультанта.`;
 }
 
 /**
@@ -128,20 +129,23 @@ export class ConsiliumRouter {
     const concurrency = Math.min(policy.concurrency.value, this.#specialists.length);
 
     const assignmentSequences: number[] = [];
-    const assign = async (phase: ConsiliumPhase, recipient: AgentRegistration): Promise<void> => {
-      const routed = await routeA2AEnvelope(this.#registrar, roster, {
-        messageId: assignmentMessageId(input.sessionGeneration, phase, recipient.agentId),
+    const assignments = {
+      initial_position: assignmentBody("initial_position", input.task, this.#specialists.map(agent => agent.role)),
+      critique: assignmentBody("critique", input.task, [this.#critic.role]),
+      revision: assignmentBody("revision", input.task, this.#specialists.map(agent => agent.role))
+    };
+    const assign = async (phase: ConsiliumPhase, recipients: readonly AgentRegistration[]): Promise<void> => {
+      const routed = await routeHeadAssignment(this.#registrar, roster, this.#head, {
+        messageId: assignmentMessageId(input.sessionGeneration, phase, phase === "critique" ? this.#critic.agentId : "specialists"),
         sessionGeneration: input.sessionGeneration,
-        fromAgentId: this.#head.agentId,
-        toAgentId: recipient.agentId,
-        kind: "assignment",
-        body: assignmentBody(phase, input.task, recipient.role)
+        toAgentIds: recipients.map(agent => agent.agentId),
+        body: assignments[phase]
       }, this.#afterConfirmed);
       if (!routed.ok) throw new SafeConsiliumFailure(routed.cause);
       assignmentSequences.push(routed.visibleSequence);
     };
     try {
-      for (const specialist of this.#specialists) await assign("initial_position", specialist);
+      await assign("initial_position", this.#specialists);
     } catch (error) {
       return { ok: false, code: "initial_phase_failed", ...safeFailureDetails(error) };
     }
@@ -157,7 +161,7 @@ export class ConsiliumRouter {
           phase: "initial_position",
           sessionGeneration: input.sessionGeneration,
           task: input.task,
-          assignment: assignmentBody("initial_position", input.task, specialist.role),
+          assignment: assignments.initial_position,
           evidence: Object.freeze([])
         }, async (emission) => {
           if (emission.kind !== "initial_position" || emission.toAgentId !== this.#critic.agentId || !meaningfulBody(emission.body)) {
@@ -189,12 +193,12 @@ export class ConsiliumRouter {
     let critiqueSequence: number | undefined;
     let critiqueBody: string | undefined;
     try {
-      await assign("critique", this.#critic);
+      await assign("critique", [this.#critic]);
       await criticRuntime.run({
         phase: "critique",
         sessionGeneration: input.sessionGeneration,
         task: input.task,
-        assignment: assignmentBody("critique", input.task, this.#critic.role),
+        assignment: assignments.critique,
         evidence: initialEvidence
       }, async (emission) => {
         if (emission.kind !== "critique" || emission.toAgentId !== this.#head.agentId || !meaningfulBody(emission.body) || critiqueSequence !== undefined) {
@@ -221,7 +225,7 @@ export class ConsiliumRouter {
     const revisionEvidence = Object.freeze([...initialEvidence, Object.freeze({ fromRole: this.#critic.role, body: critiqueBody })]);
     const revisionSequences: number[] = [];
     try {
-      for (const specialist of this.#specialists) await assign("revision", specialist);
+      await assign("revision", this.#specialists);
       await this.#runBatches(this.#specialists, concurrency, async (specialist) => {
         const runtime = runtimes.value.get(specialist.agentId);
         if (runtime === undefined) throw new SafeConsiliumFailure("runtime_missing");
@@ -230,7 +234,7 @@ export class ConsiliumRouter {
           phase: "revision",
           sessionGeneration: input.sessionGeneration,
           task: input.task,
-          assignment: assignmentBody("revision", input.task, specialist.role),
+          assignment: assignments.revision,
           evidence: revisionEvidence
         }, async (emission) => {
           if (emission.kind !== "revision" || emission.toAgentId !== this.#head.agentId || !meaningfulBody(emission.body)) {
