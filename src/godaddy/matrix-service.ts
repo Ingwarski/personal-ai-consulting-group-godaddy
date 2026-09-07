@@ -1437,7 +1437,10 @@ export function createGoDaddyMatrixService(
     },
     getReadiness: currentReadiness,
     assertReadyForNewSession(): void {
-      if (!currentReadiness().ready) throw new MatrixSidecarError("not_ready");
+      const readiness = currentReadiness();
+      if (!readiness.ready) throw Object.assign(new MatrixSidecarError("not_ready"), {
+        readinessReason: readiness.reason
+      });
     },
     stop(): Promise<void> {
       if (stopPromise !== undefined) return stopPromise;

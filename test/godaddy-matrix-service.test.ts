@@ -741,6 +741,9 @@ test("a rejection-subscriber registration failure removes the ingress subscriber
   assert.equal(h.runtime.rejectionSubscriber, undefined);
   assert.equal(h.runtime.ingressUnsubscriptions, 1);
   assert.equal(h.service.getReadiness().reason, "sidecar_not_ready");
+  assert.throws(() => h.service.assertReadyForNewSession(), (error: unknown) =>
+    error instanceof MatrixSidecarError && error.code === "not_ready"
+    && (error as MatrixSidecarError & { readinessReason?: string }).readinessReason === "sidecar_not_ready");
   await h.service.stop();
 });
 

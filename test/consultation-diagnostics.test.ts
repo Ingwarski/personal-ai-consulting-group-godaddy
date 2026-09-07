@@ -10,3 +10,14 @@ test("consultation diagnostics classify known errors without exposing SQL, messa
   assert.equal(safeConsultationFailure({ stage: "ingress_lease", code: "private-value" }), undefined);
   assert.deepEqual(classifyConsultationFailure("private-stage", new Error("secret")), { stage: "execution", code: "unknown" });
 });
+
+test("readiness failures retain only allowlisted cause, never raw context", () => {
+  for (const reason of ["database_unavailable", "schema_unavailable", "outbox_blocked", "ingress_blocked", "sidecar_not_ready", "lock_contended", "circuit_open", "retry_exhausted", "stopping", "stopped"]) {
+    const failure = classifyConsultationFailure("readiness", { code: "not_ready", readinessReason: reason, message: "private details" });
+    assert.deepEqual(failure, { stage: "readiness", code: "matrix_" + reason });
+    assert.deepEqual(safeConsultationFailure(failure), failure);
+  }
+  assert.deepEqual(classifyConsultationFailure("readiness", { code: "not_ready", readinessReason: "private details" }), { stage: "readiness", code: "unknown" });
+  assert.deepEqual(classifyConsultationFailure("readiness", { code: "not_ready", readinessReason: "__proto__" }), { stage: "readiness", code: "unknown" });
+  assert.deepEqual(classifyConsultationFailure("media_maintenance", { code: "ER_LOCK_WAIT_TIMEOUT" }), { stage: "media_maintenance", code: "mysql_lock_timeout" });
+});

@@ -524,8 +524,9 @@ export function createMatrixConsultationService(input: Readonly<{
     try {
       // Short-lived encrypted plaintext staging expires even when room or
       // provider readiness is blocked. Maintenance does not contact Matrix.
-      diagnosticStage = "readiness";
+      diagnosticStage = "media_maintenance";
       await input.media?.purgeExpired();
+      diagnosticStage = "readiness";
       input.assertReady();
       diagnosticStage = "leadership";
       if (!acquired) { acquired = await input.leadership.acquire(); if (!acquired) return; }
