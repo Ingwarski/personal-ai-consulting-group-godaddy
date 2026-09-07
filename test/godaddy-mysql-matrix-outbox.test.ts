@@ -104,7 +104,21 @@ class ScriptedConnection implements MySqlConnection {
   async commit() { this.commits += 1; }
   async rollback() { this.rollbacks += 1; }
   release() {}
-  execute(statement: string, values: readonly unknown[]) { return this.#execute(statement, values); }
+  execute(statement: string, values: readonly unknown[]) {
+    assertTimestampBoundary(statement, values);
+    return this.#execute(statement, values);
+  }
+}
+
+// These scripted tests do not run MySQL's parser. Enforce the production SQL
+// boundary explicitly, so an ISO-Z value cannot silently pass a fake executor.
+function assertTimestampBoundary(statement: string, values: readonly unknown[]): void {
+  if (!statement.startsWith("UPDATE personal_consultant_matrix_")) return;
+  const offset = statement.indexOf("updated_at = ");
+  assert.notEqual(offset, -1);
+  assert.match(statement.slice(offset), /^updated_at = REPLACE\(\?, 'Z', '\+00:00'\)/u);
+  const parameter = (statement.slice(0, offset).match(/\?/gu) ?? []).length;
+  assert.match(String(values[parameter]), /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u);
 }
 
 class ScriptedPool implements MySqlPool {
@@ -120,7 +134,10 @@ class ScriptedPool implements MySqlPool {
   }
 
   async getConnection() { return this.connection; }
-  execute(statement: string, values: readonly unknown[]) { return this.direct(statement, values); }
+  execute(statement: string, values: readonly unknown[]) {
+    assertTimestampBoundary(statement, values);
+    return this.direct(statement, values);
+  }
 }
 
 test("same-process registrar transactions queue before borrowing the bounded pool", async () => {

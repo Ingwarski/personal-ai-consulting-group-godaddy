@@ -66,34 +66,38 @@ const SELECT_HEAD = `SELECT generation, sequence_no AS sequenceNo, transaction_i
   WHERE state IN ('pending', 'leased', 'blocked')
   ORDER BY generation ASC, sequence_no ASC LIMIT 1`;
 const SELECT_HEAD_FOR_UPDATE = `${SELECT_HEAD} FOR UPDATE`;
+// MySQL TIMESTAMP requires a numeric UTC offset, not JavaScript's trailing Z.
+// Convert only the SQL timestamp parameter; VARCHAR lease/receipt timestamps
+// must retain canonical ISO-Z for validation, hashing and replay comparisons.
+const MYSQL_UTC_TIMESTAMP = "REPLACE(?, 'Z', '+00:00')";
 const LEASE_OUTBOX = `UPDATE ${GODADDY_MATRIX_OUTBOX_TABLE}
   SET state = 'leased', lease_owner = ?, lease_epoch = lease_epoch + 1,
-      lease_expires_at = ?, attempt_count = attempt_count + 1, updated_at = ?
+      lease_expires_at = ?, attempt_count = attempt_count + 1, updated_at = ${MYSQL_UTC_TIMESTAMP}
   WHERE generation = ? AND sequence_no = ? AND lease_epoch = ?`;
 const ACCEPT_OUTBOX = `UPDATE ${GODADDY_MATRIX_OUTBOX_TABLE}
   SET state = 'accepted', matrix_event_id = ?, accepted_at = ?, lease_owner = NULL,
-      lease_expires_at = NULL, last_error_code = NULL, updated_at = ?
+      lease_expires_at = NULL, last_error_code = NULL, updated_at = ${MYSQL_UTC_TIMESTAMP}
   WHERE generation = ? AND sequence_no = ? AND state = 'leased' AND lease_owner = ? AND lease_epoch = ?`;
 const BLOCK_OUTBOX = `UPDATE ${GODADDY_MATRIX_OUTBOX_TABLE}
-  SET state = 'blocked', last_error_code = ?, lease_owner = NULL, lease_expires_at = NULL, updated_at = ?
+  SET state = 'blocked', last_error_code = ?, lease_owner = NULL, lease_expires_at = NULL, updated_at = ${MYSQL_UTC_TIMESTAMP}
   WHERE generation = ? AND sequence_no = ? AND state = 'leased' AND lease_owner = ? AND lease_epoch = ?`;
 const RELEASE_OUTBOX = `UPDATE ${GODADDY_MATRIX_OUTBOX_TABLE}
   SET state = 'pending', available_at = ?, last_error_code = ?, lease_owner = NULL,
-      lease_expires_at = NULL, updated_at = ?
+      lease_expires_at = NULL, updated_at = ${MYSQL_UTC_TIMESTAMP}
   WHERE generation = ? AND sequence_no = ? AND state = 'leased' AND lease_owner = ? AND lease_epoch = ?`;
 const QUARANTINE_OUTBOX = `UPDATE ${GODADDY_MATRIX_OUTBOX_TABLE}
   SET state = 'blocked', last_error_code = 'outbox_corrupt', lease_owner = NULL,
-      lease_expires_at = NULL, updated_at = ?
+      lease_expires_at = NULL, updated_at = ${MYSQL_UTC_TIMESTAMP}
   WHERE generation = ? AND sequence_no = ? AND state IN ('pending', 'leased')`;
 const FENCE_GENERATION = `UPDATE ${GODADDY_MATRIX_OUTBOX_TABLE}
-  SET state = 'cancelled', last_error_code = ?, lease_owner = NULL, lease_expires_at = NULL, updated_at = ?
+  SET state = 'cancelled', last_error_code = ?, lease_owner = NULL, lease_expires_at = NULL, updated_at = ${MYSQL_UTC_TIMESTAMP}
   WHERE generation = ? AND record_kind = 'message' AND state IN ('pending', 'blocked')`;
 const DEVICE_DELIVERED = `UPDATE ${GODADDY_MATRIX_OUTBOX_TABLE}
   SET state = 'device_delivered', device_delivery_evidence_id = ?, device_delivery_evidence_hash = ?,
-      device_delivered_at = ?, updated_at = ?
+      device_delivered_at = ?, updated_at = ${MYSQL_UTC_TIMESTAMP}
   WHERE matrix_event_id = ? AND state = 'accepted'`;
 const READ_OUTBOX = `UPDATE ${GODADDY_MATRIX_OUTBOX_TABLE}
-  SET state = 'read', read_evidence_id = ?, read_evidence_hash = ?, read_at = ?, updated_at = ?
+  SET state = 'read', read_evidence_id = ?, read_evidence_hash = ?, read_at = ?, updated_at = ${MYSQL_UTC_TIMESTAMP}
   WHERE matrix_event_id = ? AND state IN ('accepted', 'device_delivered')`;
 
 const ENSURE_REGISTRAR_LOCK = `INSERT IGNORE INTO ${GODADDY_STATE_TABLE} (state_namespace, state_key, state_value)
@@ -111,7 +115,7 @@ const INSERT_REJECTED_INGRESS = `INSERT INTO ${GODADDY_MATRIX_INGRESS_TABLE}
   VALUES (?, ?, 'rejected', ?, ?, ?, ?, CAST(? AS JSON), ?, ?)`;
 const EXPIRE_MEDIA_INGRESS = `UPDATE ${GODADDY_MATRIX_INGRESS_TABLE}
   SET state = 'rejected', work_intent_json = CAST(? AS JSON), ack_eligible_at = ?,
-      lease_owner = NULL, lease_expires_at = NULL, updated_at = ?
+      lease_owner = NULL, lease_expires_at = NULL, updated_at = ${MYSQL_UTC_TIMESTAMP}
   WHERE event_id = ? AND event_hash = ? AND state = 'ready' AND ack_eligible_at IS NULL`;
 const SELECT_INGRESS_FOR_UPDATE = `SELECT event_id AS eventId, event_hash AS eventHash, state,
   room_id AS roomId, owner_mxid AS ownerMxid, body_hash AS bodyHash,
@@ -130,22 +134,22 @@ const SELECT_INGRESS_HEAD_FOR_UPDATE = `SELECT event_id AS eventId, event_hash A
   FROM ${GODADDY_MATRIX_INGRESS_TABLE} WHERE state IN ('ready', 'leased')
   ORDER BY received_at ASC, event_id ASC LIMIT 1 FOR UPDATE`;
 const LEASE_INGRESS = `UPDATE ${GODADDY_MATRIX_INGRESS_TABLE}
-  SET state = 'leased', lease_owner = ?, lease_epoch = lease_epoch + 1, lease_expires_at = ?, updated_at = ?
+  SET state = 'leased', lease_owner = ?, lease_epoch = lease_epoch + 1, lease_expires_at = ?, updated_at = ${MYSQL_UTC_TIMESTAMP}
   WHERE event_id = ? AND lease_epoch = ? AND state IN ('ready', 'leased')`;
 const REGISTER_INGRESS = `UPDATE ${GODADDY_MATRIX_INGRESS_TABLE}
   SET state = 'processed', session_id = ?, generation = ?, lease_owner = NULL,
-      lease_expires_at = NULL, updated_at = ?
+      lease_expires_at = NULL, updated_at = ${MYSQL_UTC_TIMESTAMP}
   WHERE event_id = ? AND event_hash = ? AND state = 'leased' AND lease_owner = ? AND lease_epoch = ?`;
 const ACK_INGRESS = `UPDATE ${GODADDY_MATRIX_INGRESS_TABLE}
-  SET acknowledged_at = COALESCE(acknowledged_at, ?), updated_at = ?
+  SET acknowledged_at = COALESCE(acknowledged_at, ?), updated_at = ${MYSQL_UTC_TIMESTAMP}
   WHERE event_id = ? AND event_hash = ? AND ack_eligible_at IS NOT NULL
     AND state IN ('ready', 'leased', 'processed', 'rejected')`;
 const CONSUME_INGRESS_MEDIA = `UPDATE ${GODADDY_MATRIX_INGRESS_TABLE}
-  SET media_consumption_receipt_hash = ?, media_consumed_at = ?, ack_eligible_at = ?, updated_at = ?
+  SET media_consumption_receipt_hash = ?, media_consumed_at = ?, ack_eligible_at = ?, updated_at = ${MYSQL_UTC_TIMESTAMP}
   WHERE event_id = ? AND event_hash = ? AND media_manifest_hash = ?
     AND state = 'ready' AND (media_consumption_receipt_hash IS NULL OR media_consumption_receipt_hash = ?)`;
 const QUARANTINE_INGRESS = `UPDATE ${GODADDY_MATRIX_INGRESS_TABLE}
-  SET state = 'blocked', lease_owner = NULL, lease_expires_at = NULL, updated_at = ?
+  SET state = 'blocked', lease_owner = NULL, lease_expires_at = NULL, updated_at = ${MYSQL_UTC_TIMESTAMP}
   WHERE event_id = ? AND state IN ('ready', 'leased')`;
 
 function rowsOf(result: unknown): readonly Row[] {
