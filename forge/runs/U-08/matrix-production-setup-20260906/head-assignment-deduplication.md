@@ -28,3 +28,9 @@
 Перша версія `533f11f36c7ce99f6072ffffe1eed601afa0d427` підтверджена на вкладці «Опубліковано» з двома OK. Під час перевірки source action неактуальний dashboard відкрив ZIP-dialog замість GitHub pull. Діалог скасовано без завантаження; повний reload повернув source main і нормальний GitHub pull. Налаштування source не змінювалися. Виправлення межі довгих імен адресатів включається окремим наступним commit.
 
 Owner Google session відновлена звичайним вибором уже підтвердженого акаунта, без зміни credentials. До публікації захищений Matrix status показував ready=false/reason=store_binding_unavailable, consultationWorking=false/consultationBlocked=true. Це окрема поточна проблема; ремонт дублювання не оголошує її вирішеною і не змінює crypto store. Усі 29 native inputs зберегли SHA-256; Rust rebuild не запускався.
+
+## Остаточна публікація і поточна межа — запис 20:46 UTC
+
+На вкладці GoDaddy «Опубліковано» у Chrome підтверджено повний commit `fcbe5462fcce3deb37cf016ad1d6c8ac7cb63a34`, два OK і повідомлення «Опубліковано». Цей commit включає спільні доручення та межу 808 символів. HTTP `/healthz` повернув `status=alive`, `runtime=godaddy-node22`.
+
+Після остаточної публікації свіжий захищений `/operations/matrix/status` у Chrome повернув `setupMode=disabled`, `configured=true`, `ready=false`, `reason=store_binding_unavailable`, `consultationWorking=false`, `consultationBlocked=true`, `consultationFailure={stage:readiness,code:unknown}`. Це підтверджує поточний окремий блокер доступу до наявного сховища, а не успішний live-консиліум. Нових повідомлень або команди «Продовжити» не надіслано; старі доручення та попередні результати залишено недоторканими. Локальні перевірки й публікація ремонту підтверджені; усунення дублювання в новому live-консиліумі та доставка попереднього фіналу ще не підтверджені.
