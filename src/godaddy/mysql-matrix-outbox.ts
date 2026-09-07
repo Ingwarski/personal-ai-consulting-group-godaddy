@@ -391,7 +391,10 @@ async function validLeasedRecord(input: Readonly<{
     message.bodyHash !== input.bodyHash || input.deliveryHash === undefined || !/^[a-f0-9]{64}$/u.test(input.deliveryHash) ||
     !/^pc-\d+-\d+-[a-f0-9]{24}$/.test(input.transactionId) ||
     (input.replyToEventId !== undefined && !/^\$[A-Za-z0-9$:_-]{8,255}$/.test(input.replyToEventId)) ||
-    (message.addressedTo !== undefined && (typeof message.addressedTo !== "string" || message.addressedTo.length > 160)) ||
+    // A shared head assignment can name five 160-character roles separated by
+    // "; ". Other message kinds retain the single-recipient bound.
+    (message.addressedTo !== undefined && (typeof message.addressedTo !== "string" ||
+      message.addressedTo.length > (message.authority?.kind === "assignment" ? 5 * 160 + 4 * 2 : 160))) ||
     matrixTransactionIdFor(message) !== input.transactionId
   ) return false;
   if (input.recordKind !== "message" && input.recordKind !== "control") return false;

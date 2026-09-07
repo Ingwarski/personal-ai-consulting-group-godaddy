@@ -66,6 +66,9 @@ test("shared assignment rejects invalid recipients, substituted head, unsafe con
     assert.equal((await routeHeadAssignment(registrar, roster, head, { ...input, toAgentIds }, observe)).ok, false);
   }
   assert.equal((await routeHeadAssignment(registrar, roster, { ...head, runtimeSessionRef: "substituted" }, input, observe)).ok, false);
+  for (const role of ["", "я".repeat(161)]) {
+    assert.equal((await routeHeadAssignment(registrar, roster.map(agent => agent.agentId === "finance" ? { ...agent, role } : agent), head, input, observe)).ok, false);
+  }
   assert.equal((await routeHeadAssignment(registrar, roster, head, { ...input, body: "password=private-value" }, observe)).ok, false);
   assert.deepEqual(await registrar.getConfirmedMessages(1), []);
   await registrar.stopSession(1);

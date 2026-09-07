@@ -47,6 +47,9 @@ export async function routeHeadAssignment(
   }
   const recipients = input.toAgentIds.map(id => roster.find(agent => agent.agentId === id));
   if (recipients.some(agent => agent === undefined)) return { ok: false, code: "agent_not_registered", cause: "recipient_not_registered" };
+  if (recipients.some(agent => agent!.role.trim().length === 0 || agent!.role.length > 160)) {
+    return { ok: false, code: "invalid_envelope", cause: "invalid_recipient_id" };
+  }
   if (input.body.length === 0) return { ok: false, code: "invalid_envelope", cause: "empty_body" };
   if (isSecretLikeMatrixContent(input.body)) return { ok: false, code: "invalid_envelope", cause: "invalid_runtime_emission" };
   const registered = await registrar.appendConfirmedMessage({

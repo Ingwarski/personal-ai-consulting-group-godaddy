@@ -16,8 +16,15 @@
 
 - SDD `--before implementation`: passed, 13 документів.
 - Build, typecheck, environment policy: passed.
-- Node 22.23.2: 815 passed, 0 failed, `/tmp/matrix-head-dedup-check.log`.
+- Node 22.23.2: 816 passed, 0 failed, `/tmp/matrix-head-dedup-check.log`.
 - Для 2 і 5 спеціалістів: рівно три різні head assignments; задача в них один раз; дослівна відповідність видимого доручення і runtime assignment; кожна первинна позиція та revision доставляються окремо; рівно одна критика.
 - Перевірено один запис/outbox на replay, conflict зі зміненими адресатами, відмову для невідомих/повторених/надмірних адресатів, підміненого runtime головного, секретів і stopped generation. Existing final-only recovery tests passed.
 - Перша перевірка нового тесту виявила помилкову назву тестового методу outbox; виправлено на наявний `getLocalMatrixOutboxRecordForTest`, не змінюючи production API.
+- Додаткова перевірка SQL outbox виявила стару межу 160 символів для одного addressedTo. Для authority.kind=assignment межа тепер 808: п'ять ролей по 160 плюс чотири розділювачі. Інші типи лишилися на 160. Кожна роль адресата перевіряється до реєстрації; тест перевіряє повний SQL lease на 808, відмову на 809, незмінну межу інших типів і підміну адресата. DDL або переписування даних не потрібні.
 - Публікація та новий live-консиліум на момент запису ще не підтверджені. Уже видимі старі повідомлення навмисно залишаються в історії.
+
+## Перебіг публікації
+
+Перша версія `533f11f36c7ce99f6072ffffe1eed601afa0d427` підтверджена на вкладці «Опубліковано» з двома OK. Під час перевірки source action неактуальний dashboard відкрив ZIP-dialog замість GitHub pull. Діалог скасовано без завантаження; повний reload повернув source main і нормальний GitHub pull. Налаштування source не змінювалися. Виправлення межі довгих імен адресатів включається окремим наступним commit.
+
+Owner Google session відновлена звичайним вибором уже підтвердженого акаунта, без зміни credentials. До публікації захищений Matrix status показував ready=false/reason=store_binding_unavailable, consultationWorking=false/consultationBlocked=true. Це окрема поточна проблема; ремонт дублювання не оголошує її вирішеною і не змінює crypto store. Усі 29 native inputs зберегли SHA-256; Rust rebuild не запускався.

@@ -232,6 +232,36 @@ test("leases identity-bound critic messages and rejects altered, malformed or st
   }
 });
 
+test("leases the full bounded five-recipient assignment while rejecting overlong or tampered destinations", async () => {
+  const head = { agentId: "head", provider: "codex" as const, runtimeSessionRef: "thread-head-01", kind: "assignment" as const };
+  const fiveRoles = Array.from({ length: 5 }, (_, i) => `Консультант ${i}: `.padEnd(160, "я")).join("; ");
+  assert.equal(fiveRoles.length, 808);
+  for (const [label, addressedTo, kind, valid] of [
+    ["five-roles", fiveRoles, "assignment", true],
+    ["over-limit", fiveRoles + "я", "assignment", false],
+    ["ordinary-limit", fiveRoles, "revision", false],
+    ["destination-tamper", fiveRoles, "assignment", false]
+  ] as const) {
+    const authority = { ...head, kind };
+    const bodyHash = await confirmedMessageFingerprint({ role: head.agentId, body: message.body, addressedTo, replyToEventId, authority });
+    const candidate = { ...message, role: head.agentId, addressedTo, bodyHash, authority };
+    const transactionId = `pc-1-1-${bodyHash.slice(0, 24)}`;
+    const deliveryHash = jsonHash({ generation: 1, sequence: 1, transactionId, recordKind: "message",
+      message: { generation: 1, sequence: 1, internalEventId: candidate.internalEventId, role: candidate.role,
+        visibleTime: candidate.visibleTime, body: candidate.body, bodyFormat: candidate.bodyFormat,
+        addressedTo, bodyHash, confirmedAt: candidate.confirmedAt }, replyToEventId, createdAt: candidate.confirmedAt });
+    const pool = new ScriptedPool({ transaction: async statement => {
+      if (statement.startsWith("SELECT generation")) return [[canonicalOutboxRow({ transactionId, bodyHash, deliveryHash,
+        messageJson: JSON.stringify(label === "destination-tamper" ? { ...candidate, addressedTo: "Інший адресат" } : candidate) })], []];
+      if (statement.startsWith("UPDATE personal_consultant_matrix_outbox")) return [{ affectedRows: 1 }, []];
+      throw new Error("Unexpected SQL");
+    } });
+    const pending = new MySqlMatrixOutbox(pool).leaseHead({ leaseOwner: "node-worker-01", now: new Date(message.confirmedAt), leaseMilliseconds: 30_000 });
+    if (valid) assert.equal((await pending)?.message.addressedTo, fiveRoles);
+    else await assert.rejects(pending, MatrixOutboxCorruptionError);
+  }
+});
+
 test("a blocked strict head intentionally halts all later publication, as does an active head lease", async () => {
   for (const row of [
     canonicalOutboxRow({ state: "blocked", leaseEpoch: 1 }),
