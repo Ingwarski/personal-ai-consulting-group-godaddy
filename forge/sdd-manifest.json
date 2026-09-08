@@ -19357,6 +19357,12 @@
       "recorded_at": "2026-09-07T23:40:10Z",
       "status": "published_diagnostics_live_blocked_original_store_unavailable",
       "source_commit": "252815600a84922e74d5b650a07687af1c04fa5d",
+      "last_explicit_redeploy": {
+        "recorded_at": "2026-09-08T05:56:01Z",
+        "result": "publication_succeeded_original_store_still_missing",
+        "path": "forge/runs/U-08/adaptive-consultation-20260908/redeploy-retry-20260908.md",
+        "content_hash": "7def8ebc13dc0f282035fe1d52dc313ce6caef2f2cb3f32a7439a07521e86677"
+      },
       "receipt": {
         "path": "forge/runs/U-08/adaptive-consultation-20260908/published-verification.json",
         "content_hash": "080fa472b8e1120e2f85424f92fd58feedb843dc735b63a9368ef96a08cd572a"
