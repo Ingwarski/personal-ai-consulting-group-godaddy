@@ -1,5 +1,11 @@
 # Guardrails
 
+## PI-MATRIX-MYSQL-20260908 — Storage correction authority
+
+Apply the corresponding PRD security/continuity correction and paired context/terms. Dedicated Matrix database access is permitted only within the new architecture's stated component boundary; it is not permission for agents, Preview, other applications or HappyPro to access it. Preserve E2EE, transactional recovery, credential separation, verified device identity and one active writer. No reset, database wipe, silent fresh identity, stale-store rollback or removal of protections while private durable files remain exposed. Missing keys block dependent recovery, not safe non-production work.
+
+The Owner's “implement it, plz” adopts the correction request. Under the installed SDD implementation gate, a newly reconciled formal plan must still pause for a later implementation message; do not backdate that pause or treat this pre-reconciliation message as a post-plan receipt. Preserve prior implementation/release evidence as historical, not evidence for changed storage. Published completion requires fresh real restart/redeploy evidence with Settings closed; tests and feasibility code alone cannot establish it.
+
 ## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix
 
 Це чинне вузьке уточнення за однойменними розділами PRD, project-context і canonical-terms; попередні датовані рішення нижче зберігають силу лише там, де не суперечать FR-047–FR-052.

@@ -1,5 +1,15 @@
 # DoD And Evals
 
+## PI-MATRIX-MYSQL-20260908 — Durable-store completion correction
+
+Sources: the current PRD continuity/security correction and architecture AD-26. This narrows the replacement obligations of existing `G-14 matrix_e2ee_room_and_platform_isolation`, `G-15 v1_real_matrix_e2e` and `G-23 product_security_requirements`; no former execution evidence is promoted. SQLite-specific storage/private-folder checks below remain historical for the legacy path, not the target-store requirement.
+
+G-14 requires the pinned SDK storage contracts plus real isolated-MySQL transactions, encrypted-record context/integrity, verified TLS/least privilege, atomic SDK batches, crash-safe sync/inbox/ACK ordering, exclusive DB-fenced ownership, stale-writer rejection, schema-aware migration and exact-identity isolated restore. Test before/after/unknown commit, DB outage, restart, takeover, wrong key, row transplant and missing migration state. Failure, missing applicable evidence, silent reset, stale SQLite fallback or remaining unprotected private durable files blocks this gate. Re-run after storage/SDK/schema/key/grant/checkpoint/lease/migration changes. Automation for full MySQL/SDK/migration integration is not yet available; isolated synthetic encryption proof is not its substitute.
+
+G-15 requires a real Published Owner request with all Settings tabs closed through Head Consultant, specialists, selected Critic and one delivered result, repeated after restart and redeployment with unchanged identity and no lost accepted messages or duplicate work. Same-app push registration or healthz alone cannot pass. G-23 retains every current security requirement and applies NFR-005–NFR-010, NFR-012 and NFR-019 to the new direct Rust/database boundary, encrypted state, credentials and Preview isolation. Existing auth, consent, archive, provider and UI gates remain required.
+
+QA binds these changes to the existing storage/integration, security and no-Settings checks; concrete check definitions belong to QA. Definition status is prepared; execution is not_run for the changed target, release readiness not_evaluated. Missing legacy keys remain a named operational recovery block. No tests or Published operation were performed by this definition pass.
+
 ## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix
 
 Чинна зміна визначень за однойменними PRD, контекстом, термінами, guardrails, journey, screen-map, wireframes, DB-D21 та AD-25. Старі гейти збережено й уточнено, не замінено одним «консенсус працює». Нових продуктового runtime/test/user evidence цей owner не створює.

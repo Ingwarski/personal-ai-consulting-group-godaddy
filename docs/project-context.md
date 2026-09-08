@@ -1,5 +1,9 @@
 # Контекст проєкту
 
+## PI-MATRIX-MYSQL-20260908 — Continuity correction context
+
+Source: current product idea and PRD sections `PI-MATRIX-MYSQL-20260908`. The same Owner, GoDaddy application, MySQL database, Element channel and subscription boundaries remain. Restart-critical Matrix state must survive application-file loss; the present folder dependence is being replaced, not declared repaired. No new paid/local production service or destructive recovery is authorized. Missing legacy keys are still an unresolved recovery fact. English is used for this scoped correction at the current request; existing Ukrainian content and product-language policy are preserved.
+
 ## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix
 
 Чинне цільове уточнення — `PI-CONSENSUS-20260908`, PRD FR-047.a–FR-052.d, UC-001/UC-002/UC-005. Попередні датовані узгодження нижче збережені як історія й незмінний контекст; нові локальні наслідки наведено тут. Парний invocation: `project-context-bundle-consensus-20260908`.

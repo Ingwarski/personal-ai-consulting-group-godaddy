@@ -1,5 +1,9 @@
 # Канонічні терміни
 
+## PI-MATRIX-MYSQL-20260908 — Continuity correction terms
+
+Source: current product idea and PRD sections `PI-MATRIX-MYSQL-20260908`; paired with the context correction. `Durable Matrix state` means identity, encryption state and accepted-work recovery data surviving application-file loss (стійкий стан Matrix), not a folder existence check. `Migration` transfers a valid matching store without resetting identity (перенесення стану); `recovery blocked` names unavailable keys or invalid state (відновлення заблоковано), not permission to create a new device. `Fencing` rejects an obsolete writer after ownership changes (відсікання застарілого записувача). `Stateless Preview` remains unable to access Published state; simplifying setup does not waive this boundary.
+
 ## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix
 
 Джерела: PI-CONSENSUS-20260908; FR-047.a–FR-052.d. Парний invocation: `project-context-bundle-consensus-20260908`. Нижче — англійські видимі назви з українськими значеннями та доречними резервними емодзі. Назва залишається текстом; ідентичності `agentId` попередніх ролей не змінюються. «Система» не є назвою консультанта; автоматичні повідомлення мають Head Consultant і окреме службове позначення мовою сесії.

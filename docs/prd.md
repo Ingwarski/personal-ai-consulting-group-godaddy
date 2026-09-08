@@ -1,5 +1,15 @@
 # Product Requirements Document: Personal Consultant
 
+## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction
+
+Source: the complete current product idea, especially `PI-MATRIX-MYSQL-20260908`. This refines `UC-001`, `UC-002`, `UC-003`, `UC-005`, `FR-052.a`–`FR-052.d`, `NFR-005`–`NFR-010`, `NFR-012` and `NFR-019`, without adding actors, product surfaces or paid dependencies. The existing GoDaddy app and MySQL database must retain every piece of state required to resume the same Matrix identity and accepted work after application files disappear on restart/redeployment. One verified final result must be delivered, not a duplicate consultation. Missing keys remain an explicit recovery blocker unless a valid backup/key source exists; neither migration nor retry grants device-reset authority.
+
+Scoped ASVS reassessment: storage confidentiality/integrity and key inventory (`v5.0.0-11.1.1`, `v5.0.0-11.1.2`, `v5.0.0-11.2.1`, `v5.0.0-11.3.3`, `v5.0.0-14.1.1`, `v5.0.0-14.1.2`); least-privilege storage access and isolated credentials (`v5.0.0-8.1.1`, `v5.0.0-8.2.1`, `v5.0.0-13.3.1`); transactional recovery and exclusive ownership (`v5.0.0-2.3.3`, `v5.0.0-2.3.4`); authenticated encrypted database transport (`v5.0.0-12.3.1`). These existing obligations now explicitly cover Rust's narrowly scoped database access, encrypted Matrix state, pending-event journal and checkpoint—not only Node settings/archive. Other chapter mappings and the no-added-MFA exception remain unchanged; this is not a fresh full security audit or compliance claim.
+
+Allowed outcome: a properly authorized runtime commits protected state atomically, resumes matching identity and accepted work, and rejects obsolete concurrent writers. Denied outcomes: plaintext keys/message bodies in database or logs; agent access to database credentials; Preview using Published state; invalid certificate fallback; stale-worker writes; checkpoint advancement that loses an unacknowledged event; partial migration presented as readiness; silent empty-store initialization for an existing device. Normal database outages retry without erasing state.
+
+For `JOB-003`/`UC-003`, folder-specific setup and timed Preview comparison are removed only after the replacement no longer depends on private durable files. Genuine Matrix device verification, owner access, clear failure/recovery guidance and authorized temporary-file handling remain. `FR-052.a`–`FR-052.d` acceptance requires the actual Published flow with Settings closed, after restart and redeployment, with unchanged identity and no lost accepted messages; local storage tests alone cannot pass it.
+
 - Статус: базова версія V1
 - Основне джерело продуктового наміру: `docs/product-idea.md`
 - Джерельний SHA-256: `9691980b7283afd2902f197c13dfdf05997b974a8e87784b68050383f7c0efe3`

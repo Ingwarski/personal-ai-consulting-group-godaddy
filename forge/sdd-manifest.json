@@ -263,22 +263,26 @@
       }
     },
     "architecture": {
-      "invocation_id": "architecture-consensus-20260908",
+      "invocation_id": "architecture-matrix-mysql-20260908",
       "outputs": [
         "docs/architecture.md"
       ],
       "source_usage": {
         "docs/prd.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction"
         ],
         "docs/project-context.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity correction context"
         ],
         "docs/canonical-terms.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity correction terms"
         ],
         "docs/guardrails.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Storage correction authority"
         ],
         "docs/user-journey.md": [
           "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
@@ -302,24 +306,40 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "2f33296f7f5585fb62d8bc6984b0a4778bd1fc166c3a03d627d089bc0793687a"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction",
+            "content_hash": "d96083e0aae80cfbf5cc2c261b66cf0c0499430c970ebc15dc5fbce60e751905"
           }
         ],
         "docs/project-context.md": [
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "55e695e5c0a29e8dfc83bf79d186303ee072ed4cad41bff5c449f2121c1c7eaf"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity correction context",
+            "content_hash": "83b713aa8e3ccbff1ced132993393d2b14831282a32a714bb0ead4c897a21cf2"
           }
         ],
         "docs/canonical-terms.md": [
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "25378f346a4a6b145d734efb4bf4e3a8ceb9bdb00e1156b3fa5d8c2be3cfd0c9"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity correction terms",
+            "content_hash": "51fda289262dd589edb908a881e4c3c17f9cc956749b6351fda23a0e4e648aab"
           }
         ],
         "docs/guardrails.md": [
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "f29f85ab0a6363aadb6d4751ab659a54971216b8cca2869c81eda24b7e88f649"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Storage correction authority",
+            "content_hash": "5ae34defd363b629424655a240c113a421005800632c33baec51bf8b25376e32"
           }
         ],
         "docs/user-journey.md": [
@@ -347,29 +367,30 @@
           }
         ]
       },
-      "recorded_at": "2026-09-07T21:49:45.587Z",
+      "recorded_at": "2026-09-08T19:27:41.652Z",
       "before_check": {
         "node": "architecture",
         "result": "passed"
-      }
+      },
+      "note": "Recorded from actual before-check and inline owner return for this correction; not a production authorization."
     },
     "product-idea": {
-      "invocation_id": "product-idea-consensus-20260908",
+      "invocation_id": "product-idea-matrix-mysql-20260908",
       "outputs": [
         "docs/product-idea.md"
       ],
       "source_usage": {},
       "source_hashes": {},
       "consumed_source_fragments": {},
-      "recorded_at": "2026-09-07T21:21:44.554Z",
+      "recorded_at": "2026-09-08T19:19:37.294Z",
       "before_check": {
         "node": "product-idea",
         "result": "passed"
       },
-      "note": "Recorded from actual earlier precheck and inline owner invocation."
+      "note": "Recorded from actual before-check and inline owner return for this correction; not a production authorization."
     },
     "prd": {
-      "invocation_id": "prd-consensus-20260908",
+      "invocation_id": "prd-matrix-mysql-20260908",
       "outputs": [
         "docs/prd.md"
       ],
@@ -377,27 +398,30 @@
         "docs/product-idea.md": "full"
       },
       "source_hashes": {
-        "docs/product-idea.md": "a0f72bdfad571009ec4ec8f62aa0bbd4606ed29e1c29ebe6ed466800f7c46730"
+        "docs/product-idea.md": "7bda752fb48bb173ffb1455093dc1408a3d71efe9235e933402b27c720ad8a2f"
       },
       "consumed_source_fragments": {},
-      "recorded_at": "2026-09-07T21:24:38.041Z",
+      "recorded_at": "2026-09-08T19:27:40.827Z",
       "before_check": {
         "node": "prd",
         "result": "passed"
-      }
+      },
+      "note": "Recorded from actual before-check and inline owner return for this correction; not a production authorization."
     },
     "project-context": {
-      "invocation_id": "project-context-bundle-consensus-20260908",
+      "invocation_id": "project-context-bundle-matrix-mysql-20260908",
       "outputs": [
         "docs/project-context.md",
         "docs/canonical-terms.md"
       ],
       "source_usage": {
         "docs/product-idea.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Durable Matrix without another host"
         ],
         "docs/prd.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction"
         ]
       },
       "source_hashes": {},
@@ -406,33 +430,44 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "1ef0a1b0f718b74bdac10749cac5ff9b24c16c70be1392b64df948a461531196"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Durable Matrix without another host",
+            "content_hash": "35feb9bbe27903de50d36874ed7c4fb85b710d127376da18b5c85ec41e49fe8e"
           }
         ],
         "docs/prd.md": [
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "2f33296f7f5585fb62d8bc6984b0a4778bd1fc166c3a03d627d089bc0793687a"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction",
+            "content_hash": "d96083e0aae80cfbf5cc2c261b66cf0c0499430c970ebc15dc5fbce60e751905"
           }
         ]
       },
-      "recorded_at": "2026-09-07T21:26:19.022Z",
+      "recorded_at": "2026-09-08T19:27:41.028Z",
       "before_check": {
-        "node": "project-context-bundle",
+        "node": "project-context",
         "result": "passed"
-      }
+      },
+      "note": "Recorded from actual before-check and inline owner return for this correction; not a production authorization."
     },
     "canonical-terms": {
-      "invocation_id": "project-context-bundle-consensus-20260908",
+      "invocation_id": "project-context-bundle-matrix-mysql-20260908",
       "outputs": [
         "docs/project-context.md",
         "docs/canonical-terms.md"
       ],
       "source_usage": {
         "docs/product-idea.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Durable Matrix without another host"
         ],
         "docs/prd.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction"
         ]
       },
       "source_hashes": {},
@@ -441,35 +476,47 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "1ef0a1b0f718b74bdac10749cac5ff9b24c16c70be1392b64df948a461531196"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Durable Matrix without another host",
+            "content_hash": "35feb9bbe27903de50d36874ed7c4fb85b710d127376da18b5c85ec41e49fe8e"
           }
         ],
         "docs/prd.md": [
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "2f33296f7f5585fb62d8bc6984b0a4778bd1fc166c3a03d627d089bc0793687a"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction",
+            "content_hash": "d96083e0aae80cfbf5cc2c261b66cf0c0499430c970ebc15dc5fbce60e751905"
           }
         ]
       },
-      "recorded_at": "2026-09-07T21:26:19.022Z",
+      "recorded_at": "2026-09-08T19:27:41.234Z",
       "before_check": {
-        "node": "project-context-bundle",
+        "node": "canonical-terms",
         "result": "passed"
-      }
+      },
+      "note": "Recorded from actual before-check and inline owner return for this correction; not a production authorization."
     },
     "guardrails": {
-      "invocation_id": "guardrails-consensus-20260908",
+      "invocation_id": "guardrails-matrix-mysql-20260908",
       "outputs": [
         "docs/guardrails.md"
       ],
       "source_usage": {
         "docs/prd.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction"
         ],
         "docs/project-context.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity correction context"
         ],
         "docs/canonical-terms.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity correction terms"
         ]
       },
       "source_hashes": {},
@@ -478,35 +525,49 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "2f33296f7f5585fb62d8bc6984b0a4778bd1fc166c3a03d627d089bc0793687a"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction",
+            "content_hash": "d96083e0aae80cfbf5cc2c261b66cf0c0499430c970ebc15dc5fbce60e751905"
           }
         ],
         "docs/project-context.md": [
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "55e695e5c0a29e8dfc83bf79d186303ee072ed4cad41bff5c449f2121c1c7eaf"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity correction context",
+            "content_hash": "83b713aa8e3ccbff1ced132993393d2b14831282a32a714bb0ead4c897a21cf2"
           }
         ],
         "docs/canonical-terms.md": [
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "25378f346a4a6b145d734efb4bf4e3a8ceb9bdb00e1156b3fa5d8c2be3cfd0c9"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity correction terms",
+            "content_hash": "51fda289262dd589edb908a881e4c3c17f9cc956749b6351fda23a0e4e648aab"
           }
         ]
       },
-      "recorded_at": "2026-09-07T21:32:01.488Z",
+      "recorded_at": "2026-09-08T19:27:41.443Z",
       "before_check": {
         "node": "guardrails",
         "result": "passed"
-      }
+      },
+      "note": "Recorded from actual before-check and inline owner return for this correction; not a production authorization."
     },
     "dod-evals": {
-      "invocation_id": "dod-evals-consensus-20260908",
+      "invocation_id": "dod-evals-matrix-mysql-20260908",
       "outputs": [
         "docs/dod-evals.md"
       ],
       "source_usage": {
         "docs/prd.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction"
         ],
         "docs/project-context.md": [
           "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
@@ -530,7 +591,8 @@
           "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
         ],
         "docs/architecture.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## AD-26 — Transactional MySQL Matrix store (PI-MATRIX-MYSQL-20260908)"
         ]
       },
       "source_hashes": {},
@@ -539,6 +601,10 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "2f33296f7f5585fb62d8bc6984b0a4778bd1fc166c3a03d627d089bc0793687a"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction",
+            "content_hash": "d96083e0aae80cfbf5cc2c261b66cf0c0499430c970ebc15dc5fbce60e751905"
           }
         ],
         "docs/project-context.md": [
@@ -587,23 +653,29 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "a3451d184b2557f183c526c43da7f89fa77adf3faad64f8263dfa28d9cc9984c"
+          },
+          {
+            "heading": "## AD-26 — Transactional MySQL Matrix store (PI-MATRIX-MYSQL-20260908)",
+            "content_hash": "dc7fb115186d228b0937d36e58c003da387aba58e8790282ee1caf7dcb884900"
           }
         ]
       },
-      "recorded_at": "2026-09-07T21:38:50.145Z",
+      "recorded_at": "2026-09-08T19:27:41.877Z",
       "before_check": {
         "node": "dod-evals",
         "result": "passed"
-      }
+      },
+      "note": "Recorded from actual before-check and inline owner return for this correction; not a production authorization."
     },
     "qa-checklist": {
-      "invocation_id": "qa-checklist-consensus-20260908",
+      "invocation_id": "qa-checklist-matrix-mysql-20260908",
       "outputs": [
         "docs/qa-checklist.md"
       ],
       "source_usage": {
         "docs/prd.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction"
         ],
         "docs/project-context.md": [
           "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
@@ -627,10 +699,12 @@
           "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
         ],
         "docs/architecture.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## AD-26 — Transactional MySQL Matrix store (PI-MATRIX-MYSQL-20260908)"
         ],
         "docs/dod-evals.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Durable-store completion correction"
         ]
       },
       "source_hashes": {},
@@ -639,6 +713,10 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "2f33296f7f5585fb62d8bc6984b0a4778bd1fc166c3a03d627d089bc0793687a"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction",
+            "content_hash": "d96083e0aae80cfbf5cc2c261b66cf0c0499430c970ebc15dc5fbce60e751905"
           }
         ],
         "docs/project-context.md": [
@@ -687,29 +765,39 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "a3451d184b2557f183c526c43da7f89fa77adf3faad64f8263dfa28d9cc9984c"
+          },
+          {
+            "heading": "## AD-26 — Transactional MySQL Matrix store (PI-MATRIX-MYSQL-20260908)",
+            "content_hash": "dc7fb115186d228b0937d36e58c003da387aba58e8790282ee1caf7dcb884900"
           }
         ],
         "docs/dod-evals.md": [
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "93bb80574d83963b109874e09ecf66dce0d1fc437cebf3b05ab9b6636609af30"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Durable-store completion correction",
+            "content_hash": "dcb402e4bd9cb12bd0cd7a188a9309fac982f5da727c9f9ff5a3821ef027cbe2"
           }
         ]
       },
-      "recorded_at": "2026-09-07T21:43:37.845Z",
+      "recorded_at": "2026-09-08T19:27:42.102Z",
       "before_check": {
         "node": "qa-checklist",
         "result": "passed"
-      }
+      },
+      "note": "Recorded from actual before-check and inline owner return for this correction; not a production authorization."
     },
     "development-plan": {
-      "invocation_id": "development-plan-consensus-20260908",
+      "invocation_id": "development-plan-matrix-mysql-20260908",
       "outputs": [
         "docs/development-plan.md"
       ],
       "source_usage": {
         "docs/prd.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction"
         ],
         "docs/project-context.md": [
           "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
@@ -718,7 +806,8 @@
           "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
         ],
         "docs/guardrails.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Storage correction authority"
         ],
         "docs/user-journey.md": [
           "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
@@ -733,13 +822,16 @@
           "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
         ],
         "docs/architecture.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## AD-26 — Transactional MySQL Matrix store (PI-MATRIX-MYSQL-20260908)"
         ],
         "docs/dod-evals.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Durable-store completion correction"
         ],
         "docs/qa-checklist.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Target-store checks"
         ]
       },
       "source_hashes": {},
@@ -748,6 +840,10 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "2f33296f7f5585fb62d8bc6984b0a4778bd1fc166c3a03d627d089bc0793687a"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction",
+            "content_hash": "d96083e0aae80cfbf5cc2c261b66cf0c0499430c970ebc15dc5fbce60e751905"
           }
         ],
         "docs/project-context.md": [
@@ -766,6 +862,10 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "f29f85ab0a6363aadb6d4751ab659a54971216b8cca2869c81eda24b7e88f649"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Storage correction authority",
+            "content_hash": "5ae34defd363b629424655a240c113a421005800632c33baec51bf8b25376e32"
           }
         ],
         "docs/user-journey.md": [
@@ -796,38 +896,60 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "a3451d184b2557f183c526c43da7f89fa77adf3faad64f8263dfa28d9cc9984c"
+          },
+          {
+            "heading": "## AD-26 — Transactional MySQL Matrix store (PI-MATRIX-MYSQL-20260908)",
+            "content_hash": "dc7fb115186d228b0937d36e58c003da387aba58e8790282ee1caf7dcb884900"
           }
         ],
         "docs/dod-evals.md": [
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "93bb80574d83963b109874e09ecf66dce0d1fc437cebf3b05ab9b6636609af30"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Durable-store completion correction",
+            "content_hash": "dcb402e4bd9cb12bd0cd7a188a9309fac982f5da727c9f9ff5a3821ef027cbe2"
           }
         ],
         "docs/qa-checklist.md": [
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "32b016c273f51ee1aaec13c2bccce6c1e41d7a89919b505f663d0a01f5d62d22"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Target-store checks",
+            "content_hash": "558da0f3986dfce165e596266c572cac462f80b9f937901ce355174423f59ef2"
           }
         ]
       },
-      "recorded_at": "2026-09-07T21:46:31.690Z",
+      "recorded_at": "2026-09-08T19:28:51.326Z",
       "before_check": {
         "node": "development-plan",
         "result": "passed"
-      }
+      },
+      "note": "Recorded from actual before-check and inline owner return for this correction; not a production authorization."
     }
   },
   "traceability_version": 1,
   "product_scope": {
     "profile": "existing_change",
-    "capabilities": {"ui": true, "api": true, "persistence": true, "payments": false, "sensitive_data": true},
-    "definition_ref": {"path": "docs/product-idea.md", "heading": "### Профіль зміни PI-CONSENSUS-20260908"}
+    "capabilities": {
+      "ui": true,
+      "api": true,
+      "persistence": true,
+      "payments": false,
+      "sensitive_data": true
+    },
+    "definition_ref": {
+      "path": "docs/product-idea.md",
+      "heading": "### Профіль зміни PI-CONSENSUS-20260908"
+    }
   },
   "checker_contract_version": 1,
   "pipeline_version": "1.1.0",
-  "state": "implementing",
-  "updated_at": "2026-09-07T21:48:15.061Z",
+  "state": "awaiting-implementation-prompt",
+  "updated_at": "2026-09-08T19:29:01.373Z",
   "language": {
     "working_language": "uk",
     "selection_source": "recorded-preference",
@@ -880,7 +1002,7 @@
     "product-idea": {
       "path": "docs/product-idea.md",
       "owner_skill": "to-product-idea",
-      "owner_invocation_id": "product-idea-consensus-20260908",
+      "owner_invocation_id": "product-idea-matrix-mysql-20260908",
       "declared_output_set": [
         "docs/product-idea.md"
       ],
@@ -890,12 +1012,12 @@
       "dependency_status": {},
       "source_hashes": {},
       "consumed_source_fragments": {},
-      "content_hash": "a0f72bdfad571009ec4ec8f62aa0bbd4606ed29e1c29ebe6ed466800f7c46730",
+      "content_hash": "7bda752fb48bb173ffb1455093dc1408a3d71efe9235e933402b27c720ad8a2f",
       "validation": {
         "result": "passed",
         "working_language": "uk",
-        "reviewed_at": "2026-09-07T21:21:23.105Z",
-        "review_scope": "Повний задум прочитано; сім прямих змін Власника збережено з межами. Перевірка документа, не продукту."
+        "reviewed_at": "2026-09-08T19:19:37.294Z",
+        "review_scope": "Scoped English PI-MATRIX-MYSQL-20260908 correction; existing Ukrainian document and historical decisions retained. Definition validation only; no product test claim."
       },
       "open_questions": [],
       "supersedes": {
@@ -1102,7 +1224,7 @@
     "prd": {
       "path": "docs/prd.md",
       "owner_skill": "to-sdd-prd",
-      "owner_invocation_id": "prd-consensus-20260908",
+      "owner_invocation_id": "prd-matrix-mysql-20260908",
       "declared_output_set": [
         "docs/prd.md"
       ],
@@ -1115,16 +1237,15 @@
         "product-idea": "validated"
       },
       "source_hashes": {
-        "docs/product-idea.md": "a0f72bdfad571009ec4ec8f62aa0bbd4606ed29e1c29ebe6ed466800f7c46730"
+        "docs/product-idea.md": "7bda752fb48bb173ffb1455093dc1408a3d71efe9235e933402b27c720ad8a2f"
       },
       "consumed_source_fragments": {},
-      "content_hash": "91a81040cc165f2bfef673b6f417ed21ea4ab965eed70f44398314d29445669e",
+      "content_hash": "caa777c2ec363f87a77aecccc719e8f83e85d3fa553a2a24caaae914609358b0",
       "validation": {
         "result": "passed",
         "working_language": "uk",
-        "reviewed_at": "2026-09-07T21:24:38.041Z",
-        "review_scope": "Цільове узгодження PI-CONSENSUS-20260908 за перечитаними змінами й зазначеними джерелами; незмінні попередні рішення збережено.",
-        "evidence_scope": "Перевірка SDD-визначень, не запуск продукту."
+        "reviewed_at": "2026-09-08T19:27:40.827Z",
+        "review_scope": "Scoped English PI-MATRIX-MYSQL-20260908 correction; existing Ukrainian document and historical decisions retained. Definition validation only; no product test claim."
       },
       "security_review": {
         "version": 1,
@@ -3223,7 +3344,7 @@
     "project-context": {
       "path": "docs/project-context.md",
       "owner_skill": "to-project-context",
-      "owner_invocation_id": "project-context-bundle-consensus-20260908",
+      "owner_invocation_id": "project-context-bundle-matrix-mysql-20260908",
       "declared_output_set": [
         "docs/project-context.md",
         "docs/canonical-terms.md"
@@ -3244,22 +3365,29 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "1ef0a1b0f718b74bdac10749cac5ff9b24c16c70be1392b64df948a461531196"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Durable Matrix without another host",
+            "content_hash": "35feb9bbe27903de50d36874ed7c4fb85b710d127376da18b5c85ec41e49fe8e"
           }
         ],
         "docs/prd.md": [
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "2f33296f7f5585fb62d8bc6984b0a4778bd1fc166c3a03d627d089bc0793687a"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction",
+            "content_hash": "d96083e0aae80cfbf5cc2c261b66cf0c0499430c970ebc15dc5fbce60e751905"
           }
         ]
       },
-      "content_hash": "0de3d4a9ba3036657786ad29410bbdadef1c25a3db1dae1efbde01b9ff09fac3",
+      "content_hash": "36e533018a7e5015641570dc8c419a043dd7227019cd771532a7194ff8b98303",
       "validation": {
         "result": "passed",
         "working_language": "uk",
-        "reviewed_at": "2026-09-07T21:26:19.022Z",
-        "review_scope": "Цільове узгодження PI-CONSENSUS-20260908 за перечитаними змінами й зазначеними джерелами; незмінні попередні рішення збережено.",
-        "evidence_scope": "Перевірка SDD-визначень, не запуск продукту."
+        "reviewed_at": "2026-09-08T19:27:41.028Z",
+        "review_scope": "Scoped English PI-MATRIX-MYSQL-20260908 correction; existing Ukrainian document and historical decisions retained. Definition validation only; no product test claim."
       },
       "open_questions": [],
       "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
@@ -3362,17 +3490,19 @@
       },
       "source_usage": {
         "docs/product-idea.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Durable Matrix without another host"
         ],
         "docs/prd.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction"
         ]
       }
     },
     "canonical-terms": {
       "path": "docs/canonical-terms.md",
       "owner_skill": "to-project-context",
-      "owner_invocation_id": "project-context-bundle-consensus-20260908",
+      "owner_invocation_id": "project-context-bundle-matrix-mysql-20260908",
       "declared_output_set": [
         "docs/project-context.md",
         "docs/canonical-terms.md"
@@ -3393,22 +3523,29 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "1ef0a1b0f718b74bdac10749cac5ff9b24c16c70be1392b64df948a461531196"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Durable Matrix without another host",
+            "content_hash": "35feb9bbe27903de50d36874ed7c4fb85b710d127376da18b5c85ec41e49fe8e"
           }
         ],
         "docs/prd.md": [
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "2f33296f7f5585fb62d8bc6984b0a4778bd1fc166c3a03d627d089bc0793687a"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction",
+            "content_hash": "d96083e0aae80cfbf5cc2c261b66cf0c0499430c970ebc15dc5fbce60e751905"
           }
         ]
       },
-      "content_hash": "98a18603fa5f2532db3249396373c1789df1ee28842f43ce1d4a5743b4a56ed0",
+      "content_hash": "08a737f42d269e83320a6a1b691946be87fae9792e0c8e798ae18a8537eaaec4",
       "validation": {
         "result": "passed",
         "working_language": "uk",
-        "reviewed_at": "2026-09-07T21:26:19.022Z",
-        "review_scope": "Цільове узгодження PI-CONSENSUS-20260908 за перечитаними змінами й зазначеними джерелами; незмінні попередні рішення збережено.",
-        "evidence_scope": "Перевірка SDD-визначень, не запуск продукту."
+        "reviewed_at": "2026-09-08T19:27:41.234Z",
+        "review_scope": "Scoped English PI-MATRIX-MYSQL-20260908 correction; existing Ukrainian document and historical decisions retained. Definition validation only; no product test claim."
       },
       "open_questions": [],
       "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
@@ -3511,17 +3648,19 @@
       },
       "source_usage": {
         "docs/product-idea.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Durable Matrix without another host"
         ],
         "docs/prd.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction"
         ]
       }
     },
     "guardrails": {
       "path": "docs/guardrails.md",
       "owner_skill": "to-guardrails",
-      "owner_invocation_id": "guardrails-consensus-20260908",
+      "owner_invocation_id": "guardrails-matrix-mysql-20260908",
       "declared_output_set": [
         "docs/guardrails.md"
       ],
@@ -3543,28 +3682,39 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "2f33296f7f5585fb62d8bc6984b0a4778bd1fc166c3a03d627d089bc0793687a"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction",
+            "content_hash": "d96083e0aae80cfbf5cc2c261b66cf0c0499430c970ebc15dc5fbce60e751905"
           }
         ],
         "docs/project-context.md": [
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "55e695e5c0a29e8dfc83bf79d186303ee072ed4cad41bff5c449f2121c1c7eaf"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity correction context",
+            "content_hash": "83b713aa8e3ccbff1ced132993393d2b14831282a32a714bb0ead4c897a21cf2"
           }
         ],
         "docs/canonical-terms.md": [
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "25378f346a4a6b145d734efb4bf4e3a8ceb9bdb00e1156b3fa5d8c2be3cfd0c9"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity correction terms",
+            "content_hash": "51fda289262dd589edb908a881e4c3c17f9cc956749b6351fda23a0e4e648aab"
           }
         ]
       },
-      "content_hash": "72b7e9301e76cc1d27a059534d1d3fe9987a697ebf43e6154b6e8320604e14ad",
+      "content_hash": "81c153f36445774f1d99692db115f8d9416a81204e14d426b53ff80c9b1489a9",
       "validation": {
         "result": "passed",
         "working_language": "uk",
-        "reviewed_at": "2026-09-07T21:32:01.488Z",
-        "review_scope": "Цільове узгодження PI-CONSENSUS-20260908 за перечитаними змінами й зазначеними джерелами; незмінні попередні рішення збережено.",
-        "evidence_scope": "Перевірка SDD-визначень, не запуск продукту."
+        "reviewed_at": "2026-09-08T19:27:41.443Z",
+        "review_scope": "Scoped English PI-MATRIX-MYSQL-20260908 correction; existing Ukrainian document and historical decisions retained. Definition validation only; no product test claim."
       },
       "open_questions": [],
       "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
@@ -3754,13 +3904,16 @@
       },
       "source_usage": {
         "docs/prd.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction"
         ],
         "docs/project-context.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity correction context"
         ],
         "docs/canonical-terms.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity correction terms"
         ]
       }
     },
@@ -6102,7 +6255,7 @@
     "architecture": {
       "path": "docs/architecture.md",
       "owner_skill": "to-architecture",
-      "owner_invocation_id": "architecture-consensus-20260908",
+      "owner_invocation_id": "architecture-matrix-mysql-20260908",
       "declared_output_set": [
         "docs/architecture.md"
       ],
@@ -6137,24 +6290,40 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "2f33296f7f5585fb62d8bc6984b0a4778bd1fc166c3a03d627d089bc0793687a"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction",
+            "content_hash": "d96083e0aae80cfbf5cc2c261b66cf0c0499430c970ebc15dc5fbce60e751905"
           }
         ],
         "docs/project-context.md": [
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "55e695e5c0a29e8dfc83bf79d186303ee072ed4cad41bff5c449f2121c1c7eaf"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity correction context",
+            "content_hash": "83b713aa8e3ccbff1ced132993393d2b14831282a32a714bb0ead4c897a21cf2"
           }
         ],
         "docs/canonical-terms.md": [
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "25378f346a4a6b145d734efb4bf4e3a8ceb9bdb00e1156b3fa5d8c2be3cfd0c9"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity correction terms",
+            "content_hash": "51fda289262dd589edb908a881e4c3c17f9cc956749b6351fda23a0e4e648aab"
           }
         ],
         "docs/guardrails.md": [
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "f29f85ab0a6363aadb6d4751ab659a54971216b8cca2869c81eda24b7e88f649"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Storage correction authority",
+            "content_hash": "5ae34defd363b629424655a240c113a421005800632c33baec51bf8b25376e32"
           }
         ],
         "docs/user-journey.md": [
@@ -6182,13 +6351,12 @@
           }
         ]
       },
-      "content_hash": "040234260b27a1ef10ebc71d00c44504775e8d4217e68b6d7004897efcb2feac",
+      "content_hash": "b0dfc196ebc7fe799350b2f344587a7d80d48275adb6fe2674ec4dd983df2943",
       "validation": {
         "result": "passed",
         "working_language": "uk",
-        "reviewed_at": "2026-09-07T21:49:45.587Z",
-        "review_scope": "Цільове узгодження PI-CONSENSUS-20260908 за перечитаними змінами й зазначеними джерелами; незмінні попередні рішення збережено.",
-        "evidence_scope": "Перевірка SDD-визначень, не запуск продукту."
+        "reviewed_at": "2026-09-08T19:27:41.652Z",
+        "review_scope": "Scoped English PI-MATRIX-MYSQL-20260908 correction; existing Ukrainian document and historical decisions retained. Definition validation only; no product test claim."
       },
       "security_coverage": {
         "NFR-005": {
@@ -6645,16 +6813,20 @@
       },
       "source_usage": {
         "docs/prd.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction"
         ],
         "docs/project-context.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity correction context"
         ],
         "docs/canonical-terms.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity correction terms"
         ],
         "docs/guardrails.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Storage correction authority"
         ],
         "docs/user-journey.md": [
           "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
@@ -6714,7 +6886,7 @@
     "dod-evals": {
       "path": "docs/dod-evals.md",
       "owner_skill": "to-dod-evals",
-      "owner_invocation_id": "dod-evals-consensus-20260908",
+      "owner_invocation_id": "dod-evals-matrix-mysql-20260908",
       "declared_output_set": [
         "docs/dod-evals.md"
       ],
@@ -6749,6 +6921,10 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "2f33296f7f5585fb62d8bc6984b0a4778bd1fc166c3a03d627d089bc0793687a"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction",
+            "content_hash": "d96083e0aae80cfbf5cc2c261b66cf0c0499430c970ebc15dc5fbce60e751905"
           }
         ],
         "docs/project-context.md": [
@@ -6797,16 +6973,19 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "a3451d184b2557f183c526c43da7f89fa77adf3faad64f8263dfa28d9cc9984c"
+          },
+          {
+            "heading": "## AD-26 — Transactional MySQL Matrix store (PI-MATRIX-MYSQL-20260908)",
+            "content_hash": "dc7fb115186d228b0937d36e58c003da387aba58e8790282ee1caf7dcb884900"
           }
         ]
       },
-      "content_hash": "86408c26819e2692027e2b1957a1d22f38f9085891906c3304f212d6136afae8",
+      "content_hash": "e9190670d1fc9ed77ecfff5f6be24a1af0a644fe9ade14fc69b1ee83519a953e",
       "validation": {
         "result": "passed",
         "working_language": "uk",
-        "reviewed_at": "2026-09-07T21:38:50.145Z",
-        "review_scope": "Цільове узгодження PI-CONSENSUS-20260908 за перечитаними змінами й зазначеними джерелами; незмінні попередні рішення збережено.",
-        "evidence_scope": "Перевірка SDD-визначень, не запуск продукту."
+        "reviewed_at": "2026-09-08T19:27:41.877Z",
+        "review_scope": "Scoped English PI-MATRIX-MYSQL-20260908 correction; existing Ukrainian document and historical decisions retained. Definition validation only; no product test claim."
       },
       "security_coverage": {
         "NFR-005": {
@@ -6858,7 +7037,8 @@
       "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
       "source_usage": {
         "docs/prd.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction"
         ],
         "docs/project-context.md": [
           "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
@@ -6882,7 +7062,8 @@
           "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
         ],
         "docs/architecture.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## AD-26 — Transactional MySQL Matrix store (PI-MATRIX-MYSQL-20260908)"
         ]
       },
       "supersedes": {
@@ -7276,7 +7457,7 @@
     "qa-checklist": {
       "path": "docs/qa-checklist.md",
       "owner_skill": "to-qa-checklist",
-      "owner_invocation_id": "qa-checklist-consensus-20260908",
+      "owner_invocation_id": "qa-checklist-matrix-mysql-20260908",
       "declared_output_set": [
         "docs/qa-checklist.md"
       ],
@@ -7313,6 +7494,10 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "2f33296f7f5585fb62d8bc6984b0a4778bd1fc166c3a03d627d089bc0793687a"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction",
+            "content_hash": "d96083e0aae80cfbf5cc2c261b66cf0c0499430c970ebc15dc5fbce60e751905"
           }
         ],
         "docs/project-context.md": [
@@ -7361,22 +7546,29 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "a3451d184b2557f183c526c43da7f89fa77adf3faad64f8263dfa28d9cc9984c"
+          },
+          {
+            "heading": "## AD-26 — Transactional MySQL Matrix store (PI-MATRIX-MYSQL-20260908)",
+            "content_hash": "dc7fb115186d228b0937d36e58c003da387aba58e8790282ee1caf7dcb884900"
           }
         ],
         "docs/dod-evals.md": [
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "93bb80574d83963b109874e09ecf66dce0d1fc437cebf3b05ab9b6636609af30"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Durable-store completion correction",
+            "content_hash": "dcb402e4bd9cb12bd0cd7a188a9309fac982f5da727c9f9ff5a3821ef027cbe2"
           }
         ]
       },
-      "content_hash": "89153ffedc2eee83ca8cfdd9a97d41eb8ecdbf8c9b2b0aa085126f3bac3e5ad5",
+      "content_hash": "616a54d4fdd2000339055eba0cdf48b2316323d65300948f8a3884b50396b51c",
       "validation": {
         "result": "passed",
         "working_language": "uk",
-        "reviewed_at": "2026-09-07T21:43:37.845Z",
-        "review_scope": "Цільове узгодження PI-CONSENSUS-20260908 за перечитаними змінами й зазначеними джерелами; незмінні попередні рішення збережено.",
-        "evidence_scope": "Перевірка SDD-визначень, не запуск продукту."
+        "reviewed_at": "2026-09-08T19:27:42.102Z",
+        "review_scope": "Scoped English PI-MATRIX-MYSQL-20260908 correction; existing Ukrainian document and historical decisions retained. Definition validation only; no product test claim."
       },
       "security_coverage": {
         "NFR-005": {
@@ -7428,7 +7620,8 @@
       "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
       "source_usage": {
         "docs/prd.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction"
         ],
         "docs/project-context.md": [
           "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
@@ -7452,10 +7645,12 @@
           "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
         ],
         "docs/architecture.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## AD-26 — Transactional MySQL Matrix store (PI-MATRIX-MYSQL-20260908)"
         ],
         "docs/dod-evals.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Durable-store completion correction"
         ]
       },
       "traceability": {
@@ -8366,7 +8561,7 @@
             "required": true,
             "definition_ref": {
               "path": "docs/qa-checklist.md",
-              "heading": "## Interaction And State-Change Checks"
+              "heading": "## PI-MATRIX-MYSQL-20260908 — Target-store checks"
             }
           },
           {
@@ -8384,7 +8579,7 @@
             "required": true,
             "definition_ref": {
               "path": "docs/qa-checklist.md",
-              "heading": "## Interaction And State-Change Checks"
+              "heading": "## PI-MATRIX-MYSQL-20260908 — Target-store checks"
             }
           },
           {
@@ -8402,7 +8597,7 @@
             "required": true,
             "definition_ref": {
               "path": "docs/qa-checklist.md",
-              "heading": "## Interaction And State-Change Checks"
+              "heading": "## PI-MATRIX-MYSQL-20260908 — Target-store checks"
             }
           },
           {
@@ -8411,7 +8606,7 @@
             "required": true,
             "definition_ref": {
               "path": "docs/qa-checklist.md",
-              "heading": "## Interaction And State-Change Checks"
+              "heading": "## PI-MATRIX-MYSQL-20260908 — Target-store checks"
             }
           },
           {
@@ -11490,7 +11685,7 @@
     "development-plan": {
       "path": "docs/development-plan.md",
       "owner_skill": "to-development-plan",
-      "owner_invocation_id": "development-plan-consensus-20260908",
+      "owner_invocation_id": "development-plan-matrix-mysql-20260908",
       "declared_output_set": [
         "docs/development-plan.md"
       ],
@@ -11529,6 +11724,10 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "2f33296f7f5585fb62d8bc6984b0a4778bd1fc166c3a03d627d089bc0793687a"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction",
+            "content_hash": "d96083e0aae80cfbf5cc2c261b66cf0c0499430c970ebc15dc5fbce60e751905"
           }
         ],
         "docs/project-context.md": [
@@ -11547,6 +11746,10 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "f29f85ab0a6363aadb6d4751ab659a54971216b8cca2869c81eda24b7e88f649"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Storage correction authority",
+            "content_hash": "5ae34defd363b629424655a240c113a421005800632c33baec51bf8b25376e32"
           }
         ],
         "docs/user-journey.md": [
@@ -11577,28 +11780,39 @@
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "a3451d184b2557f183c526c43da7f89fa77adf3faad64f8263dfa28d9cc9984c"
+          },
+          {
+            "heading": "## AD-26 — Transactional MySQL Matrix store (PI-MATRIX-MYSQL-20260908)",
+            "content_hash": "dc7fb115186d228b0937d36e58c003da387aba58e8790282ee1caf7dcb884900"
           }
         ],
         "docs/dod-evals.md": [
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "93bb80574d83963b109874e09ecf66dce0d1fc437cebf3b05ab9b6636609af30"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Durable-store completion correction",
+            "content_hash": "dcb402e4bd9cb12bd0cd7a188a9309fac982f5da727c9f9ff5a3821ef027cbe2"
           }
         ],
         "docs/qa-checklist.md": [
           {
             "heading": "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
             "content_hash": "32b016c273f51ee1aaec13c2bccce6c1e41d7a89919b505f663d0a01f5d62d22"
+          },
+          {
+            "heading": "## PI-MATRIX-MYSQL-20260908 — Target-store checks",
+            "content_hash": "558da0f3986dfce165e596266c572cac462f80b9f937901ce355174423f59ef2"
           }
         ]
       },
-      "content_hash": "271cc18ea9631b7846e687f2228a55e76058b5ebcfe49ef834a15038cc07164f",
+      "content_hash": "cc9025beb72c6aed349246995126723ae235f9af84dfa951994689c258fbf144",
       "validation": {
         "result": "passed",
         "working_language": "uk",
-        "reviewed_at": "2026-09-07T21:46:31.690Z",
-        "review_scope": "Цільове узгодження PI-CONSENSUS-20260908 за перечитаними змінами й зазначеними джерелами; незмінні попередні рішення збережено.",
-        "evidence_scope": "Перевірка SDD-визначень, не запуск продукту."
+        "reviewed_at": "2026-09-08T19:28:51.326Z",
+        "review_scope": "Scoped English PI-MATRIX-MYSQL-20260908 correction; existing Ukrainian document and historical decisions retained. Definition validation only; no product test claim."
       },
       "security_coverage": {
         "NFR-005": {
@@ -11652,7 +11866,8 @@
       "prior_revalidation_reason": "Upstream provider-settings requirements changed; owner reconciliation not yet dispatched because the PRD MFA decision blocks dependency-order advancement. Prior hashes/invocation retained as history, not refreshed acceptance.",
       "source_usage": {
         "docs/prd.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Continuity and storage security correction"
         ],
         "docs/project-context.md": [
           "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
@@ -11661,7 +11876,8 @@
           "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
         ],
         "docs/guardrails.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Storage correction authority"
         ],
         "docs/user-journey.md": [
           "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
@@ -11676,13 +11892,16 @@
           "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
         ],
         "docs/architecture.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## AD-26 — Transactional MySQL Matrix store (PI-MATRIX-MYSQL-20260908)"
         ],
         "docs/dod-evals.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Durable-store completion correction"
         ],
         "docs/qa-checklist.md": [
-          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix"
+          "## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix",
+          "## PI-MATRIX-MYSQL-20260908 — Target-store checks"
         ]
       },
       "traceability": {
@@ -11776,6 +11995,15 @@
             "definition_ref": {
               "path": "docs/development-plan.md",
               "heading": "### U-09 — Archive, costs, GoDaddy deployment security and release evidence"
+            }
+          },
+          {
+            "id": "U-06-C1",
+            "kind": "unit",
+            "required": true,
+            "definition_ref": {
+              "path": "docs/development-plan.md",
+              "heading": "## U-06-C1 — Durable Matrix storage and unattended operation"
             }
           }
         ],
@@ -13795,6 +14023,114 @@
               "path": "docs/development-plan.md",
               "heading": "### Точне unit → clause трасування"
             }
+          },
+          {
+            "from": "U-06-C1",
+            "to": "FR-052.a",
+            "relation": "implements",
+            "definition_ref": {
+              "path": "docs/development-plan.md",
+              "heading": "## U-06-C1 — Durable Matrix storage and unattended operation"
+            }
+          },
+          {
+            "from": "U-06-C1",
+            "to": "FR-052.b",
+            "relation": "implements",
+            "definition_ref": {
+              "path": "docs/development-plan.md",
+              "heading": "## U-06-C1 — Durable Matrix storage and unattended operation"
+            }
+          },
+          {
+            "from": "U-06-C1",
+            "to": "FR-052.c",
+            "relation": "implements",
+            "definition_ref": {
+              "path": "docs/development-plan.md",
+              "heading": "## U-06-C1 — Durable Matrix storage and unattended operation"
+            }
+          },
+          {
+            "from": "U-06-C1",
+            "to": "FR-052.d",
+            "relation": "implements",
+            "definition_ref": {
+              "path": "docs/development-plan.md",
+              "heading": "## U-06-C1 — Durable Matrix storage and unattended operation"
+            }
+          },
+          {
+            "from": "U-06-C1",
+            "to": "NFR-005",
+            "relation": "implements",
+            "definition_ref": {
+              "path": "docs/development-plan.md",
+              "heading": "## U-06-C1 — Durable Matrix storage and unattended operation"
+            }
+          },
+          {
+            "from": "U-06-C1",
+            "to": "NFR-006",
+            "relation": "implements",
+            "definition_ref": {
+              "path": "docs/development-plan.md",
+              "heading": "## U-06-C1 — Durable Matrix storage and unattended operation"
+            }
+          },
+          {
+            "from": "U-06-C1",
+            "to": "NFR-007",
+            "relation": "implements",
+            "definition_ref": {
+              "path": "docs/development-plan.md",
+              "heading": "## U-06-C1 — Durable Matrix storage and unattended operation"
+            }
+          },
+          {
+            "from": "U-06-C1",
+            "to": "NFR-008",
+            "relation": "implements",
+            "definition_ref": {
+              "path": "docs/development-plan.md",
+              "heading": "## U-06-C1 — Durable Matrix storage and unattended operation"
+            }
+          },
+          {
+            "from": "U-06-C1",
+            "to": "NFR-009",
+            "relation": "implements",
+            "definition_ref": {
+              "path": "docs/development-plan.md",
+              "heading": "## U-06-C1 — Durable Matrix storage and unattended operation"
+            }
+          },
+          {
+            "from": "U-06-C1",
+            "to": "NFR-010",
+            "relation": "implements",
+            "definition_ref": {
+              "path": "docs/development-plan.md",
+              "heading": "## U-06-C1 — Durable Matrix storage and unattended operation"
+            }
+          },
+          {
+            "from": "U-06-C1",
+            "to": "NFR-012",
+            "relation": "implements",
+            "definition_ref": {
+              "path": "docs/development-plan.md",
+              "heading": "## U-06-C1 — Durable Matrix storage and unattended operation"
+            }
+          },
+          {
+            "from": "U-06-C1",
+            "to": "NFR-019",
+            "relation": "implements",
+            "definition_ref": {
+              "path": "docs/development-plan.md",
+              "heading": "## U-06-C1 — Durable Matrix storage and unattended operation"
+            }
           }
         ]
       },
@@ -14727,8 +15063,8 @@
     "definition_status": "prepared",
     "release_readiness": "blocked",
     "source_hashes": {
-      "docs/qa-checklist.md": "89153ffedc2eee83ca8cfdd9a97d41eb8ecdbf8c9b2b0aa085126f3bac3e5ad5",
-      "docs/dod-evals.md": "86408c26819e2692027e2b1957a1d22f38f9085891906c3304f212d6136afae8"
+      "docs/qa-checklist.md": "616a54d4fdd2000339055eba0cdf48b2316323d65300948f8a3884b50396b51c",
+      "docs/dod-evals.md": "e9190670d1fc9ed77ecfff5f6be24a1af0a644fe9ade14fc69b1ee83519a953e"
     },
     "gates": [
       {
@@ -17938,7 +18274,7 @@
         "gate_id": "matrix_e2ee_room_and_platform_isolation",
         "definition_ref": {
           "path": "docs/qa-checklist.md",
-          "heading": "## Interaction And State-Change Checks"
+          "heading": "## PI-MATRIX-MYSQL-20260908 — Target-store checks"
         },
         "definition_status": "prepared",
         "execution_status": "not_run",
@@ -17982,7 +18318,7 @@
         "gate_id": "matrix_e2ee_room_and_platform_isolation",
         "definition_ref": {
           "path": "docs/qa-checklist.md",
-          "heading": "## Interaction And State-Change Checks"
+          "heading": "## PI-MATRIX-MYSQL-20260908 — Target-store checks"
         },
         "definition_status": "prepared",
         "execution_status": "not_run",
@@ -18026,7 +18362,7 @@
         "gate_id": "matrix_e2ee_room_and_platform_isolation",
         "definition_ref": {
           "path": "docs/qa-checklist.md",
-          "heading": "## Interaction And State-Change Checks"
+          "heading": "## PI-MATRIX-MYSQL-20260908 — Target-store checks"
         },
         "definition_status": "prepared",
         "execution_status": "not_run",
@@ -18048,7 +18384,7 @@
         "gate_id": "matrix_e2ee_room_and_platform_isolation",
         "definition_ref": {
           "path": "docs/qa-checklist.md",
-          "heading": "## Interaction And State-Change Checks"
+          "heading": "## PI-MATRIX-MYSQL-20260908 — Target-store checks"
         },
         "definition_status": "prepared",
         "execution_status": "not_run",
@@ -19179,119 +19515,135 @@
     ]
   },
   "implementation_gate": {
-    "state": "authorized_for_phase3",
-    "development_plan_hash": "271cc18ea9631b7846e687f2228a55e76058b5ebcfe49ef834a15038cc07164f",
+    "state": "awaiting_implementation_prompt",
+    "development_plan_hash": "cc9025beb72c6aed349246995126723ae235f9af84dfa951994689c258fbf144",
     "product_scope_hash": "defc5e24f0dd91be42b984888b157137f4f1ed361459e70f42b832e18c957bd4",
     "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
-    "awaiting_at": "2026-09-07T21:48:15.061Z",
-    "prompt_id": "implementation-consensus-20260908-01",
-    "prompt_received_at": "2026-09-07T22:05:54.903Z",
-    "released_at": "2026-09-07T22:05:54.983Z",
-    "reason": "New explicit implementation instruction after the unchanged plan pause; exact plan/scope/baseline revalidated. Local implementation only; live external changes excluded.",
+    "awaiting_at": "2026-09-08T19:29:01.373Z",
+    "prompt_id": null,
+    "prompt_received_at": null,
+    "released_at": null,
+    "reason": "Current U-06-C1 correction plan validated. The current user request preceded this formal-plan pause; a later explicit implementation message is required by the installed pipeline. No production work or new live authorization is recorded.",
     "supersedes": {
-      "state": "awaiting_implementation_prompt",
-      "development_plan_hash": "271cc18ea9631b7846e687f2228a55e76058b5ebcfe49ef834a15038cc07164f",
-      "product_scope_hash": "defc5e24f0dd91be42b984888b157137f4f1ed361459e70f42b832e18c957bd4",
-      "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
-      "awaiting_at": "2026-09-07T21:48:15.061Z",
-      "prompt_id": null,
-      "prompt_received_at": null,
-      "released_at": null,
-      "reason": "PI-CONSENSUS-20260908 reconciled and definition checks passed. Separate later implementation prompt required; this run changes SDD only, not production.",
+      "state": "invalidated",
+      "reason": "PI-MATRIX-MYSQL-20260908 changes storage trust boundaries and the formal development plan; previous plan authorization is retained but cannot authorize this revision.",
+      "invalidated_at": "2026-09-08T19:19:37.525Z",
       "supersedes": {
-        "state": "invalidated",
-        "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
+        "state": "authorized_for_phase3",
+        "development_plan_hash": "271cc18ea9631b7846e687f2228a55e76058b5ebcfe49ef834a15038cc07164f",
+        "product_scope_hash": "defc5e24f0dd91be42b984888b157137f4f1ed361459e70f42b832e18c957bd4",
         "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
-        "awaiting_at": "2026-09-05T23:38:24.056Z",
-        "prompt_id": "implementation-matrix-connection-20260906-01",
-        "prompt_received_at": "2026-09-06T12:10:02Z",
-        "released_at": "2026-09-06T12:10:02Z",
-        "prompt_receipt": {
-          "path": "forge/implementation-prompt-matrix-connection-20260906.json",
-          "content_hash": "70634797eefe54e94ce7497da2c86ccff5fa054a6d532bb8a949ade701cbd24e"
-        },
-        "reason": "PI-CONSENSUS-20260908 змінює ролі, делегування, мову, консенсус і автономний Matrix; попередній prompt не дозволяє реалізацію нового плану.",
+        "awaiting_at": "2026-09-07T21:48:15.061Z",
+        "prompt_id": "implementation-consensus-20260908-01",
+        "prompt_received_at": "2026-09-07T22:05:54.903Z",
+        "released_at": "2026-09-07T22:05:54.983Z",
+        "reason": "New explicit implementation instruction after the unchanged plan pause; exact plan/scope/baseline revalidated. Local implementation only; live external changes excluded.",
         "supersedes": {
-          "state": "authorized_for_phase3",
-          "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
+          "state": "awaiting_implementation_prompt",
+          "development_plan_hash": "271cc18ea9631b7846e687f2228a55e76058b5ebcfe49ef834a15038cc07164f",
+          "product_scope_hash": "defc5e24f0dd91be42b984888b157137f4f1ed361459e70f42b832e18c957bd4",
           "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
-          "awaiting_at": "2026-09-05T23:38:24.056Z",
-          "prompt_id": "implementation-matrix-connection-20260906-01",
-          "prompt_received_at": "2026-09-06T12:10:02Z",
-          "released_at": "2026-09-06T12:10:02Z",
-          "prompt_receipt": {
-            "path": "forge/implementation-prompt-matrix-connection-20260906.json",
-            "content_hash": "70634797eefe54e94ce7497da2c86ccff5fa054a6d532bb8a949ade701cbd24e"
-          },
-          "reason": "Explicit yes to the retained Matrix connection implementation question; unchanged plan and baseline. Local code and credential-free tests only; publication and production effects excluded.",
+          "awaiting_at": "2026-09-07T21:48:15.061Z",
+          "prompt_id": null,
+          "prompt_received_at": null,
+          "released_at": null,
+          "reason": "PI-CONSENSUS-20260908 reconciled and definition checks passed. Separate later implementation prompt required; this run changes SDD only, not production.",
           "supersedes": {
-            "state": "authorized_for_phase3",
+            "state": "invalidated",
             "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
             "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
             "awaiting_at": "2026-09-05T23:38:24.056Z",
-            "reason": "Explicit later implementation prompt matches unchanged current plan and baseline; scoped local implementation only.",
+            "prompt_id": "implementation-matrix-connection-20260906-01",
+            "prompt_received_at": "2026-09-06T12:10:02Z",
+            "released_at": "2026-09-06T12:10:02Z",
+            "prompt_receipt": {
+              "path": "forge/implementation-prompt-matrix-connection-20260906.json",
+              "content_hash": "70634797eefe54e94ce7497da2c86ccff5fa054a6d532bb8a949ade701cbd24e"
+            },
+            "reason": "PI-CONSENSUS-20260908 змінює ролі, делегування, мову, консенсус і автономний Matrix; попередній prompt не дозволяє реалізацію нового плану.",
             "supersedes": {
-              "state": "awaiting-implementation-prompt",
+              "state": "authorized_for_phase3",
               "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
               "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
               "awaiting_at": "2026-09-05T23:38:24.056Z",
-              "reason": "Critic-provider scope was reconciled across owned SDD artifacts. A separate later explicit implementation prompt is required for this new plan; earlier Google/U-06 authorization is preserved but does not release this scope.",
+              "prompt_id": "implementation-matrix-connection-20260906-01",
+              "prompt_received_at": "2026-09-06T12:10:02Z",
+              "released_at": "2026-09-06T12:10:02Z",
+              "prompt_receipt": {
+                "path": "forge/implementation-prompt-matrix-connection-20260906.json",
+                "content_hash": "70634797eefe54e94ce7497da2c86ccff5fa054a6d532bb8a949ade701cbd24e"
+              },
+              "reason": "Explicit yes to the retained Matrix connection implementation question; unchanged plan and baseline. Local code and credential-free tests only; publication and production effects excluded.",
               "supersedes": {
-                "state": "invalidated",
-                "reason": "PI-CRITIC-20260906 changes the selected critic provider and readiness/isolation contracts; old authorization does not cover the revised plan.",
-                "invalidated_at": "2026-09-05T23:12:04.223Z",
+                "state": "authorized_for_phase3",
+                "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
+                "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+                "awaiting_at": "2026-09-05T23:38:24.056Z",
+                "reason": "Explicit later implementation prompt matches unchanged current plan and baseline; scoped local implementation only.",
                 "supersedes": {
-                  "state": "authorized_for_phase3",
-                  "development_plan_hash": "f17072dc044dc12ee20039a78f856801df5121aef19922966fece2eebf17d15a",
+                  "state": "awaiting-implementation-prompt",
+                  "development_plan_hash": "df4ce95ad4bbc99659cfc25abb1d11880f83ecbe43abfcba6e2afc9aa77be7ee",
                   "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
-                  "awaiting_at": "2026-09-05T17:35:39.845Z",
-                  "prompt_id": "implementation-u04-google-20260905-01",
-                  "prompt_received_at": "2026-09-05T17:38:07.954Z",
-                  "released_at": "2026-09-05T17:40:02.645Z",
-                  "prompt_receipt": {
-                    "path": "forge/implementation-prompt-u04-google-20260905.json",
-                    "content_hash": "9dcd385d98a55682f1b58c0bce4ae3cc06a465db5b0774ca04af49c206ee2b18"
-                  },
-                  "reason": "Explicit development request after completed-plan pause, revalidated unchanged sources/baseline. Scoped U-04 host execution only; no new external/high-risk authority.",
+                  "awaiting_at": "2026-09-05T23:38:24.056Z",
+                  "reason": "Critic-provider scope was reconciled across owned SDD artifacts. A separate later explicit implementation prompt is required for this new plan; earlier Google/U-06 authorization is preserved but does not release this scope.",
                   "supersedes": {
-                    "state": "awaiting-implementation-prompt",
-                    "development_plan_hash": "f17072dc044dc12ee20039a78f856801df5121aef19922966fece2eebf17d15a",
-                    "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
-                    "awaiting_at": "2026-09-05T17:35:39.845Z",
-                    "reason": "Current SDD migration authorizes documentation only. A separate later explicit implementation prompt must bind this plan and baseline. Prior U-06 authorization is invalidated and retained below.",
+                    "state": "invalidated",
+                    "reason": "PI-CRITIC-20260906 changes the selected critic provider and readiness/isolation contracts; old authorization does not cover the revised plan.",
+                    "invalidated_at": "2026-09-05T23:12:04.223Z",
                     "supersedes": {
-                      "state": "invalidated",
-                      "development_plan_hash": "a38919e0a84c61b081661227bd5ee936744bb9781dba2286ecc25d7d7e3974ca",
+                      "state": "authorized_for_phase3",
+                      "development_plan_hash": "f17072dc044dc12ee20039a78f856801df5121aef19922966fece2eebf17d15a",
                       "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
-                      "prompt_id": "implementation-prompt-u06-20260904-go-01",
-                      "awaiting_at": "2026-09-04T20:55:01+03:00",
-                      "prompt_received_at": "2026-09-04T21:43:42+03:00",
-                      "released_at": "2026-09-04T22:55:31+03:00",
+                      "awaiting_at": "2026-09-05T17:35:39.845Z",
+                      "prompt_id": "implementation-u04-google-20260905-01",
+                      "prompt_received_at": "2026-09-05T17:38:07.954Z",
+                      "released_at": "2026-09-05T17:40:02.645Z",
                       "prompt_receipt": {
-                        "path": "forge/implementation-prompt-u06-20260904.json",
-                        "content_hash": "ec8a4a216b37c7edc6e37d921f102c80714cf8224e884e25b85a9de8e341441c"
+                        "path": "forge/implementation-prompt-u04-google-20260905.json",
+                        "content_hash": "9dcd385d98a55682f1b58c0bce4ae3cc06a465db5b0774ca04af49c206ee2b18"
                       },
-                      "reason": "Exact-plan provenance contradicted by retained original events; see forge/authorization-correction-20260905.json. This historical receipt cannot authorize a later plan. Current explicit remediation remains in scope; no next-unit authorization is inferred.",
-                      "correction_ref": "forge/authorization-correction-20260905.json"
+                      "reason": "Explicit development request after completed-plan pause, revalidated unchanged sources/baseline. Scoped U-04 host execution only; no new external/high-risk authority.",
+                      "supersedes": {
+                        "state": "awaiting-implementation-prompt",
+                        "development_plan_hash": "f17072dc044dc12ee20039a78f856801df5121aef19922966fece2eebf17d15a",
+                        "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+                        "awaiting_at": "2026-09-05T17:35:39.845Z",
+                        "reason": "Current SDD migration authorizes documentation only. A separate later explicit implementation prompt must bind this plan and baseline. Prior U-06 authorization is invalidated and retained below.",
+                        "supersedes": {
+                          "state": "invalidated",
+                          "development_plan_hash": "a38919e0a84c61b081661227bd5ee936744bb9781dba2286ecc25d7d7e3974ca",
+                          "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+                          "prompt_id": "implementation-prompt-u06-20260904-go-01",
+                          "awaiting_at": "2026-09-04T20:55:01+03:00",
+                          "prompt_received_at": "2026-09-04T21:43:42+03:00",
+                          "released_at": "2026-09-04T22:55:31+03:00",
+                          "prompt_receipt": {
+                            "path": "forge/implementation-prompt-u06-20260904.json",
+                            "content_hash": "ec8a4a216b37c7edc6e37d921f102c80714cf8224e884e25b85a9de8e341441c"
+                          },
+                          "reason": "Exact-plan provenance contradicted by retained original events; see forge/authorization-correction-20260905.json. This historical receipt cannot authorize a later plan. Current explicit remediation remains in scope; no next-unit authorization is inferred.",
+                          "correction_ref": "forge/authorization-correction-20260905.json"
+                        }
+                      }
                     }
                   }
+                },
+                "prompt_id": "implementation-critic-router-20260906-01",
+                "prompt_received_at": "2026-09-05T23:44:05.744Z",
+                "released_at": "2026-09-05T23:44:05.920Z",
+                "prompt_receipt": {
+                  "path": "forge/implementation-prompt-critic-router-20260906.json",
+                  "content_hash": "51a226066be61255dac63f1fd595434f3acd87dbbae5396ff985f186f639b534"
                 }
               }
-            },
-            "prompt_id": "implementation-critic-router-20260906-01",
-            "prompt_received_at": "2026-09-05T23:44:05.744Z",
-            "released_at": "2026-09-05T23:44:05.920Z",
-            "prompt_receipt": {
-              "path": "forge/implementation-prompt-critic-router-20260906.json",
-              "content_hash": "51a226066be61255dac63f1fd595434f3acd87dbbae5396ff985f186f639b534"
             }
           }
+        },
+        "prompt_receipt": {
+          "path": "forge/implementation-prompt-consensus-20260908.json",
+          "content_hash": "1ab86059bbbff0bd8b4385082082d80714aa95ed2d09553cce77d896b1f6fcaf"
         }
       }
-    },
-    "prompt_receipt": {
-      "path": "forge/implementation-prompt-consensus-20260908.json",
-      "content_hash": "1ab86059bbbff0bd8b4385082082d80714aa95ed2d09553cce77d896b1f6fcaf"
     }
   },
   "prototype_promotions": [],
@@ -19371,13 +19723,22 @@
         "path": "forge/runs/U-08/adaptive-consultation-20260908/published-followup.md",
         "content_hash": "fdea6d660e12964ffe8698fc739876e4dae2828deff5037de9ded44135240493"
       },
-      "local_tests": { "node": "22.16.0", "total": 893, "passed": 893, "failed": 0 },
+      "local_tests": {
+        "node": "22.16.0",
+        "total": 893,
+        "passed": 893,
+        "failed": 0
+      },
       "live_matrix_readiness": "blocked_store_binding_missing_private_root_missing",
       "pusher_registration": "not_performed",
       "support_request": "draft_not_sent",
       "accepted_units": [],
       "required_next": "Provider storage diagnosis and preservation of original identity; dedicated wake setup and actual Matrix acceptance remain outstanding.",
-      "limits": ["Earlier local-only records remain historical and unchanged.", "Live metadata establishes current path absence, not permanent data loss or provider root cause.", "Mac lock prevented the last Published dashboard hash recheck; final diagnostic behavior was observed live."]
+      "limits": [
+        "Earlier local-only records remain historical and unchanged.",
+        "Live metadata establishes current path absence, not permanent data loss or provider root cause.",
+        "Mac lock prevented the last Published dashboard hash recheck; final diagnostic behavior was observed live."
+      ]
     },
     "status": "adaptive_consultation_published_original_store_blocked",
     "owner_invocation_id": "implementation-matrix-connection-20260906-01",
@@ -19389,7 +19750,14 @@
       "report_hash": "f40384c3f668dc855e0a932dee691238cff5dc3336fb7b8182ff6573bbcd5b54",
       "recorded_at": "2026-09-06T12:49:35Z",
       "scope": "Explicitly authorized cross-unit Matrix intake, consent, media, bounded consultation and Critic-reviewed durable final-delivery connection. No new unit acceptance; previous partial-unit evidence remains partial.",
-      "limits": ["No Published GoDaddy end-to-end test, real MySQL concurrency/restart test, live model call or actual Matrix delivery/read receipt was run in this change. Local final-delivery intent is not live receipt proof.","Scanned/image-only PDFs, OCR, charts requiring visual PDF interpretation and protected/active PDFs are unsupported and rejected. Text-layer extraction is not full ordinary-PDF acceptance.","Per-document owner confirmation and heuristic secret detection cannot prove arbitrary image/text data contains no sensitive information. Full sensitive-document handling acceptance is not claimed.","The 45-second system waiting notice is not a guaranteed first specialist reply within 30 seconds or a 90-second automatic specialist replacement protocol. Full timing and usability gates remain unverified.","Expired/unreadable attachment recovery requires New task and resending safe source files; no silent refetch, indefinite media retention or automatic replacement.","Historical archive, JIT credential, private-path artifact and broader release evidence gaps remain outside this local slice. No unit is newly accepted."]
+      "limits": [
+        "No Published GoDaddy end-to-end test, real MySQL concurrency/restart test, live model call or actual Matrix delivery/read receipt was run in this change. Local final-delivery intent is not live receipt proof.",
+        "Scanned/image-only PDFs, OCR, charts requiring visual PDF interpretation and protected/active PDFs are unsupported and rejected. Text-layer extraction is not full ordinary-PDF acceptance.",
+        "Per-document owner confirmation and heuristic secret detection cannot prove arbitrary image/text data contains no sensitive information. Full sensitive-document handling acceptance is not claimed.",
+        "The 45-second system waiting notice is not a guaranteed first specialist reply within 30 seconds or a 90-second automatic specialist replacement protocol. Full timing and usability gates remain unverified.",
+        "Expired/unreadable attachment recovery requires New task and resending safe source files; no silent refetch, indefinite media retention or automatic replacement.",
+        "Historical archive, JIT credential, private-path artifact and broader release evidence gaps remain outside this local slice. No unit is newly accepted."
+      ]
     },
     "local_verification": {
       "node": {
@@ -19656,13 +20024,23 @@
         "full_check_status": "not_passed_pending_required_real_environment_evidence",
         "evidence_ref": "forge/runs/U-04/critic-router-20260906/verification.json"
       }
-    ]
+    ],
+    "matrix_mysql_correction": {
+      "unit_id": "U-06-C1",
+      "status": "not_started",
+      "definition_ref": {
+        "path": "docs/development-plan.md",
+        "heading": "## U-06-C1 — Durable Matrix storage and unattended operation"
+      },
+      "note": "Prepared definitions; unchanged prior implementation evidence is historical for this replacement. No production source, database mutation or deployment in this SDD pass."
+    }
   },
   "affected_feature_units": [
     "U-05",
     "U-06",
     "U-08",
-    "U-09"
+    "U-09",
+    "U-06-C1"
   ],
   "input_requests": [
     {
@@ -19708,7 +20086,7 @@
     }
   ],
   "next_ready_nodes": [],
-  "pause_reason": null,
+  "pause_reason": "Current U-06-C1 correction plan validated. The current user request preceded this formal-plan pause; a later explicit implementation message is required by the installed pipeline. No production work or new live authorization is recorded.",
   "matrix_production_setup_progress": {
     "authorization_ref": "forge/matrix-production-setup-authorization-20260906.json",
     "evidence_ref": "forge/runs/U-08/matrix-production-setup-20260906/progress.md",
@@ -19809,12 +20187,21 @@
       "reason": "store_binding_unavailable",
       "consultation_working": false,
       "consultation_blocked": true,
-      "consultation_failure": { "stage": "readiness", "code": "unknown" },
+      "consultation_failure": {
+        "stage": "readiness",
+        "code": "unknown"
+      },
       "recorded_at": "2026-09-07T20:46:13Z",
       "readiness_evidence_scope": "Fresh protected Published status in Chrome after fcbe5462 publication; schema and collation fields below retain earlier historical checks and were not re-executed in this repair.",
       "missing_tables_observed_in_read_only_ui": [],
-      "created_tables_confirmed": ["personal_consultant_matrix_outbox", "personal_consultant_matrix_ingress"],
-      "state_key_collations_observed": { "state_namespace": "utf8mb4_bin", "state_key": "utf8mb4_bin" },
+      "created_tables_confirmed": [
+        "personal_consultant_matrix_outbox",
+        "personal_consultant_matrix_ingress"
+      ],
+      "state_key_collations_observed": {
+        "state_namespace": "utf8mb4_bin",
+        "state_key": "utf8mb4_bin"
+      },
       "required_state_key_collation": "utf8mb4_bin",
       "existing_state_table_altered": true,
       "alter_scope": "Only state_namespace and state_key collation; utf8mb4 and existing records preserved",
@@ -20165,6 +20552,256 @@
           "started_at_basis": "Implementation kickoff observed in immutable prompt receipt before source edits; this operational index was updated during the run, not pre-registered as a separate promotion event."
         }
       ]
+    }
+  ],
+  "reconciliation_history": [
+    {
+      "artifact": "product-idea",
+      "owner_invocation_id": "product-idea-consensus-20260908",
+      "content_hash": "a0f72bdfad571009ec4ec8f62aa0bbd4606ed29e1c29ebe6ed466800f7c46730",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "reviewed_at": "2026-09-07T21:21:23.105Z",
+        "review_scope": "Повний задум прочитано; сім прямих змін Власника збережено з межами. Перевірка документа, не продукту."
+      },
+      "recorded_at": "2026-09-08T19:19:37.294Z"
+    },
+    {
+      "artifact": "prd",
+      "owner_invocation_id": "prd-consensus-20260908",
+      "content_hash": "91a81040cc165f2bfef673b6f417ed21ea4ab965eed70f44398314d29445669e",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "reviewed_at": "2026-09-07T21:24:38.041Z",
+        "review_scope": "Цільове узгодження PI-CONSENSUS-20260908 за перечитаними змінами й зазначеними джерелами; незмінні попередні рішення збережено.",
+        "evidence_scope": "Перевірка SDD-визначень, не запуск продукту."
+      },
+      "recorded_at": "2026-09-08T19:20:15.169Z"
+    },
+    {
+      "artifact": "prd",
+      "owner_invocation_id": "prd-matrix-mysql-20260908",
+      "content_hash": "6b4184812649a77d740688411aa3b943badf89c523c4f4eb64581670dfa570db",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "reviewed_at": "2026-09-08T19:20:15.169Z",
+        "review_scope": "Scoped English PI-MATRIX-MYSQL-20260908 correction; existing Ukrainian document and historical decisions retained. Definition validation only; no product test claim."
+      },
+      "recorded_at": "2026-09-08T19:20:30.933Z"
+    },
+    {
+      "artifact": "project-context",
+      "owner_invocation_id": "project-context-bundle-consensus-20260908",
+      "content_hash": "0de3d4a9ba3036657786ad29410bbdadef1c25a3db1dae1efbde01b9ff09fac3",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "reviewed_at": "2026-09-07T21:26:19.022Z",
+        "review_scope": "Цільове узгодження PI-CONSENSUS-20260908 за перечитаними змінами й зазначеними джерелами; незмінні попередні рішення збережено.",
+        "evidence_scope": "Перевірка SDD-визначень, не запуск продукту."
+      },
+      "recorded_at": "2026-09-08T19:21:02.297Z"
+    },
+    {
+      "artifact": "canonical-terms",
+      "owner_invocation_id": "project-context-bundle-consensus-20260908",
+      "content_hash": "98a18603fa5f2532db3249396373c1789df1ee28842f43ce1d4a5743b4a56ed0",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "reviewed_at": "2026-09-07T21:26:19.022Z",
+        "review_scope": "Цільове узгодження PI-CONSENSUS-20260908 за перечитаними змінами й зазначеними джерелами; незмінні попередні рішення збережено.",
+        "evidence_scope": "Перевірка SDD-визначень, не запуск продукту."
+      },
+      "recorded_at": "2026-09-08T19:21:02.543Z"
+    },
+    {
+      "artifact": "guardrails",
+      "owner_invocation_id": "guardrails-consensus-20260908",
+      "content_hash": "72b7e9301e76cc1d27a059534d1d3fe9987a697ebf43e6154b6e8320604e14ad",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "reviewed_at": "2026-09-07T21:32:01.488Z",
+        "review_scope": "Цільове узгодження PI-CONSENSUS-20260908 за перечитаними змінами й зазначеними джерелами; незмінні попередні рішення збережено.",
+        "evidence_scope": "Перевірка SDD-визначень, не запуск продукту."
+      },
+      "recorded_at": "2026-09-08T19:21:27.104Z"
+    },
+    {
+      "artifact": "architecture",
+      "owner_invocation_id": "architecture-consensus-20260908",
+      "content_hash": "040234260b27a1ef10ebc71d00c44504775e8d4217e68b6d7004897efcb2feac",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "reviewed_at": "2026-09-07T21:49:45.587Z",
+        "review_scope": "Цільове узгодження PI-CONSENSUS-20260908 за перечитаними змінами й зазначеними джерелами; незмінні попередні рішення збережено.",
+        "evidence_scope": "Перевірка SDD-визначень, не запуск продукту."
+      },
+      "recorded_at": "2026-09-08T19:23:48.274Z"
+    },
+    {
+      "artifact": "dod-evals",
+      "owner_invocation_id": "dod-evals-consensus-20260908",
+      "content_hash": "86408c26819e2692027e2b1957a1d22f38f9085891906c3304f212d6136afae8",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "reviewed_at": "2026-09-07T21:38:50.145Z",
+        "review_scope": "Цільове узгодження PI-CONSENSUS-20260908 за перечитаними змінами й зазначеними джерелами; незмінні попередні рішення збережено.",
+        "evidence_scope": "Перевірка SDD-визначень, не запуск продукту."
+      },
+      "recorded_at": "2026-09-08T19:24:38.088Z"
+    },
+    {
+      "artifact": "qa-checklist",
+      "owner_invocation_id": "qa-checklist-consensus-20260908",
+      "content_hash": "89153ffedc2eee83ca8cfdd9a97d41eb8ecdbf8c9b2b0aa085126f3bac3e5ad5",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "reviewed_at": "2026-09-07T21:43:37.845Z",
+        "review_scope": "Цільове узгодження PI-CONSENSUS-20260908 за перечитаними змінами й зазначеними джерелами; незмінні попередні рішення збережено.",
+        "evidence_scope": "Перевірка SDD-визначень, не запуск продукту."
+      },
+      "recorded_at": "2026-09-08T19:25:17.629Z"
+    },
+    {
+      "artifact": "architecture",
+      "owner_invocation_id": "architecture-matrix-mysql-20260908",
+      "content_hash": "0029f7cd0ab80cd9a947de1941ef48b98b42f323a277bbbe2db2cb22307cde98",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "reviewed_at": "2026-09-08T19:23:48.274Z",
+        "review_scope": "Scoped English PI-MATRIX-MYSQL-20260908 correction; existing Ukrainian document and historical decisions retained. Definition validation only; no product test claim."
+      },
+      "recorded_at": "2026-09-08T19:26:14.628Z"
+    },
+    {
+      "artifact": "dod-evals",
+      "owner_invocation_id": "dod-evals-matrix-mysql-20260908",
+      "content_hash": "e9190670d1fc9ed77ecfff5f6be24a1af0a644fe9ade14fc69b1ee83519a953e",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "reviewed_at": "2026-09-08T19:24:38.088Z",
+        "review_scope": "Scoped English PI-MATRIX-MYSQL-20260908 correction; existing Ukrainian document and historical decisions retained. Definition validation only; no product test claim."
+      },
+      "recorded_at": "2026-09-08T19:26:14.842Z"
+    },
+    {
+      "artifact": "qa-checklist",
+      "owner_invocation_id": "qa-checklist-matrix-mysql-20260908",
+      "content_hash": "107786273c8a401bb6f102ef7769bc81f53c191808f810b31e379ce543618960",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "reviewed_at": "2026-09-08T19:25:17.629Z",
+        "review_scope": "Scoped English PI-MATRIX-MYSQL-20260908 correction; existing Ukrainian document and historical decisions retained. Definition validation only; no product test claim."
+      },
+      "recorded_at": "2026-09-08T19:26:15.057Z"
+    },
+    {
+      "artifact": "prd",
+      "owner_invocation_id": "prd-matrix-mysql-20260908",
+      "content_hash": "babf52ea8ac2ce81a6cc96c3a7e26db42d7d08fbc4fcc1dd159fe5b986436b9a",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "reviewed_at": "2026-09-08T19:20:30.933Z",
+        "review_scope": "Scoped English PI-MATRIX-MYSQL-20260908 correction; existing Ukrainian document and historical decisions retained. Definition validation only; no product test claim."
+      },
+      "recorded_at": "2026-09-08T19:27:40.827Z"
+    },
+    {
+      "artifact": "project-context",
+      "owner_invocation_id": "project-context-bundle-matrix-mysql-20260908",
+      "content_hash": "36e533018a7e5015641570dc8c419a043dd7227019cd771532a7194ff8b98303",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "reviewed_at": "2026-09-08T19:21:02.297Z",
+        "review_scope": "Scoped English PI-MATRIX-MYSQL-20260908 correction; existing Ukrainian document and historical decisions retained. Definition validation only; no product test claim."
+      },
+      "recorded_at": "2026-09-08T19:27:41.028Z"
+    },
+    {
+      "artifact": "canonical-terms",
+      "owner_invocation_id": "project-context-bundle-matrix-mysql-20260908",
+      "content_hash": "08a737f42d269e83320a6a1b691946be87fae9792e0c8e798ae18a8537eaaec4",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "reviewed_at": "2026-09-08T19:21:02.543Z",
+        "review_scope": "Scoped English PI-MATRIX-MYSQL-20260908 correction; existing Ukrainian document and historical decisions retained. Definition validation only; no product test claim."
+      },
+      "recorded_at": "2026-09-08T19:27:41.234Z"
+    },
+    {
+      "artifact": "guardrails",
+      "owner_invocation_id": "guardrails-matrix-mysql-20260908",
+      "content_hash": "81c153f36445774f1d99692db115f8d9416a81204e14d426b53ff80c9b1489a9",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "reviewed_at": "2026-09-08T19:21:27.104Z",
+        "review_scope": "Scoped English PI-MATRIX-MYSQL-20260908 correction; existing Ukrainian document and historical decisions retained. Definition validation only; no product test claim."
+      },
+      "recorded_at": "2026-09-08T19:27:41.443Z"
+    },
+    {
+      "artifact": "architecture",
+      "owner_invocation_id": "architecture-matrix-mysql-20260908",
+      "content_hash": "ec960247a7e11476d33710e3df33c6b04f4a9ca60438edc2a8e5cf5e14648a16",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "reviewed_at": "2026-09-08T19:26:14.628Z",
+        "review_scope": "Scoped English PI-MATRIX-MYSQL-20260908 correction; existing Ukrainian document and historical decisions retained. Definition validation only; no product test claim."
+      },
+      "recorded_at": "2026-09-08T19:27:41.652Z"
+    },
+    {
+      "artifact": "dod-evals",
+      "owner_invocation_id": "dod-evals-matrix-mysql-20260908",
+      "content_hash": "e9190670d1fc9ed77ecfff5f6be24a1af0a644fe9ade14fc69b1ee83519a953e",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "reviewed_at": "2026-09-08T19:26:14.842Z",
+        "review_scope": "Scoped English PI-MATRIX-MYSQL-20260908 correction; existing Ukrainian document and historical decisions retained. Definition validation only; no product test claim."
+      },
+      "recorded_at": "2026-09-08T19:27:41.877Z"
+    },
+    {
+      "artifact": "qa-checklist",
+      "owner_invocation_id": "qa-checklist-matrix-mysql-20260908",
+      "content_hash": "616a54d4fdd2000339055eba0cdf48b2316323d65300948f8a3884b50396b51c",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "reviewed_at": "2026-09-08T19:26:15.057Z",
+        "review_scope": "Scoped English PI-MATRIX-MYSQL-20260908 correction; existing Ukrainian document and historical decisions retained. Definition validation only; no product test claim."
+      },
+      "recorded_at": "2026-09-08T19:27:42.102Z"
+    },
+    {
+      "artifact": "development-plan",
+      "owner_invocation_id": "development-plan-consensus-20260908",
+      "content_hash": "271cc18ea9631b7846e687f2228a55e76058b5ebcfe49ef834a15038cc07164f",
+      "validation": {
+        "result": "passed",
+        "working_language": "uk",
+        "reviewed_at": "2026-09-07T21:46:31.690Z",
+        "review_scope": "Цільове узгодження PI-CONSENSUS-20260908 за перечитаними змінами й зазначеними джерелами; незмінні попередні рішення збережено.",
+        "evidence_scope": "Перевірка SDD-визначень, не запуск продукту."
+      },
+      "recorded_at": "2026-09-08T19:28:51.326Z"
     }
   ]
 }

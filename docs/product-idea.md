@@ -1,5 +1,15 @@
 # Product Idea: Personal Consultant
 
+## PI-MATRIX-MYSQL-20260908 — Durable Matrix without another host
+
+Source: the Owner repeated the one-GoDaddy/MySQL recommendation, requested the correction-unit plan, then explicitly instructed “implement it, plz” in the current conversation. The exact platform message ID and receipt time are unavailable; no historical timestamp or implementation-gate receipt is inferred. The following adopted scope refines JOB-001, JOB-003 and JOB-004; unchanged product decisions and design materials remain authoritative.
+
+Keep the existing GoDaddy app and MySQL database, Matrix/Element, the Rust encryption component and existing subscription integrations. Persist all restart-critical Matrix state in dedicated application tables through direct transactional storage, rather than private durable files under public assets. No extra host, paid service, database wipe, silent device replacement, authentication redesign, MFA or HappyPro change is included. Missing old encryption keys cannot be reconstructed by this change.
+
+After initial authorized connection and genuine device verification, an Owner message must work with all Settings tabs closed, including after restart and redeployment. Preserve identity, committed incoming work, ordered delivery and duplicate protection. Remove folder-specific and cross-browser Preview setup only when no remaining private durable state depends on that path. Settings configures the app; it is not a prerequisite for waking it. Existing product speed, consent, trust, subscription and external-action boundaries remain unchanged. A valid legacy store may be migrated safely; unavailable keys remain an explicit recovery issue, never permission to reset.
+
+Observable completion is the real Published message → consultation → selected Critic → one delivered result, with restart/redeploy continuity and no lost accepted work. A proposed adapter, local test or green build alone is not that evidence. This source adoption does not fabricate the pipeline's later-message gate for the newly reconciled formal plan.
+
 ## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix
 
 Джерело — сім прямих доручень Власника в поточному повідомленні від 08.09.2026. Цей розділ уточнює JOB-001–JOB-004 і має пріоритет над попереднім описом лише для наведених змін; решта продуктового задуму, підписки, межі доступу й історія залишаються чинними. Це вимоги до наступної реалізації, не твердження про вже опубліковані можливості.

@@ -1,5 +1,46 @@
 # Архітектура Personal Consultant
 
+## AD-26 — Transactional MySQL Matrix store (PI-MATRIX-MYSQL-20260908)
+
+Current correction target, not implemented/deployed fact. This explicitly supersedes only the SQLite-only, OS-lock-only and “Rust must not access MySQL” statements in §§2–5, 10–12 and AD-16 below; previous paragraphs remain design history. Sources: current product idea/PRD correction, guardrails and existing FR-052 no-Settings journey. Existing visual baseline/frozen bytes and Matrix recovery states are retained; no new dashboard or visual redesign.
+
+### AD-26 ownership and credentials
+
+One GoDaddy Node app remains HTTP host/supervisor and owns settings/registrar/outbox/archive. Rust remains sole Matrix SDK/E2EE/transport owner, directly implementing the pinned SDK storage interfaces against dedicated MySQL tables. No extra host or Node database RPC bridge. Preserve SDK encryption algorithms, bounded NDJSON and fixed Matrix network origins; add only the configured database connection to Rust. Google/AI/archive credentials and agents remain outside this boundary.
+
+Reuse validated `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` and `MATRIX_STORE_PASSPHRASE` through an explicit Rust-child allowlist; do not duplicate them into new secret groups. `MATRIX_STORE_BACKEND=mysql` selects the new backend; derive the store identity from the existing exact bot/device binding unless a separate `MATRIX_STORE_ID` is technically necessary. Use the existing app-scoped provider credential, limited to the application's required tables in code; prefer table-restricted grants where the provider supports them, without inventing a new account-setup prerequisite. Require TLS certificate/hostname verification for network DB connections, bounded pool/timeouts and parameterized SQL. Additive DDL is an explicit authorized operation, never normal startup. Legacy directory remains a read-only migration input; agents receive no DB/store credentials.
+
+### AD-26 data and transaction contract
+
+Additive application-only InnoDB tables with binary identifiers, explicit schema version and no plaintext sensitive values:
+
+| Table | Key and responsibility |
+|---|---|
+| `pc_matrix_stores` | `store_id BINARY(16)` primary key; version, identity fingerprint, key ID, encrypted identity metadata, `fence BIGINT UNSIGNED`, owner nonce and lease expiry. |
+| `pc_matrix_records` | Primary key `(store_id, namespace VARBINARY(64), record_key BINARY(32))`; versioned encrypted SDK crypto/state values and indexes, revision. Keyed hashes protect sensitive lookup keys. Disposable event/media caches stay in memory; pending accepted media recovery metadata is durable in the inbox/batch. |
+| `pc_matrix_inbox` | `(store_id, event_key BINARY(32))`; encrypted pending event, revision/status and durable Node ACK linkage. |
+| `pc_matrix_migrations` | `(store_id, migration_id BINARY(16))`; source fingerprint, version, phase, encrypted manifest/count evidence and cutover revision. |
+
+Sensitive values use vetted authenticated encryption, fresh random nonce and authenticated purpose/table/store/key/schema/revision binding; keys stay outside MySQL. Explicitly test row-context binding rather than assume SDK StoreCipher provides it. Preserve the existing external passphrase/key; never generate replacements at startup. Future key rotation must use a separately verified recoverable procedure, not a new MVP settings workflow or full rewrite obligation in this unit. Bounds follow existing protocol/media limits.
+
+Every write transaction locks the store ownership row and verifies current generation and unexpired ownership using database time before committing its entire logical batch. Takeover increments the fence; an obsolete writer cannot write, renew or release its successor's lease. Lease loss stops intake/send and closes that SDK instance. Deterministic Matrix transaction IDs remain required: database fencing cannot undo an HTTP send already accepted by the homeserver. Unknown commit outcomes reconcile by stable operation ID, not a fresh retry identity.
+
+Preserve existing committed-cursor plus durable pending-journal semantics in the smallest adapter seam: cursor advancement cannot lose an event not yet durably represented in the inbox. Preserve complete SDK atomic batch semantics. Sidecar pending events remain until Node commits ingress dedupe/session work and returns ACK; lost ACK replays the same Matrix event ID. Validate checkpoint ordering across the actual SDK save/event callbacks; if this seam cannot meet the invariant, resolve the precise gap before adding another replay store. No raw sync-response archive is prescribed. Pending media source/decryption metadata resides in the encrypted inbox, not a new durable cache.
+
+### AD-26 migration, files and recovery
+
+Inventory crypto/state SQLite, binding/identity, cursor, pending-event journal, ACK records and caches; each maps to MySQL or is proven disposable. A transient media spool is safe only while its source/decryption metadata remains durably recoverable through processing/ACK; preserve existing private-path, size/MIME/hash/symlink/TTL controls. No private durable state may remain beneath public assets.
+
+Explicit migration sequence: stop legacy writer; verify a consistent read-only backup, exact device and key; use a pinned-version, SQLite-schema-aware importer for all required crypto/state/index/journal fields (there is no assumed complete public SDK export); check counts, identity and representative decrypt/replay; atomically record cutover; start only the MySQL writer. An unhandled required field blocks migration pending a tested transfer path. Missing keys block recovery, never authorize logout/reset/new device or an empty store bound to an existing ID. No periodic copying of a running SQLite store.
+
+Before cutover, only isolated candidate rows may be discarded within the authorized operation while legacy state remains untouched. After MySQL writes, legacy SQLite is stale: rollback must use a MySQL-compatible code version or a verified reverse migration from current state. Never run both writers. Backup restore includes current encrypted records, ownership metadata and matching external keys in an isolated namespace, then identity/decrypt/replay verification. No database wipe or legacy cleanup.
+
+Remove folder-binding/timed Preview browser comparison only after the private-file inventory passes. Preview remains stateless and receives no Published Matrix DB/encryption credentials. Startup validates schema/key/identity/fence and starts sync independently of Settings; reuse bounded reconnect and authenticated same-app wake hint. Wake payload never becomes a user command. Liveness is not storage/trust/sync readiness.
+
+### AD-26 verification boundary
+
+Local SDK tests, isolated real-MySQL transaction/crash tests, migration/restore and compatible artifact build are prerequisites, not Published proof. GoDaddy grants/TLS, full SDK serialization and live database behavior remain to be verified. Completion requires the same Published identity after restart/redeploy, Settings closed, real Owner message → consultation → selected Critic → one delivered result, no lost accepted work or duplicates. Relevant controls remain NFR-005–NFR-010, NFR-012 and NFR-019; other security obligations remain active. Missing legacy keys and device verification are operational conditions, not established by this document.
+
 ## PI-CONSENSUS-20260908 — Персональні ролі, делегування й автономний Matrix
 
 Джерела: однойменні зміни PRD → контекст/терміни/guardrails → journey/screen-map/wireframes → DB-D21, а також forge/exploration/consensus-20260908/matrix-wake-research.md. Цей AD-25 замінює лише однопрохідний review та пов'язані рольові/мовні/availability припущення. Rust E2EE, один бот, MySQL, Google owner auth і незалежні налаштування провайдерів збережено. Baseline PC-MATRIX-CANDIDATE-B-V2-20260816-R1 має незмінний render hash і вузький DB-D21, без prototype-code reuse.

@@ -1,0 +1,15 @@
+[package]
+name = "matrix-record-envelope-proof"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.93"
+publish = false
+
+[workspace]
+
+[dev-dependencies]
+matrix-sdk-store-encryption = "=0.18.0"
+serde = { version = "1.0.228", features = ["derive"] }
+
+[lints.rust]
+unsafe_code = "forbid"
