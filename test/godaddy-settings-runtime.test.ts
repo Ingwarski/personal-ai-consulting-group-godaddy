@@ -573,6 +573,39 @@ test("Google login uses configured public origin despite internal Host, returns 
   }
 });
 
+test("owner utility stylesheet is readable before login without opening protected assets or querying state", async () => {
+  const { runtime, pool } = fixture();
+  pool.execute = async () => { throw new Error("Styles must not query state."); };
+  pool.getConnection = async () => { throw new Error("Styles must not open state transactions."); };
+  const response = await runtime.handle(request("/assets/owner-panel.css"));
+  assert.equal(response?.status, 200);
+  assert.match(response!.headers.get("content-type")!, /text\/css/);
+  assert.equal((await runtime.handle(request("/assets/owner-panel.css", undefined, { method: "POST" })))?.status, 405);
+  assert.equal((await runtime.handle(request("/assets/settings.css")))?.status, 403);
+  const preview = createGoDaddySettingsRuntime({}, { readAsset: async () => new TextEncoder().encode("body{}") });
+  assert.equal((await preview.handle(request("/assets/owner-panel.css")))?.status, 200);
+  assert.equal((await preview.handle(request("/operations/runtime")))?.status, 503);
+});
+
+test("owner login, runtime, recovery and database utilities share readable page layout", async () => {
+  for (const [path, pool] of [
+    ["/auth/sign-in", new OwnerAuthPool()],
+    ["/operations/runtime", new OwnerAuthPool()],
+    ["/settings", new SettingsPool()],
+    ["/operations/matrix/schema", new MatrixSchemaPool()],
+    ["/operations/matrix/state-collation", new MatrixCollationPool()]
+  ] as const) {
+    const { runtime } = fixture({ pool, environment: { CAPABILITY_CATALOG_JSON: undefined }, runtime: bootstrap({ loadCatalog: async () => undefined }) });
+    const { jar } = await login(runtime);
+    const response = await runtime.handle(request(path, jar));
+    assert.equal(response?.status, 200, path);
+    const document = await response!.text();
+    assert.match(document, /href="\/assets\/owner-panel.css"/);
+    assert.match(document, /class="settings-page owner-panel"/);
+    assert.match(document, /width=device-width/);
+  }
+});
+
 test("all protected bytes deny unknown grants, while callback failures clean the URL without exposing provider text", async () => {
   const { runtime } = fixture();
   for (const path of ["/api/settings", "/api/settings/reset", "/api/settings/csrf", "/assets/settings.css", "/assets/settings.js",

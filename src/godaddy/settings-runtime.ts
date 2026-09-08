@@ -1,4 +1,5 @@
 import { createGoDaddyConsiliumRuntime, type GoDaddyConsiliumRuntime } from "./consilium-runtime.ts";
+import { ownerPanelDocument } from "../settings/ui/owner-panel.ts";
 import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -215,28 +216,17 @@ async function parseActionForm(request: Request, extraFields: readonly string[] 
   return Object.freeze({ formToken, fields: Object.freeze(fields) });
 }
 
-const loginDocument = (formToken: string, denied = false, rateLimited = false): string => `<!doctype html>
-<html lang="uk">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Вхід власника — Personal Consultant</title>
-    <script src="${OWNER_AUTH_SCRIPT_PATH}" defer></script>
-  </head>
-  <body>
-    <main>
+export const loginDocument = (formToken: string, denied = false, rateLimited = false): string => ownerPanelDocument({ title: "Вхід власника", scriptPath: OWNER_AUTH_SCRIPT_PATH, content: `
       <h1>Налаштування власника</h1>
       <p>Увійдіть через Google з дозволеним обліковим записом власника.</p>
       ${rateLimited ? '<p role="alert">Забагато спроб входу. Зачекайте хвилину, оновіть сторінку та спробуйте знову.</p>' : denied ? '<p role="alert">Вхід не завершено або доступ не дозволено. Спробуйте знову з обліковим записом власника.</p>' : ""}
       <p role="alert" tabindex="-1" data-owner-action-status></p>
       <form action="/auth/google/start" method="post" data-owner-action>
         <input type="hidden" name="formToken" value="${escapeHtml(formToken)}" />
-        <button type="submit">Увійти через Google</button>
+        <button class="button primary" type="submit">Увійти через Google</button>
       </form>
       <noscript>Для захищеного входу увімкніть JavaScript і оновіть сторінку.</noscript>
-    </main>
-  </body>
-</html>`;
+    ` });
 
 async function isEmptyJsonAction(request: Request): Promise<boolean> {
   if (!/^application\/json(?:\s*;\s*charset=utf-8)?$/iu.test(request.headers.get("content-type") ?? "")) return false;
@@ -277,7 +267,7 @@ function defaultPool(configuration: GodaddyDatabaseConfiguration): MySqlPool {
 const defaultReadAsset = (asset: SettingsAsset): Promise<Uint8Array> =>
   readFile(resolve(runtimeAssetDirectory, asset));
 
-function operationDocument(input: Readonly<{
+export function operationDocument(input: Readonly<{
   codex: string;
   codexPlanType?: string;
   claude: string;
@@ -311,11 +301,7 @@ function operationDocument(input: Readonly<{
   const catalogResult = input.catalogResult === "updated"
     ? '<p role="status">Каталог можливостей оновлено.</p>'
     : input.catalogResult === "unavailable" ? `<p role="alert">Каталог не оновлено. ${catalogFailureMessages[failureCode]} Код: <code>${failureCode}</code>.</p>` : "";
-  return `<!doctype html>
-<html lang="uk">
-  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Підготовка runtime — Personal Consultant</title><script src="${OWNER_AUTH_SCRIPT_PATH}" defer></script></head>
-  <body>
-    <main>
+  return ownerPanelDocument({ title: "Підготовка runtime", section: "runtime", scriptPath: OWNER_AUTH_SCRIPT_PATH, content: `
       <h1>Підготовка runtime</h1>
       <p>Codex: ${escapeHtml(input.codex)}${input.codexPlanType === undefined ? "" : ` (план: ${escapeHtml(input.codexPlanType)})`}. Claude Code: ${escapeHtml(input.claude === "not_checked" ? "не перевірено" : input.claude)}.</p>
       <p role="alert" tabindex="-1" data-owner-action-status></p>
@@ -324,23 +310,29 @@ function operationDocument(input: Readonly<{
       ${resetResult}
       ${deviceError}
       ${device}
-      <p>Якщо показаний план відрізняється від вашої Codex-підписки або потрібна інша модель, очистіть попередній вхід перед повторною авторизацією.</p>
-      ${form("/operations/runtime/codex/reconnect", "Очистити попередній вхід Codex")}
+      <section aria-labelledby="codex-setup-title"><h2 id="codex-setup-title">Підписка Codex</h2>
+      <div class="owner-actions">
       ${form("/operations/runtime/codex", "Почати вхід Codex")}
       ${form("/operations/runtime/catalog?provider=codex", "Оновити каталог Codex")}
+      </div>
+      <p>Якщо показаний план відрізняється від вашої Codex-підписки або потрібна інша модель, очистіть попередній вхід перед повторною авторизацією.</p>
+      ${form("/operations/runtime/codex/reconnect", "Очистити попередній вхід Codex")}
+      </section>
+      <section aria-labelledby="claude-setup-title"><h2 id="claude-setup-title">Підписка Claude Code</h2>
       ${form("/operations/runtime/catalog?provider=claude_code", "Перевірити Claude Code й оновити його каталог")}
       <p>Перевірка Codex не звертається до Claude Code. Доступність кожного провайдера перевіряється окремо.</p>
+      </section>
       <p><a href="/settings">Відкрити Налаштування власника</a></p>
       <p><a href="/operations/matrix">Підключення та перевірка Matrix</a></p>
       <section aria-label="Сесії власника">
+        <h2>Сесії власника</h2><div class="owner-actions">
         ${form("/auth/sign-out", "Вийти з цього браузера")}
         ${form("/auth/sessions/revoke", "Завершити всі сесії")}
+        </div>
         <p>Вихід завершує лише доступ до застосунку, не до облікового запису Google чи підписок ШІ.</p>
       </section>
       <noscript>Для захищених дій увімкніть JavaScript і оновіть сторінку.</noscript>
-    </main>
-  </body>
-</html>`;
+    ` });
 }
 
 /**
@@ -358,11 +350,21 @@ export function createGoDaddySettingsRuntime(
   const database = parseGodaddyDatabaseConfiguration(environment);
   const google = parseOwnerGoogleConfiguration(environment);
   let receipt = capabilityReceiptFromEnvironment(environment, now());
+  // Presentation-only public asset for login and the stateless verifier. The
+  // existing protected settings assets and all data/action gates stay intact.
+  const publicStyle = async (request: Request): Promise<Response | undefined> => {
+    if (new URL(request.url).pathname !== "/assets/owner-panel.css") return undefined;
+    if (request.method !== "GET") return plain("Method not allowed.", 405, { allow: "GET" });
+    try { return assetResponse(await (dependencies.readAsset ?? defaultReadAsset)("settings.css"), "settings.css"); }
+    catch { return plain("Styles are temporarily unavailable.", 503); }
+  };
 
   if (!runtimeEnvironment.ok || !database.ok || !google.ok) {
     return Object.freeze({
       configured: false,
       async handle(request: Request): Promise<Response | undefined> {
+        const style = await publicStyle(request);
+        if (style !== undefined) return style;
         // Static, read-only verifier: no pool, owner session, state or credentials.
         const verifier = matrixPreviewVerifierResponse(request);
         if (verifier !== undefined) return verifier;
@@ -456,6 +458,8 @@ export function createGoDaddySettingsRuntime(
 
   const handle = async (request: Request): Promise<Response | undefined> => {
       const url = new URL(request.url);
+      const style = await publicStyle(request);
+      if (style !== undefined) return style;
       const verifier = matrixPreviewVerifierResponse(request);
       if (verifier !== undefined) return verifier;
       const control = await matrixPositiveControlResponse(request);
@@ -528,8 +532,7 @@ export function createGoDaddySettingsRuntime(
         const status = await inspectStateKeyCollation(pool);
         const token = await owner.issueActionToken(cookieHeader, MATRIX_COLLATION_PATH);
         if (token === undefined) return plain("Access denied.", 403);
-        return html(`<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-          <title>Порівняння ключів Matrix</title><script src="${OWNER_AUTH_SCRIPT_PATH}" defer></script></head><body><main>
+        return html(ownerPanelDocument({ title: "Порівняння ключів Matrix", section: "matrix", scriptPath: OWNER_AUTH_SCRIPT_PATH, content: `
           <h1>Порівняння ключів Matrix</h1>
           <p>Лише state_namespace і state_key у personal_consultant_state: utf8mb4_unicode_ci → utf8mb4_bin. Кодування utf8mb4, підтримка кирилиці та вміст записів зберігаються. Текст повідомлень не змінюється.</p>
           <p role="status">${status.compatible ? "Обидві ключові колонки вже використовують utf8mb4_bin." : status.repairable ? "Потрібне виправлення порівняння ключів." : "Визначення колонок не відповідає дозволеній міграції. Зміни заблоковано."}</p>
@@ -538,7 +541,7 @@ export function createGoDaddySettingsRuntime(
           ${status.compatible || !status.repairable ? "" : `<form action="${MATRIX_COLLATION_PATH}" method="post" data-owner-action><input type="hidden" name="formToken" value="${escapeHtml(token)}"><button type="submit">Виправити лише порівняння двох ключових колонок</button></form>`}
           <p><a href="${MATRIX_STATUS_PATH}">Перевірити готовність Matrix</a></p>
           <noscript>Для захищеної операції увімкніть JavaScript і оновіть сторінку.</noscript>
-          </main></body></html>`, 200);
+          ` }), 200);
       }
       if (url.pathname === MATRIX_SCHEMA_PATH) {
         if (url.search) return plain("Invalid request.", 400);
@@ -549,8 +552,7 @@ export function createGoDaddySettingsRuntime(
         const inventory = request.method === "POST" ? await createMissingMatrixTables(pool) : await inspectMatrixSchema(pool);
         const token = await owner.issueActionToken(cookieHeader, MATRIX_SCHEMA_PATH);
         if (token === undefined) return plain("Access denied.", 403);
-        return html(`<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-          <title>Таблиці Matrix</title><script src="${OWNER_AUTH_SCRIPT_PATH}" defer></script></head><body><main>
+        return html(ownerPanelDocument({ title: "Таблиці Matrix", section: "matrix", scriptPath: OWNER_AUTH_SCRIPT_PATH, content: `
           <h1>Таблиці Matrix</h1><p>Операція створює лише відсутні personal_consultant_matrix_outbox та personal_consultant_matrix_ingress. Наявні таблиці й записи не змінюються.</p>
           <p role="status">${inventory.missing.length === 0 ? "Обидві таблиці наявні. Це ще не підтвердження готовності консультації." : `Відсутні: ${inventory.missing.map(escapeHtml).join(", ")}`}</p>
           <p>Порівняння ключів наявної таблиці стану (потрібне utf8mb4_bin): ${escapeHtml(JSON.stringify(inventory.stateKeyCollations))}</p>
@@ -558,7 +560,7 @@ export function createGoDaddySettingsRuntime(
           ${inventory.missing.length === 0 ? "" : `<form action="${MATRIX_SCHEMA_PATH}" method="post" data-owner-action><input type="hidden" name="formToken" value="${escapeHtml(token)}"><button type="submit">Створити лише відсутні таблиці Matrix</button></form>`}
           <p><a href="${MATRIX_STATUS_PATH}">Перевірити готовність Matrix</a></p>
           <noscript>Для захищеної операції увімкніть JavaScript і оновіть сторінку.</noscript>
-          </main></body></html>`, 200);
+          ` }), 200);
       }
       if (url.pathname === MATRIX_STATUS_PATH) {
         if (request.method !== "GET") return plain("Method not allowed.", 405, { allow: "GET" });
@@ -683,7 +685,7 @@ export function createGoDaddySettingsRuntime(
         const stored = readCompatibleSettingsDocument(await storage.get<unknown>("owner-settings:document"));
         if (stored === undefined) {
           return url.pathname === "/settings" && request.method === "GET"
-            ? html('<!doctype html><html lang="uk"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Налаштування власника</title><main><h1>Налаштування власника</h1><p role="status">Каталог ще не перевірено. Оновіть лише каталог потрібного провайдера.</p><a href="/operations/runtime">Підготовка runtime</a></main></html>', 200)
+            ? html(ownerPanelDocument({ title: "Налаштування власника", section: "settings", content: '<h1>Налаштування власника</h1><p role="status">Каталог ще не перевірено. Оновіть лише каталог потрібного провайдера.</p><a class="element-return" href="/operations/runtime">Підготовка runtime</a>' }), 200)
             : plain("Settings are temporarily unavailable.", 503);
         }
         recoveryReceipt = Object.freeze({

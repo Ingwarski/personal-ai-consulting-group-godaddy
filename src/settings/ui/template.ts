@@ -1,4 +1,5 @@
 import { deriveSettingsFormState } from "./controller.ts";
+import { ownerPanelNavigation } from "./owner-panel.ts";
 import { validateCatalogTiming } from "../catalog.ts";
 import type { SettingsReadModel } from "../owner-settings-do.ts";
 import type { CapabilityReceipt, OwnerSettings, ProviderModelCapability, ProviderReasoningEffort, ProviderSettings, SpeedPreset } from "../types.ts";
@@ -209,6 +210,7 @@ export function renderSettingsDocument(model: SettingsPageModel): string {
   <body class="settings-shell">
     <a class="skip-link" href="#main-content">Перейти до налаштувань</a>
     <main class="settings-page" id="main-content" tabindex="-1">
+      ${ownerPanelNavigation("settings")}
       <header class="settings-header">
         <div>
           <p class="settings-eyebrow">Персональний консультант</p>

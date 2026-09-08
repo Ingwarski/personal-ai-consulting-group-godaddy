@@ -1,4 +1,5 @@
 import type { MatrixSetupStatus } from "./matrix-setup-process.ts";
+import { ownerPanelDocument } from "../settings/ui/owner-panel.ts";
 import { OWNER_AUTH_SCRIPT_PATH } from "./owner-auth-client.ts";
 import { MATRIX_PREVIEW_ORIGIN, MATRIX_PREVIEW_VERIFIER, type MatrixBrowserChallenge, type MatrixControlVisibility } from "./matrix-browser-isolation.ts";
 import type { MatrixIsolationDiagnostics, MatrixReleaseDiagnostic } from "./matrix-release-install.ts";
@@ -57,7 +58,7 @@ export function matrixSetupDocument(view: MatrixSetupView, token: string): strin
     return `<section><h2>${title}</h2><ul>${status.devices[target].map(device => `<li><p><code>${escape(device.device_id)}</code> — довіра: ${yes(device.verified)}${device.blacklisted ? "; заблокований" : ""}</p><p>Відбиток ключа: <code>${escape(device.ed25519 ?? "ключ відсутній")}</code></p>${device.ed25519 === null || device.deleted || device.blacklisted || !device.cross_signed_by_owner || (target === "self" && device.device_id === status.own_bot_device_id) ? "" : form(target === "self" ? "verify_self" : "verify_owner", "Почати порівняння з цим пристроєм", { deviceId: device.device_id })}</li>`).join("")}</ul></section>`;
   }).join("");
   const comparison = flow == null ? "" : `<section><h2>Порівняння в Element</h2><p>Обліковий запис: ${flow.target === "self" ? "бот" : "Власник"}; пристрій <code>${escape(flow.other_device_id)}</code>.</p><p>Стан: <code>${escape(flow.phase)}</code>.</p>${flow.emojis === null ? "" : `<ol>${flow.emojis.map(emoji => `<li>${escape(emoji.symbol)} ${escape(emoji.description)}</li>`).join("")}</ol>`}${flow.decimals === null ? "" : `<p>Числа: <strong>${flow.decimals.join(" · ")}</strong></p>`}<p>Звірте всі символи або числа з Element на зазначеному пристрої. Не підтверджуйте, якщо вони відрізняються або ви не починали цю перевірку.</p>${flow.comparison_token === null || flow.confirmed ? "" : form("confirm", "Усі символи або числа збігаються", { flowId: flow.flow_id, comparisonToken: flow.comparison_token })}${form("cancel", "Скасувати це порівняння", { flowId: flow.flow_id })}</section>`;
-  return `<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Підключення Matrix</title><script src="${OWNER_AUTH_SCRIPT_PATH}" defer></script></head><body><main>
+  return ownerPanelDocument({ title: "Підключення Matrix", section: "matrix", scriptPath: OWNER_AUTH_SCRIPT_PATH, content: `
   <h1>Підключення Matrix</h1><p role="alert" tabindex="-1" data-owner-action-status></p><p role="status">${escape(stateLabels[view.state] ?? "Стан не підтверджено.")}</p>
   ${view.expiresAt === undefined ? "" : `<p>Сеанс налаштування обмежений 15 хвилинами від запуску. На момент оновлення сторінки залишилося приблизно ${Math.max(0, Math.floor((view.expiresAt - Date.now()) / 60_000))} хв. Нове порівняння не поновлює цей час.</p>`}
   ${view.error === undefined ? "" : `<p role="alert">Дію не завершено. Секрети й наявні дані не видалялися. Код: <code>${escape(view.error)}</code>. ${escape(errorGuidance[view.error] ?? "Перевірте конфігурацію Published та оновіть стан; не створюйте заміну наявного сховища.")}</p>`}
@@ -76,5 +77,5 @@ export function matrixSetupDocument(view: MatrixSetupView, token: string): strin
   ${["starting", "verifying"].includes(view.state) ? form("status", "Оновити стан перевірки") : ""}
   ${status === undefined ? "" : `<p>Пристрій бота: <code>${escape(status.own_bot_device_id)}</code>. Відбиток: <code>${escape(status.own_bot_ed25519 ?? "очікування ключа")}</code>.</p><p>Довіра до бота: ${yes(status.self_identity_verified)}. Ключі перехресного підписування: ${yes(status.private_cross_signing_ready)}. Довіра до Власника: ${yes(status.owner_identity_verified)}.</p>${comparison}${devices}${form("finish", "Завершити перевірку всіх умов Matrix")}`}
   ${["starting", "verifying", "stopping"].includes(view.state) ? form("stop", "Зупинити налаштування без видалення даних") : ""}
-  <p><a href="/operations/runtime">Повернутися до підписок ШІ</a></p><noscript>Для захищених дій увімкніть JavaScript.</noscript></main></body></html>`;
+  <p><a href="/operations/runtime">Повернутися до підписок ШІ</a></p><noscript>Для захищених дій увімкніть JavaScript.</noscript>` });
 }
