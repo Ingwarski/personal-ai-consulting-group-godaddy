@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "kind": "matrix-production-release",
-  "sourceCommit": "271bcb8ec973e34fe0e53a0f260991ed1a4a5373",
+  "sourceCommit": "489cf8f24cca8905cf07b0fced4aed2465f56991",
   "sidecarVersion": "0.1.0",
   "protocolVersion": 1,
   "builder": {
@@ -23,8 +23,8 @@
     {
       "path": "build-provenance.json",
       "role": "evidence",
-      "sha256": "0100c260140d27e23381468a6e629e04d6c9fd2d6052cdc3d80a44e2ab92e0e6",
-      "sizeBytes": 8551
+      "sha256": "cb315f76afdc89e0278a21a0f1eb20c8016f0cf3aca42ce628a6587edeb10c62",
+      "sizeBytes": 11616
     },
     {
       "path": "cc.txt",
@@ -35,26 +35,26 @@
     {
       "path": "licenses.json",
       "role": "evidence",
-      "sha256": "22f138ab2c0959521dbcab61f571bbea97b8ead3d495473d60d26eb7de481133",
-      "sizeBytes": 96351
+      "sha256": "2c82d042fe4c8766b43854ac01e7506fc82ccb1685820c38657144547435f30a",
+      "sizeBytes": 104839
     },
     {
       "path": "personal-consultant-matrix-setup",
       "role": "setup",
-      "sha256": "c7d03e02dff339df1098f246893cdd8b4ce814880078f346e9ac4b696cb4cb0d",
-      "sizeBytes": 32682416
+      "sha256": "33332a9514b827cd251ae68fd1a2ca470d5ef2a1921f4a99d7d44f9596937cb3",
+      "sizeBytes": 39937264
     },
     {
       "path": "personal-consultant-matrix-sidecar",
       "role": "sidecar",
-      "sha256": "516a8bba8ffe4d286e0d6d2240d55737cf5e8195bc271d521c466077b657709b",
-      "sizeBytes": 38674960
+      "sha256": "08e414426e03fd0eb36601108126a4ddd570f496cfcd1c538f804a9105354966",
+      "sizeBytes": 45114704
     },
     {
       "path": "personal-consultant-matrix-sidecar.cdx.json",
       "role": "evidence",
-      "sha256": "9a9019c70468d5d4fcd8ec61bb1b8d8db3b60912e8aea5d5243ea4419932b047",
-      "sizeBytes": 223240
+      "sha256": "f5afbc54d21e4537733e2414317a949291e9548fce8b9f87d561e94686c28c49",
+      "sizeBytes": 245525
     },
     {
       "path": "RELEASE_CANDIDATE.txt",

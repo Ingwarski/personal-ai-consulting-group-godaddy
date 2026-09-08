@@ -3,13 +3,13 @@
   "kind": "matrix-production-build-provenance",
   "source": {
     "repository": "Ingwarski/personal-ai-consulting-group-godaddy",
-    "commit": "271bcb8ec973e34fe0e53a0f260991ed1a4a5373",
-    "workflowCommit": "271bcb8ec973e34fe0e53a0f260991ed1a4a5373",
+    "commit": "489cf8f24cca8905cf07b0fced4aed2465f56991",
+    "workflowCommit": "489cf8f24cca8905cf07b0fced4aed2465f56991",
     "workflowRef": "Ingwarski/personal-ai-consulting-group-godaddy/.github/workflows/matrix-sidecar-release.yml@refs/heads/codex/matrix-connection-20260906",
-    "runId": "34060973791",
+    "runId": "34277772246",
     "runAttempt": "1",
-    "runUrl": "https://github.com/Ingwarski/personal-ai-consulting-group-godaddy/actions/runs/34060973791/attempts/1",
-    "nativeTree": "2cd817b7a8ace6a627a4045539588b5732dab78b",
+    "runUrl": "https://github.com/Ingwarski/personal-ai-consulting-group-godaddy/actions/runs/34277772246/attempts/1",
+    "nativeTree": "a133941a2d56b473e25de043ebfcd0b839d016ed",
     "inputs": [
       {
         "path": ".github/workflows/matrix-sidecar-release.yml",
@@ -21,11 +21,59 @@
       },
       {
         "path": "native/matrix-sidecar/Cargo.lock",
-        "sha256": "4a0469995afd74cd03b3095a180cef059ae0feb57008bb7cf6d000e007d55db7"
+        "sha256": "75e772f68f0ac9c76b54488678187767089f61178230c046f24298690d9ba664"
       },
       {
         "path": "native/matrix-sidecar/Cargo.toml",
-        "sha256": "513aeb016de461432fb07fc345e330a14cc8f6d61e113689d4644cef729e06b1"
+        "sha256": "1ee12074d906e9707febf7df48d2738521fde55645585b9ff9d6fe5587671538"
+      },
+      {
+        "path": "native/matrix-sidecar/mysql-store/Cargo.toml",
+        "sha256": "afd2772c3004ad2d7d4d0dbb30fad3ad3877d40f06d120a3cb1e9bee76604334"
+      },
+      {
+        "path": "native/matrix-sidecar/mysql-store/README.md",
+        "sha256": "0e9fe313462d7775897c18aafa0cab7f978640d586296db9b1ab3d67d6e37644"
+      },
+      {
+        "path": "native/matrix-sidecar/mysql-store/schema.sql",
+        "sha256": "6562798fde2a210e5699a11c13e6c70707aa22cc8035d3a31f695ad477954439"
+      },
+      {
+        "path": "native/matrix-sidecar/mysql-store/src/backend.rs",
+        "sha256": "4605ca83b2c9b76353f76b1551f42cd5c276c374ac5d8cf57b8fbd0345a1da43"
+      },
+      {
+        "path": "native/matrix-sidecar/mysql-store/src/crypto.rs",
+        "sha256": "fa5cf728cf802de15fb3c886cd2d6c5905c90765c8cc33dbb285faa4ed13f423"
+      },
+      {
+        "path": "native/matrix-sidecar/mysql-store/src/crypto_contract_tests.rs",
+        "sha256": "5075701d9146798434a1ce97b356acc6fa88b789723c8a68c162c8ca8ee9dc95"
+      },
+      {
+        "path": "native/matrix-sidecar/mysql-store/src/legacy_crypto.rs",
+        "sha256": "84cae4cbaa082a6535fb5a1806e6925bdceef986787cf02527e3e17ebf350ee7"
+      },
+      {
+        "path": "native/matrix-sidecar/mysql-store/src/legacy_state.rs",
+        "sha256": "b3062a5e700a0560fde0742d8567f9fdbc1d5b76cbd7ca781cd674d559505515"
+      },
+      {
+        "path": "native/matrix-sidecar/mysql-store/src/lib.rs",
+        "sha256": "f38ba25e34cadc829c093a050e699789a288e526b80341a746f2ca14d550dd1a"
+      },
+      {
+        "path": "native/matrix-sidecar/mysql-store/src/state.rs",
+        "sha256": "c31375a5a2e8a89b340f9e17f3fd7695a5ea0d27c786167e13d37ae2ee41ac9a"
+      },
+      {
+        "path": "native/matrix-sidecar/mysql-store/tests/backend_contract.rs",
+        "sha256": "845660601b046496a063f185ce227538be635c30c59d26c2abe984367bf7aaf0"
+      },
+      {
+        "path": "native/matrix-sidecar/mysql-store/tests/backend_faults.rs",
+        "sha256": "7e253d31c5c211ca1868520cbc1561c5a474d94297d3ce4f2301508d09d4ee08"
       },
       {
         "path": "native/matrix-sidecar/rust-toolchain.toml",
@@ -33,11 +81,11 @@
       },
       {
         "path": "native/matrix-sidecar/src/bin/personal-consultant-matrix-setup.rs",
-        "sha256": "224c11d8f8be50caa84cc27beaf1b7260f2f7ee317a5b1ecf3bd27bdbb235273"
+        "sha256": "1cb7a7fabaed3bb6d22ea74701a5a6d8a82132792a8b33223fc66bcdecd3186e"
       },
       {
         "path": "native/matrix-sidecar/src/client.rs",
-        "sha256": "8b2c487d375bce0c684a4593cd6881ff76070329dc98d3aa4be47152f45eddb1"
+        "sha256": "e536aa8d96951c24686b727925bb20fc8ddfcf5afd835138e746fcac0c53b5f3"
       },
       {
         "path": "native/matrix-sidecar/src/client_sdk_tests.rs",
@@ -45,7 +93,19 @@
       },
       {
         "path": "native/matrix-sidecar/src/config.rs",
-        "sha256": "43ca2202daffcf5fbc1ebe948149a54cacef8c911800a6468f11160b684257ac"
+        "sha256": "ebb11f22a4b0795367dc66ef6005b8fb326ed38f446543f29ded51d06f3f88de"
+      },
+      {
+        "path": "native/matrix-sidecar/src/durable_checkpoint.rs",
+        "sha256": "4364107b5663894be2a243878033a59761f915e9f14a92110e28b0dc2cf8096f"
+      },
+      {
+        "path": "native/matrix-sidecar/src/durable_ingress.rs",
+        "sha256": "91a03f9b934c896267ee11dd9d7eac4683f129882e184fa981f60f88e2a47ea8"
+      },
+      {
+        "path": "native/matrix-sidecar/src/durable_media.rs",
+        "sha256": "5bfe93849aff6337ae39050f7f1b617af8bb0ab59e6374cff952deacfbef4e71"
       },
       {
         "path": "native/matrix-sidecar/src/egress.rs",
@@ -53,11 +113,11 @@
       },
       {
         "path": "native/matrix-sidecar/src/ingress.rs",
-        "sha256": "152be5698943f9c9e5272a64d1478dbcfd09f1667fc75a1de660cf44f9991e67"
+        "sha256": "744da1ff0b8ef65881a9d2828b777e7bdebe04fc73f32343735d48264adacc6b"
       },
       {
         "path": "native/matrix-sidecar/src/lib.rs",
-        "sha256": "bee723d1378c7c9213043b5fd6b09c97d0677beb3474ff53ad7bf14d7fa11662"
+        "sha256": "03703397ea2ecdb12966af6180cebcd3647a3d5c1195274d4c5f0ab80bde9061"
       },
       {
         "path": "native/matrix-sidecar/src/live_policy.rs",
@@ -65,15 +125,23 @@
       },
       {
         "path": "native/matrix-sidecar/src/lock.rs",
-        "sha256": "45ea88c0796bb456f79f46f1248a53c0d527a825a38f4f4c4fe6af65b3e44c06"
+        "sha256": "13da37e7f507e05cad10548e5f04446885692147cb946139d2755d42327742ba"
       },
       {
         "path": "native/matrix-sidecar/src/main.rs",
-        "sha256": "01be7a477291704fa6f6538f274922c3e006db0556aa5ba3e93772eda7524546"
+        "sha256": "48d816da688d5fa05901c60b6f26937764b681987744db68a60d0e1e2b8acaf1"
       },
       {
         "path": "native/matrix-sidecar/src/media_spool.rs",
-        "sha256": "2238f061f76c24effd5d999c031e0f7ff7120b3e044905d8c5f3f4353402a932"
+        "sha256": "1f40ed5347e4caf844bfe056b9efc9dc73a53d969f2791e8047563d7acdf495f"
+      },
+      {
+        "path": "native/matrix-sidecar/src/migration.rs",
+        "sha256": "757ce49ff90daaf61783c4b1d8dee5b726665cf05a6305761fad70e621507bfb"
+      },
+      {
+        "path": "native/matrix-sidecar/src/migration_tests.rs",
+        "sha256": "1fbb6147496277062223810a60ee955f9d676732d43a37ab03c48b6cf6dd05b7"
       },
       {
         "path": "native/matrix-sidecar/src/protocol.rs",
@@ -85,7 +153,7 @@
       },
       {
         "path": "native/matrix-sidecar/src/setup.rs",
-        "sha256": "3a054e117e742037a078e43784782e5d53d310573f558609bc35df8f7a93615f"
+        "sha256": "287041b3640ddafb9e0612eda508b929fe0a1bd0399f204a8d2b844d3548f617"
       },
       {
         "path": "native/matrix-sidecar/src/state.rs",
@@ -93,15 +161,19 @@
       },
       {
         "path": "native/matrix-sidecar/src/store.rs",
-        "sha256": "1a30c719e09a2ddec57a8ede5a32daa7a9b91c9a5b46dd6342ec155c285d3629"
+        "sha256": "866581c3e22ea3e5ea0c223f1f51e0b72ec0d158225ef0fbeb8c3e89289c292c"
       },
       {
         "path": "native/matrix-sidecar/src/sync_checkpoint.rs",
-        "sha256": "c6aaf10c4211f01e99d9499185ccfd9921f99719691212d8a5c25cc62ffbfa0b"
+        "sha256": "26578e64925f5babc532e4dbfc8ca76f386129a0343c163c34b92f01d8fbe23f"
       },
       {
         "path": "native/matrix-sidecar/src/telemetry.rs",
         "sha256": "a44e013177d94dcfde5ab4794d6f9109981ff193c3668f46e82b7441113f1fa3"
+      },
+      {
+        "path": "native/matrix-sidecar/tests/durable_media_contract.rs",
+        "sha256": "efc3d8cb64036d26d05ba267e1f37e482350dfbc5491042814fa7af95dae32b9"
       },
       {
         "path": "scripts/build-matrix-release.mjs",
@@ -113,11 +185,11 @@
       },
       {
         "path": "scripts/matrix-release-container.sh",
-        "sha256": "eab5bc29f7571becae45b0bef1d6ff838707e1b6766b1dbea68488f8e3fc4173"
+        "sha256": "f90510741f9ee5a8fc971f55ef6f0f85f8e11f80013e390bdf0dd20b97978bae"
       },
       {
         "path": "scripts/matrix-release-package.mjs",
-        "sha256": "aa0337cbec2fd910d9fa02cdc6ff4b0116db367371cb6e079aec8b676e09a859"
+        "sha256": "e0cccd6626a0c8f64365c4622d209bc141bb2551accc76ee452623fe1c2f341a"
       },
       {
         "path": "test/fixtures/matrix-invalid-media.json",
@@ -125,7 +197,7 @@
       },
       {
         "path": "test/matrix-release-package.test.mjs",
-        "sha256": "f209e261d52a3fae43c3bc0a301af655b2303eeaa4b1cb2389d856173011fdaa"
+        "sha256": "2c42d25905ecdfb4589042b4e8002ccabd2721a08f555afd5e7545bbc7592a0b"
       }
     ]
   },
@@ -155,9 +227,9 @@
     "observedImageConfigDigest": "sha256:6336bf7b311135c893a4a930b0920892b5e596ccdc374777290fa91bb59ae818"
   },
   "build": {
-    "startedAt": "2026-09-06T21:25:20.811Z",
-    "completedAt": "2026-09-06T22:52:18.959Z",
-    "sourceDateEpoch": "1788729861",
+    "startedAt": "2026-09-08T20:58:25.957Z",
+    "completedAt": "2026-09-08T22:25:20.309Z",
+    "sourceDateEpoch": "1788901021",
     "command": "cargo build --release --locked --frozen --target x86_64-unknown-linux-musl",
     "networkDuringCompilation": "none",
     "cleanBuildCount": 2,
@@ -172,14 +244,14 @@
     {
       "path": "personal-consultant-matrix-sidecar",
       "role": "sidecar",
-      "sha256": "516a8bba8ffe4d286e0d6d2240d55737cf5e8195bc271d521c466077b657709b",
-      "sizeBytes": 38674960
+      "sha256": "08e414426e03fd0eb36601108126a4ddd570f496cfcd1c538f804a9105354966",
+      "sizeBytes": 45114704
     },
     {
       "path": "personal-consultant-matrix-setup",
       "role": "setup",
-      "sha256": "c7d03e02dff339df1098f246893cdd8b4ce814880078f346e9ac4b696cb4cb0d",
-      "sizeBytes": 32682416
+      "sha256": "33332a9514b827cd251ae68fd1a2ca470d5ef2a1921f4a99d7d44f9596937cb3",
+      "sizeBytes": 39937264
     }
   ],
   "trust": {
