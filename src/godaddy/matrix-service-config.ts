@@ -35,6 +35,7 @@ const MATRIX_MEDIA_SPOOL_ROOT = resolve(MATRIX_PERSISTENT_ROOT, "media-spool");
 type MatrixEnvironmentName = typeof MATRIX_ENVIRONMENT_NAMES[number];
 
 export type GoDaddyMatrixConfiguration = Readonly<{
+  storeBackend?: "sqlite" | "mysql";
   applicationRoot: string;
   binaryPath: string;
   expectedSha256: string;
@@ -113,21 +114,28 @@ export function parseGoDaddyMatrixConfiguration(
   if (environment.GODADDY_STATE_DATABASE_ROLE !== "published") {
     return { ok: false, code: "matrix_state_database_not_enabled" };
   }
-  const supplied = suppliedMatrixNames(environment);
+  const mysql = environment.MATRIX_STORE_BACKEND === "mysql";
+  if (environment.MATRIX_STORE_BACKEND !== undefined && !["mysql", "sqlite"].includes(String(environment.MATRIX_STORE_BACKEND))) {
+    return { ok: false, code: "matrix_configuration_invalid" };
+  }
+  const names = mysql ? MATRIX_ENVIRONMENT_NAMES.filter((name) => name !== "MATRIX_STORE_DIR" && name !== "MATRIX_MEDIA_SPOOL_DIR") : MATRIX_ENVIRONMENT_NAMES;
+  const supplied = names.filter((name) => Object.hasOwn(environment, name)).length;
   if (supplied === 0) return { ok: false, code: "matrix_not_configured" };
-  if (supplied !== MATRIX_ENVIRONMENT_NAMES.length) {
+  if (supplied !== names.length) {
     return { ok: false, code: "matrix_configuration_incomplete" };
   }
 
-  const values = Object.fromEntries(MATRIX_ENVIRONMENT_NAMES.map((name) => [name, asString(environment[name], 8_192)])) as
+  const values = Object.fromEntries(names.map((name) => [name, asString(environment[name], 8_192)])) as
     Record<MatrixEnvironmentName, string | undefined>;
   if (Object.values(values).some((value) => value === undefined)) {
     return { ok: false, code: "matrix_configuration_invalid" };
   }
 
   const binaryPath = exactAbsolutePath(values.MATRIX_SIDECAR_PATH as string);
-  const storeDir = exactAbsolutePath(values.MATRIX_STORE_DIR as string);
-  const mediaSpoolDir = exactAbsolutePath(values.MATRIX_MEDIA_SPOOL_DIR as string);
+  // Legacy paths are never opened in MySQL mode. The actual shared private
+  // spool is created per boot by the service, not taken from a public folder.
+  const storeDir = mysql ? MATRIX_STORE_ROOT : exactAbsolutePath(values.MATRIX_STORE_DIR as string);
+  const mediaSpoolDir = mysql ? MATRIX_MEDIA_SPOOL_ROOT : exactAbsolutePath(values.MATRIX_MEDIA_SPOOL_DIR as string);
   const expectedSha256 = values.MATRIX_SIDECAR_SHA256 as string;
   const roomId = values.MATRIX_ROOM_ID as string;
   const ownerMxid = values.MATRIX_OWNER_MXID as string;
@@ -151,7 +159,24 @@ export function parseGoDaddyMatrixConfiguration(
   }
 
   const pathValue = asString(environment.PATH, 8_192) ?? "/usr/local/bin:/usr/bin:/bin";
+  const databaseEnvironment: Record<string, string> = {};
+  if (mysql) {
+    for (const name of ["DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD"]) {
+      const value = asString(environment[name], 8_192);
+      if (value === undefined) return { ok: false, code: "matrix_configuration_incomplete" };
+      databaseEnvironment[name] = value;
+    }
+    const port = Number(databaseEnvironment.DB_PORT);
+    if (!Number.isInteger(port) || port < 1 || port > 65535 || String(port) !== databaseEnvironment.DB_PORT) return { ok: false, code: "matrix_configuration_invalid" };
+    if (environment.DB_SSL_CA_FILE !== undefined) {
+      const ca = asString(environment.DB_SSL_CA_FILE, 8_192);
+      if (ca === undefined || exactAbsolutePath(ca) === undefined) return { ok: false, code: "matrix_configuration_invalid" };
+      databaseEnvironment.DB_SSL_CA_FILE = ca;
+    }
+  }
   const spawnEnvironment = Object.freeze({
+    ...databaseEnvironment,
+    ...(mysql ? { MATRIX_STORE_BACKEND: "mysql" } : {}),
     PATH: pathValue,
     MATRIX_HOMESERVER_URL: GODADDY_MATRIX_HOMESERVER_ORIGIN,
     MATRIX_ALLOWED_HTTPS_ORIGINS: GODADDY_MATRIX_HOMESERVER_ORIGIN,
@@ -168,6 +193,7 @@ export function parseGoDaddyMatrixConfiguration(
   return {
     ok: true,
     value: Object.freeze({
+      storeBackend: mysql ? "mysql" : "sqlite",
       applicationRoot: APPLICATION_SOURCE_ROOT,
       binaryPath,
       expectedSha256,

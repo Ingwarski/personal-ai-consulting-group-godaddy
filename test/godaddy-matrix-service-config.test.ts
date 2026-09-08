@@ -63,6 +63,47 @@ test("Preview and test runtimes stay stateless even if production credentials we
   }
 });
 
+const mysqlConfiguration = Object.freeze({
+  ...configured,
+  MATRIX_STORE_BACKEND: "mysql",
+  DB_HOST: "database.example.test",
+  DB_PORT: "3306",
+  DB_NAME: "synthetic_matrix",
+  DB_USER: "synthetic_matrix_user",
+  DB_PASSWORD: "synthetic-mysql-child-secret",
+  DB_SSL_CA_FILE: "/srv/test-fixture/mysql-ca.pem"
+});
+
+test("MySQL mode explicitly passes only selected DB credentials to its child and needs no legacy folders", () => {
+  const environment: Record<string, unknown> = { ...mysqlConfiguration,
+    DATABASE_URL: "must-not-inherit", GOOGLE_CLIENT_SECRET: "must-not-inherit", DB_SSL_REJECT_UNAUTHORIZED: "false" };
+  delete environment.MATRIX_STORE_DIR;
+  delete environment.MATRIX_MEDIA_SPOOL_DIR;
+  const result = parseGoDaddyMatrixConfiguration(environment);
+  assert.ok(result.ok);
+  assert.equal(result.value.storeBackend, "mysql");
+  for (const field of ["DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD", "DB_SSL_CA_FILE"] as const) {
+    assert.equal(result.value.spawnEnvironment[field], mysqlConfiguration[field]);
+  }
+  assert.equal(result.value.spawnEnvironment.MATRIX_STORE_BACKEND, "mysql");
+  for (const field of ["SETTINGS_OWNER_PASSWORD", "GOOGLE_CLIENT_SECRET", "DATABASE_URL", "DB_SSL_REJECT_UNAUTHORIZED"]) {
+    assert.equal(Object.hasOwn(result.value.spawnEnvironment, field), false);
+  }
+});
+
+test("MySQL child cannot start with partial DB settings, implicit port or disabled TLS hints", () => {
+  for (const field of ["DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD"]) {
+    const environment: Record<string, unknown> = { ...mysqlConfiguration };
+    delete environment[field];
+    assert.deepEqual(parseGoDaddyMatrixConfiguration(environment), { ok: false, code: "matrix_configuration_incomplete" });
+  }
+  for (const port of ["0", "65536", "3306.0", "03306", "abc"]) {
+    assert.deepEqual(parseGoDaddyMatrixConfiguration({ ...mysqlConfiguration, DB_PORT: port }), { ok: false, code: "matrix_configuration_invalid" });
+  }
+  assert.deepEqual(parseGoDaddyMatrixConfiguration({ ...mysqlConfiguration, DB_SSL_CA_FILE: "relative.pem" }), { ok: false, code: "matrix_configuration_invalid" });
+  assert.deepEqual(parseGoDaddyMatrixConfiguration({ ...mysqlConfiguration, MATRIX_STORE_BACKEND: "auto" }), { ok: false, code: "matrix_configuration_invalid" });
+});
+
 test("distinguishes absent, partial and invalid Matrix configuration without naming a secret", () => {
   assert.deepEqual(parseGoDaddyMatrixConfiguration({
     RUNTIME_MODE: "production",

@@ -7,7 +7,9 @@ import { parseHistoricalOwnerSettings } from "../settings/schema.ts";
 import type { CodexAppServerThreadClient } from "../runtime/codex-thread-client.ts";
 import type { ClaudeCodeSubscriptionProcess } from "../runtime/claude-code-critic.ts";
 import { parseCapabilityReceipt } from "../settings/capability-receipt.ts";
-import type { CapabilityReceipt, CriticProvider, OwnerSettings, ProviderModelCapability } from "../settings/types.ts";
+import { validateCatalogTiming, validateOwnerSettings } from "../settings/catalog.ts";
+import { FORBIDDEN_RUNTIME_ENVIRONMENT_NAMES } from "../runtime/environment.ts";
+import type { CapabilityReceipt, CriticProvider, OwnerSettings, ProviderModelCapability, ProviderSettings } from "../settings/types.ts";
 
 const CATALOG_STORAGE_KEY = "current";
 const CATALOG_NAMESPACE = "runtime-capability-v1";
@@ -30,6 +32,7 @@ export type RuntimeBootstrap = Readonly<{
   startCodexDeviceAuthorization: () => Promise<CodexDeviceAuthorization | undefined>;
   resetCodexAuthorization: () => Promise<boolean>;
   refreshCatalog: (provider?: CriticProvider) => Promise<RuntimeCapabilityCatalogResult>;
+  ensureCatalogForSettings?: (settings: OwnerSettings) => Promise<CapabilityReceipt | undefined>;
   getCodexThreadClient?: () => Promise<CodexAppServerThreadClient | undefined>;
   getClaudeProcess?: () => ClaudeCodeSubscriptionProcess | undefined;
   close: () => Promise<void>;
@@ -76,6 +79,7 @@ export function createRuntimeBootstrap(options: RuntimeBootstrapOptions): Runtim
     getModels: () => catalog?.claudeModels ?? []
   });
   let pendingMutation: Promise<unknown> = Promise.resolve();
+  let closing = false;
   const serializeMutation = <T>(operation: () => Promise<T>): Promise<T> => {
     const result = pendingMutation.then(operation, operation);
     pendingMutation = result.then(() => undefined, () => undefined);
@@ -103,8 +107,96 @@ export function createRuntimeBootstrap(options: RuntimeBootstrapOptions): Runtim
     }
   };
 
+  const revalidations = new Map<string, Promise<CapabilityReceipt | undefined>>();
+  const failedRevalidations = new Map<string, number>();
+  const freshForSelection = (receipt: CapabilityReceipt, settings: OwnerSettings): boolean =>
+    validateCatalogTiming(receipt, now()) === null &&
+    (settings.critic.provider === "codex" ? ["codex"] as const : ["codex", "claude_code"] as const).every(provider => {
+      const entry = receipt.providerReceipts?.[provider];
+      return entry === undefined || (entry.status === "ready" && validateCatalogTiming(entry, now()) === null);
+    });
+  const selectedModel = (models: readonly ProviderModelCapability[], selection: ProviderSettings): ProviderModelCapability | undefined =>
+    models.find(model => model.productId === selection.modelId && model.availability === "available"
+      && (selection.reasoningEffort === null || (model.supportedReasoningEfforts.includes(selection.reasoningEffort)
+        && model.reasoningMappings[selection.reasoningEffort] === selection.reasoningEffort)));
+
+  // Unattended Matrix reception includes content-free capability revalidation,
+  // not authentication, a new provider, default selection or a catalog sweep.
+  // Only the already-saved models/efforts may receive a harmless probe.
+  const revalidateSelection = async (settings: OwnerSettings): Promise<CapabilityReceipt | undefined> => {
+    if (closing) return undefined;
+    const current = await loadCatalog();
+    if (current !== undefined && freshForSelection(current, settings)) return current;
+    const previous = historicalReceipt(catalog);
+    if (previous === undefined || codex === undefined
+      || FORBIDDEN_RUNTIME_ENVIRONMENT_NAMES.some(name => Object.hasOwn(options.environment, name))) return undefined;
+    const selections = settings.critic.provider === "codex" && settings.critic.codex !== null
+      ? [settings.codex, settings.critic.codex] : [settings.codex];
+    const oldCodex = selections.map(selection => selectedModel(previous.codexModels, selection));
+    if (oldCodex.some(model => model === undefined)) return undefined;
+    const codexProbe = await codex.inspectSubscription();
+    if (codexProbe.runtime.readiness !== "ready" || codexProbe.runtime.authMode !== "chatgpt_oauth"
+      || !codexProbe.runtime.privateSingleOwner) return undefined;
+    const currentCodex = selections.map(selection => selectedModel(codexProbe.models, selection));
+    if (currentCodex.some((model, index) => model === undefined || model.runtimeModelId !== oldCodex[index]!.runtimeModelId)) return undefined;
+    const verifiedCodexModelIds: string[] = [];
+    for (const [index, model] of currentCodex.entries()) {
+      if (model!.runtimeModelId !== "gpt-6-astra" || verifiedCodexModelIds.includes(model!.productId)) continue;
+      if (selections[index]!.reasoningEffort !== "xhigh") return undefined;
+      if (!await codex.verifyModelSelection?.(model!.runtimeModelId, "xhigh")) return undefined;
+      verifiedCodexModelIds.push(model!.productId);
+    }
+    let claudeProbe: Parameters<typeof createRuntimeCapabilityCatalog>[0]["claude"];
+    if (settings.critic.provider === "claude_code") {
+      const selection = settings.critic.claude;
+      if (claude === undefined || selection === null) return undefined;
+      const model = selectedModel(previous.claudeModels, selection);
+      if (model === undefined) return undefined;
+      const status = await claude.inspectSubscription();
+      if (status.readiness !== "ready" || status.authMode !== "claude_code_oauth" || !status.privateSingleOwner
+        || status.bareMode || status.fastModeEnabled || status.extraUsageEnabled) return undefined;
+      const completion = await claude.runCritique({ modelId: model.productId, runtimeModelId: model.runtimeModelId,
+        reasoningEffort: selection.reasoningEffort, prompt: "Reply with the single word READY. Do not use tools." });
+      if (typeof completion.body !== "string" || completion.body.trim().length === 0) return undefined;
+      // This probe proves only the selected model/effort, not every historical
+      // Claude candidate. Full discovery remains an explicit owner action.
+      const efforts = selection.reasoningEffort === null ? [] : [selection.reasoningEffort];
+      const capability: ProviderModelCapability = { ...model, supportedReasoningEfforts: efforts,
+        reasoningMappings: Object.fromEntries(efforts.map(effort => [effort, effort])) };
+      claudeProbe = { runtime: { ...status, availableModelIds: [model.productId] }, models: [capability] };
+    }
+    const issuedAt = now();
+    const result = createRuntimeCapabilityCatalog({ codex: codexProbe,
+      ...(claudeProbe === undefined ? {} : { claude: claudeProbe }), previous, verifiedCodexModelIds,
+      defaults: previous.defaults, catalogVersion: `runtime-${issuedAt.getTime()}`,
+      issuedAt, expiresAt: new Date(issuedAt.getTime() + 24 * 60 * 60_000) });
+    if (closing || !result.ok || !validateOwnerSettings(settings, result.receipt, now()).ok) return undefined;
+    await runtimeStorage.put(CATALOG_STORAGE_KEY, result.receipt);
+    catalog = result.receipt;
+    return result.receipt;
+  };
+
   return Object.freeze({
     loadCatalog,
+    ensureCatalogForSettings(settings: OwnerSettings): Promise<CapabilityReceipt | undefined> {
+      if (closing) return Promise.resolve(undefined);
+      const parsed = parseHistoricalOwnerSettings(settings);
+      if (!parsed.ok) return Promise.resolve(undefined);
+      const key = JSON.stringify(parsed.value);
+      const pending = revalidations.get(key);
+      if (pending !== undefined) return pending;
+      if ((failedRevalidations.get(key) ?? 0) > now().getTime()) return Promise.resolve(undefined);
+      const operation = serializeMutation(() => revalidateSelection(parsed.value)).catch(() => undefined).then(result => {
+        if (result === undefined) {
+          // Bound repeated failed probes without acknowledging stale evidence.
+          if (failedRevalidations.size >= 16) failedRevalidations.delete(failedRevalidations.keys().next().value!);
+          failedRevalidations.set(key, now().getTime() + 30_000);
+        } else failedRevalidations.delete(key);
+        return result;
+      }).finally(() => { if (revalidations.get(key) === operation) revalidations.delete(key); });
+      revalidations.set(key, operation);
+      return operation;
+    },
     getCodexThreadClient: async () => codex?.getThreadClient?.(),
     getClaudeProcess: () => claude,
     async status(provider: CriticProvider = "codex"): Promise<RuntimeBootstrapStatus> {
@@ -185,11 +277,14 @@ export function createRuntimeBootstrap(options: RuntimeBootstrapOptions): Runtim
           try { await runtimeStorage.put(CATALOG_STORAGE_KEY, result.receipt); }
           catch { return { ok: false, code: "catalog_storage_failed" }; }
           catalog = result.receipt;
+          failedRevalidations.clear();
         }
         return result;
       });
     },
     async close(): Promise<void> {
+      closing = true;
+      await pendingMutation;
       await codex?.close();
     }
   });

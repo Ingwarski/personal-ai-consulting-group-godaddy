@@ -24,11 +24,13 @@ const rootSecret = "a-random-root-secret-used-only-in-this-test-and-never-in-pro
 test("an unresponsive owned app-server is killed and its private directory removed before close resolves", async () => {
   const launch = createSubprocessCodexAppServerLauncher({ executable: resolve("test/fixtures/ignores-term-codex.mjs"), environment: { PATH: dirname(process.execPath) + ":/usr/bin:/bin" } });
   const connection = await launch(undefined);
+  assert.equal(connection.isAlive?.(), true);
   const received = new Promise<{ pid: number; cwd: string }>(resolveMessage => connection.channel.onLine(line => resolveMessage(JSON.parse(line).result)));
   await connection.channel.send(JSON.stringify({ id: 1 }));
   const owned = await received;
   assert.match(owned.cwd, /personal-consultant-codex-/);
   await Promise.all([connection.close(), connection.close()]);
+  assert.equal(connection.isAlive?.(), false);
   assert.throws(() => process.kill(owned.pid, 0));
   await assert.rejects(access(owned.cwd));
 });
@@ -181,4 +183,76 @@ test("clears the sealed Codex state before a replacement login", async () => {
   assert.equal(await runtime.resetAuthorization(), true);
   assert.ok(fake.calls.includes("account/logout"));
   assert.equal(await vault.read("codex_auth_state"), undefined);
+});
+
+test("dead cached Codex child is retired once before concurrent preflights restore the same sealed OAuth", async () => {
+  const storage = new MemoryStorage(); const vault = createRuntimeCredentialVault({ storage, rootSecret })!;
+  const auth = new TextEncoder().encode('{"managed":"same-owner-existing-oauth"}');
+  await vault.write("codex_auth_state", auth);
+  const launches: Array<Uint8Array | undefined> = [];
+  const calls: string[] = [];
+  let alive = true; let release = () => {}; let entered = () => {};
+  const held = new Promise<void>(resolve => { release = resolve; });
+  const retiring = new Promise<void>(resolve => { entered = resolve; });
+  const launch: CodexAppServerLauncher = async state => {
+    launches.push(state); const index = launches.length;
+    const fake = launcher(responses, auth); const base = await fake.launch(state);
+    calls.push(`launch-${index}`);
+    return { ...base, isAlive: () => index !== 1 || alive, close: async () => {
+      calls.push(`closing-${index}`);
+      if (index === 1) { entered(); await held; }
+      calls.push(`closed-${index}`);
+    } };
+  };
+  const runtime = createGoDaddyCodexAppServer({ environment: {}, vault, launch });
+  assert.equal((await runtime.inspectSubscription()).runtime.readiness, "ready");
+  alive = false;
+  const clients = [runtime.getThreadClient!(), runtime.getThreadClient!(), runtime.getThreadClient!()];
+  await retiring;
+  assert.equal(launches.length, 1);
+  release(); await Promise.all(clients);
+  assert.equal(launches.length, 2);
+  assert.deepEqual(launches, [auth, auth]);
+  assert.deepEqual(calls, ["launch-1", "closing-1", "closed-1", "launch-2"]);
+  assert.equal((await runtime.inspectSubscription()).runtime.readiness, "ready");
+  assert.doesNotMatch(JSON.stringify([...storage.records.values()]), /same-owner-existing-oauth/);
+  await runtime.close();
+});
+
+test("a transient launch failure is not cached forever or repaired by a login/reset", async () => {
+  const vault = createRuntimeCredentialVault({ storage: new MemoryStorage(), rootSecret })!;
+  const fake = launcher(responses);
+  let attempts = 0;
+  const runtime = createGoDaddyCodexAppServer({ environment: {}, vault, launch: async state => {
+    if (++attempts === 1) throw new Error("PRIVATE-LAUNCH-DETAILS");
+    return fake.launch(state);
+  } });
+  assert.equal((await runtime.inspectSubscription()).runtime.readiness, "unavailable");
+  assert.equal((await runtime.inspectSubscription()).runtime.readiness, "ready");
+  assert.equal(attempts, 2);
+  assert.equal(fake.calls.includes("account/login/start"), false); assert.equal(fake.calls.includes("account/logout"), false);
+  await runtime.close();
+});
+
+test("a child exiting during subscription preflight gets one same-credential restart, not an auth/quota retry", async () => {
+  const vault = createRuntimeCredentialVault({ storage: new MemoryStorage(), rootSecret })!;
+  let launches = 0; let oldAlive = true;
+  const calls: string[] = [];
+  const runtime = createGoDaddyCodexAppServer({ environment: {}, vault, launch: async state => {
+    const index = ++launches; const fake = launcher(responses); const base = await fake.launch(state);
+    return { ...base, isAlive: () => index !== 1 || oldAlive, channel: {
+      onLine: base.channel.onLine,
+      send: async line => {
+        const request = JSON.parse(line); calls.push(request.method);
+        if (index === 1 && request.method === "account/read") { oldAlive = false; throw new Error("dead pipe"); }
+        return base.channel.send(line);
+      }
+    } };
+  } });
+  assert.equal((await runtime.inspectSubscription()).runtime.readiness, "ready");
+  assert.equal(launches, 2);
+  assert.equal(calls.includes("account/login/start"), false); assert.equal(calls.includes("account/logout"), false);
+  await runtime.close();
+  assert.equal((await runtime.inspectSubscription()).runtime.readiness, "unavailable");
+  assert.equal(launches, 2);
 });

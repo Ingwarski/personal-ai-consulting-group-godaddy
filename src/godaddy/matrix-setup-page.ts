@@ -9,6 +9,7 @@ export const MATRIX_SETUP_ACTION = "/operations/matrix/action";
 export const MATRIX_SETUP_ACTIONS = ["prepare", "complete_preview", "restrict_media_permissions", "start_fresh", "resume", "status", "verify_self", "verify_owner", "confirm", "cancel", "finish", "stop"] as const;
 export type MatrixSetupAction = typeof MATRIX_SETUP_ACTIONS[number];
 export type MatrixSetupView = Readonly<{ state: string; status?: MatrixSetupStatus; error?: string;
+  storeBackend?: "mysql" | "sqlite";
   expiresAt?: number;
   releaseDiagnostic?: MatrixReleaseDiagnostic;
   browserChallenge?: MatrixBrowserChallenge; isolationEvidence?: "browser_assisted_http_isolation";
@@ -41,12 +42,13 @@ export function matrixSetupDocument(view: MatrixSetupView, token: string): strin
     `<form action="${MATRIX_SETUP_ACTION}" method="post" data-owner-action><input type="hidden" name="formToken" value="${escape(token)}"><input type="hidden" name="action" value="${action}">${Object.entries(fields).map(([name, value]) => `<input type="hidden" name="${escape(name)}" value="${escape(value)}">`).join("")}<button type="submit">${escape(label)}</button></form>`;
   const yes = (value: boolean): string => value ? "підтверджено" : "ще не підтверджено";
   const status = view.state === "verifying" ? view.status : undefined;
+  const mysql = view.storeBackend === "mysql";
   const flow = status?.verification;
   const stateLabels: Record<string, string> = {
     disabled: "Режим налаштування вимкнено. Консультації не перемикаються автоматично.",
     unprepared: "Файли runtime ще не перевірено на цьому сервері.",
     awaiting_preview: "Програми встановлено й перевірено. Published відхиляє доступ до приватних шляхів. Потрібна окрема перевірка через авторизований Preview.",
-    prepared: "Обидві програми перевірено. Приватні каталоги підготовлено; перевірка HTTP-доступу пройдена.",
+    prepared: mysql ? "Програми перевірено. Продовжіть із перенесеним сховищем MySQL, щоб перевірити підключення й довіру до пристроїв." : "Обидві програми перевірено. Приватні каталоги підготовлено; перевірка HTTP-доступу пройдена.",
     starting: "Програма налаштування запускається. Натисніть «Оновити стан перевірки» за кілька секунд.",
     verifying: "Режим перевірки пристроїв. Консультації не запускаються.",
     complete: "Перевірки Matrix пройдено. Вимкніть MATRIX_SETUP_MODE у Published і опублікуйте знову, щоб запустити консультації.",
@@ -61,7 +63,7 @@ export function matrixSetupDocument(view: MatrixSetupView, token: string): strin
   return ownerPanelDocument({ title: "Підключення Matrix", section: "matrix", scriptPath: OWNER_AUTH_SCRIPT_PATH, content: `
   <h1>Підключення Matrix</h1><p role="alert" tabindex="-1" data-owner-action-status></p><p role="status">${escape(stateLabels[view.state] ?? "Стан не підтверджено.")}</p>
   ${view.expiresAt === undefined ? "" : `<p>Сеанс налаштування обмежений 15 хвилинами від запуску. На момент оновлення сторінки залишилося приблизно ${Math.max(0, Math.floor((view.expiresAt - Date.now()) / 60_000))} хв. Нове порівняння не поновлює цей час.</p>`}
-  ${view.error === undefined ? "" : `<p role="alert">Дію не завершено. Секрети й наявні дані не видалялися. Код: <code>${escape(view.error)}</code>. ${escape(errorGuidance[view.error] ?? "Перевірте конфігурацію Published та оновіть стан; не створюйте заміну наявного сховища.")}</p>`}
+  ${view.error === undefined ? "" : `<p role="alert">Дію не завершено. Секрети й наявні дані не видалялися. Код: <code>${escape(view.error)}</code>. ${escape(mysql && /^(matrix_setup_(expired|needs_resume|unavailable|process_failed)|store_or_device_quarantined)$/u.test(view.error) ? "Перевірте підключення MySQL і стан перенесення сховища. Продовжіть із наявним пристроєм; не створюйте нові ключі." : errorGuidance[view.error] ?? "Перевірте конфігурацію Published та оновіть стан; не створюйте заміну наявного сховища.")}</p>`}
   ${view.isolationDiagnostics === undefined ? "" : `<section><h2>Діагностика перевірки приватності</h2><p>Етап: <code>${escape(view.isolationDiagnostics.stage)}</code>. Нижче лише HTTP-статуси; вміст відповідей і секрети не показуються.</p><ul>${view.isolationDiagnostics.probes.map(probe => `<li>${escape(probe.environment)} · ${escape(probe.target)} · ${probe.status === null ? "відповідь не отримано" : `HTTP ${probe.status}`} · ${probe.denied ? "приватність підтверджено" : "приватність не підтверджено"}</li>`).join("")}</ul></section>`}
   ${view.releaseDiagnostic === undefined ? "" : `<section><h2>Діагностика прав доступу</h2><p>Лише технічні ознаки, без шляхів або вмісту файлів:</p><pre>${escape(JSON.stringify(view.releaseDiagnostic))}</pre></section>`}
   ${view.releaseDiagnostic?.stage === "store" && /^matrix-sdk-media\.sqlite3(?:-wal|-shm)?$/u.test(view.releaseDiagnostic.target)
@@ -70,10 +72,10 @@ export function matrixSetupDocument(view: MatrixSetupView, token: string): strin
     ? `<p>Виявлено надмірні права кешу медіа Matrix SDK. Окрема дія нижче лише обмежує права трьох відомих файлів до 600, не змінюючи даних, ключів або пристрою.</p>${form("restrict_media_permissions", "Обмежити права файлів кешу медіа до 600")}` : ""}
   <p>Ця сторінка не приймає паролів, токенів або ключів відновлення. Секретні значення вводяться лише в GoDaddy → Published → Секрети.</p>
   ${view.controlVisibility === undefined ? "" : `<p>Контрольний файл Published: ${view.controlVisibility === "published_control_visible_in_preview" ? "видимий у Preview" : "не видимий у Preview"}. Перевірено лише доступ до конкретних файлів під час цієї спроби, а не загальну ізоляцію сховищ.</p>`}
-  ${["unprepared", "stopped", "prepared"].includes(view.state) ? form("prepare", "1. Перевірити програми й приватність каталогів") : ""}
+  ${["unprepared", "stopped", "prepared"].includes(view.state) ? form("prepare", mysql ? "Перевірити програми Matrix" : "1. Перевірити програми й приватність каталогів") : ""}
   ${view.state !== "awaiting_preview" || view.browserChallenge === undefined ? "" : `<section><h2>Перевірка через Preview</h2><p>Відкрийте Preview через GoDaddy в цьому самому браузері, щоб увійти. Потім натисніть кнопку нижче. Cookies залишаються в Preview. Перевірка діє три хвилини; прострочена спроба не дозволяє створювати пристрій.</p><script type="application/json" id="matrix-preview-challenge">${JSON.stringify(view.browserChallenge).replaceAll("<", "\\u003c")}</script><button type="button" data-matrix-preview-verifier="${MATRIX_PREVIEW_ORIGIN}${MATRIX_PREVIEW_VERIFIER}">Перевірити авторизований Preview</button><div hidden data-matrix-preview-result>${form("complete_preview", "Передати результат перевірки", { previewReport: "pending" })}</div>${form("stop", "Скасувати перевірку й прибрати контрольні файли")}</section>`}
   ${view.isolationEvidence === undefined ? "" : `<p>Доказ приватності: Published перевірив сервер; Preview перевірив браузер через авторизований HTTP-доступ. Це браузерна перевірка, не серверна атестація Preview.</p>`}
-  ${view.state === "prepared" ? `<p>Новий пристрій має бути окремою сесією бота без попередніх ключів шифрування. Порожнє сховище для наявного пристрою не допускається.</p>${form("start_fresh", "2. Підготувати новий окремий пристрій бота")}${form("resume", "Продовжити з наявним сховищем цього пристрою")}` : ""}
+  ${view.state === "prepared" ? (mysql ? `<p>Використовується наявний пристрій і перенесені ключі. Відсутнє або незавершене сховище не замінюється порожнім.</p>${form("resume", "Підключити наявний пристрій через MySQL")}` : `<p>Новий пристрій має бути окремою сесією бота без попередніх ключів шифрування. Порожнє сховище для наявного пристрою не допускається.</p>${form("start_fresh", "2. Підготувати новий окремий пристрій бота")}${form("resume", "Продовжити з наявним сховищем цього пристрою")}`) : ""}
   ${["starting", "verifying"].includes(view.state) ? form("status", "Оновити стан перевірки") : ""}
   ${status === undefined ? "" : `<p>Пристрій бота: <code>${escape(status.own_bot_device_id)}</code>. Відбиток: <code>${escape(status.own_bot_ed25519 ?? "очікування ключа")}</code>.</p><p>Довіра до бота: ${yes(status.self_identity_verified)}. Ключі перехресного підписування: ${yes(status.private_cross_signing_ready)}. Довіра до Власника: ${yes(status.owner_identity_verified)}.</p>${comparison}${devices}${form("finish", "Завершити перевірку всіх умов Matrix")}`}
   ${["starting", "verifying", "stopping"].includes(view.state) ? form("stop", "Зупинити налаштування без видалення даних") : ""}

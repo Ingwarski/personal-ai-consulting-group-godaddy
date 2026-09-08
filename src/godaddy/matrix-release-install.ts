@@ -41,6 +41,19 @@ export type MatrixReleaseResult =
   | Readonly<{ ok: true; value: MatrixReleaseInspection }>
   | Readonly<{ ok: false; code: MatrixReleaseErrorCode }>;
 
+/** Validated executables only. Database/account readiness belongs to the Rust
+ * runtime, not an inferred filesystem marker or a successful installation. */
+export type MySqlMatrixReleaseInspection = Readonly<{
+  storeBackend: "mysql";
+  sidecarPath: string;
+  setupPath: string;
+  sidecarSha256: string;
+  setupSha256: string;
+}>;
+export type MySqlMatrixReleaseResult =
+  | Readonly<{ ok: true; value: MySqlMatrixReleaseInspection }>
+  | Readonly<{ ok: false; code: MatrixReleaseErrorCode }>;
+
 type MatrixReleaseErrorCode =
   | "matrix_release_invalid"
   | "matrix_release_unavailable"
@@ -370,6 +383,49 @@ export async function prepareMatrixRelease(applicationRoot: string, expected: Ma
 /** Read-only validation immediately before a separately authorized provisioning/spawn operation. */
 export async function inspectMatrixRelease(applicationRoot: string, expected: MatrixReleaseExpectation, options: MatrixReleaseOptions = {}): Promise<MatrixReleaseResult> {
   return run(applicationRoot, expected, options, false);
+}
+
+async function runMySqlRelease(applicationRoot: string, expected: MatrixReleaseExpectation, options: MatrixReleaseOptions,
+  prepare: boolean): Promise<MySqlMatrixReleaseResult> {
+  let stage = "release";
+  try {
+    const paths = layout(applicationRoot);
+    const uid = currentUid(options);
+    const metadata = await release(paths, expected, uid);
+    const sourceSidecar = prepare ? await verifiedBinary(join(paths.bundleDir, SIDECAR), metadata.sidecar, uid, false) : undefined;
+    const sourceSetup = prepare ? await verifiedBinary(join(paths.bundleDir, SETUP), metadata.setup, uid, false) : undefined;
+    stage = "private_directories";
+    // Deliberately no inspection, creation, permission repair or probing of
+    // public/assets or legacy persistent data. This does not certify their removal.
+    for (const path of [paths.runtimeRoot, paths.runtimeDir]) await dedicatedDirectory(path, uid, prepare);
+    stage = "installed_binaries";
+    const sidecarPath = join(paths.runtimeDir, SIDECAR);
+    const setupPath = join(paths.runtimeDir, SETUP);
+    if (prepare && sourceSidecar !== undefined && sourceSetup !== undefined) {
+      await installBinary(sidecarPath, sourceSidecar, metadata.sidecar, uid);
+      await installBinary(setupPath, sourceSetup, metadata.setup, uid);
+    } else {
+      await verifiedBinary(sidecarPath, metadata.sidecar, uid, true);
+      await verifiedBinary(setupPath, metadata.setup, uid, true);
+    }
+    return { ok: true, value: { storeBackend: "mysql", sidecarPath, setupPath,
+      sidecarSha256: metadata.sidecar.sha256, setupSha256: metadata.setup.sha256 } };
+  } catch (error) {
+    if (error instanceof ReleaseFailure && error.diagnostic !== undefined) options.observeUnsafePath?.({ stage, ...error.diagnostic });
+    return { ok: false, code: error instanceof ReleaseFailure ? error.code : "matrix_release_unavailable" };
+  }
+}
+
+/** Install the immutable native release without touching legacy persistent directories. */
+export async function prepareMySqlMatrixRelease(applicationRoot: string, expected: MatrixReleaseExpectation,
+  options: MatrixReleaseOptions = {}): Promise<MySqlMatrixReleaseResult> {
+  return runMySqlRelease(applicationRoot, expected, options, true);
+}
+
+/** Read-only executable validation; the child separately validates active MySQL state and its account. */
+export async function inspectMySqlMatrixRelease(applicationRoot: string, expected: MatrixReleaseExpectation,
+  options: MatrixReleaseOptions = {}): Promise<MySqlMatrixReleaseResult> {
+  return runMySqlRelease(applicationRoot, expected, options, false);
 }
 
 /** Explicit owner repair only. Tighten the pinned SDK's three media-cache files

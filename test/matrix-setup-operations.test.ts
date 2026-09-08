@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
+import { lstat } from "node:fs/promises";
 import { createMatrixSetupOperations, matrixSetupEnabled } from "../src/godaddy/matrix-setup-operations.ts";
 import type { MatrixReleaseInspection } from "../src/godaddy/matrix-release-install.ts";
 import type { MatrixSetupCommand } from "../src/godaddy/matrix-setup-process.ts";
@@ -41,6 +42,94 @@ function fixture(options: { environment?: Record<string, unknown>; provisioning?
   });
   return { setup, calls };
 }
+
+function mysqlFixture(options: { failInspect?: boolean; requestError?: string; spawnError?: boolean; failCloseOnce?: boolean } = {}) {
+  const calls: string[] = [];
+  let closeFailed = false;
+  let spawned: Parameters<NonNullable<Parameters<typeof createMatrixSetupOperations>[1]>["spawn"] & {}>[0] | undefined;
+  const legacy = inspection();
+  const result = { storeBackend: "mysql" as const, sidecarPath: legacy.sidecarPath, setupPath: legacy.setupPath,
+    sidecarSha256: legacy.sidecarSha256, setupSha256: legacy.setupSha256 };
+  const setup = createMatrixSetupOperations({ ...env(), MATRIX_STORE_BACKEND: "mysql",
+    DB_HOST: "127.0.0.1", DB_PORT: "3306", DB_NAME: "synthetic", DB_USER: "synthetic", DB_PASSWORD: "synthetic" }, {
+    releasePin: { manifestSha256: "d".repeat(64), sourceCommit: "e".repeat(40) }, applicationRoot: root,
+    prepare: async () => { assert.fail("MySQL must not prepare legacy files"); },
+    inspect: async () => { assert.fail("MySQL must not inspect legacy files"); },
+    isolation: async () => { assert.fail("MySQL must not run Preview HTTP ceremony"); },
+    prepareMySql: async () => { calls.push("prepare_mysql"); return { ok: true, value: result }; },
+    inspectMySql: async () => { calls.push("inspect_mysql"); return options.failInspect
+      ? { ok: false, code: "matrix_release_checksum_mismatch" } : { ok: true, value: result }; },
+    spawn: input => {
+      calls.push("spawn"); spawned = input;
+      if (options.spawnError) throw new Error("matrix_setup_unavailable");
+      return { request: async () => {
+        if (options.requestError) throw new Error(options.requestError);
+        return { own_bot_device_id: "NEW_DEVICE", own_bot_ed25519: null, self_identity_verified: true,
+          owner_identity_verified: true, private_cross_signing_ready: true, devices: { self: [], owner: [] }, verification: null };
+      }, close: async () => {
+        calls.push("close");
+        if (options.failCloseOnce && !closeFailed) { closeFailed = true; throw new Error("matrix_setup_termination_failed"); }
+      } };
+    }
+  });
+  return { setup, calls, spawned: () => spawned };
+}
+
+test("MySQL setup prepares binaries without Preview, resumes only, and uses a private disposable shared spool", async () => {
+  const f = mysqlFixture();
+  assert.equal(f.setup.view().storeBackend, "mysql");
+  assert.equal((await f.setup.action("resume", {})).error, "matrix_setup_not_prepared");
+  for (const action of ["start_fresh", "complete_preview", "restrict_media_permissions"] as const) {
+    assert.equal((await f.setup.action(action, {})).error, "matrix_setup_invalid_request");
+  }
+  assert.deepEqual(f.calls, []);
+  assert.deepEqual(await f.setup.action("prepare", {}, "owner-session"), { state: "prepared", storeBackend: "mysql" });
+  assert.equal((await f.setup.action("resume", {})).state, "starting");
+  assert.deepEqual(f.calls, ["prepare_mysql", "inspect_mysql", "spawn"]);
+  const spawned = f.spawned()!;
+  assert.equal(spawned.fresh, false);
+  assert.equal(spawned.environment.MATRIX_STORE_BACKEND, "mysql");
+  assert.equal(spawned.environment.DB_PASSWORD, "synthetic");
+  const spool = spawned.environment.MATRIX_MEDIA_SPOOL_DIR!;
+  assert.equal(spawned.environment.MATRIX_STORE_DIR, spool);
+  assert.equal(dirname(spool), spawned.environment.TMPDIR);
+  assert.match(spool, /\/pc-matrix-setup-[^/]+$/);
+  assert.doesNotMatch(spool, /public\/assets/);
+  assert.equal((await lstat(spool)).mode & 0o7777, 0o700);
+  assert.equal((await f.setup.action("status", {})).state, "verifying");
+  assert.equal((await f.setup.action("finish", {})).state, "complete");
+  await assert.rejects(lstat(spool), { code: "ENOENT" });
+  assert.equal((await f.setup.action("resume", {})).error, "matrix_setup_not_prepared");
+  await f.setup.close();
+});
+
+test("MySQL setup rejects changed release and removes its spool only after child shutdown or failed spawn", async () => {
+  const denied = mysqlFixture({ failInspect: true });
+  await denied.setup.action("prepare", {});
+  assert.equal((await denied.setup.action("resume", {})).error, "matrix_release_checksum_mismatch");
+  assert.equal(denied.spawned(), undefined); await denied.setup.close();
+  for (const mode of ["stop", "close", "failure", "spawn_failure"] as const) {
+    const f = mysqlFixture({ ...(mode === "failure" ? { requestError: "matrix_setup_process_failed" } : {}),
+      ...(mode === "spawn_failure" ? { spawnError: true } : {}) });
+    await f.setup.action("prepare", {}); await f.setup.action("resume", {});
+    const spool = f.spawned()!.environment.MATRIX_MEDIA_SPOOL_DIR!;
+    if (mode === "stop") await f.setup.action("stop", {});
+    if (mode === "close") await f.setup.close();
+    if (mode === "failure") assert.equal((await f.setup.action("status", {})).state, "stopped");
+    await assert.rejects(lstat(spool), { code: "ENOENT" });
+    await f.setup.close();
+  }
+});
+
+test("MySQL setup retains the shared spool when child termination is not confirmed", async () => {
+  const f = mysqlFixture({ failCloseOnce: true });
+  await f.setup.action("prepare", {}); await f.setup.action("resume", {});
+  const spool = f.spawned()!.environment.MATRIX_MEDIA_SPOOL_DIR!;
+  assert.equal((await f.setup.action("stop", {})).error, "matrix_setup_termination_failed");
+  assert.ok((await lstat(spool)).isDirectory());
+  await f.setup.close();
+  await assert.rejects(lstat(spool), { code: "ENOENT" });
+});
 test("Published setup mode is explicit and Preview cannot prepare files or start a child", async () => {
   for (const environment of [{ ...env(), RUNTIME_MODE: "development" }, { ...env(), GODADDY_STATE_DATABASE_ROLE: "preview" },
     { ...env(), MATRIX_SETUP_MODE: "TRUE" }]) {

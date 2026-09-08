@@ -23,7 +23,8 @@ use tokio::sync::{Mutex, mpsc};
 use zeroize::Zeroizing;
 
 use crate::config::{Config, SEND_TIMEOUT_SECONDS};
-use crate::ingress::{IngressEvent, PendingIngress, PendingJournal, PendingRejection};
+use crate::durable_ingress::DurableJournal as PendingJournal;
+use crate::ingress::{IngressEvent, PendingIngress, PendingRejection};
 use crate::media_spool::{MediaKind, PrivateSpool};
 use crate::protocol::{SendCommand, valid_identifier};
 use crate::room_policy::{ExpectedRoom, validate as validate_node_snapshot};
@@ -87,7 +88,7 @@ pub struct MatrixClient {
     sync_ready: Arc<AtomicBool>,
     ingress_failed: Arc<AtomicBool>,
     ingress_pipeline: Arc<OnceLock<IngressPipeline>>,
-    sync_checkpoint: crate::sync_checkpoint::SyncCheckpoint,
+    sync_checkpoint: crate::durable_checkpoint::DurableCheckpoint,
     // SDK sync applies cached encryption, membership, history and device state.
     // Keep that mutation out of the authorization-to-send/key-sharing boundary.
     sdk_send_barrier: Arc<Mutex<()>>,
@@ -98,7 +99,7 @@ impl MatrixClient {
         inner: Client,
         http: reqwest::Client,
         config: &Config,
-        sync_checkpoint: crate::sync_checkpoint::SyncCheckpoint,
+        sync_checkpoint: crate::durable_checkpoint::DurableCheckpoint,
     ) -> Result<Self, TransportError> {
         Ok(Self {
             inner,
@@ -138,9 +139,10 @@ impl MatrixClient {
         Ok(())
     }
 
-    pub fn requires_pre_ingress_baseline(&self) -> Result<bool, TransportError> {
+    pub async fn requires_pre_ingress_baseline(&self) -> Result<bool, TransportError> {
         self.sync_checkpoint
             .committed_token()
+            .await
             .map(|token| token.is_none())
             .map_err(|_| TransportError::TransportFailed)
     }
@@ -149,7 +151,7 @@ impl MatrixClient {
     /// boundary are intentionally outside ingress scope; no application event handler may be
     /// installed until this returns and durably commits the response token.
     pub async fn establish_pre_ingress_baseline(&self) -> Result<(), TransportError> {
-        if !self.requires_pre_ingress_baseline()? {
+        if !self.requires_pre_ingress_baseline().await? {
             return Ok(());
         }
         let response = self
@@ -167,6 +169,7 @@ impl MatrixClient {
         };
         self.sync_checkpoint
             .commit_cursor(response.next_batch, Some(room_event_id))
+            .await
             .map_err(|_| TransportError::TransportFailed)
     }
 
@@ -209,7 +212,7 @@ impl MatrixClient {
         tokio::spawn(async move {
             if establish_after_backlog {
                 loop {
-                    match journal.unacked_count() {
+                    match journal.unacked_count().await {
                         Ok(count) if count >= crate::config::MAX_UNACKED_EVENTS => {
                             tokio::time::sleep(Duration::from_millis(250)).await;
                         }
@@ -233,7 +236,7 @@ impl MatrixClient {
                 }
             }
             loop {
-                match journal.unacked_count() {
+                match journal.unacked_count().await {
                     Ok(count) if count >= crate::config::MAX_UNACKED_EVENTS => {
                         tokio::time::sleep(Duration::from_millis(250)).await;
                         continue;
@@ -288,9 +291,11 @@ impl MatrixClient {
         let (previous_token, previous_room_event_id) = self
             .sync_checkpoint
             .committed_cursor()
+            .await
             .map_err(|_| TransportError::TransportFailed)?;
         self.sync_checkpoint
             .begin(previous_token.clone())
+            .await
             .map_err(|_| TransportError::TransportFailed)?;
         let settings_with_cursor = settings.clone().token(match previous_token.clone() {
             Some(token) => SyncToken::Specific(token),
@@ -341,9 +346,11 @@ impl MatrixClient {
         }
         self.sync_checkpoint
             .commit_cursor(response.next_batch, next_room_event_id)
+            .await
             .map_err(|_| TransportError::TransportFailed)?;
         self.sync_checkpoint
             .complete()
+            .await
             .map_err(|_| TransportError::TransportFailed)
     }
 
@@ -631,10 +638,20 @@ impl MatrixClient {
             _ => return Ok(()),
         }
         let cleanup_media = ingress.media.clone();
-        match pipeline.journal.persist(ingress) {
+        if let PendingJournal::MySql(backend) = &pipeline.journal {
+            crate::durable_media::archive(backend, &pipeline.spool, &ingress.media)
+                .await
+                .map_err(|_| TransportError::TransportFailed)?;
+        }
+        match pipeline.journal.persist(ingress).await {
             Ok(outcome) => {
                 if outcome.requires_incoming_media_cleanup() {
                     for media in cleanup_media {
+                        if let PendingJournal::MySql(backend) = &pipeline.journal {
+                            crate::durable_media::remove(backend, &media.handle)
+                                .await
+                                .map_err(|_| TransportError::TransportFailed)?;
+                        }
                         pipeline
                             .spool
                             .acknowledge(&media.handle)
@@ -651,6 +668,8 @@ impl MatrixClient {
                 Ok(())
             }
             Err(_) => {
+                // A failed SQL commit may have succeeded server-side. Retain
+                // encrypted media until recovery/TTL determines reachability.
                 for media in cleanup_media {
                     pipeline
                         .spool
@@ -1138,6 +1157,7 @@ async fn record_media_outcome(
             if let Some(rejection) = pipeline
                 .journal
                 .reject_invalid_media(event, descriptor)
+                .await
                 .map_err(|_| TransportError::TransportFailed)?
             {
                 pipeline
@@ -1508,6 +1528,7 @@ mod tests {
         );
         let following_receipt = journal
             .persist(following.clone())
+            .await
             .unwrap()
             .into_pending()
             .unwrap();
@@ -1521,7 +1542,7 @@ mod tests {
         drop(pipeline);
         drop(journal);
         let restored = PendingJournal::open(&store, &secret).unwrap();
-        let replay = restored.replay_ordered(4).unwrap();
+        let replay = restored.replay_ordered(4).await.unwrap();
         assert!(matches!(
             &replay[..],
             [OrderedReplay::Rejected(_), OrderedReplay::Ingress(_)]
@@ -1535,17 +1556,20 @@ mod tests {
                 event_id: bad.event_id.clone(),
                 durable_receipt_id: "mysql-bad".into(),
             })
+            .await
             .unwrap();
         restored
             .acknowledge(&IngressAck {
                 event_id: following.event_id,
                 durable_receipt_id: "mysql-good".into(),
             })
+            .await
             .unwrap();
-        assert!(restored.replay_ordered(4).unwrap().is_empty());
+        assert!(restored.replay_ordered(4).await.unwrap().is_empty());
         assert!(
             restored
                 .reject_invalid_media(&bad, &fixture["invalid_descriptor"])
+                .await
                 .unwrap()
                 .is_none()
         );
@@ -1582,7 +1606,7 @@ mod tests {
             .await
             .is_err()
         );
-        assert!(journal.replay_ordered(4).unwrap().is_empty());
+        assert!(journal.replay_ordered(4).await.unwrap().is_empty());
         assert!(receiver.try_recv().is_err());
         assert_eq!(
             checkpoint.committed_token().unwrap().as_deref(),

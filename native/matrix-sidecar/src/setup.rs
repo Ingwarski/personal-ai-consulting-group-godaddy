@@ -180,6 +180,20 @@ pub fn parse_options(arguments: &[String]) -> Result<(PathBuf, bool), &'static s
 /// Client can upload keys. A token copied from Element cannot be transplanted
 /// into an empty store. A resumable store must match the already-published key.
 pub(crate) async fn verify_session_binding(config: &Config) -> Result<(), StoreError> {
+    let local_identity = if config.store_root.join("matrix-sdk-crypto.sqlite3").exists() {
+        crate::lock::verify_private_path(&config.store_root.join("matrix-sdk-crypto.sqlite3"))
+            .map_err(|_| StoreError::Quarantined)?;
+        store::setup_account_identity(config).await?
+    } else {
+        None
+    };
+    verify_session_binding_with_identity(config, local_identity.as_deref()).await
+}
+
+pub(crate) async fn verify_session_binding_with_identity(
+    config: &Config,
+    local_identity: Option<&str>,
+) -> Result<(), StoreError> {
     let http = reqwest::Client::builder()
         .https_only(true)
         .no_proxy()
@@ -212,18 +226,11 @@ pub(crate) async fn verify_session_binding(config: &Config) -> Result<(), StoreE
             .body(json!({"device_keys": {&config.bot_mxid: [&config.bot_device_id]}}).to_string()),
     )
     .await?;
-    let local_identity = if config.store_root.join("matrix-sdk-crypto.sqlite3").exists() {
-        crate::lock::verify_private_path(&config.store_root.join("matrix-sdk-crypto.sqlite3"))
-            .map_err(|_| StoreError::Quarantined)?;
-        store::setup_account_identity(config).await?
-    } else {
-        None
-    };
     if !server_key_matches(
         &keys,
         &config.bot_mxid,
         &config.bot_device_id,
-        local_identity.as_deref(),
+        local_identity,
     ) {
         return Err(StoreError::Quarantined);
     }
@@ -633,6 +640,7 @@ pub async fn run(arguments: Vec<String>) -> Result<(), &'static str> {
             StoreError::LockContended => "store_locked",
             StoreError::Quarantined => "store_or_device_quarantined",
             StoreError::Open => "transport_or_store_unavailable",
+            StoreError::RetryWithNewInstance => "transport_or_store_unavailable",
         })?;
     let client = store.client.clone();
     let sync_barrier = Arc::new(tokio::sync::Mutex::new(()));

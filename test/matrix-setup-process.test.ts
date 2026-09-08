@@ -6,6 +6,14 @@ import type { spawn } from "node:child_process";
 import { parseMatrixSetupStatus, spawnMatrixSetupProcess } from "../src/godaddy/matrix-setup-process.ts";
 import { matrixSetupDocument } from "../src/godaddy/matrix-setup-page.ts";
 
+test("MySQL setup keeps existing-device controls and does not offer replacement or Preview ceremony", () => {
+  const html = matrixSetupDocument({ state: "prepared", storeBackend: "mysql" }, "synthetic-token");
+  assert.match(html, /Підключити наявний пристрій через MySQL/u);
+  assert.match(html, /Перевірити програми Matrix/u);
+  assert.doesNotMatch(html, /value="start_fresh"|Перевірити авторизований Preview|приватність каталогів/u);
+  assert.doesNotMatch(html, /перевірка HTTP-доступу пройдена/u);
+});
+
 const status = () => ({ own_bot_device_id: "NEW_DEVICE", own_bot_ed25519: "A".repeat(43),
   self_identity_verified: false, owner_identity_verified: false, private_cross_signing_ready: false,
   devices: { self: [{ device_id: "TRUSTED_DEVICE", ed25519: "B".repeat(43), verified: false,

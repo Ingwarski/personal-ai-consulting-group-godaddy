@@ -35,6 +35,7 @@ pub enum ConfigError {
 }
 
 pub struct Config {
+    pub mysql: bool,
     pub homeserver: FixedHomeserver,
     pub store_root: PathBuf,
     pub spool_parent: PathBuf,
@@ -51,11 +52,39 @@ pub struct Config {
 impl Config {
     pub fn from_env(provision_fresh: bool, application_root: &Path) -> Result<Self, ConfigError> {
         let homeserver = production_homeserver(&required("MATRIX_HOMESERVER_URL")?)?;
-        let (store_root, spool_parent) = matrix_private_paths(
-            &required("MATRIX_STORE_DIR")?,
-            &required("MATRIX_MEDIA_SPOOL_DIR")?,
-            application_root,
-        )?;
+        let mysql = match env::var("MATRIX_STORE_BACKEND").as_deref() {
+            Ok("mysql") => true,
+            Ok("sqlite") | Err(_) => false,
+            _ => return Err(ConfigError::Missing),
+        };
+        // MySQL startup cannot implicitly create a replacement crypto identity.
+        if mysql && provision_fresh {
+            return Err(ConfigError::Missing);
+        }
+        let (store_root, spool_parent) = if mysql {
+            // Node creates this private per-boot directory and needs the same
+            // path to consume validated media. No durable crypto files live here.
+            let root = PathBuf::from(required("MATRIX_MEDIA_SPOOL_DIR")?);
+            let temp = fs::canonicalize(env::temp_dir()).map_err(|_| ConfigError::Path)?;
+            let resolved = fs::canonicalize(&root).map_err(|_| ConfigError::Path)?;
+            if !root.is_absolute()
+                || resolved.parent() != Some(temp.as_path())
+                || !resolved
+                    .file_name()
+                    .and_then(|s| s.to_str())
+                    .is_some_and(|s| s.starts_with("pc-matrix-"))
+            {
+                return Err(ConfigError::Path);
+            }
+            crate::lock::ensure_private_directory(&root).map_err(|_| ConfigError::Path)?;
+            (root.clone(), root)
+        } else {
+            matrix_private_paths(
+                &required("MATRIX_STORE_DIR")?,
+                &required("MATRIX_MEDIA_SPOOL_DIR")?,
+                application_root,
+            )?
+        };
         let store_passphrase = Zeroizing::new(required("MATRIX_STORE_PASSPHRASE")?);
         if !valid_secret_key(&store_passphrase) {
             return Err(ConfigError::Missing);
@@ -75,6 +104,7 @@ impl Config {
         let allowed_origins =
             parse_allowed_origins(&required("MATRIX_ALLOWED_HTTPS_ORIGINS")?, &homeserver)?;
         Ok(Self {
+            mysql,
             homeserver,
             store_root,
             spool_parent,

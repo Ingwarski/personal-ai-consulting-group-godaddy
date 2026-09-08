@@ -139,17 +139,144 @@ pub struct AckOutcome {
     pub pending: Option<PendingIngress>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-struct AckTombstone {
-    receipt_id: String,
-    event_id: String,
-    event_hash: String,
-    durable_receipt_id: String,
-    acknowledged_at_ms: u64,
+pub(crate) struct AckTombstone {
+    pub(crate) receipt_id: String,
+    pub(crate) event_id: String,
+    pub(crate) event_hash: String,
+    pub(crate) durable_receipt_id: String,
+    pub(crate) acknowledged_at_ms: u64,
+}
+
+pub(crate) struct LegacyJournalSnapshot {
+    pub(crate) pending: Vec<(PendingIngress, u64)>,
+    pub(crate) rejected: Vec<PendingRejection>,
+    pub(crate) acknowledged: Vec<AckTombstone>,
 }
 
 impl PendingJournal {
+    /// Migration reads only: unlike open(), this does not create directories,
+    /// clean temporary files, prune ACKs or modify the legacy source at all.
+    pub(crate) fn export_read_only(
+        store_root: &Path,
+        passphrase: &str,
+    ) -> Result<LegacyJournalSnapshot, JournalError> {
+        if !crate::config::valid_secret_key(passphrase) {
+            return Err(JournalError);
+        }
+        let root_metadata = fs::symlink_metadata(store_root).map_err(|_| JournalError)?;
+        if !root_metadata.is_dir() || root_metadata.file_type().is_symlink() {
+            return Err(JournalError);
+        }
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::MetadataExt;
+            if root_metadata.mode() & 0o777 != 0o700
+                || root_metadata.uid() != rustix::process::geteuid().as_raw()
+            {
+                return Err(JournalError);
+            }
+        }
+        let key_material = hex::decode(passphrase).map_err(|_| JournalError)?;
+        let key = Sha256::digest(
+            [
+                b"personal-consultant/pending-ingress/v1".as_slice(),
+                key_material.as_slice(),
+            ]
+            .concat(),
+        );
+        let journal = Self {
+            root: store_root.join("pending-ingress"),
+            rejection_root: store_root.join("rejected-ingress"),
+            ack_root: store_root.join("ingress-ack-tombstones"),
+            cipher: XChaCha20Poly1305::new(&key),
+            mutation: Arc::new(Mutex::new(())),
+        };
+        let mut pending = Vec::new();
+        let mut rejected = Vec::new();
+        let mut acknowledged = Vec::new();
+        for (root, extension) in [
+            (&journal.root, "pending"),
+            (&journal.rejection_root, "rejected"),
+            (&journal.ack_root, "ack"),
+        ] {
+            let metadata = fs::symlink_metadata(root).map_err(|_| JournalError)?;
+            if !metadata.is_dir() || metadata.file_type().is_symlink() {
+                return Err(JournalError);
+            }
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::MetadataExt;
+                if metadata.mode() & 0o777 != 0o700
+                    || metadata.uid() != rustix::process::geteuid().as_raw()
+                {
+                    return Err(JournalError);
+                }
+            }
+            let mut paths = fs::read_dir(root)
+                .map_err(|_| JournalError)?
+                .map(|entry| entry.map(|entry| entry.path()).map_err(|_| JournalError))
+                .collect::<Result<Vec<_>, _>>()?;
+            paths.sort();
+            for path in paths {
+                let name = path
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .ok_or(JournalError)?;
+                // Incomplete atomic temps/unknown files require operator recovery;
+                // an importer must not silently skip or delete them.
+                if !valid_journal_target(name, extension) {
+                    return Err(JournalError);
+                }
+                match extension {
+                    "pending" => {
+                        let record = journal.load(&path)?;
+                        let created = fs::symlink_metadata(&path)
+                            .map_err(|_| JournalError)?
+                            .modified()
+                            .map_err(|_| JournalError)?
+                            .duration_since(UNIX_EPOCH)
+                            .map_err(|_| JournalError)?
+                            .as_millis();
+                        let created = u64::try_from(created)
+                            .ok()
+                            .filter(|value| *value > 0)
+                            .ok_or(JournalError)?;
+                        pending.push((record, created));
+                        if pending.len() > MAX_UNACKED_EVENTS {
+                            return Err(JournalError);
+                        }
+                    }
+                    "rejected" => {
+                        rejected.push(journal.load_rejection(&path)?);
+                        if rejected.len() > MAX_UNACKED_EVENTS {
+                            return Err(JournalError);
+                        }
+                    }
+                    "ack" => {
+                        let record = load_tombstone(&path)?;
+                        if name != format!("{}.ack", event_key_for(&record.event_id))
+                            || record.acknowledged_at_ms == 0
+                        {
+                            return Err(JournalError);
+                        }
+                        acknowledged.push(record);
+                        if acknowledged.len() > MAX_ACK_TOMBSTONES {
+                            return Err(JournalError);
+                        }
+                    }
+                    _ => return Err(JournalError),
+                }
+            }
+        }
+        Ok(LegacyJournalSnapshot {
+            pending,
+            rejected,
+            acknowledged,
+        })
+    }
+
     pub fn open(store_root: &Path, passphrase: &str) -> Result<Self, JournalError> {
         if !crate::config::valid_secret_key(passphrase) {
             return Err(JournalError);
@@ -265,33 +392,7 @@ impl PendingJournal {
     ) -> Result<Option<PendingRejection>, JournalError> {
         let _guard = self.mutation.lock().map_err(|_| JournalError)?;
         let event_key = event_key_for(&event.event_id);
-        let body_hash = hash_json(&event.body)?;
-        let media_manifest_hash = hash_json(descriptor)?;
-        let event_hash = hash_json(&HashEvent {
-            event_id: &event.event_id,
-            room_id: &event.room_id,
-            sender_mxid: &event.sender_mxid,
-            sender_device_id: &event.sender_device_id,
-            encrypted: true,
-            body_hash: &body_hash,
-            relation_event_id: event.reply_to_event_id.as_deref(),
-            media_manifest_hash: &media_manifest_hash,
-        })?;
-        let mut rejection = PendingRejection {
-            sequence: 1,
-            receipt_id: receipt_id_for(&event.event_id, &event.sender_device_id),
-            event_id: event.event_id.clone(),
-            room_id: event.room_id.clone(),
-            sender_mxid: event.sender_mxid.clone(),
-            sender_device_id: event.sender_device_id.clone(),
-            reason: IngressRejection::InvalidMedia,
-            body_hash,
-            media_manifest_hash,
-            event_hash,
-        };
-        if !rejection.is_valid() {
-            return Err(JournalError);
-        }
+        let mut rejection = invalid_media_rejection(event, descriptor)?;
         let ack_path = self.ack_root.join(format!("{event_key}.ack"));
         if ack_path.exists() {
             let tombstone = load_tombstone(&ack_path)?;
@@ -682,7 +783,7 @@ impl PendingJournal {
 }
 
 impl IngressEvent {
-    fn is_valid(&self) -> bool {
+    pub(crate) fn is_valid(&self) -> bool {
         let body_valid = self.body.as_ref().is_none_or(|body| {
             !body.trim().is_empty() && !body.contains('\0') && body.len() <= MAX_PLAINTEXT_BYTES
         });
@@ -713,7 +814,7 @@ impl IngressEvent {
 }
 
 impl PendingRejection {
-    fn from_pending(pending: &PendingIngress) -> Result<Self, JournalError> {
+    pub(crate) fn from_pending(pending: &PendingIngress) -> Result<Self, JournalError> {
         let hashes = ingress_hashes(&pending.event)?;
         Ok(Self {
             sequence: pending.sequence,
@@ -729,7 +830,7 @@ impl PendingRejection {
         })
     }
 
-    fn is_valid(&self) -> bool {
+    pub(crate) fn is_valid(&self) -> bool {
         self.sequence > 0
             && valid_matrix_event_id(&self.event_id)
             && self.room_id.starts_with('!')
@@ -747,7 +848,7 @@ impl PendingRejection {
                 .all(|value| valid_lower_sha256(value))
     }
 
-    fn matches(&self, other: &Self) -> bool {
+    pub(crate) fn matches(&self, other: &Self) -> bool {
         self.sequence == other.sequence
             && self.receipt_id == other.receipt_id
             && self.event_id == other.event_id
@@ -761,10 +862,10 @@ impl PendingRejection {
     }
 }
 
-struct IngressHashes {
-    body: String,
-    media_manifest: String,
-    event: String,
+pub(crate) struct IngressHashes {
+    pub(crate) body: String,
+    pub(crate) media_manifest: String,
+    pub(crate) event: String,
 }
 
 #[derive(Serialize)]
@@ -788,7 +889,7 @@ struct HashEvent<'a> {
     media_manifest_hash: &'a str,
 }
 
-fn ingress_hashes(event: &IngressEvent) -> Result<IngressHashes, JournalError> {
+pub(crate) fn ingress_hashes(event: &IngressEvent) -> Result<IngressHashes, JournalError> {
     let media = event
         .media
         .iter()
@@ -822,7 +923,7 @@ fn hash_json(value: &impl Serialize) -> Result<String, JournalError> {
     Ok(hex::encode(Sha256::digest(bytes)))
 }
 
-fn valid_lower_sha256(value: &str) -> bool {
+pub(crate) fn valid_lower_sha256(value: &str) -> bool {
     value.len() == 64
         && value
             .bytes()
@@ -842,14 +943,14 @@ impl IngressAck {
     }
 }
 
-fn valid_matrix_event_id(value: &str) -> bool {
+pub(crate) fn valid_matrix_event_id(value: &str) -> bool {
     value.starts_with('$')
         && value.len() <= 255
         && value.is_ascii()
         && !value.bytes().any(|byte| byte.is_ascii_whitespace())
 }
 
-fn receipt_id_for(event_id: &str, sender_device_id: &str) -> String {
+pub(crate) fn receipt_id_for(event_id: &str, sender_device_id: &str) -> String {
     format!(
         "ingress-{}",
         &hex::encode(Sha256::digest(
@@ -956,6 +1057,41 @@ fn now_ms() -> u64 {
         .ok()
         .and_then(|duration| u64::try_from(duration.as_millis()).ok())
         .unwrap_or(u64::MAX)
+}
+
+/// Shared rejection hashing for the durable SQL and legacy journal adapters.
+pub(crate) fn invalid_media_rejection(
+    event: &IngressEvent,
+    descriptor: &serde_json::Value,
+) -> Result<PendingRejection, JournalError> {
+    let body_hash = hash_json(&event.body)?;
+    let media_manifest_hash = hash_json(descriptor)?;
+    let event_hash = hash_json(&HashEvent {
+        event_id: &event.event_id,
+        room_id: &event.room_id,
+        sender_mxid: &event.sender_mxid,
+        sender_device_id: &event.sender_device_id,
+        encrypted: true,
+        body_hash: &body_hash,
+        relation_event_id: event.reply_to_event_id.as_deref(),
+        media_manifest_hash: &media_manifest_hash,
+    })?;
+    let rejection = PendingRejection {
+        sequence: 1,
+        receipt_id: receipt_id_for(&event.event_id, &event.sender_device_id),
+        event_id: event.event_id.clone(),
+        room_id: event.room_id.clone(),
+        sender_mxid: event.sender_mxid.clone(),
+        sender_device_id: event.sender_device_id.clone(),
+        reason: IngressRejection::InvalidMedia,
+        body_hash,
+        media_manifest_hash,
+        event_hash,
+    };
+    if !rejection.is_valid() {
+        return Err(JournalError);
+    }
+    Ok(rejection)
 }
 
 #[cfg(test)]

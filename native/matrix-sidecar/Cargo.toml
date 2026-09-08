@@ -1,5 +1,5 @@
 [workspace]
-members = ["."]
+members = [".", "mysql-store"]
 resolver = "3"
 
 [package]
@@ -11,11 +11,13 @@ license = "LicenseRef-Proprietary"
 publish = false
 
 [dependencies]
+personal-consultant-matrix-mysql-store = { path = "mysql-store" }
 fs2 = "0.4.3"
 chacha20poly1305 = "0.10.1"
 hex = "0.4.3"
 matrix-sdk = { version = "=0.18.0", default-features = false, features = ["e2e-encryption", "bundled-sqlite"] }
 matrix-sdk-base = { version = "=0.18.0", default-features = false, features = ["e2e-encryption"] }
+matrix-sdk-common = "=0.18.0"
 matrix-sdk-sqlite = { version = "=0.18.0", default-features = false, features = ["bundled", "crypto-store", "state-store"] }
 reqwest = { version = "=0.13.4", default-features = false, features = ["rustls"] }
 rustix = { version = "1.1.4", features = ["fs", "process"] }
@@ -29,6 +31,7 @@ uuid = { version = "1.20.0", features = ["v4"] }
 zeroize = "1.8.2"
 
 [dev-dependencies]
+rusqlite = { version = "=0.37.0", features = ["bundled"] }
 tempfile = "3.24.0"
 
 [profile.release]

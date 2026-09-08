@@ -505,6 +505,8 @@ type HarnessOptions = Readonly<{
   outbox?: FakeOutbox;
   receipts?: FakeIngressReceipts;
   readBinding?: () => Promise<import("../src/godaddy/matrix-store-binding.ts").MatrixStoreBindingResult>;
+  registryQuery?: MySqlPool["execute"];
+  storeBackend?: "sqlite" | "mysql";
   publicationSynchronizer?: MatrixPublicationSynchronizer;
 }>;
 
@@ -518,7 +520,7 @@ function harness(options: HarnessOptions = {}) {
   const runtimeInputs: Array<Parameters<NonNullable<Parameters<typeof createGoDaddyMatrixService>[1]["createRuntime"]>>[0]> = [];
   let bindingReads = 0;
   const pool = Object.freeze({
-    execute: async (): Promise<readonly [unknown, unknown]> => [[], []],
+    execute: options.registryQuery ?? (async (): Promise<readonly [unknown, unknown]> => [[], []]),
     getConnection: async () => { throw new Error("unused"); }
   }) as unknown as MySqlPool;
   const registrarRuntime = Object.freeze({
@@ -539,7 +541,7 @@ function harness(options: HarnessOptions = {}) {
     registrarRuntime,
     now: () => new Date(clock.now())
   }, {
-    parseConfiguration: () => ({ ok: true, value: configuration }),
+    parseConfiguration: () => ({ ok: true, value: { ...configuration, ...(options.storeBackend === undefined ? {} : { storeBackend: options.storeBackend }) } }),
     probeDatabase: options.probe ?? (async () => readyProbe),
     readStoreBinding: async () => {
       bindingReads += 1;
@@ -575,6 +577,51 @@ function harness(options: HarnessOptions = {}) {
     bindingReads: () => bindingReads
   };
 }
+
+test("activated MySQL authority blocks old SQLite binding and runtime spawn", async () => {
+  const h = harness({ registryQuery: async () => [[{ fingerprint: "ab".repeat(32) }], []] });
+  await h.service.start();
+  assert.equal(h.service.getReadiness().reason, "store_binding_invalid");
+  assert.equal(h.bindingReads(), 0);
+  assert.equal(h.supervisorOptions.length, 0);
+  await h.service.stop();
+});
+
+test("registry connection failure defers SQLite startup without reading stale files", async () => {
+  let unavailable = true;
+  const h = harness({ registryQuery: async () => {
+    if (unavailable) throw Object.assign(new Error("synthetic unavailable database"), { code: "ECONNREFUSED" });
+    return [[], []];
+  } });
+  await h.service.start();
+  assert.equal(h.service.getReadiness().reason, "store_binding_transient");
+  assert.equal(h.bindingReads(), 0);
+  assert.equal(h.supervisorOptions.length, 0);
+  unavailable = false;
+  await h.clock.advance(10_000);
+  assert.equal(h.bindingReads(), 1);
+  assert.equal(h.supervisorOptions.length, 1);
+  await h.service.stop();
+});
+
+test("MySQL mode uses activated DB identity without touching the legacy binding file", async () => {
+  const h = harness({ storeBackend: "mysql", registryQuery: async () => [[{ fingerprint: "ab".repeat(32) }], []] });
+  await h.service.start();
+  assert.equal(h.bindingReads(), 0);
+  assert.equal(h.supervisorOptions.length, 1);
+  assert.equal(h.supervisorOptions[0]?.expectedIdentity?.storeFingerprint, "ab".repeat(32));
+  assert.notEqual(h.supervisorOptions[0]?.spawnEnvironment?.MATRIX_MEDIA_SPOOL_DIR, configuration.mediaSpoolDir);
+  await h.service.stop();
+});
+
+test("MySQL mode with no activation does not fall back to the valid old SQLite binding", async () => {
+  const h = harness({ storeBackend: "mysql", registryQuery: async () => [[{ fingerprint: null }], []] });
+  await h.service.start();
+  assert.equal(h.service.getReadiness().reason, "store_binding_invalid");
+  assert.equal(h.bindingReads(), 0);
+  assert.equal(h.supervisorOptions.length, 0);
+  await h.service.stop();
+});
 
 test("Preview is inert before parser, pool, filesystem, randomness, timers or sidecar dependencies", async () => {
   let touches = 0;

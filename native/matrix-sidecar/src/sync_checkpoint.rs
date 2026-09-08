@@ -46,6 +46,41 @@ impl SyncCheckpoint {
             matches!(target, CHECKPOINT_FILE | CURSOR_FILE)
         })
         .map_err(|_| CheckpointError)?;
+        Self::build(root, secret_key)
+    }
+
+    /// Authenticate an existing consistent backup without creating, pruning,
+    /// aligning SQLite, or cleaning any source file. Incomplete atomic writes
+    /// require recovery before this migration constructor can succeed.
+    pub fn open_read_only(root: &Path, secret_key: &str) -> Result<Self, CheckpointError> {
+        let metadata = fs::symlink_metadata(root).map_err(|_| CheckpointError)?;
+        if !metadata.is_dir() || metadata.file_type().is_symlink() {
+            return Err(CheckpointError);
+        }
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::MetadataExt;
+            if metadata.mode() & 0o777 != 0o700
+                || metadata.uid() != rustix::process::geteuid().as_raw()
+            {
+                return Err(CheckpointError);
+            }
+        }
+        for entry in fs::read_dir(root).map_err(|_| CheckpointError)? {
+            let name = entry.map_err(|_| CheckpointError)?.file_name();
+            if name
+                .to_str()
+                .is_some_and(|name| name.starts_with(".atomic-"))
+            {
+                return Err(CheckpointError);
+            }
+        }
+        let checkpoint = Self::build(root, secret_key)?;
+        checkpoint.export_committed_for_migration()?;
+        Ok(checkpoint)
+    }
+
+    fn build(root: &Path, secret_key: &str) -> Result<Self, CheckpointError> {
         if !crate::config::valid_secret_key(secret_key) {
             return Err(CheckpointError);
         }
@@ -160,6 +195,18 @@ impl SyncCheckpoint {
         Ok((record.token, record.room_event_id))
     }
 
+    /// A read-only migration must also authenticate an unfinished checkpoint;
+    /// ignoring a malformed in-flight file would hide incomplete source state.
+    pub(crate) fn export_committed_for_migration(
+        &self,
+    ) -> Result<(Option<String>, Option<String>), CheckpointError> {
+        let committed = self.committed_cursor()?;
+        if self.path.exists() {
+            self.load()?;
+        }
+        Ok(committed)
+    }
+
     pub fn commit_cursor(
         &self,
         token: String,
@@ -262,7 +309,7 @@ impl SyncCheckpoint {
     }
 }
 
-fn validate_room_event_anchor(anchor: Option<&str>) -> Result<(), CheckpointError> {
+pub(crate) fn validate_room_event_anchor(anchor: Option<&str>) -> Result<(), CheckpointError> {
     if anchor.is_some_and(|event_id| {
         !event_id.starts_with('$') || event_id.len() > 255 || !event_id.is_ascii()
     }) {
@@ -271,7 +318,7 @@ fn validate_room_event_anchor(anchor: Option<&str>) -> Result<(), CheckpointErro
     Ok(())
 }
 
-fn validate_token(token: Option<&str>) -> Result<(), CheckpointError> {
+pub(crate) fn validate_token(token: Option<&str>) -> Result<(), CheckpointError> {
     if token
         .is_some_and(|token| token.is_empty() || token.len() > 16 * 1024 || token.contains('\0'))
     {

@@ -4,7 +4,7 @@ import { chmod, link, lstat, mkdir, mkdtemp, readFile, readdir, realpath, rename
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { inspectMatrixRelease, prepareMatrixRelease, restrictMatrixMediaPermissions, verifyMatrixHttpIsolation, type MatrixReleaseExpectation, type MatrixIsolationDiagnostics } from "../src/godaddy/matrix-release-install.ts";
+import { inspectMatrixRelease, prepareMatrixRelease, inspectMySqlMatrixRelease, prepareMySqlMatrixRelease, restrictMatrixMediaPermissions, verifyMatrixHttpIsolation, type MatrixReleaseExpectation, type MatrixIsolationDiagnostics } from "../src/godaddy/matrix-release-install.ts";
 import { runMatrixBrowserChecks } from "../src/godaddy/matrix-browser-isolation.ts";
 import { matrixPositiveControlResponse } from "../src/godaddy/matrix-positive-control.ts";
 import { createGodaddyServer } from "../src/godaddy/server.mjs";
@@ -73,6 +73,42 @@ test("inspection is read-only and does not turn missing installation into a prov
   assert.deepEqual(await inspectMatrixRelease(f.root, f.expected), { ok: false, code: "matrix_release_unavailable" });
   assert.equal((await readdir(f.root)).includes(".runtime"), false);
   assert.deepEqual(await readdir(join(f.root, "public", "assets")), []);
+});
+
+test("MySQL release needs no public tree and attests only immutable executables", async t => {
+  const f = await fixture(t);
+  await rm(join(f.root, "public"), { recursive: true });
+  assert.deepEqual(await inspectMySqlMatrixRelease(f.root, f.expected), { ok: false, code: "matrix_release_unavailable" });
+  assert.deepEqual((await readdir(f.root)).sort(), [".runtime-release"]);
+  const result = await prepareMySqlMatrixRelease(f.root, f.expected);
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.deepEqual(Object.keys(result.value).sort(), ["sidecarPath", "sidecarSha256", "setupPath", "setupSha256", "storeBackend"].sort());
+  assert.equal(result.value.storeBackend, "mysql");
+  assert.deepEqual(await readFile(result.value.sidecarPath), sidecar);
+  assert.deepEqual(await readFile(result.value.setupPath), setup);
+  assert.equal((await lstat(result.value.setupPath)).mode & 0o777, 0o500);
+  assert.deepEqual((await readdir(f.root)).sort(), [".runtime", ".runtime-release"]);
+  assert.deepEqual(await inspectMySqlMatrixRelease(f.root, f.expected), result);
+});
+
+test("MySQL release leaves even unsafe legacy public state untouched and retains immutable binary checks", async t => {
+  const f = await fixture(t);
+  const oldFile = join(f.root, "public", "assets", "legacy-sensitive-state");
+  await writeFile(oldFile, "synthetic-legacy-data", { mode: 0o644 });
+  await chmod(oldFile, 0o644);
+  const before = await lstat(oldFile);
+  assert.equal((await prepareMySqlMatrixRelease(f.root, f.expected)).ok, true);
+  assert.equal((await inspectMySqlMatrixRelease(f.root, f.expected)).ok, true);
+  const after = await lstat(oldFile);
+  assert.equal(after.ino, before.ino); assert.equal(after.ctimeMs, before.ctimeMs);
+  assert.equal(await readFile(oldFile, "utf8"), "synthetic-legacy-data");
+  assert.deepEqual(await readdir(join(f.root, "public", "assets")), ["legacy-sensitive-state"]);
+  assert.deepEqual(await inspectMySqlMatrixRelease(f.root, { ...f.expected, manifestSha256: "0".repeat(64) }),
+    { ok: false, code: "matrix_release_checksum_mismatch" });
+  await chmod(join(f.runtime, SIDECAR), 0o700);
+  await writeFile(join(f.runtime, SIDECAR), Buffer.alloc(sidecar.length, 0));
+  assert.deepEqual(await prepareMySqlMatrixRelease(f.root, f.expected), { ok: false, code: "matrix_release_conflict" });
 });
 
 test("unsafe state diagnostics expose only fixed metadata labels and never repair or read state", async (t) => {

@@ -1,0 +1,24 @@
+{
+  "event": "implementation_prompt",
+  "role": "user",
+  "intent": "start_production_implementation",
+  "prompt_id": "implementation-U-06-C1-20260908-01",
+  "message_id": null,
+  "message": "Implement U-06-C1 from the validated plan.",
+  "received_at": "2026-09-08T19:34:40.812Z",
+  "recorded_at": "2026-09-08T19:34:40.812Z",
+  "timestamp_basis": "Observed in the active conversation after the plan pause; original transport timestamp/message ID unavailable.",
+  "development_plan_hash": "cc9025beb72c6aed349246995126723ae235f9af84dfa951994689c258fbf144",
+  "product_scope_hash": "defc5e24f0dd91be42b984888b157137f4f1ed361459e70f42b832e18c957bd4",
+  "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
+  "scope": {
+    "allowed": "Implement U-06-C1 and isolated synthetic-data tests. Live provisioning/cutover remains an explicit operation under the plan.",
+    "excluded": [
+      "HappyPro",
+      "database wipe",
+      "silent device replacement",
+      "stateful Preview",
+      "new paid or local production hosting"
+    ]
+  }
+}

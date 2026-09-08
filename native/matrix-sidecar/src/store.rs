@@ -1,7 +1,11 @@
+use personal_consultant_matrix_mysql_store::{
+    Backend, DatabaseConfig, crypto::MySqlCryptoStore, state::MySqlStateStore,
+};
 use std::fs;
 #[cfg(test)]
 use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use matrix_sdk::{
     Client, SessionMeta, SessionTokens,
@@ -48,16 +52,231 @@ pub enum StoreError {
     Quarantined,
     #[error("crypto store could not be opened")]
     Open,
+    /// This instance must be discarded. Recovery creates a fresh fenced
+    /// backend and reloads committed state; it never retries poisoned caches.
+    #[error("Matrix database needs a fresh runtime instance")]
+    RetryWithNewInstance,
+}
+
+pub fn mysql_error(error: personal_consultant_matrix_mysql_store::StoreError) -> StoreError {
+    classify_mysql_error(&error)
+}
+
+fn classify_mysql_error(error: &personal_consultant_matrix_mysql_store::StoreError) -> StoreError {
+    use personal_consultant_matrix_mysql_store::StoreError as DatabaseError;
+    match error {
+        DatabaseError::Unavailable | DatabaseError::Fenced | DatabaseError::Closed => {
+            StoreError::RetryWithNewInstance
+        }
+        DatabaseError::Conflict => StoreError::LockContended,
+        DatabaseError::Corrupt | DatabaseError::InvalidConfiguration | DatabaseError::Schema => {
+            StoreError::Quarantined
+        }
+    }
+}
+
+fn crypto_error(error: matrix_sdk_base::crypto::store::CryptoStoreError) -> StoreError {
+    if let matrix_sdk_base::crypto::store::CryptoStoreError::Backend(error) = error {
+        if let Some(database) =
+            error.downcast_ref::<personal_consultant_matrix_mysql_store::StoreError>()
+        {
+            return classify_mysql_error(database);
+        }
+    }
+    StoreError::Quarantined
+}
+
+fn state_error(error: matrix_sdk_base::store::StoreError) -> StoreError {
+    if let matrix_sdk_base::store::StoreError::Backend(error) = error {
+        if let Some(database) =
+            error.downcast_ref::<personal_consultant_matrix_mysql_store::StoreError>()
+        {
+            return classify_mysql_error(database);
+        }
+    }
+    StoreError::Quarantined
+}
+
+pub fn checkpoint_error(error: crate::durable_checkpoint::CheckpointError) -> StoreError {
+    match error {
+        crate::durable_checkpoint::CheckpointError::Database(error) => mysql_error(error),
+        crate::durable_checkpoint::CheckpointError::Invalid => StoreError::Quarantined,
+    }
+}
+
+fn restore_mysql_session_error(error: matrix_sdk::Error) -> StoreError {
+    match error {
+        matrix_sdk::Error::CryptoStoreError(error) => crypto_error(*error),
+        matrix_sdk::Error::StateStore(error) => state_error(*error),
+        _ => StoreError::Quarantined,
+    }
 }
 
 pub struct OpenStore {
     pub client: Client,
     pub http_client: reqwest::Client,
-    pub lock: StoreLock,
+    pub lock: Option<StoreLock>,
+    pub mysql: Option<Arc<Backend>>,
+    _lease: Option<DatabaseLease>,
     pub root: PathBuf,
     pub fresh: bool,
     pub binding: Option<DeviceBinding>,
-    pub sync_checkpoint: crate::sync_checkpoint::SyncCheckpoint,
+    pub sync_checkpoint: crate::durable_checkpoint::DurableCheckpoint,
+}
+
+struct DatabaseLease {
+    task: tokio::task::JoinHandle<()>,
+    backend: Arc<Backend>,
+}
+impl DatabaseLease {
+    fn start(backend: Arc<Backend>) -> Self {
+        let active = backend.clone();
+        let task = tokio::spawn(async move {
+            let mut ticks = tokio::time::interval(std::time::Duration::from_secs(10));
+            loop {
+                ticks.tick().await;
+                if active.renew().await.is_err() {
+                    break;
+                }
+            }
+        });
+        Self { task, backend }
+    }
+}
+impl Drop for DatabaseLease {
+    fn drop(&mut self) {
+        self.task.abort();
+        let backend = self.backend.clone();
+        if let Ok(runtime) = tokio::runtime::Handle::try_current() {
+            runtime.spawn(async move {
+                let _ = backend.close().await;
+            });
+        }
+    }
+}
+
+/// Stable namespace coordinates bind this application room and exact device.
+/// No additional owner secret or randomly regenerated environment ID is needed.
+pub fn mysql_coordinates(config: &Config) -> Result<([u8; 16], Vec<u8>, [u8; 32]), StoreError> {
+    let identity = serde_json::to_vec(&(
+        "personal-consultant-matrix-v1",
+        config.homeserver.origin(),
+        &config.room_id,
+        &config.bot_mxid,
+        &config.bot_device_id,
+    ))
+    .map_err(|_| StoreError::Quarantined)?;
+    let digest = Sha256::digest(&identity);
+    let mut id = [0; 16];
+    id.copy_from_slice(&digest[..16]);
+    let key: [u8; 32] = hex::decode(config.store_passphrase.as_str())
+        .map_err(|_| StoreError::Quarantined)?
+        .try_into()
+        .map_err(|_| StoreError::Quarantined)?;
+    Ok((id, identity, key))
+}
+
+async fn open_mysql(config: &Config, setup_preflight: bool) -> Result<OpenStore, StoreError> {
+    if config.provision_fresh {
+        return Err(StoreError::Quarantined);
+    }
+    let db = DatabaseConfig::from_env().map_err(mysql_error)?;
+    let pool = db.connect().await.map_err(mysql_error)?;
+    let (id, identity, key) = mysql_coordinates(config)?;
+    let opened = Backend::open(pool.clone(), id, &identity, &key, 30_000).await;
+    pool.close().await;
+    let backend = Arc::new(opened.map_err(mysql_error)?);
+    let lease = DatabaseLease::start(backend.clone());
+    // A partially imported namespace is never a runnable store.
+    if backend
+        .get("app.meta", b"activation")
+        .await
+        .map_err(mysql_error)?
+        .as_deref()
+        != Some(b"ready")
+    {
+        return Err(StoreError::Quarantined);
+    }
+    let binding: DeviceBinding = serde_json::from_slice(
+        &backend
+            .get("app.meta", b"device-binding")
+            .await
+            .map_err(mysql_error)?
+            .ok_or(StoreError::Quarantined)?,
+    )
+    .map_err(|_| StoreError::Quarantined)?;
+    if binding.device_id != config.bot_device_id {
+        return Err(StoreError::Quarantined);
+    }
+    let crypto = MySqlCryptoStore::new(backend.clone());
+    let account = crypto
+        .load_account()
+        .await
+        .map_err(mysql_error)?
+        .ok_or(StoreError::Quarantined)?;
+    if account.user_id().as_str() != config.bot_mxid
+        || account.device_id().as_str() != config.bot_device_id
+    {
+        return Err(StoreError::Quarantined);
+    }
+    let fingerprint = hex::encode(Sha256::digest(
+        account.identity_keys().ed25519.to_base64().as_bytes(),
+    ));
+    validate_bound_identity(&binding, Some(&fingerprint))?;
+    if setup_preflight {
+        crate::setup::verify_session_binding_with_identity(config, Some(&fingerprint)).await?;
+    }
+    let checkpoint = crate::durable_checkpoint::DurableCheckpoint::open_mysql(backend.clone())
+        .await
+        .map_err(checkpoint_error)?;
+    let http_client = reqwest::Client::builder()
+        .https_only(true)
+        .no_proxy()
+        .redirect(reqwest::redirect::Policy::none())
+        .build()
+        .map_err(|_| StoreError::Open)?;
+    let stores = matrix_sdk::config::StoreConfig::new(
+        matrix_sdk_common::cross_process_lock::CrossProcessLockConfig::SingleProcess,
+    )
+    .crypto_store(crypto)
+    .state_store(MySqlStateStore::new(backend.clone()));
+    // The backend fence governs the single writer; disposable SDK caches use
+    // StoreConfig's memory implementations, not another private SQLite file.
+    let client = private_client_builder()
+        .homeserver_url(config.homeserver.as_url().as_str())
+        .http_client(http_client.clone())
+        .respect_login_well_known(false)
+        .store_config(stores)
+        .build()
+        .await
+        .map_err(|_| StoreError::Open)?;
+    client
+        .restore_session(MatrixSession {
+            meta: SessionMeta {
+                user_id: config
+                    .bot_mxid
+                    .parse()
+                    .map_err(|_| StoreError::Quarantined)?,
+                device_id: config.bot_device_id.clone().into(),
+            },
+            tokens: SessionTokens {
+                access_token: config.access_token.to_string(),
+                refresh_token: None,
+            },
+        })
+        .await
+        .map_err(restore_mysql_session_error)?;
+    Ok(OpenStore {
+        client,
+        http_client,
+        lock: None,
+        mysql: Some(backend),
+        _lease: Some(lease),
+        root: config.store_root.clone(),
+        fresh: false,
+        binding: Some(binding),
+        sync_checkpoint: checkpoint,
+    })
 }
 
 fn private_client_builder() -> matrix_sdk::ClientBuilder {
@@ -83,6 +302,9 @@ pub async fn open_for_setup(config: &Config) -> Result<OpenStore, StoreError> {
 }
 
 async fn open_internal(config: &Config, setup_preflight: bool) -> Result<OpenStore, StoreError> {
+    if config.mysql {
+        return open_mysql(config, setup_preflight).await;
+    }
     if !config.store_root.exists() {
         return Err(StoreError::Quarantined);
     }
@@ -167,11 +389,13 @@ async fn open_internal(config: &Config, setup_preflight: bool) -> Result<OpenSto
     Ok(OpenStore {
         client,
         http_client,
-        lock,
+        lock: Some(lock),
+        mysql: None,
+        _lease: None,
         root: config.store_root.clone(),
         fresh: scenario.fresh,
         binding,
-        sync_checkpoint,
+        sync_checkpoint: crate::durable_checkpoint::DurableCheckpoint::Legacy(sync_checkpoint),
     })
 }
 
@@ -568,6 +792,74 @@ fn secure_fresh_store_files(root: &Path) -> Result<(), StoreError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn database_startup_errors_preserve_recovery_and_quarantine_boundaries() {
+        use personal_consultant_matrix_mysql_store::StoreError as Db;
+        for error in [Db::Unavailable, Db::Fenced, Db::Closed] {
+            assert!(matches!(
+                mysql_error(error),
+                StoreError::RetryWithNewInstance
+            ));
+        }
+        assert!(matches!(
+            mysql_error(Db::Conflict),
+            StoreError::LockContended
+        ));
+        for error in [Db::Corrupt, Db::InvalidConfiguration, Db::Schema] {
+            assert!(matches!(mysql_error(error), StoreError::Quarantined));
+        }
+    }
+
+    #[test]
+    fn sdk_and_checkpoint_wrappers_do_not_hide_database_failure_classes() {
+        use personal_consultant_matrix_mysql_store::StoreError as Db;
+        assert!(matches!(
+            crypto_error(Db::Unavailable.into()),
+            StoreError::RetryWithNewInstance
+        ));
+        assert!(matches!(
+            crypto_error(Db::Corrupt.into()),
+            StoreError::Quarantined
+        ));
+        assert!(matches!(
+            state_error(Db::Fenced.into()),
+            StoreError::RetryWithNewInstance
+        ));
+        assert!(matches!(
+            state_error(Db::Schema.into()),
+            StoreError::Quarantined
+        ));
+        assert!(matches!(
+            checkpoint_error(crate::durable_checkpoint::CheckpointError::Database(
+                Db::Closed
+            )),
+            StoreError::RetryWithNewInstance
+        ));
+        assert!(matches!(
+            checkpoint_error(crate::durable_checkpoint::CheckpointError::Invalid),
+            StoreError::Quarantined
+        ));
+        assert!(matches!(
+            restore_mysql_session_error(matrix_sdk::Error::CryptoStoreError(Box::new(
+                Db::Unavailable.into()
+            ))),
+            StoreError::RetryWithNewInstance
+        ));
+        assert!(matches!(
+            restore_mysql_session_error(matrix_sdk::Error::StateStore(Box::new(
+                Db::Corrupt.into()
+            ))),
+            StoreError::Quarantined
+        ));
+        // Error messages, even plausible database messages, grant no retry class.
+        assert!(matches!(
+            crypto_error(matrix_sdk_base::crypto::store::CryptoStoreError::Backend(
+                Box::new(std::io::Error::other("Matrix database unavailable"))
+            )),
+            StoreError::Quarantined
+        ));
+    }
     use crate::config::FixedHomeserver;
     use std::io::Write;
     use zeroize::Zeroizing;
@@ -602,6 +894,7 @@ mod tests {
             make_private(&root);
         }
         Config {
+            mysql: false,
             homeserver: FixedHomeserver::parse("https://matrix.example").unwrap(),
             store_root: root.clone(),
             spool_parent: root.join("spool"),
@@ -646,6 +939,19 @@ mod tests {
         assert!(!scenario.fresh);
         assert_eq!(scenario.binding.unwrap().device_id, "DEVICE");
         assert!(validate_scenario(&config(restore, "OTHER")).is_err());
+    }
+
+    #[test]
+    fn mysql_namespace_matches_node_utf8_tuple() {
+        let temp = tempfile::tempdir().unwrap();
+        let mut c = config(temp.path().to_owned(), "BOT_DEVICE_1");
+        c.homeserver = FixedHomeserver::parse("https://matrix.org").unwrap();
+        c.room_id = "!private-room:matrix.org".into();
+        c.bot_mxid = "@consultant-bot:matrix.org".into();
+        assert_eq!(
+            hex::encode(mysql_coordinates(&c).unwrap().0),
+            "bffc6137918f06551a73123b566c15ef"
+        );
     }
 
     #[test]

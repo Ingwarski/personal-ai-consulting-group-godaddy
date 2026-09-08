@@ -80,6 +80,19 @@ pub struct StagingFile {
 }
 
 impl PrivateSpool {
+    pub fn open_read_only(parent: &Path) -> Result<Self, MediaError> {
+        let meta = fs::symlink_metadata(parent).map_err(|_| MediaError)?;
+        if !meta.is_dir() || meta.file_type().is_symlink() {
+            return Err(MediaError);
+        }
+        ensure_private_directory(parent).map_err(|_| MediaError)?;
+        Ok(Self {
+            parent: parent.to_owned(),
+            root: parent.to_owned(),
+            instance: "migration-read-only".into(),
+            replay_instances: Arc::new(RwLock::new(HashSet::new())),
+        })
+    }
     pub fn create(parent: &Path) -> Result<Self, MediaError> {
         if !parent.exists() {
             return Err(MediaError);
@@ -112,6 +125,63 @@ impl PrivateSpool {
 
     pub fn instance(&self) -> &str {
         &self.instance
+    }
+
+    /// Read only an already validated private handle for encrypted SQL staging.
+    pub fn read_verified(&self, reference: &MediaReference) -> Result<Vec<u8>, MediaError> {
+        self.inspect(reference)?;
+        let bytes = crate::lock::read_private_file(
+            &self.resolve(&reference.handle)?,
+            MAX_MEDIA_OBJECT_BYTES,
+        )
+        .map_err(|_| MediaError)?;
+        if bytes.len() as u64 != reference.length
+            || hex::encode(Sha256::digest(&bytes)) != reference.sha256
+        {
+            return Err(MediaError);
+        }
+        Ok(bytes)
+    }
+
+    /// Recreate a committed opaque handle in a NEW private ephemeral root. The
+    /// reference's hash/length/type are verified before any file is created.
+    pub fn restore_verified(
+        &self,
+        reference: &MediaReference,
+        bytes: &[u8],
+    ) -> Result<(), MediaError> {
+        let (instance, _) = parse_handle(&reference.handle).ok_or(MediaError)?;
+        let kind = detect_kind(bytes).ok_or(MediaError)?;
+        if bytes.len() as u64 != reference.length
+            || reference.length > MAX_MEDIA_OBJECT_BYTES
+            || hex::encode(Sha256::digest(bytes)) != reference.sha256
+            || kind.mime() != reference.declared_mime
+            || Path::new(&reference.handle)
+                .extension()
+                .and_then(|s| s.to_str())
+                != Some(kind.extension())
+        {
+            return Err(MediaError);
+        }
+        ensure_private_directory(&self.parent).map_err(|_| MediaError)?;
+        let directory = self.parent.join(format!("boot-{instance}"));
+        if !directory.exists() {
+            fs::create_dir(&directory).map_err(|_| MediaError)?;
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                fs::set_permissions(&directory, fs::Permissions::from_mode(0o700))
+                    .map_err(|_| MediaError)?;
+            }
+        }
+        ensure_private_directory(&directory).map_err(|_| MediaError)?;
+        let target = directory.join(&reference.handle);
+        if !target.exists() {
+            crate::lock::atomic_create_private(&target, bytes).map_err(|_| MediaError)?;
+        }
+        self.authorize_replay(std::slice::from_ref(reference))?;
+        self.inspect(reference)?;
+        Ok(())
     }
 
     pub fn write(&self, kind: MediaKind, bytes: &[u8]) -> Result<MediaReference, MediaError> {
@@ -228,6 +298,9 @@ impl PrivateSpool {
                 continue;
             }
             let directory = self.parent.join(format!("boot-{instance}"));
+            if !directory.is_dir() {
+                return Err(MediaError);
+            }
             ensure_private_directory(&directory).map_err(|_| MediaError)?;
             instances.insert(instance.to_owned());
         }

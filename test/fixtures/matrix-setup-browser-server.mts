@@ -1,12 +1,21 @@
 // Synthetic local browser fixture. Never connects to Matrix, MySQL, or a provider.
 import { createServer } from "node:http";
+import { readFile } from "node:fs/promises";
 import { matrixSetupDocument } from "../../src/godaddy/matrix-setup-page.ts";
 import { ownerAuthClientJavaScript, isOwnerAuthScriptPath } from "../../src/godaddy/owner-auth-client.ts";
 import { securityHeaders } from "../../src/http/security-headers.ts";
-const server = createServer((request, response) => {
+const server = createServer(async (request, response) => {
+  const url = new URL(request.url ?? "/", "http://127.0.0.1:4337");
+  if (url.pathname === "/assets/owner-panel.css") {
+    response.writeHead(200, { "content-type": "text/css" });
+    response.end(await readFile(new URL("../../src/settings/ui/styles.css", import.meta.url))); return;
+  }
   const script = isOwnerAuthScriptPath(request.url ?? "");
   const headers = securityHeaders(new Headers({ "content-type": script ? "application/javascript" : "text/html; charset=utf-8" }));
   response.writeHead(200, Object.fromEntries(headers.entries()));
+  if (!script && url.searchParams.get("backend") === "mysql") {
+    response.end(matrixSetupDocument({ state: "prepared", storeBackend: "mysql" }, "synthetic-not-a-real-csrf-token")); return;
+  }
   response.end(script ? ownerAuthClientJavaScript : matrixSetupDocument({ state: "verifying", status: {
     own_bot_device_id: "SYNTHETIC_NEW_DEVICE", own_bot_ed25519: "A".repeat(43), self_identity_verified: false,
     owner_identity_verified: false, private_cross_signing_ready: false,

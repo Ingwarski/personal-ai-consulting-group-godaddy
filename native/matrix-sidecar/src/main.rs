@@ -8,7 +8,8 @@ use personal_consultant_matrix_sidecar::client::{
 use personal_consultant_matrix_sidecar::config::{
     Config, MAX_FRAME_BYTES, MAX_UNACKED_EVENTS, MEDIA_TTL_SECONDS, PROTOCOL_VERSION,
 };
-use personal_consultant_matrix_sidecar::ingress::{OrderedReplay, PendingJournal};
+use personal_consultant_matrix_sidecar::durable_ingress::DurableJournal as PendingJournal;
+use personal_consultant_matrix_sidecar::ingress::OrderedReplay;
 use personal_consultant_matrix_sidecar::media_spool::PrivateSpool;
 use personal_consultant_matrix_sidecar::protocol::{
     FrameDecoder, IncomingFrame, OutgoingFrame, PublicError, ReadyIdentity, RequestCommand,
@@ -201,14 +202,15 @@ async fn run() -> Result<(), ()> {
                 })
             }
             IncomingFrame::Ack { ack, .. } => {
-                let acknowledged = phase
-                    .permits_ack()
-                    .then(|| {
-                        runtime
-                            .as_ref()
-                            .and_then(|active| active.journal.acknowledge(&ack).ok())
-                    })
-                    .flatten();
+                let acknowledged = if phase.permits_ack() && ack.is_valid() {
+                    if let Some(active) = runtime.as_ref() {
+                        active.journal.acknowledge(&ack).await.ok()
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                };
                 if !ack.is_valid() || acknowledged.is_none() {
                     Some(OutgoingFrame::error(id, PublicError::InvalidFrame))
                 } else {
@@ -216,6 +218,15 @@ async fn run() -> Result<(), ()> {
                         && let Some(pending) = outcome.pending
                     {
                         for media in pending.event.media {
+                            if let PendingJournal::MySql(backend) = &active.journal {
+                                // ACK is already durable. Cleanup is retryable
+                                // by bounded orphan pruning after a crash.
+                                let _ = personal_consultant_matrix_sidecar::durable_media::remove(
+                                    backend,
+                                    &media.handle,
+                                )
+                                .await;
+                            }
                             let _ = active.spool.acknowledge(&media.handle);
                         }
                     }
@@ -291,14 +302,29 @@ async fn handle_request(
                 open_store.sync_checkpoint.clone(),
             )
             .map_err(|_| PublicError::StoreQuarantined)?;
-            let journal =
+            let journal = if let Some(backend) = &open_store.mysql {
+                PendingJournal::from_mysql(backend.clone())
+            } else {
                 PendingJournal::open(&config.store_root, config.store_passphrase.as_str())
-                    .map_err(|_| PublicError::StoreQuarantined)?;
+                    .map_err(public_journal_error)?
+            };
             let (output_tx, mut output_rx) = tokio::sync::mpsc::channel(MAX_UNACKED_EVENTS);
             let startup_expired = journal
                 .expire_media(std::time::Duration::from_secs(MEDIA_TTL_SECONDS))
-                .map_err(|_| PublicError::StoreQuarantined)?;
+                .await
+                .map_err(public_journal_error)?;
             for item in &startup_expired {
+                if let PendingJournal::MySql(backend) = &journal {
+                    for media in &item.media {
+                        personal_consultant_matrix_sidecar::durable_media::remove(
+                            backend,
+                            &media.handle,
+                        )
+                        .await
+                        .map_err(public_durable_media_error)?;
+                    }
+                    continue;
+                }
                 spool
                     .authorize_replay(&item.media)
                     .map_err(|_| PublicError::StoreQuarantined)?;
@@ -310,7 +336,8 @@ async fn handle_request(
             }
             let active_handles = journal
                 .active_media_handles()
-                .map_err(|_| PublicError::StoreQuarantined)?;
+                .await
+                .map_err(public_journal_error)?;
             if spool
                 .cleanup_expired(
                     std::time::Duration::from_secs(MEDIA_TTL_SECONDS),
@@ -323,9 +350,19 @@ async fn handle_request(
             }
             let mut buffered = journal
                 .replay_ordered(MAX_UNACKED_EVENTS)
-                .map_err(|_| PublicError::StoreQuarantined)?;
+                .await
+                .map_err(public_journal_error)?;
             for item in &buffered {
                 if let OrderedReplay::Ingress(pending) = item {
+                    if let PendingJournal::MySql(backend) = &journal {
+                        personal_consultant_matrix_sidecar::durable_media::restore(
+                            backend,
+                            &spool,
+                            &pending.event.media,
+                        )
+                        .await
+                        .map_err(public_durable_media_error)?;
+                    }
                     spool
                         .authorize_replay(&pending.event.media)
                         .map_err(|_| PublicError::StoreQuarantined)?;
@@ -335,9 +372,12 @@ async fn handle_request(
                 }
             }
             let startup_backlog = buffered.len();
-            let cursor_missing = matrix
-                .requires_pre_ingress_baseline()
-                .map_err(|_| PublicError::StoreQuarantined)?;
+            let cursor_missing = open_store
+                .sync_checkpoint
+                .committed_token()
+                .await
+                .map(|token| token.is_none())
+                .map_err(|error| public_store_error(store::checkpoint_error(error)))?;
             if !pre_ingress_baseline_allowed(cursor_missing, startup_backlog) {
                 return Err(PublicError::StoreQuarantined);
             }
@@ -412,6 +452,7 @@ async fn handle_request(
                     interval.tick().await;
                     let expired = match cleanup_journal
                         .expire_media(std::time::Duration::from_secs(MEDIA_TTL_SECONDS))
+                        .await
                     {
                         Ok(expired) => expired,
                         Err(_) => {
@@ -420,6 +461,20 @@ async fn handle_request(
                         }
                     };
                     for item in expired {
+                        if let PendingJournal::MySql(backend) = &cleanup_journal {
+                            for media in &item.media {
+                                if personal_consultant_matrix_sidecar::durable_media::remove(
+                                    backend,
+                                    &media.handle,
+                                )
+                                .await
+                                .is_err()
+                                {
+                                    let _ = cleanup_output.send(MatrixOutput::Fatal).await;
+                                    return;
+                                }
+                            }
+                        }
                         if cleanup_spool.authorize_replay(&item.media).is_err() {
                             let _ = cleanup_output.send(MatrixOutput::Fatal).await;
                             return;
@@ -438,13 +493,25 @@ async fn handle_request(
                             return;
                         }
                     }
-                    let active_handles = match cleanup_journal.active_media_handles() {
+                    let active_handles = match cleanup_journal.active_media_handles().await {
                         Ok(handles) => handles,
                         Err(_) => {
                             let _ = cleanup_output.send(MatrixOutput::Fatal).await;
                             return;
                         }
                     };
+                    if let PendingJournal::MySql(backend) = &cleanup_journal {
+                        if personal_consultant_matrix_sidecar::durable_media::prune(
+                            backend,
+                            &active_handles,
+                        )
+                        .await
+                        .is_err()
+                        {
+                            let _ = cleanup_output.send(MatrixOutput::Fatal).await;
+                            return;
+                        }
+                    }
                     if cleanup_spool
                         .cleanup_expired(
                             std::time::Duration::from_secs(MEDIA_TTL_SECONDS),
@@ -537,9 +604,36 @@ fn public_send_error(error: TransportError) -> PublicError {
     }
 }
 
+fn public_journal_error(
+    error: personal_consultant_matrix_sidecar::durable_ingress::JournalError,
+) -> PublicError {
+    match error {
+        personal_consultant_matrix_sidecar::durable_ingress::JournalError::Database(error) => {
+            public_store_error(store::mysql_error(error))
+        }
+        personal_consultant_matrix_sidecar::durable_ingress::JournalError::Invalid => {
+            PublicError::StoreQuarantined
+        }
+    }
+}
+
+fn public_durable_media_error(
+    error: personal_consultant_matrix_sidecar::durable_media::MediaError,
+) -> PublicError {
+    match error {
+        personal_consultant_matrix_sidecar::durable_media::MediaError::Database(error) => {
+            public_store_error(store::mysql_error(error))
+        }
+        personal_consultant_matrix_sidecar::durable_media::MediaError::Invalid => {
+            PublicError::StoreQuarantined
+        }
+    }
+}
+
 fn public_store_error(error: store::StoreError) -> PublicError {
     match error {
         store::StoreError::LockContended => PublicError::LockContended,
+        store::StoreError::RetryWithNewInstance => PublicError::NotReady,
         store::StoreError::Quarantined | store::StoreError::Open => {
             telemetry::emit(telemetry::SafeEvent::StoreQuarantined);
             PublicError::StoreQuarantined
@@ -655,6 +749,47 @@ mod tests {
         ));
         assert!(matches!(
             public_store_error(store::StoreError::Quarantined),
+            PublicError::StoreQuarantined
+        ));
+        assert!(matches!(
+            public_store_error(store::StoreError::RetryWithNewInstance),
+            PublicError::NotReady
+        ));
+        // Existing SQLite/open failures retain their historical classification.
+        assert!(matches!(
+            public_store_error(store::StoreError::Open),
+            PublicError::StoreQuarantined
+        ));
+    }
+
+    #[test]
+    fn startup_journal_and_media_transients_retry_but_invalid_content_stays_quarantined() {
+        use personal_consultant_matrix_mysql_store::StoreError as Db;
+        use personal_consultant_matrix_sidecar::{
+            durable_ingress::JournalError, durable_media::MediaError,
+        };
+        assert!(matches!(
+            public_journal_error(JournalError::Database(Db::Unavailable)),
+            PublicError::NotReady
+        ));
+        assert!(matches!(
+            public_journal_error(JournalError::Database(Db::Fenced)),
+            PublicError::NotReady
+        ));
+        assert!(matches!(
+            public_journal_error(JournalError::Invalid),
+            PublicError::StoreQuarantined
+        ));
+        assert!(matches!(
+            public_durable_media_error(MediaError::Database(Db::Closed)),
+            PublicError::NotReady
+        ));
+        assert!(matches!(
+            public_durable_media_error(MediaError::Database(Db::Corrupt)),
+            PublicError::StoreQuarantined
+        ));
+        assert!(matches!(
+            public_durable_media_error(MediaError::Invalid),
             PublicError::StoreQuarantined
         ));
     }

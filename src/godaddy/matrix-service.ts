@@ -1,4 +1,8 @@
 import { createHash, randomBytes } from "node:crypto";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { checkLegacyMatrixStoreAuthority, readMySqlMatrixStoreBinding } from "./matrix-mysql-binding.ts";
 
 import { formatConfirmedMessageForMatrix, isSecretLikeMatrixContent } from "../matrix/bridge.ts";
 import type { RoomBinding } from "../matrix/room-invariant.ts";
@@ -606,6 +610,7 @@ export function createGoDaddyMatrixService(
   });
 
   let runtime: MatrixRuntime | undefined;
+  let transientSpool: string | undefined;
   let unsubscribeIngress: (() => void) | undefined;
   let unsubscribeRejectedIngress: (() => void) | undefined;
   let startPromise: Promise<void> | undefined;
@@ -887,7 +892,16 @@ export function createGoDaddyMatrixService(
     const operation = (async (): Promise<void> => {
       if (!active(generation) || !database.mysqlAvailable || !database.schemaAvailable) return;
       if (runtime === undefined) {
-        const storeBinding = await readStoreBinding({
+        if (configuration.storeBackend !== "mysql") {
+          const authority = await checkLegacyMatrixStoreAuthority(input.pool, configuration);
+          if (!active(generation)) return;
+          if (!authority.ok) {
+            if (authority.code === "store_binding_transient") deferRecovery(authority.code);
+            else setTerminal(authority.code);
+            return;
+          }
+        }
+        const storeBinding = configuration.storeBackend === "mysql" ? await readMySqlMatrixStoreBinding(input.pool, configuration) : await readStoreBinding({
           storeDir: configuration.storeDir,
           expectedDeviceId: configuration.botDeviceId
         });
@@ -898,6 +912,10 @@ export function createGoDaddyMatrixService(
           return;
         }
         try {
+          if (configuration.storeBackend === "mysql" && transientSpool === undefined) {
+            transientSpool = await mkdtemp(join(tmpdir(), "pc-matrix-"));
+          }
+          const mediaSpoolDir = transientSpool ?? configuration.mediaSpoolDir;
           const supervisor = createSupervisor({
             binaryPath: configuration.binaryPath,
             expectedSha256: configuration.expectedSha256,
@@ -909,7 +927,9 @@ export function createGoDaddyMatrixService(
               storeFingerprint: storeBinding.value.storeFingerprint
             }),
             argumentsList: Object.freeze(["--application-root", configuration.applicationRoot]),
-            spawnEnvironment: configuration.spawnEnvironment,
+            spawnEnvironment: transientSpool === undefined ? configuration.spawnEnvironment : Object.freeze({
+              ...configuration.spawnEnvironment, MATRIX_MEDIA_SPOOL_DIR: mediaSpoolDir, TMPDIR: tmpdir()
+            }),
             cwd: configuration.applicationRoot
           });
           if (!active(generation)) return;
@@ -921,7 +941,7 @@ export function createGoDaddyMatrixService(
               ownerMxid: configuration.ownerMxid,
               botMxid: configuration.botMxid,
               botDeviceId: configuration.botDeviceId,
-              mediaSpoolParent: configuration.mediaSpoolDir
+              mediaSpoolParent: mediaSpoolDir
             }),
             readiness: runtimeDependencyReadiness
           });
@@ -1510,6 +1530,11 @@ export function createGoDaddyMatrixService(
           throw new MatrixSidecarError("termination_failed");
         }
         stopped = true;
+        if (transientSpool !== undefined) {
+          // Exact mkdtemp-owned path, only after all child/media work stopped.
+          await rm(transientSpool, { recursive: true, force: true });
+          transientSpool = undefined;
+        }
         terminalReason = "stopped";
       })();
       stopPromise = operation;

@@ -25,6 +25,20 @@ pub struct StoreLock {
 }
 
 impl StoreLock {
+    /// Offline import locks the existing frozen source without creating or
+    /// changing files. A still-running legacy sidecar causes a hard conflict.
+    pub fn acquire_read_only(store_root: &Path) -> Result<Self, LockError> {
+        let path = store_root.join("sidecar.lock");
+        let file = OpenOptions::new()
+            .read(true)
+            .custom_flags(nofollow_flag())
+            .open(&path)
+            .map_err(|_| LockError::Io)?;
+        verify_private_file(&file)?;
+        file.try_lock_exclusive()
+            .map_err(|_| LockError::Contended)?;
+        Ok(Self { file, path })
+    }
     pub fn acquire(store_root: &Path) -> Result<Self, LockError> {
         ensure_private_directory(store_root)?;
         let path = store_root.join("sidecar.lock");

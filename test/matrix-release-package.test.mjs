@@ -121,6 +121,26 @@ test("release dependency evidence fails closed on incomplete graph and unpinned 
   }
 });
 
+test("release includes only the exact source-bound MySQL workspace crate", () => {
+  const value = metadata();
+  const owned = crate("personal-consultant-matrix-mysql-store", "0.1.0", "LicenseRef-Proprietary");
+  owned.source = null;
+  owned.manifest_path = "/source/mysql-store/Cargo.toml";
+  value.packages[0].manifest_path = "/source/Cargo.toml";
+  value.packages.push(owned);
+  value.workspace_members = [value.packages[0].id, owned.id];
+  value.resolve.nodes.push({id: owned.id, deps: []});
+  value.resolve.nodes[0].deps.push({pkg: owned.id, dep_kinds: [{kind: null}]});
+  assert.equal(createDependencyEvidence(value, builder).licenses.packages.find(p => p.name === owned.name).source, "application-source");
+  for (const path of ["/external/Cargo.toml", "/source/../mysql-store/Cargo.toml"]) {
+    owned.manifest_path = path;
+    assert.throws(() => createDependencyEvidence(value, builder));
+  }
+  owned.manifest_path = "/source/mysql-store/Cargo.toml";
+  value.workspace_members = [];
+  assert.throws(() => createDependencyEvidence(value, builder));
+});
+
 test("release workflow remains separate from non-deployable verification and cannot deploy", () => {
   const release = readFileSync(new URL("../.github/workflows/matrix-sidecar-release.yml", import.meta.url), "utf8");
   const verification = readFileSync(new URL("../.github/workflows/matrix-sidecar.yml", import.meta.url), "utf8");

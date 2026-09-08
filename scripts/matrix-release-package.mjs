@@ -139,12 +139,19 @@ export function createDependencyEvidence(metadata, builder) {
   }
   const included = new Set();
   const dependencies = new Map();
+  // This one workspace library is part of the same immutable source mount and
+  // commit as the application, not an arbitrary external path dependency.
+  const isOwnedWorkspaceCrate = (pkg) => pkg.source == null
+    && pkg.name === "personal-consultant-matrix-mysql-store" && pkg.version === "0.1.0"
+    && typeof root.manifest_path === "string" && root.manifest_path.endsWith("/Cargo.toml")
+    && pkg.manifest_path === root.manifest_path.slice(0, -"Cargo.toml".length) + "mysql-store/Cargo.toml"
+    && metadata.workspace_members?.includes(pkg.id);
   function visit(id) {
     if (included.has(id)) return;
     const pkg = packages.get(id);
     const node = nodes.get(id);
     if (!pkg || !node) throw new Error("Incomplete Cargo dependency graph.");
-    if (id !== rootId && !pkg.source?.startsWith("registry+https://github.com/rust-lang/crates.io-index")) {
+    if (id !== rootId && !isOwnedWorkspaceCrate(pkg) && !pkg.source?.startsWith("registry+https://github.com/rust-lang/crates.io-index")) {
       throw new Error("Unpinned non-registry production dependency.");
     }
     included.add(id);
@@ -174,7 +181,7 @@ export function createDependencyEvidence(metadata, builder) {
       packages: sorted.map((pkg) => ({ name: pkg.name, version: pkg.version, purl: purl(pkg),
         licenseExpression: pkg.license ?? null,
         licenseFileDeclared: Boolean(pkg.license_file),
-        source: pkg.id === rootId ? "application-source" : pkg.source }))
+        source: pkg.id === rootId || isOwnedWorkspaceCrate(pkg) ? "application-source" : pkg.source }))
     }
   };
 }

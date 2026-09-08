@@ -18,7 +18,7 @@ case "${1:-}" in
     cc --version > /build/cc.txt
     ;;
   test)
-    cargo test --locked --frozen --all-targets --target x86_64-unknown-linux-musl
+    cargo test --workspace --locked --frozen --all-targets --target x86_64-unknown-linux-musl
     ;;
   *)
     echo 'Unknown release builder phase.' >&2

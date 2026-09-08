@@ -465,6 +465,46 @@ test("an expired or missing catalog exposes saved Critic recovery controls witho
   assert.equal((await runtime.handle(request("/settings")))?.status, 303);
 });
 
+test("Matrix snapshot revalidates persisted choices without any login or Settings request", async () => {
+  const pool = new SettingsPool();
+  const receipt = createCapabilityReceipt();
+  const settings = { ...receipt.defaults, critic: { ...receipt.defaults.critic, provider: "codex" as const, codex: receipt.defaults.codex } };
+  const saved = JSON.stringify({ schemaVersion: "3", revision: 7, defaultsVersion: "retained-defaults", catalogVersion: "old-catalog",
+    settings, createdAt: "2026-08-14T00:00:00.000Z", updatedAt: "2026-08-14T00:00:00.000Z", actor: "owner" });
+  pool.settings.set("owner-settings:document", saved);
+  const calls: unknown[] = [];
+  const { runtime } = fixture({ pool, runtime: bootstrap({
+    loadCatalog: async () => undefined,
+    ensureCatalogForSettings: async selection => { calls.push(selection); return receipt; },
+    startCodexDeviceAuthorization: async () => { assert.fail("No login"); },
+    resetCodexAuthorization: async () => { assert.fail("No reset"); },
+    refreshCatalog: async () => { assert.fail("No full catalog sweep"); }
+  }) });
+  const snapshot = await runtime.prepareConsultationSnapshot!("matrix-unattended-session");
+  assert.ok(snapshot);
+  assert.deepEqual(calls, [settings]);
+  assert.deepEqual(snapshot.settings, settings);
+  assert.equal(snapshot.settingsRevision, 7); assert.equal(snapshot.catalogVersion, receipt.catalogVersion);
+  assert.equal(pool.settings.get("owner-settings:document"), saved);
+  await runtime.close();
+});
+
+test("Matrix snapshot cannot start after failed revalidation or invent choices when stored Settings are missing", async () => {
+  for (const hasSettings of [true, false]) {
+    const pool = new SettingsPool();
+    if (hasSettings) pool.settings.set("owner-settings:document", JSON.stringify({ schemaVersion: "3", revision: 1,
+      defaultsVersion: "existing", catalogVersion: "old", settings: createCapabilityReceipt().defaults,
+      createdAt: activeNow.toISOString(), updatedAt: activeNow.toISOString(), actor: "owner" }));
+    const before = [...pool.settings];
+    let checked = 0;
+    const { runtime } = fixture({ pool, runtime: bootstrap({ loadCatalog: async () => undefined,
+      ensureCatalogForSettings: async () => { checked++; return undefined; } }) });
+    assert.equal(await runtime.prepareConsultationSnapshot!("no-catalog"), undefined);
+    assert.equal(checked, hasSettings ? 1 : 0); assert.deepEqual([...pool.settings], before);
+    await runtime.close();
+  }
+});
+
 test("a first-time owner with no catalog gets a protected recovery page rather than an HTTP 503", async () => {
   const { runtime } = fixture({ pool: new SettingsPool(), runtime: bootstrap({ loadCatalog: async () => undefined }) });
   const { jar } = await login(runtime);

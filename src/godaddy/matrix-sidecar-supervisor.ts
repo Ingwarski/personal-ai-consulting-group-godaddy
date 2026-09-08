@@ -571,6 +571,9 @@ const PUBLIC_ERRORS = new Set([
 
 const ALLOWED_SIDECAR_ENVIRONMENT = new Set([
   "PATH",
+  "MATRIX_STORE_BACKEND",
+  "TMPDIR",
+  "DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD", "DB_SSL_CA_FILE",
   "MATRIX_HOMESERVER_URL",
   "MATRIX_ALLOWED_HTTPS_ORIGINS",
   "MATRIX_STORE_DIR",
@@ -668,6 +671,9 @@ function safeEnvironment(environment: Readonly<Record<string, string>> | undefin
     return Object.freeze({ PATH: process.env.PATH ?? "/usr/local/bin:/usr/bin:/bin" });
   }
   const entries = Object.entries(environment);
+  if (environment.MATRIX_STORE_BACKEND !== "mysql" && entries.some(([key]) => key.startsWith("DB_"))) {
+    throw new MatrixSidecarError("invalid_configuration");
+  }
   if (entries.some(([key, value]) => !ALLOWED_SIDECAR_ENVIRONMENT.has(key) || typeof value !== "string" || value.includes("\0"))) {
     throw new MatrixSidecarError("invalid_configuration");
   }

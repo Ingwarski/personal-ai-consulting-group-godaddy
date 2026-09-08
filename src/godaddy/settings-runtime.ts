@@ -703,10 +703,16 @@ export function createGoDaddySettingsRuntime(
     configured: true,
     consilium,
     async prepareConsultationSnapshot(sessionId: string) {
-      // Read the owner's saved selection and existing catalog. A Matrix input
-      // must never refresh a subscription, silently reset preferences or accept
-      // settings supplied by a message.
-      const current = await loadReceipt();
+      // Unattended Matrix use must not require a Settings visit every time a
+      // capability receipt expires. Revalidate only the owner's persisted
+      // selection through the existing subscription, never message-supplied
+      // settings, a new login/provider, a reset or a fallback model.
+      let current = await loadReceipt();
+      const saved = readCompatibleSettingsDocument(await storage.get<unknown>("owner-settings:document"));
+      if (saved !== undefined && runtime.ensureCatalogForSettings !== undefined) {
+        current = await runtime.ensureCatalogForSettings(saved.settings);
+        receipt = current;
+      }
       if (current === undefined) return undefined;
       const document = await ownerSettings.read();
       if (document?.effectiveForNextSession === null || document === undefined) return undefined;

@@ -948,7 +948,7 @@
   },
   "checker_contract_version": 1,
   "pipeline_version": "1.1.0",
-  "state": "awaiting-implementation-prompt",
+  "state": "implementation-authorized",
   "updated_at": "2026-09-08T19:29:01.373Z",
   "language": {
     "working_language": "uk",
@@ -19515,15 +19515,19 @@
     ]
   },
   "implementation_gate": {
-    "state": "awaiting_implementation_prompt",
+    "state": "authorized_for_phase3",
     "development_plan_hash": "cc9025beb72c6aed349246995126723ae235f9af84dfa951994689c258fbf144",
     "product_scope_hash": "defc5e24f0dd91be42b984888b157137f4f1ed361459e70f42b832e18c957bd4",
     "approved_baseline_id": "PC-MATRIX-CANDIDATE-B-V2-20260816-R1",
     "awaiting_at": "2026-09-08T19:29:01.373Z",
-    "prompt_id": null,
-    "prompt_received_at": null,
-    "released_at": null,
-    "reason": "Current U-06-C1 correction plan validated. The current user request preceded this formal-plan pause; a later explicit implementation message is required by the installed pipeline. No production work or new live authorization is recorded.",
+    "prompt_id": "implementation-U-06-C1-20260908-01",
+    "prompt_received_at": "2026-09-08T19:34:40.812Z",
+    "released_at": "2026-09-08T19:34:40.812Z",
+    "reason": "New explicit user instruction after the unchanged validated U-06-C1 plan pause.",
+    "prompt_receipt": {
+      "path": "forge/implementation-prompt-U-06-C1-20260908.json",
+      "content_hash": "5d9a8ae3044efc6c4d8de729f4e92f48d2d8db7782d7274bb8b962cd9ff5f5b3"
+    },
     "supersedes": {
       "state": "invalidated",
       "reason": "PI-MATRIX-MYSQL-20260908 changes storage trust boundaries and the formal development plan; previous plan authorization is retained but cannot authorize this revision.",
@@ -20085,8 +20089,8 @@
       "scope": "Deployment identity only. Does not block source-grounded SDD reconciliation or authorize an unconfirmed owner account. The exact account remains outside this manifest."
     }
   ],
-  "next_ready_nodes": [],
-  "pause_reason": "Current U-06-C1 correction plan validated. The current user request preceded this formal-plan pause; a later explicit implementation message is required by the installed pipeline. No production work or new live authorization is recorded.",
+  "next_ready_nodes": ["implementation"],
+  "pause_reason": null,
   "matrix_production_setup_progress": {
     "authorization_ref": "forge/matrix-production-setup-authorization-20260906.json",
     "evidence_ref": "forge/runs/U-08/matrix-production-setup-20260906/progress.md",

@@ -14,6 +14,7 @@ const MAX_AUTH_STATE_BYTES = 64 * 1024;
 
 export type CodexAppServerConnection = Readonly<{
   channel: JsonRpcLineChannel;
+  isAlive?: () => boolean;
   readAuthState: () => Promise<Uint8Array | undefined>;
   close: () => Promise<void>;
 }>;
@@ -115,6 +116,7 @@ export function createSubprocessCodexAppServerLauncher(input: Readonly<{
       reader.close();
     };
     child.once("error", markClosed);
+    child.once("exit", markClosed);
     const channel: JsonRpcLineChannel = Object.freeze({
       async send(line: string): Promise<void> {
         if (closed || !child.stdin.writable) throw new Error("Codex app-server is closed.");
@@ -150,7 +152,8 @@ export function createSubprocessCodexAppServerLauncher(input: Readonly<{
       });
       await rm(directory, { recursive: true, force: true });
     })();
-    return Object.freeze({ channel, readAuthState, close });
+    return Object.freeze({ channel, readAuthState, close,
+      isAlive: () => !closed && child.exitCode === null && child.signalCode === null });
   };
 }
 
@@ -163,6 +166,8 @@ export function createSubprocessCodexAppServerLauncher(input: Readonly<{
 export function createGoDaddyCodexAppServer(options: GoDaddyCodexAppServerOptions): GoDaddyCodexAppServer {
   const launch = options.launch ?? createSubprocessCodexAppServerLauncher(options);
   let active: Promise<ActiveConnection> | undefined;
+  let recovery: Promise<void> | undefined;
+  let closed = false;
   let authEpoch = 0;
   let credentialOperations = Promise.resolve();
 
@@ -198,8 +203,34 @@ export function createGoDaddyCodexAppServer(options: GoDaddyCodexAppServerOption
   };
 
   const getActive = async (): Promise<ActiveConnection> => {
+    if (closed) throw new Error("Codex app-server is closed.");
+    if (recovery !== undefined) await recovery;
+    if (closed) throw new Error("Codex app-server is closed.");
+    if (active !== undefined) {
+      const candidate = active;
+      let resolved: ActiveConnection;
+      try { resolved = await candidate; }
+      catch {
+        // A failed vault read/launch must not remain a permanently rejected
+        // cached promise. A later request can retry without changing OAuth.
+        if (active === candidate) active = undefined;
+        throw new Error("Codex app-server is unavailable.");
+      }
+      if (active !== candidate) return getActive();
+      if (resolved.connection.isAlive?.() === false) {
+        // One retirement/relaunch even for concurrent preflights. Persist the
+        // existing managed credential before removing this dead child's files;
+        // never log out, reset credentials or start a new device authorization.
+        let retiring: Promise<void>;
+        retiring = closeActive(true).finally(() => { if (recovery === retiring) recovery = undefined; });
+        recovery = retiring;
+        await retiring;
+        return getActive();
+      }
+      return resolved;
+    }
     if (active === undefined) {
-      active = (async () => {
+      const candidate = (async () => {
         const connectionEpoch = authEpoch;
         const connection = await launch(await options.vault.read(CODEX_AUTH_STORAGE_KEY));
         const client = new JsonRpcClient({ channel: connection.channel, experimentalApi: true });
@@ -212,10 +243,15 @@ export function createGoDaddyCodexAppServer(options: GoDaddyCodexAppServerOption
         } catch {
           client.close();
           await connection.close().catch(() => undefined);
-          active = undefined;
           throw new Error("Codex app-server is unavailable.");
         }
       })();
+      active = candidate;
+      try { return await candidate; }
+      catch {
+        if (active === candidate) active = undefined;
+        throw new Error("Codex app-server is unavailable.");
+      }
     }
     return active;
   };
@@ -252,10 +288,16 @@ export function createGoDaddyCodexAppServer(options: GoDaddyCodexAppServerOption
     },
     async inspectSubscription(): Promise<CodexAppServerProbe> {
       try {
-        const current = await getActive();
-        const probe = await probeCodexAppServer(current.client, { privateSingleOwner: true });
-        await persist(current.connection, current.authEpoch);
-        return probe;
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const current = await getActive();
+          const probe = await probeCodexAppServer(current.client, { privateSingleOwner: true });
+          // The child may have exited during the content-free probe. Retry
+          // once through the same retirement gate, not on an auth/quota denial.
+          if (current.connection.isAlive?.() === false && attempt === 0) continue;
+          await persist(current.connection, current.authEpoch);
+          return probe;
+        }
+        throw new Error("Codex app-server is unavailable.");
       } catch {
         return Object.freeze({
           runtime: Object.freeze({ authMode: "other" as const, readiness: "unavailable" as const, privateSingleOwner: true, availableModelIds: Object.freeze([]) }),
@@ -295,6 +337,8 @@ export function createGoDaddyCodexAppServer(options: GoDaddyCodexAppServerOption
       }
     },
     async close(): Promise<void> {
+      closed = true;
+      await recovery;
       await closeActive(true);
     }
   });

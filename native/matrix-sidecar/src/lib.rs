@@ -1,10 +1,16 @@
 pub mod client;
 pub mod config;
+pub mod durable_checkpoint;
+pub mod durable_ingress;
+pub mod durable_media;
 pub mod egress;
 pub mod ingress;
 mod live_policy;
 pub mod lock;
 pub mod media_spool;
+pub mod migration;
+#[cfg(test)]
+mod migration_tests;
 pub mod protocol;
 pub mod room_policy;
 pub mod setup;
