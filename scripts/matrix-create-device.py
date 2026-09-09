@@ -56,6 +56,7 @@ def arguments(argv=None):
     parser.add_argument("--room-id", required=True)
     parser.add_argument("--manifest", required=True, type=Path)
     parser.add_argument("--manifest-sha256", required=True)
+    parser.add_argument("--store-backend", choices=("sqlite", "mysql"), default="sqlite")
     parser.add_argument("--setup-mode-already-configured", action="store_true",
                         help="Omit MATRIX_SETUP_MODE when Published already has provision; preserve its existing row.")
     return parser.parse_args(argv)
@@ -226,6 +227,10 @@ def dotenv_group(args, sidecar_sha256, device):
     }
     if args.setup_mode_already_configured:
         del values["MATRIX_SETUP_MODE"]
+    if args.store_backend == "mysql":
+        values["MATRIX_STORE_BACKEND"] = "mysql"
+        del values["MATRIX_STORE_DIR"]
+        del values["MATRIX_MEDIA_SPOOL_DIR"]
     # Quote every value so numbers and special token characters stay strings in the importer.
     return ("\n".join(f"{key}={json.dumps(value, ensure_ascii=True)}" for key, value in values.items()) + "\n").encode("utf-8")
 
@@ -283,7 +288,10 @@ def main(argv=None, *, input_fn=input, password_fn=getpass.getpass, login_fn=cre
             raise HandoffError("This handoff requires macOS. No login was attempted.")
         clipboard.require_available()
         output("This creates ONE NEW, separate bot session for GoDaddy. Your existing verified Safari session stays intact.")
-        output("Use this only after the EMPTY fresh-store and private-URL preflight succeeded. Do not use it to restore or replace an existing crypto store.")
+        if args.store_backend == "mysql":
+            output("Use only for explicit fresh MySQL setup. Existing device namespaces and published encryption keys will not be overwritten.")
+        else:
+            output("Use this only after the EMPTY fresh-store and private-URL preflight succeeded. Do not use it to restore or replace an existing crypto store.")
         output("Do not run it twice. Clipboard history/universal clipboard may retain copied secrets; disable them before proceeding.")
         if args.setup_mode_already_configured:
             output("The import will preserve the existing MATRIX_SETUP_MODE=provision row; it will not add a duplicate.")

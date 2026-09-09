@@ -139,6 +139,16 @@ class HandoffTests(unittest.TestCase):
             if not args.setup_mode_already_configured:
                 self.assertEqual(json.loads(values["MATRIX_SETUP_MODE"]), "provision")
 
+    def test_mysql_group_has_no_durable_filesystem_paths(self):
+        args = HELPER.arguments(self.argv() + ["--store-backend", "mysql"])
+        values = dict(line.split("=", 1) for line in HELPER.dotenv_group(
+            args, "d" * 64, HELPER.NewDevice(BOT, "NEW_DEVICE", TOKEN)).decode().splitlines())
+        self.assertEqual(json.loads(values["MATRIX_STORE_BACKEND"]), "mysql")
+        self.assertNotIn("MATRIX_STORE_DIR", values)
+        self.assertNotIn("MATRIX_MEDIA_SPOOL_DIR", values)
+        self.assertEqual(json.loads(values["MATRIX_SIDECAR_PATH"]),
+                         "/app/runtime/matrix/personal-consultant-matrix-sidecar")
+
     def test_invalid_pin_fails_before_password_or_login(self):
         code, _, passwords, logins, clipboard = self.run_main(pin="0" * 64)
         self.assertEqual(code, 1)
