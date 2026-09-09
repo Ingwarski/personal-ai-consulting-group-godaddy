@@ -418,9 +418,9 @@ async function runMySqlRelease(applicationRoot: string, expected: MatrixReleaseE
     const setupPath = join(paths.runtimeDir, SETUP);
     if (prepare && sourceSidecar !== undefined && sourceSetup !== undefined) {
       await installBinary(sidecarPath, sourceSidecar, metadata.sidecar, uid,
-        "3b737154b4c78a65d19cd5870c81d056d91fadc64592a7c0fd0b62ab91a93e90");
+        "30958a7c049a009c38ff8abb70b2ed3a0c409b61613185576eef8891ed5a58cf");
       await installBinary(setupPath, sourceSetup, metadata.setup, uid,
-        "8dfffd5c615a7a2bbfb72d4402961888f4ff6c039eed4ce2ee07c61ea7510aad");
+        "f93f4c61f87cf2102963a8a48eddaa15d421afd2bfe3c6d0b4b7953516d1d6e6");
     } else {
       await verifiedBinary(sidecarPath, metadata.sidecar, uid, true);
       await verifiedBinary(setupPath, metadata.setup, uid, true);

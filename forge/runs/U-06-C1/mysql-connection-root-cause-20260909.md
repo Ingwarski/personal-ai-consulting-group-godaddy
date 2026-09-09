@@ -74,6 +74,15 @@ the exact promoted bundle into a fresh canonical application root and its
 read-only inspector independently revalidated both installed executables with
 the pinned manifest, source commit and binary hashes.
 
+The first Published preparation exposed `matrix_release_conflict` before any
+database or Matrix operation. Its atomic upgrade allowlist still named the
+release preceding the one actually deployed on Published. The repair updates
+that guard to the exact immediately preceding manifest's sidecar
+`30958a7c049a009c38ff8abb70b2ed3a0c409b61613185576eef8891ed5a58cf`
+and setup
+`f93f4c61f87cf2102963a8a48eddaa15d421afd2bfe3c6d0b4b7953516d1d6e6`.
+Arbitrary or modified executables remain non-replaceable.
+
 The exact bundle and runtime pin are promoted in the same repository change as
 this evidence. Exact GoDaddy Published revision and post-deployment MySQL/Matrix
 result must still be appended before this repair is called complete.
