@@ -1,7 +1,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { constants } from "node:fs";
 import { lstat, open } from "node:fs/promises";
-import { isAbsolute, resolve } from "node:path";
+import { isAbsolute, join, resolve } from "node:path";
 import { spawn } from "node:child_process";
 import { withMatrixPrivateUmask } from "./matrix-private-spawn.ts";
 
@@ -571,6 +571,7 @@ const PUBLIC_ERRORS = new Set([
 
 const ALLOWED_SIDECAR_ENVIRONMENT = new Set([
   "PATH",
+  "SSL_CERT_FILE",
   "MATRIX_STORE_BACKEND",
   "TMPDIR",
   "DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD", "DB_SSL_CA_FILE",
@@ -707,6 +708,8 @@ function validateSpawnIdentity(
   const botDeviceId = environment.MATRIX_BOT_DEVICE_ID;
   const storeDirectory = environment.MATRIX_STORE_DIR;
   const spoolDirectory = environment.MATRIX_MEDIA_SPOOL_DIR;
+  const mysql = environment.MATRIX_STORE_BACKEND === "mysql";
+  const caBundlePath = environment.SSL_CERT_FILE;
   if (
     homeserver !== expected.homeserverOrigin
     || allowedOrigins === undefined
@@ -721,6 +724,8 @@ function validateSpawnIdentity(
     || !/^[a-f0-9]{64}$/u.test(environment.MATRIX_STORE_PASSPHRASE)
     || storeDirectory === undefined || !isAbsolute(storeDirectory) || resolve(storeDirectory) !== storeDirectory
     || spoolDirectory === undefined || !isAbsolute(spoolDirectory) || resolve(spoolDirectory) !== spoolDirectory
+    || (mysql && caBundlePath !== join(spoolDirectory, "node-default-ca.pem"))
+    || (!mysql && caBundlePath !== undefined)
   ) throw new MatrixSidecarError("invalid_configuration");
 }
 

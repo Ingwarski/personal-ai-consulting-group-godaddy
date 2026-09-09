@@ -16,8 +16,12 @@ accept-invalid-cert fallback. SQLx uses its `native-tls` backend here because
 GoDaddy's Published MySQL endpoint completes the same verified connection from
 Node/OpenSSL but rejects SQLx's Rustls handshake. The Linux release statically
 links vendored OpenSSL, so it does not depend on a GoDaddy host-library version.
-Actual GoDaddy acceptance must still be verified after deploying the exact
-release. No additional owner secret is introduced.
+Because a static OpenSSL process cannot assume that GoDaddy exposes a CA file at
+one of `openssl-probe`'s fixed Linux locations, Node writes its already active
+default public CA set into the same private per-process temporary directory and
+passes only that file as `SSL_CERT_FILE`. The file is deleted with the process
+spool. This matches Node's successful verified connection and introduces no
+owner secret or accept-invalid-certificate path.
 
 `MATRIX_STORE_DIR` and `MATRIX_MEDIA_SPOOL_DIR` no longer need owner-managed
 persistent folders in MySQL mode. Node creates a private per-boot temporary

@@ -1,10 +1,11 @@
 import { createHash, randomBytes } from "node:crypto";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { checkLegacyMatrixStoreAuthority, readMySqlMatrixStoreBinding } from "./matrix-mysql-binding.ts";
 import { prepareMySqlMatrixRelease } from "./matrix-release-install.ts";
 import { MATRIX_RELEASE_PIN } from "./matrix-release-pin.ts";
+import { writeNodeDefaultCaBundle } from "./matrix-tls-roots.ts";
 
 import { formatConfirmedMessageForMatrix, isSecretLikeMatrixContent } from "../matrix/bridge.ts";
 import type { RoomBinding } from "../matrix/room-invariant.ts";
@@ -925,7 +926,14 @@ export function createGoDaddyMatrixService(
             }
           }
           if (configuration.storeBackend === "mysql" && transientSpool === undefined) {
-            transientSpool = await mkdtemp(join(tmpdir(), "pc-matrix-"));
+            const createdSpool = await mkdtemp(join(await realpath(tmpdir()), "pc-matrix-"));
+            try {
+              await writeNodeDefaultCaBundle(createdSpool);
+              transientSpool = createdSpool;
+            } catch (error) {
+              await rm(createdSpool, { recursive: true, force: true });
+              throw error;
+            }
           }
           const mediaSpoolDir = transientSpool ?? configuration.mediaSpoolDir;
           const supervisor = createSupervisor({
@@ -940,7 +948,8 @@ export function createGoDaddyMatrixService(
             }),
             argumentsList: Object.freeze(["--application-root", configuration.applicationRoot]),
             spawnEnvironment: transientSpool === undefined ? configuration.spawnEnvironment : Object.freeze({
-              ...configuration.spawnEnvironment, MATRIX_MEDIA_SPOOL_DIR: mediaSpoolDir, TMPDIR: tmpdir()
+              ...configuration.spawnEnvironment, MATRIX_MEDIA_SPOOL_DIR: mediaSpoolDir, TMPDIR: dirname(mediaSpoolDir),
+              SSL_CERT_FILE: join(mediaSpoolDir, "node-default-ca.pem")
             }),
             cwd: configuration.applicationRoot
           });

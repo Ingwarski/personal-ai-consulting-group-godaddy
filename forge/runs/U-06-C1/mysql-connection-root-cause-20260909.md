@@ -99,3 +99,15 @@ result must still be appended before this repair is called complete.
 The executable-binding repair passed the complete local project gate: build,
 typecheck, 940 tests, environment policy and diff whitespace validation. This
 does not replace the required Published provisioning result.
+
+Published commit `33b0f8b5d8f998a9e2744840ddba82e0f22d4b61` removed the
+configuration error and started the native setup process. Its first strict
+SQLx/native-tls attempt returned `mysql_tls_failed` while the same Published
+screen still reported the separate Node certificate-verified connection as
+`connected`. The remaining distinction is trust-root discovery: Node uses its
+active bundled CA set, while native-tls delegates to `openssl-probe`, whose
+fixed Linux file/dir search is not a guarantee on the GoDaddy application host.
+The correction writes Node's active public CA roots to a private per-process
+bundle and supplies it to the static child through `SSL_CERT_FILE`. Hostname and
+certificate verification remain enabled; no owner secret or permissive TLS
+fallback is added.

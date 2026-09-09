@@ -7,6 +7,7 @@ import { inspectMatrixRelease, prepareMatrixRelease, verifyMatrixHttpIsolation, 
   prepareMySqlMatrixRelease, inspectMySqlMatrixRelease,
   type MatrixReleaseExpectation, type MatrixIsolationDiagnostics, type MatrixReleaseDiagnostic } from "./matrix-release-install.ts";
 import { MATRIX_RELEASE_PIN } from "./matrix-release-pin.ts";
+import { writeNodeDefaultCaBundle } from "./matrix-tls-roots.ts";
 import type { MatrixBrowserChallenge } from "./matrix-browser-isolation.ts";
 import { spawnMatrixSetupProcess, type MatrixSetupProcess, type MatrixSetupCommand } from "./matrix-setup-process.ts";
 import type { MatrixSetupAction, MatrixSetupView } from "./matrix-setup-page.ts";
@@ -112,9 +113,11 @@ export function createMatrixSetupOperations(environment: Record<string, unknown>
         if (closed) throw new Error("matrix_setup_disabled");
         if (!stat.isDirectory() || stat.isSymbolicLink() || (stat.mode & 0o7777) !== 0o700
           || await realpath(path) !== path) throw new Error("matrix_setup_unsafe_path");
+        const caBundlePath = await writeNodeDefaultCaBundle(path);
         process = (dependencies.spawn ?? spawnMatrixSetupProcess)({ binaryPath: inspection.value.setupPath,
           applicationRoot: root, fresh: action === "start_fresh", environment: { ...configuration.value.spawnEnvironment,
-            MATRIX_STORE_DIR: path, MATRIX_MEDIA_SPOOL_DIR: path, TMPDIR: temporaryParent } });
+            MATRIX_STORE_DIR: path, MATRIX_MEDIA_SPOOL_DIR: path, TMPDIR: temporaryParent,
+            SSL_CERT_FILE: caBundlePath } });
       } catch (error) { await cleanupSpool(); throw error; }
       view = { state: "starting", ...(process.expiresAt === undefined ? {} : { expiresAt: process.expiresAt }) }; return view;
     }

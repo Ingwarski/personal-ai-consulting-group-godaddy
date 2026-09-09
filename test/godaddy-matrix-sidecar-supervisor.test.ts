@@ -465,6 +465,14 @@ test("rejects ambient process injection and split-brain identity/path configurat
   assert.throws(() => fixture({
     spawnEnvironment: { ...spawnEnvironment, MATRIX_MEDIA_SPOOL_DIR: "/private/x/../matrix-spool" }
   }), (error: unknown) => error instanceof MatrixSidecarError && error.code === "invalid_configuration");
+  assert.throws(() => fixture({
+    spawnEnvironment: { ...spawnEnvironment, SSL_CERT_FILE: "/tmp/unbound-ca.pem" }
+  }), (error: unknown) => error instanceof MatrixSidecarError && error.code === "invalid_configuration");
+  assert.doesNotThrow(() => fixture({
+    spawnEnvironment: { ...spawnEnvironment, MATRIX_STORE_BACKEND: "mysql",
+      DB_HOST: "db.example.test", DB_PORT: "3306", DB_NAME: "matrix", DB_USER: "matrix", DB_PASSWORD: "test-only",
+      SSL_CERT_FILE: `${SPOOL_PARENT}/node-default-ca.pem` }
+  }));
   for (const argumentsList of [
     [],
     ["--caller-controlled"],

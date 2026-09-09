@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { lstat } from "node:fs/promises";
+import { lstat, readFile } from "node:fs/promises";
 import { createMatrixSetupOperations, matrixSetupEnabled } from "../src/godaddy/matrix-setup-operations.ts";
 import type { MatrixReleaseInspection } from "../src/godaddy/matrix-release-install.ts";
 import type { MatrixSetupCommand } from "../src/godaddy/matrix-setup-process.ts";
@@ -97,6 +97,9 @@ test("MySQL setup prepares binaries without Preview and resumes with a private d
   assert.match(spool, /\/pc-matrix-setup-[^/]+$/);
   assert.doesNotMatch(spool, /public\/assets/);
   assert.equal((await lstat(spool)).mode & 0o7777, 0o700);
+  assert.equal(dirname(spawned.environment.SSL_CERT_FILE!), spool);
+  assert.equal((await lstat(spawned.environment.SSL_CERT_FILE!)).mode & 0o7777, 0o600);
+  assert.match(await readFile(spawned.environment.SSL_CERT_FILE!, "utf8"), /^-----BEGIN CERTIFICATE-----/u);
   assert.equal((await f.setup.action("status", {})).state, "verifying");
   assert.equal((await f.setup.action("finish", {})).state, "complete");
   await assert.rejects(lstat(spool), { code: "ENOENT" });

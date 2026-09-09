@@ -306,6 +306,9 @@ Names only:
 - sidecar: `MATRIX_PROTOCOL_VERSION`; у MySQL mode executable path і SHA-256
   походять лише з committed release pin та canonical application root, а не з
   окремо змінюваних `MATRIX_SIDECAR_PATH`/`MATRIX_SIDECAR_SHA256` secrets;
+- MySQL TLS trust: Node materializes its active public CA set into the private
+  per-process spool and passes that exact file as `SSL_CERT_FILE` to static
+  Rust/OpenSSL; it is not a secret and is deleted with the spool;
 - store/media: `MATRIX_STORE_DIR`, `MATRIX_STORE_PASSPHRASE`, `MATRIX_MEDIA_SPOOL_DIR`;
 - Matrix: `MATRIX_HOMESERVER_URL`, `MATRIX_ALLOWED_HTTPS_ORIGINS`, `MATRIX_BOT_MXID`, `MATRIX_BOT_DEVICE_ID`, `MATRIX_ACCESS_TOKEN`, `MATRIX_ROOM_ID`, `MATRIX_OWNER_MXID`;
 - archive: `ARCHIVE_ENCRYPTION_KEY`, `ARCHIVE_KEY_ID`;

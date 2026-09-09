@@ -622,6 +622,10 @@ test("MySQL mode uses activated DB identity without touching the legacy binding 
   assert.equal(h.supervisorOptions.length, 1);
   assert.equal(h.supervisorOptions[0]?.expectedIdentity?.storeFingerprint, "ab".repeat(32));
   assert.notEqual(h.supervisorOptions[0]?.spawnEnvironment?.MATRIX_MEDIA_SPOOL_DIR, configuration.mediaSpoolDir);
+  assert.equal(
+    h.supervisorOptions[0]?.spawnEnvironment?.SSL_CERT_FILE,
+    `${h.supervisorOptions[0]?.spawnEnvironment?.MATRIX_MEDIA_SPOOL_DIR}/node-default-ca.pem`
+  );
   await h.service.stop();
 });
 
