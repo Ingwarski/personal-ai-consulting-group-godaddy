@@ -8,4 +8,4 @@ exec python3 "$task_script_dir/matrix-create-device.py" \
   --bot-id "$task_bot" --owner-id "$task_owner" --room-id "$task_room" \
   --store-backend mysql \
   --manifest "$task_script_dir/../runtime-release/matrix/release-manifest.json" \
-  --manifest-sha256 81dd73e672ccfc65c3dd3e5e86d1c7939d2c3f5a67a26d1d863cfe5ac878c8f1
+  --manifest-sha256 2002cbe0af8a031c13d02024a6086401d8d6b144ff30db4c4a38cebd2216c2ec

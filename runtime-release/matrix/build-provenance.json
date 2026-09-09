@@ -3,13 +3,13 @@
   "kind": "matrix-production-build-provenance",
   "source": {
     "repository": "Ingwarski/personal-ai-consulting-group-godaddy",
-    "commit": "5bf6eb3e1a613161c0b978cc471d1a124156d713",
-    "workflowCommit": "5bf6eb3e1a613161c0b978cc471d1a124156d713",
+    "commit": "2fbe93e06ca0b5e6555bb8d0e913f9709e664395",
+    "workflowCommit": "2fbe93e06ca0b5e6555bb8d0e913f9709e664395",
     "workflowRef": "Ingwarski/personal-ai-consulting-group-godaddy/.github/workflows/matrix-sidecar-release.yml@refs/heads/codex/matrix-connection-20260906",
-    "runId": "34340128272",
+    "runId": "34357350761",
     "runAttempt": "1",
-    "runUrl": "https://github.com/Ingwarski/personal-ai-consulting-group-godaddy/actions/runs/34340128272/attempts/1",
-    "nativeTree": "ceb5e8791643759bfbd28995484afe2f07185d1f",
+    "runUrl": "https://github.com/Ingwarski/personal-ai-consulting-group-godaddy/actions/runs/34357350761/attempts/1",
+    "nativeTree": "0b77581bc0093c6ade55b6dfced4ae2ea57e0126",
     "inputs": [
       {
         "path": ".github/workflows/matrix-sidecar-release.yml",
@@ -41,7 +41,7 @@
       },
       {
         "path": "native/matrix-sidecar/mysql-store/src/backend.rs",
-        "sha256": "4605ca83b2c9b76353f76b1551f42cd5c276c374ac5d8cf57b8fbd0345a1da43"
+        "sha256": "973927b7d39500967438a563225db17bb83928ae8c9c4d0c130aa2568e111c6d"
       },
       {
         "path": "native/matrix-sidecar/mysql-store/src/crypto.rs",
@@ -153,7 +153,7 @@
       },
       {
         "path": "native/matrix-sidecar/src/setup.rs",
-        "sha256": "287041b3640ddafb9e0612eda508b929fe0a1bd0399f204a8d2b844d3548f617"
+        "sha256": "34322a47f0945e9fcadba8fde15a698c04e1e78222af32b6f7768bc40d68384e"
       },
       {
         "path": "native/matrix-sidecar/src/state.rs",
@@ -227,9 +227,9 @@
     "observedImageConfigDigest": "sha256:6336bf7b311135c893a4a930b0920892b5e596ccdc374777290fa91bb59ae818"
   },
   "build": {
-    "startedAt": "2026-09-09T10:26:49.844Z",
-    "completedAt": "2026-09-09T12:00:04.945Z",
-    "sourceDateEpoch": "1788949522",
+    "startedAt": "2026-09-09T13:30:17.383Z",
+    "completedAt": "2026-09-09T15:06:52.816Z",
+    "sourceDateEpoch": "1788960539",
     "command": "cargo build --release --locked --frozen --target x86_64-unknown-linux-musl",
     "networkDuringCompilation": "none",
     "cleanBuildCount": 2,
@@ -244,14 +244,14 @@
     {
       "path": "personal-consultant-matrix-sidecar",
       "role": "sidecar",
-      "sha256": "3b737154b4c78a65d19cd5870c81d056d91fadc64592a7c0fd0b62ab91a93e90",
+      "sha256": "30958a7c049a009c38ff8abb70b2ed3a0c409b61613185576eef8891ed5a58cf",
       "sizeBytes": 45151568
     },
     {
       "path": "personal-consultant-matrix-setup",
       "role": "setup",
-      "sha256": "8dfffd5c615a7a2bbfb72d4402961888f4ff6c039eed4ce2ee07c61ea7510aad",
-      "sizeBytes": 39941360
+      "sha256": "f93f4c61f87cf2102963a8a48eddaa15d421afd2bfe3c6d0b4b7953516d1d6e6",
+      "sizeBytes": 39945456
     }
   ],
   "trust": {
