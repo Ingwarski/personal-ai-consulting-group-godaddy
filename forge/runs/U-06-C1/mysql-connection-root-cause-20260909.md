@@ -83,6 +83,19 @@ and setup
 `f93f4c61f87cf2102963a8a48eddaa15d421afd2bfe3c6d0b4b7953516d1d6e6`.
 Arbitrary or modified executables remain non-replaceable.
 
+The following setup attempt then reached `matrix_configuration_invalid`: the
+runtime configuration duplicated the executable path and checksum in GoDaddy
+secrets, so the stale prior checksum rejected the newly pinned release. MySQL
+mode now derives both values from the canonical application root and committed
+release pin; the verified release inspection supplies the same binding during
+provisioning. Existing stale path/hash secrets are ignored and can be retired
+later without a destructive edit during this recovery. SQLite compatibility
+continues to require its explicit path and checksum values.
+
 The exact bundle and runtime pin are promoted in the same repository change as
 this evidence. Exact GoDaddy Published revision and post-deployment MySQL/Matrix
 result must still be appended before this repair is called complete.
+
+The executable-binding repair passed the complete local project gate: build,
+typecheck, 940 tests, environment policy and diff whitespace validation. This
+does not replace the required Published provisioning result.

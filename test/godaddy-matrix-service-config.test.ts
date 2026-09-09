@@ -5,6 +5,7 @@ import {
   godaddyMatrixEnvironmentNames,
   parseGoDaddyMatrixConfiguration
 } from "../src/godaddy/matrix-service-config.ts";
+import { MATRIX_RELEASE_SIDECAR_SHA256 } from "../src/godaddy/matrix-release-pin.ts";
 
 const matrixPersistentRoot = `${process.cwd()}/public/assets/.personal-consultant-matrix-v1`;
 
@@ -77,11 +78,15 @@ const mysqlConfiguration = Object.freeze({
 test("MySQL mode explicitly passes only selected DB credentials to its child and needs no legacy folders", () => {
   const environment: Record<string, unknown> = { ...mysqlConfiguration,
     DATABASE_URL: "must-not-inherit", GOOGLE_CLIENT_SECRET: "must-not-inherit", DB_SSL_REJECT_UNAUTHORIZED: "false" };
+  delete environment.MATRIX_SIDECAR_PATH;
+  delete environment.MATRIX_SIDECAR_SHA256;
   delete environment.MATRIX_STORE_DIR;
   delete environment.MATRIX_MEDIA_SPOOL_DIR;
   const result = parseGoDaddyMatrixConfiguration(environment);
   assert.ok(result.ok);
   assert.equal(result.value.storeBackend, "mysql");
+  assert.equal(result.value.binaryPath, `${process.cwd()}/runtime/matrix/personal-consultant-matrix-sidecar`);
+  assert.equal(result.value.expectedSha256, MATRIX_RELEASE_SIDECAR_SHA256);
   for (const field of ["DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD", "DB_SSL_CA_FILE"] as const) {
     assert.equal(result.value.spawnEnvironment[field], mysqlConfiguration[field]);
   }
@@ -89,6 +94,18 @@ test("MySQL mode explicitly passes only selected DB credentials to its child and
   for (const field of ["SETTINGS_OWNER_PASSWORD", "GOOGLE_CLIENT_SECRET", "DATABASE_URL", "DB_SSL_REJECT_UNAUTHORIZED"]) {
     assert.equal(Object.hasOwn(result.value.spawnEnvironment, field), false);
   }
+});
+
+test("MySQL executable identity comes from the verified release, not stale deployment values", () => {
+  const result = parseGoDaddyMatrixConfiguration({
+    ...mysqlConfiguration,
+    MATRIX_SIDECAR_PATH: "/obsolete/runtime/matrix-sidecar",
+    MATRIX_SIDECAR_SHA256: "f".repeat(64)
+  });
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.value.binaryPath, `${process.cwd()}/runtime/matrix/personal-consultant-matrix-sidecar`);
+  assert.equal(result.value.expectedSha256, MATRIX_RELEASE_SIDECAR_SHA256);
 });
 
 test("MySQL child cannot start with partial DB settings, implicit port or disabled TLS hints", () => {

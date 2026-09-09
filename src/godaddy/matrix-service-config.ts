@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
-import { isAbsolute, resolve, sep } from "node:path";
+import { isAbsolute, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { MATRIX_RELEASE_SIDECAR_SHA256 } from "./matrix-release-pin.ts";
 
 export const GODADDY_MATRIX_SIDECAR_BUILD = "0.1.0";
 export const GODADDY_MATRIX_PROTOCOL_VERSION = 1;
@@ -31,6 +32,22 @@ const MATRIX_PERSISTENT_ROOT = resolve(
 );
 const MATRIX_STORE_ROOT = resolve(MATRIX_PERSISTENT_ROOT, "crypto-store");
 const MATRIX_MEDIA_SPOOL_ROOT = resolve(MATRIX_PERSISTENT_ROOT, "media-spool");
+const MATRIX_MYSQL_SIDECAR_PATH = join(
+  APPLICATION_SOURCE_ROOT,
+  "runtime",
+  "matrix",
+  "personal-consultant-matrix-sidecar"
+);
+
+export type GoDaddyMatrixExecutableBinding = Readonly<{
+  binaryPath: string;
+  expectedSha256: string;
+}>;
+
+const DEFAULT_MYSQL_EXECUTABLE_BINDING: GoDaddyMatrixExecutableBinding = Object.freeze({
+  binaryPath: MATRIX_MYSQL_SIDECAR_PATH,
+  expectedSha256: MATRIX_RELEASE_SIDECAR_SHA256
+});
 
 type MatrixEnvironmentName = typeof MATRIX_ENVIRONMENT_NAMES[number];
 
@@ -108,7 +125,8 @@ function suppliedMatrixNames(environment: Record<string, unknown>): number {
  * readiness or validation errors.
  */
 export function parseGoDaddyMatrixConfiguration(
-  environment: Record<string, unknown>
+  environment: Record<string, unknown>,
+  mysqlExecutableBinding: GoDaddyMatrixExecutableBinding = DEFAULT_MYSQL_EXECUTABLE_BINDING
 ): GoDaddyMatrixConfigurationResult {
   if (environment.RUNTIME_MODE !== "production") return { ok: false, code: "matrix_disabled_for_runtime" };
   if (environment.GODADDY_STATE_DATABASE_ROLE !== "published") {
@@ -118,7 +136,9 @@ export function parseGoDaddyMatrixConfiguration(
   if (environment.MATRIX_STORE_BACKEND !== undefined && !["mysql", "sqlite"].includes(String(environment.MATRIX_STORE_BACKEND))) {
     return { ok: false, code: "matrix_configuration_invalid" };
   }
-  const names = mysql ? MATRIX_ENVIRONMENT_NAMES.filter((name) => name !== "MATRIX_STORE_DIR" && name !== "MATRIX_MEDIA_SPOOL_DIR") : MATRIX_ENVIRONMENT_NAMES;
+  const names = mysql ? MATRIX_ENVIRONMENT_NAMES.filter((name) => ![
+    "MATRIX_SIDECAR_PATH", "MATRIX_SIDECAR_SHA256", "MATRIX_STORE_DIR", "MATRIX_MEDIA_SPOOL_DIR"
+  ].includes(name)) : MATRIX_ENVIRONMENT_NAMES;
   const supplied = names.filter((name) => Object.hasOwn(environment, name)).length;
   if (supplied === 0) return { ok: false, code: "matrix_not_configured" };
   if (supplied !== names.length) {
@@ -131,12 +151,16 @@ export function parseGoDaddyMatrixConfiguration(
     return { ok: false, code: "matrix_configuration_invalid" };
   }
 
-  const binaryPath = exactAbsolutePath(values.MATRIX_SIDECAR_PATH as string);
+  const binaryPath = mysql
+    ? exactAbsolutePath(mysqlExecutableBinding.binaryPath)
+    : exactAbsolutePath(values.MATRIX_SIDECAR_PATH as string);
   // Legacy paths are never opened in MySQL mode. The actual shared private
   // spool is created per boot by the service, not taken from a public folder.
   const storeDir = mysql ? MATRIX_STORE_ROOT : exactAbsolutePath(values.MATRIX_STORE_DIR as string);
   const mediaSpoolDir = mysql ? MATRIX_MEDIA_SPOOL_ROOT : exactAbsolutePath(values.MATRIX_MEDIA_SPOOL_DIR as string);
-  const expectedSha256 = values.MATRIX_SIDECAR_SHA256 as string;
+  const expectedSha256 = mysql
+    ? mysqlExecutableBinding.expectedSha256
+    : values.MATRIX_SIDECAR_SHA256 as string;
   const roomId = values.MATRIX_ROOM_ID as string;
   const ownerMxid = values.MATRIX_OWNER_MXID as string;
   const botMxid = values.MATRIX_BOT_MXID as string;

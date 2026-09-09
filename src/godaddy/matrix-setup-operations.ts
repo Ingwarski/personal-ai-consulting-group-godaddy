@@ -93,11 +93,14 @@ export function createMatrixSetupOperations(environment: Record<string, unknown>
     }
     if (mysql && (action === "resume" || action === "start_fresh")) {
       if (!mysqlPrepared || process !== undefined) throw new Error("matrix_setup_not_prepared");
-      const configuration = parseGoDaddyMatrixConfiguration(environment);
-      if (!configuration.ok) throw new Error(configuration.code);
       const inspection = await (dependencies.inspectMySql ?? inspectMySqlMatrixRelease)(root, pin);
       if (closed) throw new Error("matrix_setup_disabled");
       if (!inspection.ok) throw new Error(inspection.code);
+      const configuration = parseGoDaddyMatrixConfiguration(environment, {
+        binaryPath: inspection.value.sidecarPath,
+        expectedSha256: inspection.value.sidecarSha256
+      });
+      if (!configuration.ok) throw new Error(configuration.code);
       if (configuration.value.storeBackend !== "mysql" || configuration.value.binaryPath !== inspection.value.sidecarPath
         || configuration.value.expectedSha256 !== inspection.value.sidecarSha256) throw new Error("matrix_configuration_invalid");
       await cleanupSpool();
