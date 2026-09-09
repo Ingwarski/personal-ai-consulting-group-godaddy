@@ -70,6 +70,19 @@ test("setup transport requires handshake, sends exact explicit commands, and doe
   await fixture.process.close();
 });
 
+test("startup failure preserves only known safe native codes", async () => {
+  for (const code of ["configuration_invalid", "store_locked", "store_or_device_quarantined", "transport_or_store_unavailable"]) {
+    const fixture = childFixture();
+    fixture.frames({ version: 1, type: "setup_failed", error: code });
+    await assert.rejects(fixture.process.request({ type: "status" }), { message: code });
+    await fixture.process.close();
+  }
+  const fixture = childFixture();
+  fixture.frames({ version: 1, type: "setup_failed", error: "private-token-or-sdk-output" });
+  await assert.rejects(fixture.process.request({ type: "status" }), { message: "matrix_setup_unavailable" });
+  await fixture.process.close();
+});
+
 test("unexpected child response fields fail closed instead of leaking into owner UI", async () => {
   const fixture = childFixture(); fixture.frames({ version: 1, type: "setup_ready" });
   const pending = fixture.process.request({ type: "status" });

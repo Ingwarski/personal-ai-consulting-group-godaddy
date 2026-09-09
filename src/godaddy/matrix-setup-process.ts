@@ -117,6 +117,14 @@ export function spawnMatrixSetupProcess(input: Readonly<{
       try { value = JSON.parse(decoder.decode(line)); } catch { fail(); return; }
       if (!object(value) || value.version !== 1) { fail(); return; }
       if (!ready) {
+        // The native process can fail before its ready handshake. Preserve only
+        // its static public vocabulary, never arbitrary child output.
+        if (exact(value, ["version", "type", "error"]) && value.type === "setup_failed"
+          && typeof value.error === "string" && ["configuration_invalid", "store_locked",
+            "store_or_device_quarantined", "transport_or_store_unavailable"].includes(value.error)) {
+          failureCode = value.error;
+          fail(); return;
+        }
         if (!exact(value, ["version", "type"]) || value.type !== "setup_ready") { fail(); return; }
         ready = true; clearTimeout(startup); continue;
       }
