@@ -8,6 +8,8 @@ export type VerifiedTlsResult = "connected" | "server_not_supported" | "certific
 export type MySqlTransportDiagnostics = Readonly<{
   nodeDatabaseReachable: boolean;
   nodeSessionEncrypted: boolean | "unknown";
+  nodeExtraCaConfigured: boolean;
+  nodeSystemCaRequested: boolean;
   serverTlsSupport: "available" | "disabled" | "unknown";
   secureTransportRequired: boolean | "unknown";
   verifiedTlsConnection: VerifiedTlsResult;
@@ -47,6 +49,17 @@ const defaultTlsConnector: TlsConnector = async (configuration) => createConnect
   ssl: { rejectUnauthorized: true }
 }) as unknown as ProbeConnection;
 
+function nodeTrustConfiguration(): Readonly<{
+  nodeExtraCaConfigured: boolean;
+  nodeSystemCaRequested: boolean;
+}> {
+  const options = `${process.env.NODE_OPTIONS ?? ""} ${process.execArgv.join(" ")}`;
+  return Object.freeze({
+    nodeExtraCaConfigured: (process.env.NODE_EXTRA_CA_CERTS ?? "").trim().length > 0,
+    nodeSystemCaRequested: /(?:^|\s)--use-(?:system|openssl)-ca(?:\s|$)/u.test(options)
+  });
+}
+
 function classifyTlsFailure(error: unknown): VerifiedTlsResult {
   const code = typeof error === "object" && error !== null && "code" in error && typeof error.code === "string"
     ? error.code : "";
@@ -85,13 +98,15 @@ export async function inspectMySqlTransport(
   configuration?: GodaddyDatabaseConfiguration,
   dependencies: Readonly<{ connectTls?: TlsConnector }> = {}
 ): Promise<MySqlTransportDiagnostics> {
+  const trust = nodeTrustConfiguration();
   let connection: Awaited<ReturnType<MySqlPool["getConnection"]>> | undefined;
+  let destroyed = false;
   try {
     connection = await pool.getConnection();
-    const [[statusRows], [variableRows]] = await Promise.all([
-      connection.execute("SHOW SESSION STATUS LIKE 'Ssl_cipher'", []),
-      connection.execute("SHOW VARIABLES WHERE Variable_name IN ('have_ssl', 'require_secure_transport')", [])
-    ]);
+    const [statusRows] = await connection.execute("SHOW SESSION STATUS LIKE 'Ssl_cipher'", []);
+    const [variableRows] = await connection.execute(
+      "SHOW VARIABLES WHERE Variable_name IN ('have_ssl', 'require_secure_transport')", []
+    );
     const status = variableMap(statusRows);
     const variables = variableMap(variableRows);
     const cipher = status.get("ssl_cipher");
@@ -100,6 +115,7 @@ export async function inspectMySqlTransport(
     return Object.freeze({
       nodeDatabaseReachable: true,
       nodeSessionEncrypted: cipher === undefined ? "unknown" : cipher.length > 0,
+      ...trust,
       serverTlsSupport: tls === "YES" ? "available" : tls === "DISABLED" || tls === "NO" ? "disabled" : "unknown",
       secureTransportRequired: secure === "ON" ? true : secure === "OFF" ? false : "unknown",
       verifiedTlsConnection: configuration === undefined ? "not_checked"
@@ -107,14 +123,16 @@ export async function inspectMySqlTransport(
     });
   } catch {
     connection?.destroy?.();
+    destroyed = connection !== undefined;
     return Object.freeze({
       nodeDatabaseReachable: false,
       nodeSessionEncrypted: "unknown",
+      ...trust,
       serverTlsSupport: "unknown",
       secureTransportRequired: "unknown",
       verifiedTlsConnection: "not_checked"
     });
   } finally {
-    connection?.release();
+    if (!destroyed) connection?.release();
   }
 }

@@ -38,6 +38,8 @@ test("reports normalized MySQL transport facts without connection details", asyn
   assert.deepEqual(await inspectMySqlTransport(fixture.value), {
     nodeDatabaseReachable: true,
     nodeSessionEncrypted: true,
+    nodeExtraCaConfigured: false,
+    nodeSystemCaRequested: false,
     serverTlsSupport: "available",
     secureTransportRequired: true,
     verifiedTlsConnection: "not_checked"
@@ -51,6 +53,8 @@ test("reports the provider's unencrypted MySQL path and disabled TLS", async () 
   assert.deepEqual(await inspectMySqlTransport(fixture.value), {
     nodeDatabaseReachable: true,
     nodeSessionEncrypted: false,
+    nodeExtraCaConfigured: false,
+    nodeSystemCaRequested: false,
     serverTlsSupport: "disabled",
     secureTransportRequired: false,
     verifiedTlsConnection: "not_checked"
@@ -62,11 +66,13 @@ test("fails closed without exposing a database error", async () => {
   assert.deepEqual(await inspectMySqlTransport(fixture.value), {
     nodeDatabaseReachable: false,
     nodeSessionEncrypted: "unknown",
+    nodeExtraCaConfigured: false,
+    nodeSystemCaRequested: false,
     serverTlsSupport: "unknown",
     secureTransportRequired: "unknown",
     verifiedTlsConnection: "not_checked"
   });
-  assert.equal(fixture.released(), true);
+  assert.equal(fixture.released(), false);
   assert.equal(fixture.destroyed(), true);
 });
 
