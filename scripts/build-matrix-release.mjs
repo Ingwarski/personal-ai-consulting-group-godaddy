@@ -61,7 +61,7 @@ const releaseDockerfile = join(scratch, "Dockerfile.native-tls");
 const buildPackages = builder.nativeTlsBuildPackages.map(({ name, version }) => `${name}=${version}`);
 const releaseDockerfileBytes = `FROM ${builder.image}\nRUN apk add --no-cache ${buildPackages.join(" ")}\n`;
 writeFileSync(releaseDockerfile, releaseDockerfileBytes, { mode: 0o400, flag: "wx" });
-execute("docker", ["build", "--platform", builder.platform, "--pull=false", "--network=bridge", "--no-cache",
+execute("docker", ["build", "--platform", builder.platform, "--pull=false", "--network=default", "--no-cache",
   "--tag", releaseImageTag, "--file", releaseDockerfile, scratch]);
 const releaseImage = JSON.parse(execute("docker", ["image", "inspect", releaseImageTag], true))[0];
 if (!/^sha256:[a-f0-9]{64}$/.test(releaseImage.Id) || releaseImage.Os !== "linux" || releaseImage.Architecture !== "amd64") {

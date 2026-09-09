@@ -152,6 +152,7 @@ test("release workflow remains separate from non-deployable verification and can
   const build = readFileSync(new URL("../scripts/build-matrix-release.mjs", import.meta.url), "utf8");
   assert.match(build, /phase === "fetch" \? "bridge" : "none"/);
   assert.match(build, /apk add --no-cache/);
+  assert.match(build, /"--network=default"/);
   assert.match(build, /releaseImage\.Id/);
   assert.match(build, /nativeTlsBuildPackages: builder\.nativeTlsBuildPackages/);
   assert.match(build, /nativeTlsDockerfileSha256: sha256\(releaseDockerfileBytes\)/);
