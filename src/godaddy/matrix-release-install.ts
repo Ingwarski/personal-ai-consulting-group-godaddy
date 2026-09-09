@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { constants, type Stats } from "node:fs";
-import { link, lstat, mkdir, open, readdir, realpath, unlink, type FileHandle } from "node:fs/promises";
+import { link, lstat, mkdir, open, readdir, realpath, rename, unlink, type FileHandle } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { MATRIX_VERIFIER_HASH, validMatrixBrowserReport, type MatrixBrowserChallenge, type MatrixControlVisibility } from "./matrix-browser-isolation.ts";
 
@@ -252,16 +252,21 @@ async function verifiedBinary(path: string, entry: BinaryEntry, uid: number, ins
   return bytes;
 }
 
-async function installBinary(path: string, bytes: Buffer, entry: BinaryEntry, uid: number): Promise<void> {
+async function installBinary(path: string, bytes: Buffer, entry: BinaryEntry, uid: number, previousHash?: string): Promise<void> {
+  let previous: Stats | undefined;
   if (!await missing(path)) {
     try { await verifiedBinary(path, entry, uid, true); }
     catch (error) {
       if (error instanceof ReleaseFailure && error.code === "matrix_release_checksum_mismatch") {
-        throw new ReleaseFailure("matrix_release_conflict");
+        if (previousHash === undefined || digest(await boundedFile(path, uid, MAX_BINARY_BYTES, true)) !== previousHash) {
+          throw new ReleaseFailure("matrix_release_conflict");
+        }
+        previous = await lstat(path);
+      } else {
+        throw error;
       }
-      throw error;
     }
-    return;
+    if (previous === undefined) return;
   }
   const parentPath = dirname(path);
   const parent = await directory(parentPath, uid, true);
@@ -276,7 +281,17 @@ async function installBinary(path: string, bytes: Buffer, entry: BinaryEntry, ui
       throw new ReleaseFailure("matrix_release_unsafe_path");
     }
     // link is atomic and fails if a live/previous installation appeared. rename would overwrite it.
-    try { await link(temporary, path); }
+    try {
+      if (previous !== undefined) {
+        if (!sameFile(previous, await lstat(path))
+          || digest(await boundedFile(path, uid, MAX_BINARY_BYTES, true)) !== previousHash) {
+          throw new ReleaseFailure("matrix_release_conflict");
+        }
+        // Only an exact previously verified executable can be replaced. State is
+        // elsewhere; rename is atomic and existing processes retain their inode.
+        await rename(temporary, path);
+      } else await link(temporary, path);
+    }
     catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
       throw new ReleaseFailure("matrix_release_conflict");
@@ -402,8 +417,10 @@ async function runMySqlRelease(applicationRoot: string, expected: MatrixReleaseE
     const sidecarPath = join(paths.runtimeDir, SIDECAR);
     const setupPath = join(paths.runtimeDir, SETUP);
     if (prepare && sourceSidecar !== undefined && sourceSetup !== undefined) {
-      await installBinary(sidecarPath, sourceSidecar, metadata.sidecar, uid);
-      await installBinary(setupPath, sourceSetup, metadata.setup, uid);
+      await installBinary(sidecarPath, sourceSidecar, metadata.sidecar, uid,
+        "3b737154b4c78a65d19cd5870c81d056d91fadc64592a7c0fd0b62ab91a93e90");
+      await installBinary(setupPath, sourceSetup, metadata.setup, uid,
+        "8dfffd5c615a7a2bbfb72d4402961888f4ff6c039eed4ce2ee07c61ea7510aad");
     } else {
       await verifiedBinary(sidecarPath, metadata.sidecar, uid, true);
       await verifiedBinary(setupPath, metadata.setup, uid, true);
