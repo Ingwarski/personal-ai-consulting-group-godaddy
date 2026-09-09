@@ -73,7 +73,7 @@ export function createMatrixSetupOperations(environment: Record<string, unknown>
   const run = async (action: MatrixSetupAction, fields: MatrixSetupFields, ownerBinding?: string): Promise<MatrixSetupView> => {
     if (!enabled || closed) throw new Error("matrix_setup_disabled");
     if (pin === undefined) throw new Error("matrix_release_unavailable");
-    if (mysql && ["start_fresh", "complete_preview", "restrict_media_permissions"].includes(action)) {
+    if (mysql && ["complete_preview", "restrict_media_permissions"].includes(action)) {
       throw new Error("matrix_setup_invalid_request");
     }
     if (mysql && action === "prepare") {
@@ -88,7 +88,7 @@ export function createMatrixSetupOperations(environment: Record<string, unknown>
       mysqlPrepared = true;
       view = { state: "prepared" }; return view;
     }
-    if (mysql && action === "resume") {
+    if (mysql && (action === "resume" || action === "start_fresh")) {
       if (!mysqlPrepared || process !== undefined) throw new Error("matrix_setup_not_prepared");
       const configuration = parseGoDaddyMatrixConfiguration(environment);
       if (!configuration.ok) throw new Error(configuration.code);
@@ -107,7 +107,7 @@ export function createMatrixSetupOperations(environment: Record<string, unknown>
         if (!stat.isDirectory() || stat.isSymbolicLink() || (stat.mode & 0o7777) !== 0o700
           || await realpath(path) !== path) throw new Error("matrix_setup_unsafe_path");
         process = (dependencies.spawn ?? spawnMatrixSetupProcess)({ binaryPath: inspection.value.setupPath,
-          applicationRoot: root, fresh: false, environment: { ...configuration.value.spawnEnvironment,
+          applicationRoot: root, fresh: action === "start_fresh", environment: { ...configuration.value.spawnEnvironment,
             MATRIX_STORE_DIR: path, MATRIX_MEDIA_SPOOL_DIR: path, TMPDIR: temporaryParent } });
       } catch (error) { await cleanupSpool(); throw error; }
       view = { state: "starting", ...(process.expiresAt === undefined ? {} : { expiresAt: process.expiresAt }) }; return view;

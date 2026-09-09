@@ -177,58 +177,85 @@ pub fn mysql_coordinates(config: &Config) -> Result<([u8; 16], Vec<u8>, [u8; 32]
 }
 
 async fn open_mysql(config: &Config, setup_preflight: bool) -> Result<OpenStore, StoreError> {
-    if config.provision_fresh {
+    if config.provision_fresh && !setup_preflight {
         return Err(StoreError::Quarantined);
     }
     let db = DatabaseConfig::from_env().map_err(mysql_error)?;
     let pool = db.connect().await.map_err(mysql_error)?;
     let (id, identity, key) = mysql_coordinates(config)?;
+    if config.provision_fresh {
+        // Explicit setup only. Never overwrite an existing namespace or a
+        // device with published keys, including a previous failed attempt.
+        crate::setup::verify_session_binding_with_identity(config, None).await?;
+        Backend::provision_schema(&pool)
+            .await
+            .map_err(mysql_error)?;
+        Backend::provision(&pool, id, &identity, &key)
+            .await
+            .map_err(mysql_error)?;
+    }
     let opened = Backend::open(pool.clone(), id, &identity, &key, 30_000).await;
     pool.close().await;
     let backend = Arc::new(opened.map_err(mysql_error)?);
     let lease = DatabaseLease::start(backend.clone());
     // A partially imported namespace is never a runnable store.
-    if backend
-        .get("app.meta", b"activation")
-        .await
-        .map_err(mysql_error)?
-        .as_deref()
-        != Some(b"ready")
+    if !config.provision_fresh
+        && backend
+            .get("app.meta", b"activation")
+            .await
+            .map_err(mysql_error)?
+            .as_deref()
+            != Some(b"ready")
     {
         return Err(StoreError::Quarantined);
     }
-    let binding: DeviceBinding = serde_json::from_slice(
-        &backend
-            .get("app.meta", b"device-binding")
-            .await
-            .map_err(mysql_error)?
-            .ok_or(StoreError::Quarantined)?,
-    )
-    .map_err(|_| StoreError::Quarantined)?;
-    if binding.device_id != config.bot_device_id {
+    let binding: Option<DeviceBinding> = if config.provision_fresh {
+        None
+    } else {
+        Some(
+            serde_json::from_slice(
+                &backend
+                    .get("app.meta", b"device-binding")
+                    .await
+                    .map_err(mysql_error)?
+                    .ok_or(StoreError::Quarantined)?,
+            )
+            .map_err(|_| StoreError::Quarantined)?,
+        )
+    };
+    if binding
+        .as_ref()
+        .is_some_and(|b| b.device_id != config.bot_device_id)
+    {
         return Err(StoreError::Quarantined);
     }
     let crypto = MySqlCryptoStore::new(backend.clone());
-    let account = crypto
-        .load_account()
-        .await
-        .map_err(mysql_error)?
-        .ok_or(StoreError::Quarantined)?;
-    if account.user_id().as_str() != config.bot_mxid
-        || account.device_id().as_str() != config.bot_device_id
-    {
-        return Err(StoreError::Quarantined);
+    if let Some(binding) = &binding {
+        let account = crypto
+            .load_account()
+            .await
+            .map_err(mysql_error)?
+            .ok_or(StoreError::Quarantined)?;
+        if account.user_id().as_str() != config.bot_mxid
+            || account.device_id().as_str() != config.bot_device_id
+        {
+            return Err(StoreError::Quarantined);
+        }
+        let fingerprint = hex::encode(Sha256::digest(
+            account.identity_keys().ed25519.to_base64().as_bytes(),
+        ));
+        validate_bound_identity(binding, Some(&fingerprint))?;
+        if setup_preflight {
+            crate::setup::verify_session_binding_with_identity(config, Some(&fingerprint)).await?;
+        }
     }
-    let fingerprint = hex::encode(Sha256::digest(
-        account.identity_keys().ed25519.to_base64().as_bytes(),
-    ));
-    validate_bound_identity(&binding, Some(&fingerprint))?;
-    if setup_preflight {
-        crate::setup::verify_session_binding_with_identity(config, Some(&fingerprint)).await?;
+    let checkpoint = if config.provision_fresh {
+        crate::durable_checkpoint::DurableCheckpoint::initialize_mysql(backend.clone(), None, None)
+            .await
+    } else {
+        crate::durable_checkpoint::DurableCheckpoint::open_mysql(backend.clone()).await
     }
-    let checkpoint = crate::durable_checkpoint::DurableCheckpoint::open_mysql(backend.clone())
-        .await
-        .map_err(checkpoint_error)?;
+    .map_err(checkpoint_error)?;
     let http_client = reqwest::Client::builder()
         .https_only(true)
         .no_proxy()
@@ -266,6 +293,35 @@ async fn open_mysql(config: &Config, setup_preflight: bool) -> Result<OpenStore,
         })
         .await
         .map_err(restore_mysql_session_error)?;
+    let binding = if config.provision_fresh {
+        let account = MySqlCryptoStore::new(backend.clone())
+            .load_account()
+            .await
+            .map_err(mysql_error)?
+            .ok_or(StoreError::Quarantined)?;
+        if account.user_id().as_str() != config.bot_mxid
+            || account.device_id().as_str() != config.bot_device_id
+        {
+            return Err(StoreError::Quarantined);
+        }
+        let fingerprint: [u8; 32] =
+            Sha256::digest(account.identity_keys().ed25519.to_base64().as_bytes()).into();
+        let binding = DeviceBinding {
+            device_id: config.bot_device_id.clone(),
+            store_fingerprint: hex::encode(fingerprint),
+        };
+        backend
+            .activate_candidate(
+                &serde_json::to_vec(&binding).map_err(|_| StoreError::Quarantined)?,
+                fingerprint,
+                br#"{"version":1,"operation":"explicit-fresh-device"}"#,
+            )
+            .await
+            .map_err(mysql_error)?;
+        Some(binding)
+    } else {
+        binding
+    };
     Ok(OpenStore {
         client,
         http_client,
@@ -273,8 +329,8 @@ async fn open_mysql(config: &Config, setup_preflight: bool) -> Result<OpenStore,
         mysql: Some(backend),
         _lease: Some(lease),
         root: config.store_root.clone(),
-        fresh: false,
-        binding: Some(binding),
+        fresh: config.provision_fresh,
+        binding,
         sync_checkpoint: checkpoint,
     })
 }
@@ -939,6 +995,18 @@ mod tests {
         assert!(!scenario.fresh);
         assert_eq!(scenario.binding.unwrap().device_id, "DEVICE");
         assert!(validate_scenario(&config(restore, "OTHER")).is_err());
+    }
+
+    #[tokio::test]
+    async fn mysql_fresh_is_rejected_by_normal_runtime_before_database_or_network() {
+        let temp = tempfile::tempdir().unwrap();
+        let mut c = config(temp.path().to_owned(), "NEW_DEVICE");
+        c.mysql = true;
+        c.provision_fresh = true;
+        assert!(matches!(
+            open_mysql(&c, false).await,
+            Err(StoreError::Quarantined)
+        ));
     }
 
     #[test]

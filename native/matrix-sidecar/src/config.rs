@@ -57,10 +57,6 @@ impl Config {
             Ok("sqlite") | Err(_) => false,
             _ => return Err(ConfigError::Missing),
         };
-        // MySQL startup cannot implicitly create a replacement crypto identity.
-        if mysql && provision_fresh {
-            return Err(ConfigError::Missing);
-        }
         let (store_root, spool_parent) = if mysql {
             // Node creates this private per-boot directory and needs the same
             // path to consume validated media. No durable crypto files live here.

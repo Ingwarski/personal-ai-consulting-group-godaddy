@@ -75,11 +75,12 @@ function mysqlFixture(options: { failInspect?: boolean; requestError?: string; s
   return { setup, calls, spawned: () => spawned };
 }
 
-test("MySQL setup prepares binaries without Preview, resumes only, and uses a private disposable shared spool", async () => {
+test("MySQL setup prepares binaries without Preview and resumes with a private disposable shared spool", async () => {
   const f = mysqlFixture();
   assert.equal(f.setup.view().storeBackend, "mysql");
   assert.equal((await f.setup.action("resume", {})).error, "matrix_setup_not_prepared");
-  for (const action of ["start_fresh", "complete_preview", "restrict_media_permissions"] as const) {
+  assert.equal((await f.setup.action("start_fresh", {})).error, "matrix_setup_not_prepared");
+  for (const action of ["complete_preview", "restrict_media_permissions"] as const) {
     assert.equal((await f.setup.action(action, {})).error, "matrix_setup_invalid_request");
   }
   assert.deepEqual(f.calls, []);
@@ -100,6 +101,15 @@ test("MySQL setup prepares binaries without Preview, resumes only, and uses a pr
   assert.equal((await f.setup.action("finish", {})).state, "complete");
   await assert.rejects(lstat(spool), { code: "ENOENT" });
   assert.equal((await f.setup.action("resume", {})).error, "matrix_setup_not_prepared");
+  await f.setup.close();
+});
+
+test("MySQL fresh setup passes explicit fresh intent only after release preparation", async () => {
+  const f = mysqlFixture();
+  await f.setup.action("prepare", {});
+  assert.equal((await f.setup.action("start_fresh", {})).state, "starting");
+  assert.equal(f.spawned()!.fresh, true);
+  assert.equal(f.spawned()!.environment.MATRIX_STORE_BACKEND, "mysql");
   await f.setup.close();
 });
 
