@@ -9,7 +9,7 @@ import { matrixSetupDocument } from "../src/godaddy/matrix-setup-page.ts";
 test("MySQL setup offers explicit new-device setup without Preview ceremony", () => {
   const html = matrixSetupDocument({ state: "prepared", storeBackend: "mysql", mysqlTransport: {
     nodeDatabaseReachable: true, nodeSessionEncrypted: false, nodeExtraCaConfigured: false,
-    nodeSystemCaRequested: false, serverTlsSupport: "disabled", secureTransportRequired: false,
+    nodeAdditionalSystemCaActive: false, serverTlsSupport: "disabled", secureTransportRequired: false,
     verifiedTlsConnection: "server_not_supported"
   } }, "synthetic-token");
   assert.match(html, /Підключити наявний пристрій через MySQL/u);

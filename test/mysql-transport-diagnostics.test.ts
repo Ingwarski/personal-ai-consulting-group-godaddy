@@ -39,7 +39,7 @@ test("reports normalized MySQL transport facts without connection details", asyn
     nodeDatabaseReachable: true,
     nodeSessionEncrypted: true,
     nodeExtraCaConfigured: false,
-    nodeSystemCaRequested: false,
+    nodeAdditionalSystemCaActive: false,
     serverTlsSupport: "available",
     secureTransportRequired: true,
     verifiedTlsConnection: "not_checked"
@@ -54,7 +54,7 @@ test("reports the provider's unencrypted MySQL path and disabled TLS", async () 
     nodeDatabaseReachable: true,
     nodeSessionEncrypted: false,
     nodeExtraCaConfigured: false,
-    nodeSystemCaRequested: false,
+    nodeAdditionalSystemCaActive: false,
     serverTlsSupport: "disabled",
     secureTransportRequired: false,
     verifiedTlsConnection: "not_checked"
@@ -67,7 +67,7 @@ test("fails closed without exposing a database error", async () => {
     nodeDatabaseReachable: false,
     nodeSessionEncrypted: "unknown",
     nodeExtraCaConfigured: false,
-    nodeSystemCaRequested: false,
+    nodeAdditionalSystemCaActive: false,
     serverTlsSupport: "unknown",
     secureTransportRequired: "unknown",
     verifiedTlsConnection: "not_checked"

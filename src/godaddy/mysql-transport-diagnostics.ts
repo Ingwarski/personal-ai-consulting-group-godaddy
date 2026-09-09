@@ -1,4 +1,5 @@
 import { createConnection } from "mysql2/promise";
+import { getCACertificates } from "node:tls";
 
 import type { GodaddyDatabaseConfiguration, MySqlPool } from "./mysql-storage.ts";
 
@@ -9,7 +10,7 @@ export type MySqlTransportDiagnostics = Readonly<{
   nodeDatabaseReachable: boolean;
   nodeSessionEncrypted: boolean | "unknown";
   nodeExtraCaConfigured: boolean;
-  nodeSystemCaRequested: boolean;
+  nodeAdditionalSystemCaActive: boolean;
   serverTlsSupport: "available" | "disabled" | "unknown";
   secureTransportRequired: boolean | "unknown";
   verifiedTlsConnection: VerifiedTlsResult;
@@ -51,12 +52,14 @@ const defaultTlsConnector: TlsConnector = async (configuration) => createConnect
 
 function nodeTrustConfiguration(): Readonly<{
   nodeExtraCaConfigured: boolean;
-  nodeSystemCaRequested: boolean;
+  nodeAdditionalSystemCaActive: boolean;
 }> {
-  const options = `${process.env.NODE_OPTIONS ?? ""} ${process.execArgv.join(" ")}`;
+  const bundled = new Set(getCACertificates("bundled"));
+  const extra = new Set(getCACertificates("extra"));
+  const active = getCACertificates("default");
   return Object.freeze({
-    nodeExtraCaConfigured: (process.env.NODE_EXTRA_CA_CERTS ?? "").trim().length > 0,
-    nodeSystemCaRequested: /(?:^|\s)--use-(?:system|openssl)-ca(?:\s|$)/u.test(options)
+    nodeExtraCaConfigured: extra.size > 0,
+    nodeAdditionalSystemCaActive: active.some((certificate) => !bundled.has(certificate) && !extra.has(certificate))
   });
 }
 
