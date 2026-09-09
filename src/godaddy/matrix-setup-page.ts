@@ -3,6 +3,7 @@ import { ownerPanelDocument } from "../settings/ui/owner-panel.ts";
 import { OWNER_AUTH_SCRIPT_PATH } from "./owner-auth-client.ts";
 import { MATRIX_PREVIEW_ORIGIN, MATRIX_PREVIEW_VERIFIER, type MatrixBrowserChallenge, type MatrixControlVisibility } from "./matrix-browser-isolation.ts";
 import type { MatrixIsolationDiagnostics, MatrixReleaseDiagnostic } from "./matrix-release-install.ts";
+import type { MySqlTransportDiagnostics } from "./mysql-transport-diagnostics.ts";
 
 export const MATRIX_SETUP_PAGE = "/operations/matrix";
 export const MATRIX_SETUP_ACTION = "/operations/matrix/action";
@@ -10,6 +11,7 @@ export const MATRIX_SETUP_ACTIONS = ["prepare", "complete_preview", "restrict_me
 export type MatrixSetupAction = typeof MATRIX_SETUP_ACTIONS[number];
 export type MatrixSetupView = Readonly<{ state: string; status?: MatrixSetupStatus; error?: string;
   storeBackend?: "mysql" | "sqlite";
+  mysqlTransport?: MySqlTransportDiagnostics;
   expiresAt?: number;
   releaseDiagnostic?: MatrixReleaseDiagnostic;
   browserChallenge?: MatrixBrowserChallenge; isolationEvidence?: "browser_assisted_http_isolation";
@@ -43,6 +45,7 @@ export function matrixSetupDocument(view: MatrixSetupView, token: string): strin
   const yes = (value: boolean): string => value ? "підтверджено" : "ще не підтверджено";
   const status = view.state === "verifying" ? view.status : undefined;
   const mysql = view.storeBackend === "mysql";
+  const mysqlTransport = view.mysqlTransport;
   const flow = status?.verification;
   const stateLabels: Record<string, string> = {
     disabled: "Режим налаштування вимкнено. Консультації не перемикаються автоматично.",
@@ -64,6 +67,7 @@ export function matrixSetupDocument(view: MatrixSetupView, token: string): strin
   <h1>Підключення Matrix</h1><p role="alert" tabindex="-1" data-owner-action-status></p><p role="status">${escape(stateLabels[view.state] ?? "Стан не підтверджено.")}</p>
   ${view.expiresAt === undefined ? "" : `<p>Сеанс налаштування обмежений 15 хвилинами від запуску. На момент оновлення сторінки залишилося приблизно ${Math.max(0, Math.floor((view.expiresAt - Date.now()) / 60_000))} хв. Нове порівняння не поновлює цей час.</p>`}
   ${view.error === undefined ? "" : `<p role="alert">Дію не завершено. Секрети й наявні дані не видалялися. Код: <code>${escape(view.error)}</code>. ${escape(mysql && /^(matrix_setup_(expired|needs_resume|unavailable|process_failed)|store_or_device_quarantined)$/u.test(view.error) ? "Перевірте підключення MySQL і стан перенесення сховища. Продовжіть із наявним пристроєм; не створюйте нові ключі." : errorGuidance[view.error] ?? "Перевірте конфігурацію Published та оновіть стан; не створюйте заміну наявного сховища.")}</p>`}
+  ${mysqlTransport === undefined ? "" : `<section><h2>Транспорт MySQL</h2><ul><li>Node підключається до бази: ${yes(mysqlTransport.nodeDatabaseReachable)}</li><li>Поточне з’єднання Node зашифроване: ${mysqlTransport.nodeSessionEncrypted === "unknown" ? "невідомо" : yes(mysqlTransport.nodeSessionEncrypted)}</li><li>TLS на сервері MySQL: ${mysqlTransport.serverTlsSupport === "available" ? "доступний" : mysqlTransport.serverTlsSupport === "disabled" ? "вимкнений" : "невідомо"}</li><li>Сервер вимагає захищений транспорт: ${mysqlTransport.secureTransportRequired === "unknown" ? "невідомо" : yes(mysqlTransport.secureTransportRequired)}</li></ul><p>Показано лише нормалізовані ознаки; адреса, обліковий запис, схема, сертифікат і помилки не виводяться.</p></section>`}
   ${view.isolationDiagnostics === undefined ? "" : `<section><h2>Діагностика перевірки приватності</h2><p>Етап: <code>${escape(view.isolationDiagnostics.stage)}</code>. Нижче лише HTTP-статуси; вміст відповідей і секрети не показуються.</p><ul>${view.isolationDiagnostics.probes.map(probe => `<li>${escape(probe.environment)} · ${escape(probe.target)} · ${probe.status === null ? "відповідь не отримано" : `HTTP ${probe.status}`} · ${probe.denied ? "приватність підтверджено" : "приватність не підтверджено"}</li>`).join("")}</ul></section>`}
   ${view.releaseDiagnostic === undefined ? "" : `<section><h2>Діагностика прав доступу</h2><p>Лише технічні ознаки, без шляхів або вмісту файлів:</p><pre>${escape(JSON.stringify(view.releaseDiagnostic))}</pre></section>`}
   ${view.releaseDiagnostic?.stage === "store" && /^matrix-sdk-media\.sqlite3(?:-wal|-shm)?$/u.test(view.releaseDiagnostic.target)

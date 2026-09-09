@@ -7,12 +7,16 @@ import { parseMatrixSetupStatus, spawnMatrixSetupProcess } from "../src/godaddy/
 import { matrixSetupDocument } from "../src/godaddy/matrix-setup-page.ts";
 
 test("MySQL setup offers explicit new-device setup without Preview ceremony", () => {
-  const html = matrixSetupDocument({ state: "prepared", storeBackend: "mysql" }, "synthetic-token");
+  const html = matrixSetupDocument({ state: "prepared", storeBackend: "mysql", mysqlTransport: {
+    nodeDatabaseReachable: true, nodeSessionEncrypted: false, serverTlsSupport: "disabled", secureTransportRequired: false
+  } }, "synthetic-token");
   assert.match(html, /Підключити наявний пристрій через MySQL/u);
   assert.match(html, /Перевірити програми Matrix/u);
   assert.match(html, /value="start_fresh"/u);
   assert.doesNotMatch(html, /Перевірити авторизований Preview|приватність каталогів/u);
   assert.doesNotMatch(html, /перевірка HTTP-доступу пройдена/u);
+  assert.match(html, /Транспорт MySQL|TLS на сервері MySQL: вимкнений/u);
+  assert.doesNotMatch(html, /DB_HOST|password|certificate/u);
 });
 
 const status = () => ({ own_bot_device_id: "NEW_DEVICE", own_bot_ed25519: "A".repeat(43),

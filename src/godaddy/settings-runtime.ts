@@ -592,7 +592,10 @@ export function createGoDaddySettingsRuntime(
         if (url.search) return plain("Invalid request.", 400);
         const render = async (view = matrixSetup.view()): Promise<Response> => {
           const token = await owner.issueActionToken(cookieHeader, MATRIX_SETUP_ACTION);
-          return token === undefined ? plain("Access denied.", 403) : html(matrixSetupDocument(view, token), 200);
+          const mysqlTransport = environment.MATRIX_STORE_BACKEND === "mysql"
+            ? await (dependencies.inspectMySqlTransport ?? inspectMySqlTransport)(pool) : undefined;
+          const renderedView = mysqlTransport === undefined ? view : { ...view, mysqlTransport };
+          return token === undefined ? plain("Access denied.", 403) : html(matrixSetupDocument(renderedView, token), 200);
         };
         if (url.pathname === MATRIX_SETUP_PAGE && request.method === "GET") return render();
         if (url.pathname !== MATRIX_SETUP_ACTION || request.method !== "POST") return plain("Method not allowed.", 405);
