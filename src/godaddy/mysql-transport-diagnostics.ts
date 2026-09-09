@@ -4,7 +4,8 @@ import { getCACertificates } from "node:tls";
 import type { GodaddyDatabaseConfiguration, MySqlPool } from "./mysql-storage.ts";
 
 export type VerifiedTlsResult = "connected" | "server_not_supported" | "certificate_rejected"
-  | "login_or_database_failed" | "network_failed" | "connection_closed" | "failed" | "not_checked";
+  | "server_identity_rejected" | "login_or_database_failed" | "network_failed" | "connection_closed"
+  | "failed" | "not_checked";
 
 export type MySqlTransportDiagnostics = Readonly<{
   nodeDatabaseReachable: boolean;
@@ -14,6 +15,7 @@ export type MySqlTransportDiagnostics = Readonly<{
   serverTlsSupport: "available" | "disabled" | "unknown";
   secureTransportRequired: boolean | "unknown";
   verifiedTlsConnection: VerifiedTlsResult;
+  verifiedTlsIdentityConnection: VerifiedTlsResult;
 }>;
 
 type VariableRow = Readonly<{ Variable_name?: unknown; Value?: unknown }>;
@@ -50,6 +52,22 @@ const defaultTlsConnector: TlsConnector = async (configuration) => createConnect
   ssl: { rejectUnauthorized: true }
 }) as unknown as ProbeConnection;
 
+const defaultTlsIdentityConnector: TlsConnector = async (configuration) => {
+  // mysql2 intentionally defaults verifyIdentity to false even when certificate
+  // chain validation is enabled. Keep the value explicit so this probe matches
+  // SQLx VerifyIdentity rather than overstating what the CA-only probe proves.
+  const ssl = { rejectUnauthorized: true, verifyIdentity: true };
+  return createConnection({
+    host: configuration.host,
+    port: configuration.port,
+    database: configuration.database,
+    user: configuration.user,
+    password: configuration.password,
+    connectTimeout: 10_000,
+    ssl
+  }) as unknown as ProbeConnection;
+};
+
 function nodeTrustConfiguration(): Readonly<{
   nodeExtraCaConfigured: boolean;
   nodeAdditionalSystemCaActive: boolean;
@@ -67,7 +85,8 @@ function classifyTlsFailure(error: unknown): VerifiedTlsResult {
   const code = typeof error === "object" && error !== null && "code" in error && typeof error.code === "string"
     ? error.code : "";
   if (code === "HANDSHAKE_NO_SSL_SUPPORT") return "server_not_supported";
-  if (["HANDSHAKE_SSL_ERROR", "ERR_TLS_CERT_ALTNAME_INVALID", "DEPTH_ZERO_SELF_SIGNED_CERT",
+  if (code === "ERR_TLS_CERT_ALTNAME_INVALID") return "server_identity_rejected";
+  if (["HANDSHAKE_SSL_ERROR", "DEPTH_ZERO_SELF_SIGNED_CERT",
     "SELF_SIGNED_CERT_IN_CHAIN", "UNABLE_TO_GET_ISSUER_CERT_LOCALLY", "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
     "CERT_HAS_EXPIRED"].includes(code)) return "certificate_rejected";
   if (["ER_ACCESS_DENIED_ERROR", "ER_BAD_DB_ERROR"].includes(code)) return "login_or_database_failed";
@@ -99,7 +118,7 @@ async function probeVerifiedTls(
 export async function inspectMySqlTransport(
   pool: MySqlPool,
   configuration?: GodaddyDatabaseConfiguration,
-  dependencies: Readonly<{ connectTls?: TlsConnector }> = {}
+  dependencies: Readonly<{ connectTls?: TlsConnector; connectIdentityTls?: TlsConnector }> = {}
 ): Promise<MySqlTransportDiagnostics> {
   const trust = nodeTrustConfiguration();
   let connection: Awaited<ReturnType<MySqlPool["getConnection"]>> | undefined;
@@ -122,7 +141,9 @@ export async function inspectMySqlTransport(
       serverTlsSupport: tls === "YES" ? "available" : tls === "DISABLED" || tls === "NO" ? "disabled" : "unknown",
       secureTransportRequired: secure === "ON" ? true : secure === "OFF" ? false : "unknown",
       verifiedTlsConnection: configuration === undefined ? "not_checked"
-        : await probeVerifiedTls(configuration, dependencies.connectTls ?? defaultTlsConnector)
+        : await probeVerifiedTls(configuration, dependencies.connectTls ?? defaultTlsConnector),
+      verifiedTlsIdentityConnection: configuration === undefined ? "not_checked"
+        : await probeVerifiedTls(configuration, dependencies.connectIdentityTls ?? defaultTlsIdentityConnector)
     });
   } catch {
     connection?.destroy?.();
@@ -133,7 +154,8 @@ export async function inspectMySqlTransport(
       ...trust,
       serverTlsSupport: "unknown",
       secureTransportRequired: "unknown",
-      verifiedTlsConnection: "not_checked"
+      verifiedTlsConnection: "not_checked",
+      verifiedTlsIdentityConnection: "not_checked"
     });
   } finally {
     if (!destroyed) connection?.release();

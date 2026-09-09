@@ -85,7 +85,11 @@ impl DatabaseConfig {
             .database(&self.database)
             .username(&self.username)
             .password(&self.password)
-            .ssl_mode(MySqlSslMode::VerifyIdentity)
+            // GoDaddy's shared MySQL endpoint presents a publicly trusted
+            // certificate whose DNS identity does not match the connection
+            // hostname. Verify the CA chain and retain encryption; hostname
+            // identity cannot be required on this provider endpoint.
+            .ssl_mode(MySqlSslMode::VerifyCa)
             .disable_statement_logging();
         if let Some(path) = &self.ca_file {
             options = options.ssl_ca(path);
@@ -147,7 +151,7 @@ impl DatabaseConfig {
             .database(&self.database)
             .username(&self.username)
             .password(&self.password)
-            .ssl_mode(MySqlSslMode::VerifyIdentity)
+            .ssl_mode(MySqlSslMode::VerifyCa)
             .disable_statement_logging();
         if let Some(path) = &self.ca_file {
             options = options.ssl_ca(path);

@@ -42,7 +42,8 @@ test("reports normalized MySQL transport facts without connection details", asyn
     nodeAdditionalSystemCaActive: false,
     serverTlsSupport: "available",
     secureTransportRequired: true,
-    verifiedTlsConnection: "not_checked"
+    verifiedTlsConnection: "not_checked",
+    verifiedTlsIdentityConnection: "not_checked"
   });
   assert.equal(fixture.released(), true);
   assert.equal(fixture.destroyed(), false);
@@ -57,7 +58,8 @@ test("reports the provider's unencrypted MySQL path and disabled TLS", async () 
     nodeAdditionalSystemCaActive: false,
     serverTlsSupport: "disabled",
     secureTransportRequired: false,
-    verifiedTlsConnection: "not_checked"
+    verifiedTlsConnection: "not_checked",
+    verifiedTlsIdentityConnection: "not_checked"
   });
 });
 
@@ -70,7 +72,8 @@ test("fails closed without exposing a database error", async () => {
     nodeAdditionalSystemCaActive: false,
     serverTlsSupport: "unknown",
     secureTransportRequired: "unknown",
-    verifiedTlsConnection: "not_checked"
+    verifiedTlsConnection: "not_checked",
+    verifiedTlsIdentityConnection: "not_checked"
   });
   assert.equal(fixture.released(), false);
   assert.equal(fixture.destroyed(), true);
@@ -79,20 +82,35 @@ test("fails closed without exposing a database error", async () => {
 test("probes a separate certificate-verified TLS session and reports only a stable result", async () => {
   const fixture = pool({ cipher: "" });
   assert.equal((await inspectMySqlTransport(fixture.value, database, {
-    connectTls: async () => tlsConnection("TLS_AES_256_GCM_SHA384")
+    connectTls: async () => tlsConnection("TLS_AES_256_GCM_SHA384"),
+    connectIdentityTls: async () => tlsConnection("TLS_AES_256_GCM_SHA384")
   })).verifiedTlsConnection, "connected");
   for (const [code, expected] of [
     ["HANDSHAKE_NO_SSL_SUPPORT", "server_not_supported"],
-    ["ERR_TLS_CERT_ALTNAME_INVALID", "certificate_rejected"],
+    ["ERR_TLS_CERT_ALTNAME_INVALID", "server_identity_rejected"],
     ["ECONNRESET", "connection_closed"],
     ["ETIMEDOUT", "network_failed"],
     ["ER_ACCESS_DENIED_ERROR", "login_or_database_failed"],
     ["PRIVATE_SECRET_FAILURE", "failed"]
   ] as const) {
     const result = await inspectMySqlTransport(fixture.value, database, {
-      connectTls: async () => { throw Object.assign(new Error("private host"), { code }); }
+      connectTls: async () => { throw Object.assign(new Error("private host"), { code }); },
+      connectIdentityTls: async () => tlsConnection("TLS_AES_256_GCM_SHA384")
     });
     assert.equal(result.verifiedTlsConnection, expected);
     assert.equal(JSON.stringify(result).includes("private"), false);
   }
+});
+
+test("distinguishes CA validation from server-identity validation", async () => {
+  const fixture = pool({ cipher: "" });
+  const result = await inspectMySqlTransport(fixture.value, database, {
+    connectTls: async () => tlsConnection("TLS_AES_256_GCM_SHA384"),
+    connectIdentityTls: async () => {
+      throw Object.assign(new Error("private certificate name"), { code: "ERR_TLS_CERT_ALTNAME_INVALID" });
+    }
+  });
+  assert.equal(result.verifiedTlsConnection, "connected");
+  assert.equal(result.verifiedTlsIdentityConnection, "server_identity_rejected");
+  assert.equal(JSON.stringify(result).includes("private"), false);
 });

@@ -10,7 +10,8 @@ test("MySQL setup offers explicit new-device setup without Preview ceremony", ()
   const html = matrixSetupDocument({ state: "prepared", storeBackend: "mysql", mysqlTransport: {
     nodeDatabaseReachable: true, nodeSessionEncrypted: false, nodeExtraCaConfigured: false,
     nodeAdditionalSystemCaActive: false, serverTlsSupport: "disabled", secureTransportRequired: false,
-    verifiedTlsConnection: "server_not_supported"
+    verifiedTlsConnection: "server_not_supported",
+    verifiedTlsIdentityConnection: "server_identity_rejected"
   } }, "synthetic-token");
   assert.match(html, /Підключити наявний пристрій через MySQL/u);
   assert.match(html, /Перевірити програми Matrix/u);
