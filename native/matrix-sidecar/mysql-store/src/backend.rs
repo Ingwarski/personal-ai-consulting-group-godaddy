@@ -21,6 +21,34 @@ const PAGE_SIZE: i64 = 128;
 const PREFIX_BYTES: usize = 16;
 const OPERATION_TIMEOUT: Duration = Duration::from_secs(15);
 
+fn classify_connection_error(error: &sqlx::Error) -> &'static str {
+    match error {
+        sqlx::Error::Tls(_) => "mysql_tls_failed",
+        sqlx::Error::Database(_) => "mysql_login_or_database_failed",
+        sqlx::Error::Configuration(_) | sqlx::Error::InvalidArgument(_) => {
+            "mysql_client_configuration_failed"
+        }
+        sqlx::Error::Protocol(_) => "mysql_protocol_failed",
+        sqlx::Error::Io(error) => match error.kind() {
+            std::io::ErrorKind::NotFound
+            | std::io::ErrorKind::AddrNotAvailable
+            | std::io::ErrorKind::InvalidInput => "mysql_address_failed",
+            std::io::ErrorKind::ConnectionRefused
+            | std::io::ErrorKind::HostUnreachable
+            | std::io::ErrorKind::NetworkUnreachable
+            | std::io::ErrorKind::NotConnected => "mysql_connection_refused",
+            std::io::ErrorKind::ConnectionReset
+            | std::io::ErrorKind::ConnectionAborted
+            | std::io::ErrorKind::UnexpectedEof
+            | std::io::ErrorKind::BrokenPipe => "mysql_connection_closed",
+            std::io::ErrorKind::PermissionDenied => "mysql_socket_denied",
+            std::io::ErrorKind::TimedOut => "mysql_connection_timeout",
+            _ => "mysql_io_failed",
+        },
+        _ => "mysql_connection_failed",
+    }
+}
+
 fn pool_options(max_connections: u32) -> MySqlPoolOptions {
     MySqlPoolOptions::new()
         .max_connections(max_connections)
@@ -68,11 +96,7 @@ impl DatabaseConfig {
         )
         .await
         .map_err(|_| "mysql_connection_timeout")?
-        .map_err(|error| match error {
-            sqlx::Error::Tls(_) => "mysql_tls_failed",
-            sqlx::Error::Database(_) => "mysql_login_or_database_failed",
-            _ => "mysql_connection_failed",
-        })?;
+        .map_err(|error| classify_connection_error(&error))?;
         let result = tokio::time::timeout(
             Duration::from_secs(10),
             sqlx::query("SET SESSION innodb_lock_wait_timeout=5, max_execution_time=10000")
@@ -132,6 +156,35 @@ impl DatabaseConfig {
             .connect_with(options)
             .await
             .map_err(Into::into)
+    }
+}
+
+#[cfg(test)]
+mod connection_error_tests {
+    use super::classify_connection_error;
+    use std::io::{Error, ErrorKind};
+
+    #[test]
+    fn classifies_transport_failures_without_exposing_error_text() {
+        for (kind, code) in [
+            (ErrorKind::AddrNotAvailable, "mysql_address_failed"),
+            (ErrorKind::ConnectionRefused, "mysql_connection_refused"),
+            (ErrorKind::ConnectionReset, "mysql_connection_closed"),
+            (ErrorKind::PermissionDenied, "mysql_socket_denied"),
+            (ErrorKind::TimedOut, "mysql_connection_timeout"),
+            (ErrorKind::Other, "mysql_io_failed"),
+        ] {
+            let error = sqlx::Error::Io(Error::new(kind, "secret host and database detail"));
+            assert_eq!(classify_connection_error(&error), code);
+        }
+        assert_eq!(
+            classify_connection_error(&sqlx::Error::Protocol("private protocol bytes".into())),
+            "mysql_protocol_failed"
+        );
+        assert_eq!(
+            classify_connection_error(&sqlx::Error::Configuration("private config".into())),
+            "mysql_client_configuration_failed"
+        );
     }
 }
 

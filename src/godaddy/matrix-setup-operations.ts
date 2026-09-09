@@ -22,7 +22,9 @@ const nativeSetupErrors = new Set(["configuration_invalid", "input_unavailable",
   "policy_not_ready", "self_verification_required", "setup_expired", "stale_comparison", "store_locked",
   "store_or_device_quarantined", "too_many_devices", "transport_or_store_unavailable", "transport_unavailable",
   "verification_already_active", "verification_peer_changed", "mysql_connection_timeout", "mysql_tls_failed",
-  "mysql_login_or_database_failed", "mysql_connection_failed", "mysql_session_timeout", "mysql_session_configuration_failed"]);
+  "mysql_login_or_database_failed", "mysql_client_configuration_failed", "mysql_address_failed", "mysql_connection_refused",
+  "mysql_connection_closed", "mysql_socket_denied", "mysql_io_failed", "mysql_protocol_failed", "mysql_connection_failed",
+  "mysql_session_timeout", "mysql_session_configuration_failed"]);
 const isolationErrors = new Set(["matrix_http_isolation_failed", "matrix_http_isolation_cleanup_failed"]);
 const terminalProcessErrors = new Set(["matrix_setup_unavailable", "matrix_setup_process_failed", "matrix_setup_protocol_error",
   "matrix_setup_timeout", "matrix_setup_expired", "matrix_setup_needs_resume", "matrix_setup_closed", "setup_expired"]);

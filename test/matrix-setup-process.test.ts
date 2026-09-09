@@ -77,6 +77,8 @@ test("setup transport requires handshake, sends exact explicit commands, and doe
 test("startup failure preserves only known safe native codes", async () => {
   for (const code of ["configuration_invalid", "store_locked", "store_or_device_quarantined", "transport_or_store_unavailable",
     "mysql_connection_timeout", "mysql_tls_failed", "mysql_login_or_database_failed", "mysql_connection_failed",
+    "mysql_client_configuration_failed", "mysql_address_failed", "mysql_connection_refused", "mysql_connection_closed",
+    "mysql_socket_denied", "mysql_io_failed", "mysql_protocol_failed",
     "mysql_session_timeout", "mysql_session_configuration_failed"]) {
     const fixture = childFixture();
     fixture.frames({ version: 1, type: "setup_failed", error: code });
