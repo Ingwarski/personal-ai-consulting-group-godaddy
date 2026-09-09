@@ -634,6 +634,12 @@ async fn write_json<W: AsyncWrite + Unpin>(
 pub async fn run(arguments: Vec<String>) -> Result<(), &'static str> {
     let (root, fresh) = parse_options(&arguments)?;
     let config = Config::from_env(fresh, &root).map_err(|_| "configuration_invalid")?;
+    if config.mysql {
+        personal_consultant_matrix_mysql_store::DatabaseConfig::from_env()
+            .map_err(|_| "configuration_invalid")?
+            .probe()
+            .await?;
+    }
     let store = store::open_for_setup(&config)
         .await
         .map_err(|error| match error {

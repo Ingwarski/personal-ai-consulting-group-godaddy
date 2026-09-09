@@ -121,7 +121,9 @@ export function spawnMatrixSetupProcess(input: Readonly<{
         // its static public vocabulary, never arbitrary child output.
         if (exact(value, ["version", "type", "error"]) && value.type === "setup_failed"
           && typeof value.error === "string" && ["configuration_invalid", "store_locked",
-            "store_or_device_quarantined", "transport_or_store_unavailable"].includes(value.error)) {
+            "store_or_device_quarantined", "transport_or_store_unavailable", "mysql_connection_timeout",
+            "mysql_tls_failed", "mysql_login_or_database_failed", "mysql_connection_failed",
+            "mysql_session_timeout", "mysql_session_configuration_failed"].includes(value.error)) {
           failureCode = value.error;
           fail(); return;
         }

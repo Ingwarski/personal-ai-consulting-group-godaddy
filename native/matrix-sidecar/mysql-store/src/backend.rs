@@ -48,6 +48,43 @@ pub struct DatabaseConfig {
 }
 
 impl DatabaseConfig {
+    /// Setup-only, read-only probe. Never returns server text or credentials.
+    pub async fn probe(&self) -> Result<(), &'static str> {
+        use sqlx::Connection;
+        let mut options = MySqlConnectOptions::new()
+            .host(&self.host)
+            .port(self.port)
+            .database(&self.database)
+            .username(&self.username)
+            .password(&self.password)
+            .ssl_mode(MySqlSslMode::VerifyIdentity)
+            .disable_statement_logging();
+        if let Some(path) = &self.ca_file {
+            options = options.ssl_ca(path);
+        }
+        let mut connection = tokio::time::timeout(
+            Duration::from_secs(10),
+            sqlx::MySqlConnection::connect_with(&options),
+        )
+        .await
+        .map_err(|_| "mysql_connection_timeout")?
+        .map_err(|error| match error {
+            sqlx::Error::Tls(_) => "mysql_tls_failed",
+            sqlx::Error::Database(_) => "mysql_login_or_database_failed",
+            _ => "mysql_connection_failed",
+        })?;
+        let result = tokio::time::timeout(
+            Duration::from_secs(10),
+            sqlx::query("SET SESSION innodb_lock_wait_timeout=5, max_execution_time=10000")
+                .execute(&mut connection),
+        )
+        .await
+        .map_err(|_| "mysql_session_timeout")?
+        .map_err(|_| "mysql_session_configuration_failed");
+        let _ = connection.close().await;
+        result.map(|_| ())
+    }
+
     pub fn from_env() -> Result<Self, StoreError> {
         let required = |name| {
             std::env::var(name)
