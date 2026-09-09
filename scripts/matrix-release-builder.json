@@ -18,7 +18,7 @@
     },
     {
       "name": "perl",
-      "version": "5.42.0-r0",
+      "version": "5.42.2-r0",
       "licenseExpression": "Artistic-1.0-Perl OR GPL-1.0-or-later"
     }
   ],
