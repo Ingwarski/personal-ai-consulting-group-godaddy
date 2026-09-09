@@ -52,6 +52,22 @@ if (image.Id !== builder.imageConfigDigest || image.Os !== "linux" || image.Arch
   throw new Error("Pulled release image identity/platform does not match the approved immutable builder.");
 }
 
+// SQLx's compatibility TLS backend is statically linked from vendored OpenSSL.
+// Prepare one run-local image from the digest-pinned Rust base with only the
+// exact build tools OpenSSL requires, then run both clean builds offline in the
+// same immutable image identity.
+const releaseImageTag = `matrix-native-tls-builder:${run.commit.slice(0, 12)}-${run.runId}-${run.runAttempt}`;
+const releaseDockerfile = join(scratch, "Dockerfile.native-tls");
+const buildPackages = builder.nativeTlsBuildPackages.map(({ name, version }) => `${name}=${version}`);
+const releaseDockerfileBytes = `FROM ${builder.image}\nRUN apk add --no-cache ${buildPackages.join(" ")}\n`;
+writeFileSync(releaseDockerfile, releaseDockerfileBytes, { mode: 0o400, flag: "wx" });
+execute("docker", ["build", "--platform", builder.platform, "--pull=false", "--network=bridge", "--no-cache",
+  "--tag", releaseImageTag, "--file", releaseDockerfile, scratch]);
+const releaseImage = JSON.parse(execute("docker", ["image", "inspect", releaseImageTag], true))[0];
+if (!/^sha256:[a-f0-9]{64}$/.test(releaseImage.Id) || releaseImage.Os !== "linux" || releaseImage.Architecture !== "amd64") {
+  throw new Error("Prepared native TLS release image has the wrong identity/platform.");
+}
+
 function container(phase, buildDirectory) {
   execute("docker", [
     "run", "--rm", "--platform", builder.platform, "--pull", "never",
@@ -70,7 +86,7 @@ function container(phase, buildDirectory) {
     "--env", "CFLAGS=-I/headers/usr/include", "--env", "CXXFLAGS=-I/headers/usr/include",
     "--env", `SOURCE_DATE_EPOCH=${sourceEpoch}`, "--env", "TZ=UTC", "--env", "LC_ALL=C",
     "--env", "RUSTFLAGS=-C target-feature=+crt-static --remap-path-prefix=/source=/workspace/native/matrix-sidecar --remap-path-prefix=/build=/workspace/build --remap-path-prefix=/cache=/workspace/cargo",
-    builder.image, "/bin/sh", "/release-build.sh", phase
+    releaseImage.Id, "/bin/sh", "/release-build.sh", phase
   ]);
 }
 container("fetch", builds[0]);
@@ -91,7 +107,10 @@ assertUnchanged();
 
 const metadata = JSON.parse(readFileSync(join(builds[0], "cargo-metadata.json"), "utf8"));
 const { sbom, licenses } = createDependencyEvidence(metadata, builder);
-licenses.buildSystemInputs = [{ name: "linux-headers", version: "6.16.12-r0", ...builder.systemHeaders }];
+licenses.buildSystemInputs = [
+  { name: "linux-headers", version: "6.16.12-r0", ...builder.systemHeaders },
+  ...builder.nativeTlsBuildPackages
+];
 const sourceInputs = git("ls-files", "-z", "--", ...matrixReleaseSourceMounts.map(({ source }) => source), ".github/workflows/matrix-sidecar-release.yml", "scripts/matrix-release-builder.json", "scripts/matrix-release-container.sh", "scripts/matrix-release-package.mjs", "scripts/build-matrix-release.mjs", "test/matrix-release-package.test.mjs")
   .split("\0").filter(Boolean).sort().map((path) => ({ path, sha256: sha256(readFileSync(join(root, path))) }));
 const completedAt = new Date().toISOString();
@@ -99,7 +118,12 @@ const provenance = {
   schemaVersion: 1,
   kind: "matrix-production-build-provenance",
   source: { ...run, nativeTree: git("rev-parse", "HEAD:native/matrix-sidecar"), inputs: sourceInputs },
-  builder: { ...builder, observedImageConfigDigest: image.Id },
+  builder: {
+    ...builder,
+    observedImageConfigDigest: image.Id,
+    preparedImageConfigDigest: releaseImage.Id,
+    nativeTlsDockerfileSha256: sha256(releaseDockerfileBytes)
+  },
   build: {
     startedAt, completedAt, sourceDateEpoch: sourceEpoch, command: "cargo build --release --locked --frozen --target x86_64-unknown-linux-musl",
     networkDuringCompilation: "none", cleanBuildCount: 2, binaryByteEquality: "passed",
@@ -138,7 +162,9 @@ const manifest = {
   schemaVersion: 1, kind: "matrix-production-release", sourceCommit: run.commit,
   sidecarVersion: builder.sidecarVersion, protocolVersion: builder.protocolVersion,
   builder: { image: builder.image, imageConfigDigest: builder.imageConfigDigest, platform: builder.platform,
-    rustToolchain: builder.rustToolchain, target: builder.target, systemHeaders: builder.systemHeaders },
+    rustToolchain: builder.rustToolchain, target: builder.target, systemHeaders: builder.systemHeaders,
+    nativeTlsBuildPackages: builder.nativeTlsBuildPackages, preparedImageConfigDigest: releaseImage.Id,
+    nativeTlsDockerfileSha256: sha256(releaseDockerfileBytes) },
   artifacts: [...artifacts].sort((a, b) => a.path.localeCompare(b.path, "en"))
 };
 emit("release-manifest.json", manifest);

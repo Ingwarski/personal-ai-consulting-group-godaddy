@@ -55,7 +55,8 @@ test("release builder pins the platform manifest and exact toolchain", () => {
   for (const changed of [
     { image: "rust:1.93.0-alpine3.23" }, { imageConfigDigest: "sha256:latest" },
     { target: "x86_64-unknown-linux-gnu" }, { rustToolchain: "stable" },
-    { platform: "linux/arm64" }, { protocolVersion: 2 }, { setupBinaryName: "other" }
+    { platform: "linux/arm64" }, { protocolVersion: 2 }, { setupBinaryName: "other" },
+    { nativeTlsBuildPackages: [{ name: "make", version: "latest", licenseExpression: "unknown" }] }
   ]) assert.throws(() => validateBuilder({ ...builder, ...changed }));
 });
 
@@ -150,9 +151,13 @@ test("release workflow remains separate from non-deployable verification and can
   assert.doesNotMatch(release, /secrets\.|contents: write|packages: write|deployments: write/);
   const build = readFileSync(new URL("../scripts/build-matrix-release.mjs", import.meta.url), "utf8");
   assert.match(build, /phase === "fetch" \? "bridge" : "none"/);
+  assert.match(build, /apk add --no-cache/);
+  assert.match(build, /releaseImage\.Id/);
+  assert.match(build, /nativeTlsBuildPackages: builder\.nativeTlsBuildPackages/);
+  assert.match(build, /nativeTlsDockerfileSha256: sha256\(releaseDockerfileBytes\)/);
   assert.match(build, /container\("build", builds\[0\]\)/);
   assert.match(build, /container\("build", builds\[1\]\)/);
-  assert.doesNotMatch(build, /apt-get|apk add|rustup toolchain install/);
+  assert.doesNotMatch(build, /apt-get|rustup toolchain install/);
 });
 
 test("the actual shared Rust test includes resolve inside read-only provenance-bound release mounts", () => {

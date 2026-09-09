@@ -10,15 +10,27 @@
   "setupBinaryName": "personal-consultant-matrix-setup",
   "sidecarVersion": "0.1.0",
   "protocolVersion": 1,
+  "nativeTlsBuildPackages": [
+    {
+      "name": "make",
+      "version": "4.4.1-r3",
+      "licenseExpression": "GPL-3.0-or-later"
+    },
+    {
+      "name": "perl",
+      "version": "5.42.0-r0",
+      "licenseExpression": "Artistic-1.0-Perl OR GPL-1.0-or-later"
+    }
+  ],
   "systemHeaders": {
     "url": "https://dl-cdn.alpinelinux.org/alpine/v3.23/main/x86_64/linux-headers-6.16.12-r0.apk",
     "sha256": "fc83eea0ee6c438b6ca5fd5ee67a64728a6f23580584b19c522fcbff550af80b",
     "sizeBytes": 1706807,
     "regularHeaderFiles": 987,
     "licenseExpression": "GPL-2.0-only",
-    "purpose": "Pinned read-only Linux UAPI header overlay required by locked aws-lc-sys. No package manager runs and no image or compiler is modified."
+    "purpose": "Pinned read-only Linux UAPI header overlay required by locked aws-lc-sys. No package manager handles this archive and no compiler is modified."
   },
   "upstreamDockerfile": "https://github.com/rust-lang/docker-rust/blob/37d9b1d21b5332c4ca4013bb492e18f68971594c/stable/alpine3.23/Dockerfile",
   "registryVerifiedOn": "2026-09-06",
-  "registryVerification": "The amd64 manifest bytes were SHA-256 checked against the digest; its config pins Rust 1.93.0, gcc and musl-dev. Build steps may not install OS packages or toolchains. The separately hash-pinned UAPI header input is acquired before compilation and mounted read-only."
+  "registryVerification": "The amd64 manifest bytes were SHA-256 checked against the digest; its config pins Rust 1.93.0, gcc and musl-dev. A run-local derived image may add only the exact nativeTlsBuildPackages declared above; its image ID and Dockerfile hash are recorded. Compilation runs offline in that same prepared image. The separately hash-pinned UAPI header input is acquired before compilation and mounted read-only."
 }

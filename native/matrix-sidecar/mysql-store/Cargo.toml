@@ -29,7 +29,11 @@ thiserror = "2.0.18"
 zeroize = "1.8.2"
 tokio = { version = "1.49.0", features = ["sync", "time", "macros", "rt-multi-thread"] }
 uuid = { version = "1.20.0", features = ["v4"] }
-sqlx = { version = "=0.8.6", default-features = false, features = ["runtime-tokio", "tls-rustls-ring", "mysql"] }
+sqlx = { version = "=0.8.6", default-features = false, features = ["runtime-tokio", "tls-native-tls", "mysql"] }
+# SQLx's native TLS backend uses this same dependency. Enabling `vendored`
+# keeps OpenSSL inside the static musl release instead of depending on the
+# GoDaddy host's shared-library versions.
+native-tls = { version = "=0.2.18", features = ["vendored"] }
 
 [dev-dependencies]
 matrix-sdk-test = "=0.18.0"

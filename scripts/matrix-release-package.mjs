@@ -22,6 +22,10 @@ export function validateBuilder(builder) {
     || builder.setupBinaryName !== "personal-consultant-matrix-setup"
     || builder.sidecarVersion !== "0.1.0"
     || builder.protocolVersion !== 1
+    || JSON.stringify(builder.nativeTlsBuildPackages) !== JSON.stringify([
+      { name: "make", version: "4.4.1-r3", licenseExpression: "GPL-3.0-or-later" },
+      { name: "perl", version: "5.42.0-r0", licenseExpression: "Artistic-1.0-Perl OR GPL-1.0-or-later" }
+    ])
     || builder.systemHeaders?.url !== "https://dl-cdn.alpinelinux.org/alpine/v3.23/main/x86_64/linux-headers-6.16.12-r0.apk"
     || !/^[a-f0-9]{64}$/.test(builder.systemHeaders.sha256)
     || builder.systemHeaders.sizeBytes !== 1706807

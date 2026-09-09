@@ -12,8 +12,12 @@ The new selector is `MATRIX_STORE_BACKEND=mysql`. Existing `DB_HOST`, `DB_PORT`,
 `DB_NAME`, `DB_USER`, `DB_PASSWORD` and `MATRIX_STORE_PASSPHRASE` are reused.
 `DB_SSL_CA_FILE` is optional when the database certificate chains to an already
 trusted CA. TLS verifies hostname and certificate; there is no plaintext or
-accept-invalid-cert fallback. Actual GoDaddy TLS compatibility must be verified
-before cutover. No additional owner secret is introduced.
+accept-invalid-cert fallback. SQLx uses its `native-tls` backend here because
+GoDaddy's Published MySQL endpoint completes the same verified connection from
+Node/OpenSSL but rejects SQLx's Rustls handshake. The Linux release statically
+links vendored OpenSSL, so it does not depend on a GoDaddy host-library version.
+Actual GoDaddy acceptance must still be verified after deploying the exact
+release. No additional owner secret is introduced.
 
 `MATRIX_STORE_DIR` and `MATRIX_MEDIA_SPOOL_DIR` no longer need owner-managed
 persistent folders in MySQL mode. Node creates a private per-boot temporary
