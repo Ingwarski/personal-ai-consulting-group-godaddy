@@ -32,6 +32,7 @@ import { inspectMatrixSchema, createMissingMatrixTables } from "./matrix-additiv
 import { inspectStateKeyCollation, repairStateKeyCollation } from "./matrix-state-collation.ts";
 import { safeConsultationFailure } from "./consultation-diagnostics.ts";
 import { inspectMatrixStoragePaths, type MatrixStoragePaths } from "./matrix-storage-diagnostics.ts";
+import { inspectMySqlTransport, type MySqlTransportDiagnostics } from "./mysql-transport-diagnostics.ts";
 
 type SettingsAsset = "settings.css" | "settings.js";
 type CatalogFailureCode = Extract<RuntimeCapabilityCatalogResult, { ok: false }>["code"];
@@ -63,6 +64,7 @@ export type GoDaddySettingsRuntime = Readonly<{
 
 export type GoDaddySettingsRuntimeDependencies = Readonly<{
   inspectMatrixStorage?: () => Promise<MatrixStoragePaths>;
+  inspectMySqlTransport?: (pool: MySqlPool) => Promise<MySqlTransportDiagnostics>;
   matrixDiagnostics?: () => Readonly<{
     configured: boolean; ready: boolean; reason: string;
     consultationWorking: boolean; consultationBlocked: boolean;
@@ -572,6 +574,8 @@ export function createGoDaddySettingsRuntime(
         const storagePaths = status?.configured === true && status.ready === false
           && status.reason === "store_binding_missing"
           ? await (dependencies.inspectMatrixStorage ?? inspectMatrixStoragePaths)() : undefined;
+        const mysqlTransport = environment.MATRIX_STORE_BACKEND === "mysql"
+          ? await (dependencies.inspectMySqlTransport ?? inspectMySqlTransport)(pool) : undefined;
         return json({
           setupMode: environment.MATRIX_SETUP_MODE === "provision" ? "provision"
             : environment.MATRIX_SETUP_MODE === "disabled" || environment.MATRIX_SETUP_MODE === undefined ? "disabled" : "invalid",
@@ -579,6 +583,7 @@ export function createGoDaddySettingsRuntime(
           reason: status !== undefined && MATRIX_STATUS_REASONS.has(status.reason) ? status.reason : "unavailable",
           consultationWorking: status?.consultationWorking === true,
           consultationBlocked: status?.consultationBlocked !== false,
+          ...(mysqlTransport === undefined ? {} : { mysqlTransport }),
           ...(storagePaths === undefined ? {} : { storagePaths }),
           ...(safeConsultationFailure(status?.consultationFailure) === undefined ? {} : { consultationFailure: safeConsultationFailure(status?.consultationFailure) })
         });
