@@ -125,6 +125,14 @@ export function createGodaddyServer({
         return json(response, 400, { status: "error", code: "invalid_request_target" });
       }
       const url = new URL(request.url ?? "/", "http://localhost");
+      // Deployment/runtime files are never HTTP resources. Do not rely on dot
+      // prefixes or a later Settings/static handler to keep them private.
+      let decodedPath;
+      try { decodedPath = decodeURIComponent(url.pathname); }
+      catch { return json(response, 400, { status: "error", code: "invalid_request_target" }); }
+      if (/^\/(?:runtime|runtime-release|\.runtime|\.runtime-release)(?:\/|$)/u.test(decodedPath)) {
+        return json(response, 404, { status: "not_found" });
+      }
       if (request.method === "GET" && url.pathname === "/healthz") {
         // This endpoint is deliberately liveness-only. Configuration, MySQL,
         // Matrix and provider readiness are separate gates and must never make

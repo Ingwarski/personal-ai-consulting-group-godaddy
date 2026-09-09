@@ -11,7 +11,7 @@ import type { MatrixBrowserChallenge } from "../src/godaddy/matrix-browser-isola
 
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const inspection = (provisioning: MatrixReleaseInspection["storeProvisioning"] = "empty"): MatrixReleaseInspection => ({
-  sidecarPath: `${root}/.runtime/matrix/personal-consultant-matrix-sidecar`, setupPath: `${root}/.runtime/matrix/personal-consultant-matrix-setup`,
+  sidecarPath: `${root}/runtime/matrix/personal-consultant-matrix-sidecar`, setupPath: `${root}/runtime/matrix/personal-consultant-matrix-setup`,
   sidecarSha256: "a".repeat(64), setupSha256: "b".repeat(64),
   storeDir: `${root}/public/assets/.personal-consultant-matrix-v1/crypto-store`,
   mediaSpoolDir: `${root}/public/assets/.personal-consultant-matrix-v1/media-spool`,

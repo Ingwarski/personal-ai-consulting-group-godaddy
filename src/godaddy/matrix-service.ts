@@ -3,6 +3,8 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { checkLegacyMatrixStoreAuthority, readMySqlMatrixStoreBinding } from "./matrix-mysql-binding.ts";
+import { prepareMySqlMatrixRelease } from "./matrix-release-install.ts";
+import { MATRIX_RELEASE_PIN } from "./matrix-release-pin.ts";
 
 import { formatConfirmedMessageForMatrix, isSecretLikeMatrixContent } from "../matrix/bridge.ts";
 import type { RoomBinding } from "../matrix/room-invariant.ts";
@@ -121,6 +123,7 @@ export type MatrixServiceClock = Readonly<{
 export type GoDaddyMatrixServiceDependencies = Readonly<{
   parseConfiguration?: typeof parseGoDaddyMatrixConfiguration;
   readStoreBinding?: typeof readExistingMatrixStoreBinding;
+  prepareMySqlRelease?: typeof prepareMySqlMatrixRelease;
   createSupervisor?: (options: MatrixSidecarSupervisorOptions) => SupervisorPort;
   createRuntime?: (input: Parameters<typeof createMatrixRuntime>[0]) => MatrixRuntime;
   probeDatabase?: (pool: MySqlPool) => Promise<GoDaddyMatrixDatabaseProbe>;
@@ -912,6 +915,15 @@ export function createGoDaddyMatrixService(
           return;
         }
         try {
+          if (configuration.storeBackend === "mysql") {
+            const release = await (dependencies.prepareMySqlRelease ?? prepareMySqlMatrixRelease)(configuration.applicationRoot, MATRIX_RELEASE_PIN);
+            if (!active(generation)) return;
+            if (!release.ok || release.value.sidecarPath !== configuration.binaryPath
+              || release.value.sidecarSha256 !== configuration.expectedSha256) {
+              setTerminal("sidecar_not_ready");
+              return;
+            }
+          }
           if (configuration.storeBackend === "mysql" && transientSpool === undefined) {
             transientSpool = await mkdtemp(join(tmpdir(), "pc-matrix-"));
           }

@@ -15,6 +15,25 @@ import {
 
 const supportedEnvironment = Object.freeze({ RUNTIME_MODE: "production" });
 
+test("runtime directories never reach HTTP handlers, including encoded names and authenticated requests", async t => {
+  let calls = 0;
+  await withServer(t, { environment: supportedEnvironment, nodeVersion: "v22.16.0",
+    settingsRuntime: { handle: async () => { calls++; return new Response("must not serve runtime files"); } }
+  }, async origin => {
+    for (const path of ["/runtime", "/runtime/matrix/personal-consultant-matrix-sidecar", "/runtime-release/matrix/release-manifest.json",
+      "/%72untime/matrix/program", "/runtime%2fmatrix/program", "/.runtime/matrix/program", "/.runtime-release/matrix/program"]) {
+      for (const method of ["GET", "HEAD", "POST"]) {
+        const response = await fetch(origin + path, { method, headers: { cookie: "owner=synthetic" } });
+        assert.equal(response.status, 404, `${method} ${path}`);
+        assert.equal(response.headers.get("cache-control"), "no-store");
+      }
+    }
+    assert.equal(calls, 0);
+    assert.equal((await fetch(origin + "/settings")).status, 200);
+    assert.equal(calls, 1);
+  });
+});
+
 test("Published Matrix wake route bypasses Settings only via its dedicated wake handler", async (t) => {
   let settingsCalls = 0;
   let wakes = 0;

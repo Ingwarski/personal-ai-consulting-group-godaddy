@@ -73,7 +73,7 @@ class ReleaseFailure extends Error {
 
 // Fixed labels only: never expose arbitrary on-disk names, paths or contents.
 function unsafePath(path: string, stat: Stats, uid: number): ReleaseFailure {
-  const labels = [".runtime", "matrix", ".runtime-release", "public", "assets", ".personal-consultant-matrix-v1",
+  const labels = ["runtime", "matrix", "runtime-release", "public", "assets", ".personal-consultant-matrix-v1",
     "crypto-store", "media-spool", "device-binding.json", "provisioning-intent.json", "sidecar.lock", ...SDK_MEDIA_FILES,
     "matrix-sdk-state.sqlite3", "matrix-sdk-state.sqlite3-wal", "matrix-sdk-state.sqlite3-shm",
     "matrix-sdk-crypto.sqlite3", "matrix-sdk-crypto.sqlite3-wal", "matrix-sdk-crypto.sqlite3-shm",
@@ -102,9 +102,9 @@ function layout(applicationRoot: string): Layout {
   const persistentRoot = join(applicationRoot, "public", "assets", ".personal-consultant-matrix-v1");
   return {
     applicationRoot,
-    bundleDir: join(applicationRoot, ".runtime-release", "matrix"),
-    runtimeRoot: join(applicationRoot, ".runtime"),
-    runtimeDir: join(applicationRoot, ".runtime", "matrix"),
+    bundleDir: join(applicationRoot, "runtime-release", "matrix"),
+    runtimeRoot: join(applicationRoot, "runtime"),
+    runtimeDir: join(applicationRoot, "runtime", "matrix"),
     persistentRoot,
     storeDir: join(persistentRoot, "crypto-store"),
     mediaSpoolDir: join(persistentRoot, "media-spool")
@@ -618,8 +618,8 @@ export async function verifyMatrixHttpIsolation(
     const urls = HTTP_ORIGINS.flatMap((origin) => [
       ...["/assets", "/public/assets"].flatMap((prefix) => probeNames.map((name, index) =>
         `${origin}${prefix}/.personal-consultant-matrix-v1/${index === 0 ? "crypto-store" : "media-spool"}/${name}`)),
-      `${origin}/.runtime/matrix/${SIDECAR}`,
-      `${origin}/.runtime/matrix/${SETUP}`
+      `${origin}/runtime/matrix/${SIDECAR}`,
+      `${origin}/runtime/matrix/${SETUP}`
     ]);
     const statuses = new Map<string, number>();
     stage("anonymous_http");

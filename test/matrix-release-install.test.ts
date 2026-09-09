@@ -19,7 +19,7 @@ const evidence = Buffer.from("{\"test\":\"production-release-provenance-fixture\
 async function fixture(context: { after: (action: () => Promise<void>) => void }) {
   const root = await realpath(await mkdtemp(join(tmpdir(), "matrix-release-install-")));
   context.after(async () => { await rm(root, { recursive: true, force: true }); });
-  const bundle = join(root, ".runtime-release", "matrix");
+  const bundle = join(root, "runtime-release", "matrix");
   await mkdir(bundle, { recursive: true, mode: 0o700 });
   await mkdir(join(root, "public", "assets"), { recursive: true, mode: 0o700 });
   for (const [name, bytes] of [[SIDECAR, sidecar], [SETUP, setup], ["provenance.json", evidence]] as const) {
@@ -46,7 +46,7 @@ async function fixture(context: { after: (action: () => Promise<void>) => void }
   return { root, bundle, manifest, save, expected,
     store: join(root, "public", "assets", ".personal-consultant-matrix-v1", "crypto-store"),
     spool: join(root, "public", "assets", ".personal-consultant-matrix-v1", "media-spool"),
-    runtime: join(root, ".runtime", "matrix") };
+    runtime: join(root, "runtime", "matrix") };
 }
 
 test("explicit preparation installs both exact binaries privately and creates empty dedicated dirs", async (t) => {
@@ -71,7 +71,7 @@ test("explicit preparation installs both exact binaries privately and creates em
 test("inspection is read-only and does not turn missing installation into a provisioning action", async (t) => {
   const f = await fixture(t);
   assert.deepEqual(await inspectMatrixRelease(f.root, f.expected), { ok: false, code: "matrix_release_unavailable" });
-  assert.equal((await readdir(f.root)).includes(".runtime"), false);
+  assert.equal((await readdir(f.root)).includes("runtime"), false);
   assert.deepEqual(await readdir(join(f.root, "public", "assets")), []);
 });
 
@@ -79,7 +79,7 @@ test("MySQL release needs no public tree and attests only immutable executables"
   const f = await fixture(t);
   await rm(join(f.root, "public"), { recursive: true });
   assert.deepEqual(await inspectMySqlMatrixRelease(f.root, f.expected), { ok: false, code: "matrix_release_unavailable" });
-  assert.deepEqual((await readdir(f.root)).sort(), [".runtime-release"]);
+  assert.deepEqual((await readdir(f.root)).sort(), ["runtime-release"]);
   const result = await prepareMySqlMatrixRelease(f.root, f.expected);
   assert.equal(result.ok, true);
   if (!result.ok) return;
@@ -88,8 +88,31 @@ test("MySQL release needs no public tree and attests only immutable executables"
   assert.deepEqual(await readFile(result.value.sidecarPath), sidecar);
   assert.deepEqual(await readFile(result.value.setupPath), setup);
   assert.equal((await lstat(result.value.setupPath)).mode & 0o777, 0o500);
-  assert.deepEqual((await readdir(f.root)).sort(), [".runtime", ".runtime-release"]);
+  assert.deepEqual((await readdir(f.root)).sort(), ["runtime", "runtime-release"]);
   assert.deepEqual(await inspectMySqlMatrixRelease(f.root, f.expected), result);
+});
+
+test("MySQL runtime reconstructs after disposable runtime loss without hidden directories or public state", async t => {
+  const f = await fixture(t);
+  await rm(join(f.root, "public"), { recursive: true });
+  const first = await prepareMySqlMatrixRelease(f.root, f.expected);
+  assert.equal(first.ok, true);
+  for (let restart = 0; restart < 2; restart++) {
+    await rm(join(f.root, "runtime"), { recursive: true });
+    assert.deepEqual(await inspectMySqlMatrixRelease(f.root, f.expected), { ok: false, code: "matrix_release_unavailable" });
+    assert.deepEqual(await prepareMySqlMatrixRelease(f.root, f.expected), first);
+    assert.deepEqual(await inspectMySqlMatrixRelease(f.root, f.expected), first);
+    assert.deepEqual((await readdir(f.root)).sort(), ["runtime", "runtime-release"]);
+    assert.equal((await lstat(f.runtime)).mode & 0o777, 0o700);
+    assert.equal((await lstat(join(f.runtime, SIDECAR))).mode & 0o777, 0o500);
+  }
+});
+
+test("MySQL installer does not fall back to a hidden release bundle", async t => {
+  const f = await fixture(t);
+  await rename(join(f.root, "runtime-release"), join(f.root, ".runtime-release"));
+  assert.deepEqual(await prepareMySqlMatrixRelease(f.root, f.expected), { ok: false, code: "matrix_release_unavailable" });
+  assert.equal((await readdir(f.root)).includes("runtime"), false);
 });
 
 test("MySQL release leaves even unsafe legacy public state untouched and retains immutable binary checks", async t => {
@@ -200,7 +223,7 @@ test("both source binaries and evidence are verified before any dedicated runtim
       const f = await fixture(child);
       await writeFile(join(f.bundle, name), "altered");
       assert.deepEqual(await prepareMatrixRelease(f.root, f.expected), { ok: false, code: "matrix_release_checksum_mismatch" });
-      assert.equal((await readdir(f.root)).includes(".runtime"), false);
+      assert.equal((await readdir(f.root)).includes("runtime"), false);
       assert.deepEqual(await readdir(join(f.root, "public", "assets")), []);
     });
   }
@@ -265,7 +288,7 @@ test("rejects symlink and ancestor path escapes without traversing their targets
       if (location === "source") {
         await rm(join(f.bundle, SIDECAR));
         await symlink(join(outside, "keep"), join(f.bundle, SIDECAR));
-      } else if (location === "runtime") await symlink(outside, join(f.root, ".runtime"));
+      } else if (location === "runtime") await symlink(outside, join(f.root, "runtime"));
       else {
         await mkdir(join(f.root, "public", "assets", ".personal-consultant-matrix-v1"), { mode: 0o700 });
         await symlink(outside, f.store);

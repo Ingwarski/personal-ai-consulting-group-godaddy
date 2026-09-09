@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { access } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { access, lstat } from "node:fs/promises";
+import { basename, dirname, resolve } from "node:path";
 
 import {
   createGoDaddyCodexAppServer,
@@ -20,6 +20,27 @@ class MemoryStorage implements RuntimeCredentialStorage {
 }
 
 const rootSecret = "a-random-root-secret-used-only-in-this-test-and-never-in-production";
+
+test("Codex restores supplied vault bytes into a new non-hidden private home on each launch", async () => {
+  const launch = createSubprocessCodexAppServerLauncher({ executable: resolve("test/fixtures/ignores-term-codex.mjs"), environment: { PATH: dirname(process.execPath) + ":/usr/bin:/bin" } });
+  const auth = new TextEncoder().encode('{"synthetic":"not-a-real-token"}');
+  const homes = new Set<string>();
+  for (let restart = 0; restart < 2; restart++) {
+    const connection = await launch(auth);
+    try {
+      const received = new Promise<{ codexHome: string }>(resolveMessage => connection.channel.onLine(line => resolveMessage(JSON.parse(line).result)));
+      await connection.channel.send(JSON.stringify({ id: 1 }));
+      const { codexHome } = await received;
+      assert.equal(basename(codexHome), "codex-home");
+      assert.equal((await lstat(codexHome)).mode & 0o777, 0o700);
+      assert.equal((await lstat(resolve(codexHome, "auth.json"))).mode & 0o777, 0o600);
+      assert.deepEqual(new Uint8Array((await connection.readAuthState())!), auth);
+      homes.add(codexHome);
+    } finally { await connection.close(); }
+  }
+  assert.equal(homes.size, 2);
+  for (const home of homes) await assert.rejects(access(home));
+});
 
 test("an unresponsive owned app-server is killed and its private directory removed before close resolves", async () => {
   const launch = createSubprocessCodexAppServerLauncher({ executable: resolve("test/fixtures/ignores-term-codex.mjs"), environment: { PATH: dirname(process.execPath) + ":/usr/bin:/bin" } });

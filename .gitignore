@@ -9,3 +9,5 @@ coverage/
 dist/
 native/matrix-sidecar/target/
 public/assets/.personal-consultant-matrix-v1/
+/runtime/
+/.runtime/

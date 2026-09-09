@@ -209,7 +209,7 @@ def create_device(bot_id, password, connection_factory=None):
 
 def dotenv_group(args, sidecar_sha256, device):
     values = {
-        "MATRIX_SIDECAR_PATH": f"/app/.runtime/matrix/{SIDECAR}",
+        "MATRIX_SIDECAR_PATH": f"/app/runtime/matrix/{SIDECAR}",
         "MATRIX_SIDECAR_SHA256": sidecar_sha256,
         "MATRIX_PROTOCOL_VERSION": "1",
         "MATRIX_STORE_DIR": "/app/public/assets/.personal-consultant-matrix-v1/crypto-store",

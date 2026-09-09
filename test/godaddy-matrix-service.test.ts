@@ -507,6 +507,7 @@ type HarnessOptions = Readonly<{
   readBinding?: () => Promise<import("../src/godaddy/matrix-store-binding.ts").MatrixStoreBindingResult>;
   registryQuery?: MySqlPool["execute"];
   storeBackend?: "sqlite" | "mysql";
+  releaseInvalid?: boolean;
   publicationSynchronizer?: MatrixPublicationSynchronizer;
 }>;
 
@@ -519,6 +520,7 @@ function harness(options: HarnessOptions = {}) {
   const supervisorOptions: MatrixSidecarSupervisorOptions[] = [];
   const runtimeInputs: Array<Parameters<NonNullable<Parameters<typeof createGoDaddyMatrixService>[1]["createRuntime"]>>[0]> = [];
   let bindingReads = 0;
+  let releasePreparations = 0;
   const pool = Object.freeze({
     execute: options.registryQuery ?? (async (): Promise<readonly [unknown, unknown]> => [[], []]),
     getConnection: async () => { throw new Error("unused"); }
@@ -543,6 +545,13 @@ function harness(options: HarnessOptions = {}) {
   }, {
     parseConfiguration: () => ({ ok: true, value: { ...configuration, ...(options.storeBackend === undefined ? {} : { storeBackend: options.storeBackend }) } }),
     probeDatabase: options.probe ?? (async () => readyProbe),
+    prepareMySqlRelease: async () => {
+      releasePreparations++;
+      return options.releaseInvalid ? { ok: false, code: "matrix_release_checksum_mismatch" } : {
+        ok: true, value: { storeBackend: "mysql", sidecarPath: configuration.binaryPath,
+          sidecarSha256: configuration.expectedSha256, setupPath: "/synthetic/setup", setupSha256: "a".repeat(64) }
+      };
+    },
     readStoreBinding: async () => {
       bindingReads += 1;
       return options.readBinding?.() ?? {
@@ -574,7 +583,8 @@ function harness(options: HarnessOptions = {}) {
     receipts,
     supervisorOptions,
     runtimeInputs,
-    bindingReads: () => bindingReads
+    bindingReads: () => bindingReads,
+    releasePreparations: () => releasePreparations
   };
 }
 
@@ -608,6 +618,7 @@ test("MySQL mode uses activated DB identity without touching the legacy binding 
   const h = harness({ storeBackend: "mysql", registryQuery: async () => [[{ fingerprint: "ab".repeat(32) }], []] });
   await h.service.start();
   assert.equal(h.bindingReads(), 0);
+  assert.equal(h.releasePreparations(), 1);
   assert.equal(h.supervisorOptions.length, 1);
   assert.equal(h.supervisorOptions[0]?.expectedIdentity?.storeFingerprint, "ab".repeat(32));
   assert.notEqual(h.supervisorOptions[0]?.spawnEnvironment?.MATRIX_MEDIA_SPOOL_DIR, configuration.mediaSpoolDir);
@@ -619,7 +630,17 @@ test("MySQL mode with no activation does not fall back to the valid old SQLite b
   await h.service.start();
   assert.equal(h.service.getReadiness().reason, "store_binding_invalid");
   assert.equal(h.bindingReads(), 0);
+  assert.equal(h.releasePreparations(), 0);
   assert.equal(h.supervisorOptions.length, 0);
+  await h.service.stop();
+});
+
+test("MySQL automatic runtime reconstruction rejects an invalid release before spawning", async () => {
+  const h = harness({ storeBackend: "mysql", releaseInvalid: true, registryQuery: async () => [[{ fingerprint: "ab".repeat(32) }], []] });
+  await h.service.start();
+  assert.equal(h.releasePreparations(), 1);
+  assert.equal(h.supervisorOptions.length, 0);
+  assert.equal(h.service.getReadiness().reason, "sidecar_not_ready");
   await h.service.stop();
 });
 

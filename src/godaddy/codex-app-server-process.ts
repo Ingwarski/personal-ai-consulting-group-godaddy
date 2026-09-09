@@ -92,7 +92,7 @@ export function createSubprocessCodexAppServerLauncher(input: Readonly<{
   const executable = executablePath(input.executable);
   return async (authState) => {
     const directory = await mkdtemp(join(tmpdir(), "personal-consultant-codex-"));
-    const codexHome = join(directory, ".codex");
+    const codexHome = join(directory, "codex-home");
     const authPath = join(codexHome, "auth.json");
     await mkdir(codexHome, { mode: 0o700 });
     if (authState !== undefined && authState.byteLength <= MAX_AUTH_STATE_BYTES) {

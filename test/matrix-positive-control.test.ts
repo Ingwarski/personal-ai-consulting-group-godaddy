@@ -32,7 +32,7 @@ test("actual HTTP server serves only the fresh harmless public control, not arbi
   assert.equal(response.headers.get("cache-control"), "no-store");
   assert.match(response.headers.get("content-type")!, /text\/plain/);
   for (const privatePath of ["/assets/.personal-consultant-matrix-v1/crypto-store/device-binding.json",
-    "/public" + path, "/assets/other.txt", "/.runtime/matrix/personal-consultant-matrix-setup"]) {
+    "/public" + path, "/assets/other.txt", "/runtime/matrix/personal-consultant-matrix-setup"]) {
     assert.equal((await fetch(origin + privatePath)).status, 404);
   }
   assert.equal(await readFile(f.target, "utf8"), marker);
