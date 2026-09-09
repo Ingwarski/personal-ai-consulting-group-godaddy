@@ -64,7 +64,7 @@ export type GoDaddySettingsRuntime = Readonly<{
 
 export type GoDaddySettingsRuntimeDependencies = Readonly<{
   inspectMatrixStorage?: () => Promise<MatrixStoragePaths>;
-  inspectMySqlTransport?: (pool: MySqlPool) => Promise<MySqlTransportDiagnostics>;
+  inspectMySqlTransport?: (pool: MySqlPool, configuration: GodaddyDatabaseConfiguration) => Promise<MySqlTransportDiagnostics>;
   matrixDiagnostics?: () => Readonly<{
     configured: boolean; ready: boolean; reason: string;
     consultationWorking: boolean; consultationBlocked: boolean;
@@ -575,7 +575,7 @@ export function createGoDaddySettingsRuntime(
           && status.reason === "store_binding_missing"
           ? await (dependencies.inspectMatrixStorage ?? inspectMatrixStoragePaths)() : undefined;
         const mysqlTransport = environment.MATRIX_STORE_BACKEND === "mysql"
-          ? await (dependencies.inspectMySqlTransport ?? inspectMySqlTransport)(pool) : undefined;
+          ? await (dependencies.inspectMySqlTransport ?? inspectMySqlTransport)(pool, database.value) : undefined;
         return json({
           setupMode: environment.MATRIX_SETUP_MODE === "provision" ? "provision"
             : environment.MATRIX_SETUP_MODE === "disabled" || environment.MATRIX_SETUP_MODE === undefined ? "disabled" : "invalid",
@@ -593,7 +593,7 @@ export function createGoDaddySettingsRuntime(
         const render = async (view = matrixSetup.view()): Promise<Response> => {
           const token = await owner.issueActionToken(cookieHeader, MATRIX_SETUP_ACTION);
           const mysqlTransport = environment.MATRIX_STORE_BACKEND === "mysql"
-            ? await (dependencies.inspectMySqlTransport ?? inspectMySqlTransport)(pool) : undefined;
+          ? await (dependencies.inspectMySqlTransport ?? inspectMySqlTransport)(pool, database.value) : undefined;
           const renderedView = mysqlTransport === undefined ? view : { ...view, mysqlTransport };
           return token === undefined ? plain("Access denied.", 403) : html(matrixSetupDocument(renderedView, token), 200);
         };

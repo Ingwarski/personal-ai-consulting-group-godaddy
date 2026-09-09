@@ -1,10 +1,16 @@
-import type { MySqlPool } from "./mysql-storage.ts";
+import { createConnection } from "mysql2/promise";
+
+import type { GodaddyDatabaseConfiguration, MySqlPool } from "./mysql-storage.ts";
+
+export type VerifiedTlsResult = "connected" | "server_not_supported" | "certificate_rejected"
+  | "login_or_database_failed" | "network_failed" | "connection_closed" | "failed" | "not_checked";
 
 export type MySqlTransportDiagnostics = Readonly<{
   nodeDatabaseReachable: boolean;
   nodeSessionEncrypted: boolean | "unknown";
   serverTlsSupport: "available" | "disabled" | "unknown";
   secureTransportRequired: boolean | "unknown";
+  verifiedTlsConnection: VerifiedTlsResult;
 }>;
 
 type VariableRow = Readonly<{ Variable_name?: unknown; Value?: unknown }>;
@@ -23,7 +29,62 @@ const variableMap = (value: unknown): ReadonlyMap<string, string> => new Map(row
  * mysql2 pool already used by Published. It returns normalized capability
  * facts only: no host, account, schema, certificate, query text or error.
  */
-export async function inspectMySqlTransport(pool: MySqlPool): Promise<MySqlTransportDiagnostics> {
+type ProbeConnection = Readonly<{
+  execute: (statement: string, values: readonly unknown[]) => Promise<readonly [unknown, unknown]>;
+  end: () => Promise<void>;
+  destroy?: () => void;
+}>;
+
+type TlsConnector = (configuration: GodaddyDatabaseConfiguration) => Promise<ProbeConnection>;
+
+const defaultTlsConnector: TlsConnector = async (configuration) => createConnection({
+  host: configuration.host,
+  port: configuration.port,
+  database: configuration.database,
+  user: configuration.user,
+  password: configuration.password,
+  connectTimeout: 10_000,
+  ssl: { rejectUnauthorized: true }
+}) as unknown as ProbeConnection;
+
+function classifyTlsFailure(error: unknown): VerifiedTlsResult {
+  const code = typeof error === "object" && error !== null && "code" in error && typeof error.code === "string"
+    ? error.code : "";
+  if (code === "HANDSHAKE_NO_SSL_SUPPORT") return "server_not_supported";
+  if (["HANDSHAKE_SSL_ERROR", "ERR_TLS_CERT_ALTNAME_INVALID", "DEPTH_ZERO_SELF_SIGNED_CERT",
+    "SELF_SIGNED_CERT_IN_CHAIN", "UNABLE_TO_GET_ISSUER_CERT_LOCALLY", "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+    "CERT_HAS_EXPIRED"].includes(code)) return "certificate_rejected";
+  if (["ER_ACCESS_DENIED_ERROR", "ER_BAD_DB_ERROR"].includes(code)) return "login_or_database_failed";
+  if (["ENOTFOUND", "EAI_AGAIN", "ETIMEDOUT", "ECONNREFUSED", "EHOSTUNREACH", "ENETUNREACH"].includes(code)) {
+    return "network_failed";
+  }
+  if (["ECONNRESET", "EPIPE", "PROTOCOL_CONNECTION_LOST"].includes(code)) return "connection_closed";
+  return "failed";
+}
+
+async function probeVerifiedTls(
+  configuration: GodaddyDatabaseConfiguration,
+  connect: TlsConnector
+): Promise<VerifiedTlsResult> {
+  let connection: ProbeConnection | undefined;
+  try {
+    connection = await connect(configuration);
+    const [result] = await connection.execute("SHOW SESSION STATUS LIKE 'Ssl_cipher'", []);
+    const cipher = variableMap(result).get("ssl_cipher");
+    return cipher !== undefined && cipher.length > 0 ? "connected" : "failed";
+  } catch (error) {
+    connection?.destroy?.();
+    return classifyTlsFailure(error);
+  } finally {
+    await connection?.end().catch(() => undefined);
+  }
+}
+
+export async function inspectMySqlTransport(
+  pool: MySqlPool,
+  configuration?: GodaddyDatabaseConfiguration,
+  dependencies: Readonly<{ connectTls?: TlsConnector }> = {}
+): Promise<MySqlTransportDiagnostics> {
   let connection: Awaited<ReturnType<MySqlPool["getConnection"]>> | undefined;
   try {
     connection = await pool.getConnection();
@@ -40,7 +101,9 @@ export async function inspectMySqlTransport(pool: MySqlPool): Promise<MySqlTrans
       nodeDatabaseReachable: true,
       nodeSessionEncrypted: cipher === undefined ? "unknown" : cipher.length > 0,
       serverTlsSupport: tls === "YES" ? "available" : tls === "DISABLED" || tls === "NO" ? "disabled" : "unknown",
-      secureTransportRequired: secure === "ON" ? true : secure === "OFF" ? false : "unknown"
+      secureTransportRequired: secure === "ON" ? true : secure === "OFF" ? false : "unknown",
+      verifiedTlsConnection: configuration === undefined ? "not_checked"
+        : await probeVerifiedTls(configuration, dependencies.connectTls ?? defaultTlsConnector)
     });
   } catch {
     connection?.destroy?.();
@@ -48,7 +111,8 @@ export async function inspectMySqlTransport(pool: MySqlPool): Promise<MySqlTrans
       nodeDatabaseReachable: false,
       nodeSessionEncrypted: "unknown",
       serverTlsSupport: "unknown",
-      secureTransportRequired: "unknown"
+      secureTransportRequired: "unknown",
+      verifiedTlsConnection: "not_checked"
     });
   } finally {
     connection?.release();

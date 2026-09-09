@@ -27,13 +27,20 @@ function pool(input: Readonly<{ cipher?: string; haveSsl?: string; required?: st
   };
 }
 
+const database = { host: "private.invalid", port: 3306, database: "app", user: "app", password: "secret" };
+const tlsConnection = (cipher: string): Readonly<{ execute: (statement: string, values: readonly unknown[]) => Promise<readonly [unknown, unknown]>; end: () => Promise<void> }> => ({
+  async execute() { return [[{ Variable_name: "Ssl_cipher", Value: cipher }], []]; },
+  async end() {}
+});
+
 test("reports normalized MySQL transport facts without connection details", async () => {
   const fixture = pool({ cipher: "TLS_AES_256_GCM_SHA384", haveSsl: "YES", required: "ON" });
   assert.deepEqual(await inspectMySqlTransport(fixture.value), {
     nodeDatabaseReachable: true,
     nodeSessionEncrypted: true,
     serverTlsSupport: "available",
-    secureTransportRequired: true
+    secureTransportRequired: true,
+    verifiedTlsConnection: "not_checked"
   });
   assert.equal(fixture.released(), true);
   assert.equal(fixture.destroyed(), false);
@@ -45,7 +52,8 @@ test("reports the provider's unencrypted MySQL path and disabled TLS", async () 
     nodeDatabaseReachable: true,
     nodeSessionEncrypted: false,
     serverTlsSupport: "disabled",
-    secureTransportRequired: false
+    secureTransportRequired: false,
+    verifiedTlsConnection: "not_checked"
   });
 });
 
@@ -55,8 +63,30 @@ test("fails closed without exposing a database error", async () => {
     nodeDatabaseReachable: false,
     nodeSessionEncrypted: "unknown",
     serverTlsSupport: "unknown",
-    secureTransportRequired: "unknown"
+    secureTransportRequired: "unknown",
+    verifiedTlsConnection: "not_checked"
   });
   assert.equal(fixture.released(), true);
   assert.equal(fixture.destroyed(), true);
+});
+
+test("probes a separate certificate-verified TLS session and reports only a stable result", async () => {
+  const fixture = pool({ cipher: "" });
+  assert.equal((await inspectMySqlTransport(fixture.value, database, {
+    connectTls: async () => tlsConnection("TLS_AES_256_GCM_SHA384")
+  })).verifiedTlsConnection, "connected");
+  for (const [code, expected] of [
+    ["HANDSHAKE_NO_SSL_SUPPORT", "server_not_supported"],
+    ["ERR_TLS_CERT_ALTNAME_INVALID", "certificate_rejected"],
+    ["ECONNRESET", "connection_closed"],
+    ["ETIMEDOUT", "network_failed"],
+    ["ER_ACCESS_DENIED_ERROR", "login_or_database_failed"],
+    ["PRIVATE_SECRET_FAILURE", "failed"]
+  ] as const) {
+    const result = await inspectMySqlTransport(fixture.value, database, {
+      connectTls: async () => { throw Object.assign(new Error("private host"), { code }); }
+    });
+    assert.equal(result.verifiedTlsConnection, expected);
+    assert.equal(JSON.stringify(result).includes("private"), false);
+  }
 });
