@@ -271,10 +271,13 @@ impl MatrixClient {
                 {
                     break;
                 }
-                if sync_failure_requires_fatal(synced) {
-                    let _ = sender.send(MatrixOutput::Fatal).await;
-                    break;
-                }
+                // A Matrix /sync request can fail transiently while the
+                // encrypted store and durable journal remain healthy. Keep
+                // this exact process/store writer alive, publish blocked
+                // readiness above, and retry after the bounded delay below.
+                // Restarting here only adds lock contention and postpones the
+                // durable outbox; journal failures are still fatal in the
+                // explicit branches above.
                 if !ready {
                     tokio::time::sleep(Duration::from_secs(2)).await;
                 }
@@ -1402,10 +1405,6 @@ fn readiness_transition(previous: bool, current: bool) -> Option<Readiness> {
     })
 }
 
-fn sync_failure_requires_fatal(synced: bool) -> bool {
-    !synced
-}
-
 async fn with_ingress_deadline<T>(
     duration: Duration,
     future: impl std::future::Future<Output = Result<T, TransportError>>,
@@ -1628,15 +1627,13 @@ mod tests {
     }
 
     #[test]
-    fn sync_failure_blocks_and_verified_recovery_readies() {
+    fn sync_failure_blocks_until_in_process_recovery_readies() {
         assert_eq!(readiness_transition(true, false), Some(Readiness::Blocked));
         assert_eq!(readiness_transition(false, true), Some(Readiness::Ready));
         assert_eq!(readiness_transition(true, true), None);
         assert!(sync_result_allows_readiness(true, false));
         assert!(!sync_result_allows_readiness(true, true));
         assert!(!sync_result_allows_readiness(false, false));
-        assert!(sync_failure_requires_fatal(false));
-        assert!(!sync_failure_requires_fatal(true));
     }
 
     #[test]
