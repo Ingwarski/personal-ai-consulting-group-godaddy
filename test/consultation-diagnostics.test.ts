@@ -37,3 +37,12 @@ test("provider execution results expose only closed result and detail codes", ()
   }), { stage: "execution", code: "unknown" });
   assert.equal(safeConsultationFailure({ stage: "execution", code: "prepare_failed", detail: "PRIVATE" }), undefined);
 });
+
+test("registrar revision diagnostics are specific and contain no raw error text", () => {
+  assert.deepEqual(classifyConsultationFailure("input_revision", new Error("Registrar revision session is missing.")), {
+    stage: "input_revision", code: "registrar_revision_missing"
+  });
+  assert.deepEqual(classifyConsultationFailure("input_revision", new Error("Registrar consensus task is missing.")), {
+    stage: "input_revision", code: "registrar_consensus_missing"
+  });
+});

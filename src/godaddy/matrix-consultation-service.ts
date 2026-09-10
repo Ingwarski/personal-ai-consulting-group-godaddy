@@ -377,6 +377,7 @@ export function createMatrixConsultationService(input: Readonly<{
         const isControl = parseOwnerCommand(text).kind !== "ordinary_message" || parseConsultationControl(text) !== undefined;
         const confirmedReplySession = relation === undefined || isControl ? undefined : await input.resolveReplySession?.(relation);
         pending = planInput(prior, lease, confirmedReplySession);
+        diagnosticStage = "input_resume_probe";
         if (parseConsultationControl(text) === "continue" && lease.workIntent.media.length === 0 && pending.revisionGeneration !== undefined
           && pending.job !== null && pending.job.documents.length === 0 && input.executor.resumeFinalization !== undefined
           && await input.executor.canResumeFinalization?.(pending.revisionGeneration)) {
@@ -386,14 +387,17 @@ export function createMatrixConsultationService(input: Readonly<{
           pending.job.resumeFinalization = true;
           pending.notice = "Продовжую лише фінальний підсумок. Підтверджені позиції, окрему критику й доопрацювання збережено; повторних викликів спеціалістів або Критика не буде.";
         }
+        diagnosticStage = "input_pending_store";
         await mutate(state => { state.pending = pending; });
       }
       if (pending.cancelExecution) controller?.abort();
       if (pending.cancelGeneration !== undefined) {
+        diagnosticStage = "input_cancel";
         const stopped = await input.registrar.stopSession(pending.cancelGeneration);
         if (!stopped.ok && !["session_not_active", "obsolete_generation"].includes(stopped.code)) throw new Error("Session cancellation failed.");
       }
       if (pending.revisionGeneration !== undefined) {
+        diagnosticStage = "input_revision";
         const revision = await input.registrar.reviseSession({ generation: pending.revisionGeneration, revisionId: "mx-revision-" + pending.hash });
         if (!revision.ok) {
           if (pending.job !== null && await hasDurableConsensusOutcome(pending.job)) {
@@ -417,8 +421,10 @@ export function createMatrixConsultationService(input: Readonly<{
           pending.job.generation = revision.value.generation;
           pending.job.sessionId = revision.value.sessionId;
         }
+        diagnosticStage = "input_pending_store";
         await mutate(state => { state.pending = pending; });
       }
+      diagnosticStage = "input_media";
       for (const hash of pending.erase) await input.media?.erase(hash);
       diagnosticStage = "input_notice";
       if (!pending.skipNotice && pending.renderedNotice === undefined) {
@@ -431,7 +437,7 @@ export function createMatrixConsultationService(input: Readonly<{
       }
       const committed = pending.skipNotice ? { generation: pending.job!.generation! }
         : await notice("mx-notice-" + pending.hash, pending.renderedNotice!, pending.eventId, pending.noticeLanguage, true);
-      diagnosticStage = "input_state";
+      diagnosticStage = "input_commit";
       handled = { hash: pending.hash, sessionId: pending.job?.sessionId ?? "control-" + committed.generation, generation: committed.generation };
       const result = handled;
       await mutate(state => {

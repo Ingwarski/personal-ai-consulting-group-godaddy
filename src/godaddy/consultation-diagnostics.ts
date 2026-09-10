@@ -1,4 +1,9 @@
-const STAGES = new Set(["media_maintenance", "readiness", "leadership", "recovery", "ingress_lease", "input_state", "input_notice", "input_ack", "worker_state", "execution"]);
+const STAGES = new Set([
+  "media_maintenance", "readiness", "leadership", "recovery", "ingress_lease",
+  "input_state", "input_resume_probe", "input_pending_store", "input_cancel",
+  "input_revision", "input_media", "input_notice", "input_commit", "input_ack",
+  "worker_state", "execution"
+]);
 const READINESS_CODES: Readonly<Record<string, string>> = Object.freeze({
   database_unavailable: "matrix_database_unavailable", schema_unavailable: "matrix_schema_unavailable",
   outbox_blocked: "matrix_outbox_blocked", ingress_blocked: "matrix_ingress_blocked",
@@ -11,7 +16,8 @@ const CODES = new Set([
   "invalid_worker_state", "notice_rejected", "unknown", ...Object.values(READINESS_CODES),
   "runtime_unavailable", "session_unavailable", "session_busy", "invalid_task", "catalog_unavailable", "prepare_failed",
   "speed_policy_unresolved", "consilium_route_failed", "head_synthesis_failed", "finalization_failed",
-  "publication_lock_unavailable", "publication_lock_release_failed", "publication_state_invalid", "publication_unresolved"
+  "publication_lock_unavailable", "publication_lock_release_failed", "publication_state_invalid", "publication_unresolved",
+  "input_order_changed", "session_cancellation_failed", "registrar_revision_missing", "registrar_consensus_missing"
 ]);
 const DETAILS = new Set([
   "invalid_roles", "preflight_failed", "codex_thread_start_failed", "cancelled",
@@ -48,6 +54,10 @@ export function classifyConsultationFailure(stage: string, error: unknown): Cons
     : typeof e.code === "string" && CODES.has(e.code) ? e.code
     : typeof e.code === "string" && Object.hasOwn(codes, e.code) ? codes[e.code]!
     : e.message === "Consultation state is invalid." ? "invalid_worker_state"
+    : e.message === "Consultation input order changed." ? "input_order_changed"
+    : e.message === "Session cancellation failed." ? "session_cancellation_failed"
+    : e.message === "Registrar revision session is missing." ? "registrar_revision_missing"
+    : e.message === "Registrar consensus task is missing." ? "registrar_consensus_missing"
     : e.message === "Consultation notice was not committed." ? "notice_rejected" : "unknown";
   return { stage: STAGES.has(stage) ? stage : "execution", code };
 }
