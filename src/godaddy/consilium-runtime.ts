@@ -28,6 +28,7 @@ export type GoDaddyConsiliumRequest = Readonly<{
 export type GoDaddyConsiliumResult = PreparedConsiliumExecutionResult | Readonly<{
   ok: false;
   code: "runtime_unavailable" | "session_unavailable" | "session_busy" | "invalid_task" | "catalog_unavailable" | "prepare_failed" | "speed_policy_unresolved";
+  detail?: string;
 }>;
 export type GoDaddyConsultationPlanRequest = Pick<GoDaddyConsiliumRequest, "sessionGeneration" | "task" | "signal" | "language" | "taskId"> & Readonly<{ images?: readonly CodexTurnImage[] }>;
 export type GoDaddyConsultationPlanResult = ConsultationIntakeResult | Exclude<GoDaddyConsiliumResult, { ok: true }>;
@@ -83,7 +84,7 @@ export function createGoDaddyConsiliumRuntime(input: Readonly<{
     });
     const prepared = await launcher.prepare({ snapshot, capabilityReceipt: receipt,
       head: request.head, specialists: request.specialists, critic: request.critic, signal });
-    if (!prepared.ok) return { ok: false, code: "prepare_failed" };
+    if (!prepared.ok) return { ok: false, code: "prepare_failed", detail: prepared.preflightCode ?? prepared.threadStartCode ?? prepared.code };
     return executePreparedConsilium({ prepared: prepared.value, sessionGeneration: session.generation, task: request.task, signal,
       ...(adaptive ? { taskId: request.taskId!, language: request.language!, assignments: request.assignments!,
         ...(request.taskDigest === undefined ? {} : { taskDigest: request.taskDigest }) } : {}) });

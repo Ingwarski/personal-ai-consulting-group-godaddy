@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { classifyConsultationFailure, safeConsultationFailure } from "../src/godaddy/consultation-diagnostics.ts";
+import { classifyConsultationFailure, classifyConsultationResult, safeConsultationFailure } from "../src/godaddy/consultation-diagnostics.ts";
 
 test("consultation diagnostics classify known errors without exposing SQL, message, values or credentials", () => {
   const value = classifyConsultationFailure("ingress_lease", { code: "ER_TRUNCATED_WRONG_VALUE", sql: "private SQL", message: "private timestamp and owner data" });
@@ -20,4 +20,17 @@ test("readiness failures retain only allowlisted cause, never raw context", () =
   assert.deepEqual(classifyConsultationFailure("readiness", { code: "not_ready", readinessReason: "private details" }), { stage: "readiness", code: "unknown" });
   assert.deepEqual(classifyConsultationFailure("readiness", { code: "not_ready", readinessReason: "__proto__" }), { stage: "readiness", code: "unknown" });
   assert.deepEqual(classifyConsultationFailure("media_maintenance", { code: "ER_LOCK_WAIT_TIMEOUT" }), { stage: "media_maintenance", code: "mysql_lock_timeout" });
+});
+
+test("provider execution results expose only closed result and detail codes", () => {
+  assert.deepEqual(classifyConsultationResult("execution", {
+    ok: false, code: "prepare_failed", detail: "codex_effort_unavailable", raw: "PRIVATE"
+  }), { stage: "execution", code: "prepare_failed", detail: "codex_effort_unavailable" });
+  assert.deepEqual(classifyConsultationResult("execution", {
+    ok: false, code: "consilium_route_failed", cause: "codex_turn_failed", raw: "PRIVATE"
+  }), { stage: "execution", code: "consilium_route_failed", detail: "codex_turn_failed" });
+  assert.deepEqual(classifyConsultationResult("private", {
+    ok: false, code: "PRIVATE", detail: "PRIVATE"
+  }), { stage: "execution", code: "unknown" });
+  assert.equal(safeConsultationFailure({ stage: "execution", code: "prepare_failed", detail: "PRIVATE" }), undefined);
 });

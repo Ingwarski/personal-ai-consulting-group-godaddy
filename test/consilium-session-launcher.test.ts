@@ -231,7 +231,11 @@ test("a partial thread-start failure releases already created contexts and owned
   const { registrar, snapshot } = await activeRegistrar(receipt);
   const harness = codexHarness({ failThreadAt: 2 });
   const launcher = new ConsiliumSessionLauncher({ registrar, codex: harness.client, environment: {}, privateSingleOwner: true, now: () => activeNow });
-  assert.deepEqual(await launcher.prepare({ snapshot, capabilityReceipt: receipt, ...roleInput }), { ok: false, code: "codex_thread_start_failed" });
+  assert.deepEqual(await launcher.prepare({ snapshot, capabilityReceipt: receipt, ...roleInput }), {
+    ok: false,
+    code: "codex_thread_start_failed",
+    threadStartCode: "specialist_transport_error"
+  });
   assert.equal(harness.sent.filter((message) => message.method === "thread/unsubscribe").length, 2);
   for (const message of harness.sent.filter((message) => message.method === "thread/start")) {
     await assert.rejects(access((message.params as { cwd: string }).cwd));

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { classifyConsultationFailure, type ConsultationFailure } from "./consultation-diagnostics.ts";
+import { classifyConsultationFailure, classifyConsultationResult, type ConsultationFailure } from "./consultation-diagnostics.ts";
 import { isSecretLikeMatrixContent } from "../matrix/bridge.ts";
 import { parseOwnerCommand, parseConsultationControl } from "../session/owner-commands.ts";
 import { canonicalSessionLanguage, explicitSessionLanguage, initialLanguageHint } from "../consilium/language.ts";
@@ -659,7 +659,11 @@ export function createMatrixConsultationService(input: Readonly<{
           language: planned.language, assignments: planned.assignments,
           head: planned.head, specialists: planned.specialists, critic: planned.critic, signal: abort.signal });
         if (abort.signal.aborted) { if (expired) await fail(NOTICE_CONTINUE, "awaiting_continuation"); return; }
-        if (!result.ok) { await fail("Консультацію не завершено. Критичний або фінальний етап не підтверджено; готову рекомендацію не оголошено. Напишіть «Продовжити» для явної повторної спроби або «Стоп».", "failed"); return; }
+        if (!result.ok) {
+          lastFailure = classifyConsultationResult("execution", result);
+          await fail("Консультацію не завершено. Критичний або фінальний етап не підтверджено; готову рекомендацію не оголошено. Напишіть «Продовжити» для явної повторної спроби або «Стоп».", "failed");
+          return;
+        }
       }
       await withInputBarrier(() => mutate(state => { if (matches(state)) state.job!.status = "completed"; }));
       const finished = (await read()).job;

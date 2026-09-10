@@ -35,6 +35,9 @@ export type SessionLaunchResult =
       ok: false;
       code: "invalid_roles" | "preflight_failed" | "codex_thread_start_failed" | "cancelled";
       preflightCode?: SessionSubscriptionPreflightFailureCode;
+      threadStartCode?: "head_transport_error" | "head_invalid_thread_response" |
+        "specialist_transport_error" | "specialist_invalid_thread_response" |
+        "critic_transport_error" | "critic_invalid_thread_response";
     }>;
 
 export type PreparedConsiliumExecutionResult =
@@ -129,13 +132,13 @@ export class ConsiliumSessionLauncher {
     try {
       if (input.signal?.aborted) return { ok: false, code: "cancelled" };
       const headLease = await this.#codex.startIsolatedThread({ modelId: selectedCodex.runtimeModelId });
-      if (!headLease.ok) return { ok: false, code: "codex_thread_start_failed" };
+      if (!headLease.ok) return { ok: false, code: "codex_thread_start_failed", threadStartCode: `head_${headLease.code}` };
       leases.push(headLease.value);
       const specialistLeases: CodexThreadLease[] = [];
       for (const specialist of input.specialists) {
         if (controller.signal.aborted) return { ok: false, code: "cancelled" };
         const lease = await this.#codex.startIsolatedThread({ modelId: selectedCodex.runtimeModelId });
-        if (!lease.ok) return { ok: false, code: "codex_thread_start_failed" };
+        if (!lease.ok) return { ok: false, code: "codex_thread_start_failed", threadStartCode: `specialist_${lease.code}` };
         specialistLeases.push(lease.value);
         leases.push(lease.value);
       }
@@ -143,7 +146,7 @@ export class ConsiliumSessionLauncher {
       let criticLease: CodexThreadLease | undefined;
       if (selectedCritic.provider === "codex") {
         const lease = await this.#codex.startIsolatedThread({ modelId: criticCodex!.runtimeModelId });
-        if (!lease.ok) return { ok: false, code: "codex_thread_start_failed" };
+        if (!lease.ok) return { ok: false, code: "codex_thread_start_failed", threadStartCode: `critic_${lease.code}` };
         criticLease = lease.value;
         leases.push(lease.value);
       }
