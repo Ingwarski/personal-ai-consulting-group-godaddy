@@ -72,6 +72,9 @@ jobs:
           cargo clippy --locked --all-targets -- -D warnings
           cargo test --workspace --locked --all-targets
 
+      - name: Remove host-target artifacts before the independent musl build
+        run: cargo clean
+
       - name: Fetch the locked graph and build static release binary
         env:
           CC_x86_64_unknown_linux_musl: musl-gcc
