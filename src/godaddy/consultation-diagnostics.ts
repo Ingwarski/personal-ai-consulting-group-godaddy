@@ -10,7 +10,8 @@ const CODES = new Set([
   "mysql_datetime_rejected", "mysql_lock_timeout", "mysql_deadlock", "mysql_data_too_long", "mysql_schema_error", "mysql_duplicate",
   "invalid_worker_state", "notice_rejected", "unknown", ...Object.values(READINESS_CODES),
   "runtime_unavailable", "session_unavailable", "session_busy", "invalid_task", "catalog_unavailable", "prepare_failed",
-  "speed_policy_unresolved", "consilium_route_failed", "head_synthesis_failed", "finalization_failed"
+  "speed_policy_unresolved", "consilium_route_failed", "head_synthesis_failed", "finalization_failed",
+  "publication_lock_unavailable", "publication_lock_release_failed", "publication_state_invalid", "publication_unresolved"
 ]);
 const DETAILS = new Set([
   "invalid_roles", "preflight_failed", "codex_thread_start_failed", "cancelled",
@@ -44,6 +45,7 @@ export function classifyConsultationFailure(stage: string, error: unknown): Cons
   };
   const code = e.code === "not_ready" && typeof e.readinessReason === "string" && Object.hasOwn(READINESS_CODES, e.readinessReason)
     ? READINESS_CODES[e.readinessReason]!
+    : typeof e.code === "string" && CODES.has(e.code) ? e.code
     : typeof e.code === "string" && Object.hasOwn(codes, e.code) ? codes[e.code]!
     : e.message === "Consultation state is invalid." ? "invalid_worker_state"
     : e.message === "Consultation notice was not committed." ? "notice_rejected" : "unknown";

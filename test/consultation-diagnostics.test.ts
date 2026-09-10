@@ -20,6 +20,9 @@ test("readiness failures retain only allowlisted cause, never raw context", () =
   assert.deepEqual(classifyConsultationFailure("readiness", { code: "not_ready", readinessReason: "private details" }), { stage: "readiness", code: "unknown" });
   assert.deepEqual(classifyConsultationFailure("readiness", { code: "not_ready", readinessReason: "__proto__" }), { stage: "readiness", code: "unknown" });
   assert.deepEqual(classifyConsultationFailure("media_maintenance", { code: "ER_LOCK_WAIT_TIMEOUT" }), { stage: "media_maintenance", code: "mysql_lock_timeout" });
+  assert.deepEqual(classifyConsultationFailure("input_state", { code: "publication_unresolved", message: "private" }), {
+    stage: "input_state", code: "publication_unresolved"
+  });
 });
 
 test("provider execution results expose only closed result and detail codes", () => {
