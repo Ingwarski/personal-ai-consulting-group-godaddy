@@ -174,6 +174,26 @@ test("same-process registrar transactions queue before borrowing the bounded poo
   assert.equal(connectionBorrows, 2);
 });
 
+test("registrar storage reads a JSON string scalar without losing its type", async () => {
+  const taskId = "25fb0ff238ed6cb3ea04b94105b6578113c60c1e6a735beee69516a2163d1f4c";
+  const pool = new ScriptedPool({
+    transaction: async (statement) => {
+      if (statement.startsWith("SELECT CAST(state_value AS CHAR CHARACTER SET utf8mb4)")) {
+        return [[{ stateValue: JSON.stringify(taskId) }], []];
+      }
+      throw new Error(`Unexpected SQL: ${statement}`);
+    },
+    direct: async (statement) => {
+      if (statement.startsWith("SELECT CAST(state_value AS CHAR CHARACTER SET utf8mb4)")) {
+        return [[{ stateValue: JSON.stringify(taskId) }], []];
+      }
+      throw new Error(`Unexpected SQL: ${statement}`);
+    }
+  });
+  const storage = new MySqlAtomicRegistrarStorage({ executor: pool, namespace: "registrar-v1" });
+  assert.equal(await storage.get<string>("registrar:consensus-task:9"), taskId);
+});
+
 test("leases only the strict outbox head and preserves its deterministic transaction ID across crash retry", async () => {
   let leaseUpdates = 0;
   const now = new Date("2026-09-04T12:00:00.000Z");

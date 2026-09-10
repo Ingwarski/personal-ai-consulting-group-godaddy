@@ -46,8 +46,11 @@ function registrarTransactionGate(pool: MySqlPool, namespace: string): AsyncSeri
   return gate;
 }
 
-const SELECT_STATE_FOR_UPDATE = `SELECT state_value AS stateValue FROM ${GODADDY_STATE_TABLE} WHERE state_namespace = ? AND state_key = ? LIMIT 1 FOR UPDATE`;
-const SELECT_STATE = `SELECT state_value AS stateValue FROM ${GODADDY_STATE_TABLE} WHERE state_namespace = ? AND state_key = ? LIMIT 1`;
+// mysql2 decodes JSON columns by default. Force canonical JSON text here so a
+// stored string scalar (for example a task ID) retains its quotes and cannot be
+// confused with already-decoded application data.
+const SELECT_STATE_FOR_UPDATE = `SELECT CAST(state_value AS CHAR CHARACTER SET utf8mb4) AS stateValue FROM ${GODADDY_STATE_TABLE} WHERE state_namespace = ? AND state_key = ? LIMIT 1 FOR UPDATE`;
+const SELECT_STATE = `SELECT CAST(state_value AS CHAR CHARACTER SET utf8mb4) AS stateValue FROM ${GODADDY_STATE_TABLE} WHERE state_namespace = ? AND state_key = ? LIMIT 1`;
 const UPSERT_STATE = `INSERT INTO ${GODADDY_STATE_TABLE} (state_namespace, state_key, state_value)
   VALUES (?, ?, CAST(? AS JSON))
   ON DUPLICATE KEY UPDATE state_value = VALUES(state_value), updated_at = UTC_TIMESTAMP(6)`;
