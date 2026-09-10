@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseConsultationIntake, consultationIntakeSchema } from "../src/runtime/consultation-intake.ts";
+import { parseConsultationIntake, consultationIntakeSchema, requiresConsiliumMode } from "../src/runtime/consultation-intake.ts";
 import { CONSULTANT_ROLES, CONSULTATION_SPECIALISTS, assignConsultantColourSlots, PERSONAL_SPECIALIST_SAFETY_PROMPT } from "../src/consilium/consultant-roles.ts";
 import { canonicalSessionLanguage, explicitSessionLanguage, initialLanguageHint, ownerLanguageSource, sessionLanguageInstruction } from "../src/consilium/language.ts";
 
@@ -68,6 +68,17 @@ test("an explicit independent review cannot be downgraded to a direct final answ
   const schema = consultationIntakeSchema(2) as { required: string[]; properties: Record<string, { type: string }> };
   assert.equal(schema.required.includes("independentReviewRequested"), true);
   assert.equal(schema.properties.independentReviewRequested?.type, "boolean");
+});
+
+test("a compound collaboration decision cannot be downgraded to a Head-only answer", () => {
+  const task = "Help me decide whether to accept a monthly collaboration offer with a weekly-hours commitment, course fees, revenue share and ownership terms. Research current prices at https://example.test and propose a counter-offer.";
+  assert.equal(requiresConsiliumMode(task), true);
+  assert.deepEqual(parseConsultationIntake(JSON.stringify({ ...direct, language: "en" }), 2, false, "en", undefined, true),
+    { ok: false, code: "intake_output_invalid" });
+  const reviewed = parseConsultationIntake(JSON.stringify({ ...consilium, language: "en" }), 2, false, "en", undefined, true);
+  assert.equal(reviewed.ok && reviewed.kind === "consilium" && reviewed.critic.agentId === "critic", true);
+  assert.equal(requiresConsiliumMode("Should I raise my workshop price next month?"), false,
+    "one ordinary pricing dimension may still receive a concise direct answer");
 });
 
 test("all20 English roles retain historic IDs and seven personal roles without expanding roster limits", () => {

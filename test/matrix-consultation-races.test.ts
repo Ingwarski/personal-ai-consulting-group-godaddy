@@ -47,7 +47,7 @@ class SerialMemoryStorage extends MemoryRegistrarStorage {
   }
 }
 
-async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort, explicitFixtureLanguage = true) {
+async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort, explicitFixtureLanguage = true, progressIntervalMs?: number) {
   const storage = new SerialMemoryStorage();
   const registrar = new RegistrarDO({ storage: new SerialMemoryStorage(), now: () => activeNow });
   const receipt = createCapabilityReceipt();
@@ -64,6 +64,9 @@ async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort
   let noticeGate: Promise<void> | undefined;
   let noticeEntered = deferred<void>();
   let ready = true;
+  let currentNow = activeNow;
+  let failNextAfterConfirmed = false;
+  let afterConfirmedFailures = 0;
   let leadership = true;
   let planCalls = 0;
   let snapshotCalls = 0;
@@ -78,8 +81,9 @@ async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort
   const replySessions = new Map<string, string>();
   let signal: AbortSignal | undefined;
   const service = createMatrixConsultationService({
-    storage, registrar, bindingHash, now: () => activeNow,
+    storage, registrar, bindingHash, now: () => currentNow,
     ...(executionBudgetMs === undefined ? {} : { executionBudgetMs }),
+    ...(progressIntervalMs === undefined ? {} : { progressIntervalMs }),
     ...(media === undefined ? {} : { media }),
     resolveReplySession: async eventId => replySessions.get(eventId),
     ingress: {
@@ -94,7 +98,10 @@ async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort
       async resumeFinalization(request) { return resumeFinalization(request); }
     },
     async prepareSnapshot() { snapshotCalls += 1; prepareEntered.resolve(); await prepareGate; return snapshot.value; },
-    async afterConfirmed() { if (noticeGate !== undefined) { noticeEntered.resolve(); await noticeGate; } },
+    async afterConfirmed() {
+      if (failNextAfterConfirmed) { failNextAfterConfirmed = false; afterConfirmedFailures++; throw new Error("Synthetic Matrix wake failure."); }
+      if (noticeGate !== undefined) { noticeEntered.resolve(); await noticeGate; }
+    },
     leadership: { async acquire() { return leadership; }, async check() { return leadership; }, async release() {} },
     assertReady() { if (!ready) throw new Error("Room temporarily unavailable."); }
   });
@@ -125,6 +132,9 @@ async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort
     holdNotices(gate: Promise<void>) { noticeGate = gate; noticeEntered = deferred<void>(); return noticeEntered.promise; },
     clearNotices() { noticeGate = undefined; },
     setReady(value: boolean) { ready = value; },
+    advance(milliseconds: number) { currentNow = new Date(currentNow.getTime() + milliseconds); },
+    failNextConfirmationWake() { failNextAfterConfirmed = true; },
+    afterConfirmedFailures: () => afterConfirmedFailures,
     setLeadership(value: boolean) { leadership = value; },
     planCalls: () => planCalls,
     snapshotCalls: () => snapshotCalls,
@@ -336,7 +346,7 @@ test("Stop while snapshot preparation waits cannot leave a new active registrar 
   assert.equal(f.planCalls(), 0);
 });
 
-test("temporary readiness loss leaves an explicit resumable interruption, not a running job without execution", async t => {
+test("temporary Matrix readiness loss does not cancel an active durable provider turn", async t => {
   const f = await fixture();
   t.after(async () => { f.plan.resolve({ ok: false, code: "runtime_unavailable" }); await f.service.stop(); });
   f.enqueue("Допоможіть з робочою задачею.");
@@ -344,15 +354,31 @@ test("temporary readiness loss leaves an explicit resumable interruption, not a 
   await f.planEntered.promise;
   f.setReady(false);
   await f.service.tick();
-  assert.equal(f.planSignal()?.aborted, true);
-  f.plan.resolve({ ok: false, code: "runtime_unavailable" });
-  await waitFor("the interrupted worker to settle", async () => !f.service.status().working);
+  assert.equal(f.planSignal()?.aborted, false);
+  f.plan.resolve({ ok: true, kind: "direct", language: "uk", answer: "Роботу завершено без ручного відновлення." });
+  await waitForJob(f, "completed");
+  const session = await f.registrar.getActiveSession();
+  assert.equal((await f.registrar.getConfirmedMessages(session!.generation)).some(message => message.body.includes("ручного відновлення")), true);
+  assert.equal((await f.registrar.getConfirmedMessages(session!.generation)).some(message => /Продовжити|Continue/u.test(message.body)), false);
   f.setReady(true);
   await f.service.tick();
-  await flush();
   assert.equal(f.service.status().working, false);
-  assert.ok(["interrupted", "failed", "stopped"].includes((await f.state())?.job?.status ?? ""),
-    "readiness loss must persist a terminal/resumable attempt state");
+  assert.equal((await f.state())?.job?.status, "completed");
+  assert.equal(f.planCalls(), 1);
+});
+
+test("a failed optional waiting notice does not cancel the provider turn", async t => {
+  const f = await fixture(undefined, undefined, true, 10);
+  t.after(async () => { f.plan.resolve({ ok: false, code: "runtime_unavailable" }); await f.service.stop(); });
+  f.enqueue("Допоможіть з багатокроковим рішенням.");
+  await f.service.tick();
+  await f.planEntered.promise;
+  f.advance(20);
+  f.failNextConfirmationWake();
+  await waitFor("the optional notice wake failure", async () => f.afterConfirmedFailures() === 1);
+  assert.equal(f.planSignal()?.aborted, false);
+  f.plan.resolve({ ok: true, kind: "direct", language: "uk", answer: "Рішення завершено попри збій службового повідомлення." });
+  await waitForJob(f, "completed");
   assert.equal(f.planCalls(), 1);
 });
 

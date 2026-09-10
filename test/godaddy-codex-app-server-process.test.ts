@@ -56,6 +56,18 @@ test("an unresponsive owned app-server is killed and its private directory remov
   await assert.rejects(access(owned.cwd));
 });
 
+test("a child-side stdin close rejects the write without an unhandled EPIPE", async () => {
+  const launch = createSubprocessCodexAppServerLauncher({ executable: resolve("test/fixtures/closes-stdin-codex.mjs"),
+    environment: { PATH: dirname(process.execPath) + ":/usr/bin:/bin" } });
+  const connection = await launch(undefined);
+  try {
+    await new Promise<void>(resolveReady => connection.channel.onLine(() => resolveReady()));
+    await new Promise<void>(resolveDelay => setTimeout(resolveDelay, 20));
+    await assert.rejects(connection.channel.send(JSON.stringify({ id: 1 })), /Codex app-server is closed|EPIPE|write/iu);
+    assert.equal(connection.isAlive?.(), false);
+  } finally { await connection.close(); }
+});
+
 function launcher(responses: Record<string, unknown>, initialAuthState = new TextEncoder().encode('{"managed":"oauth"}')): Readonly<{
   launch: CodexAppServerLauncher;
   calls: string[];

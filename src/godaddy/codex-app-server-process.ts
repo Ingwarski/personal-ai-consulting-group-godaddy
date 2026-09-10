@@ -115,6 +115,10 @@ export function createSubprocessCodexAppServerLauncher(input: Readonly<{
       closed = true;
       reader.close();
     };
+    // A child may close its read end between the writable check and write().
+    // Node emits EPIPE on the Socket in addition to invoking the write
+    // callback; without a listener that event terminates the whole web app.
+    child.stdin.on("error", markClosed);
     child.once("error", markClosed);
     child.once("exit", markClosed);
     const channel: JsonRpcLineChannel = Object.freeze({

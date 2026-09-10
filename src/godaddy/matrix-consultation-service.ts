@@ -597,7 +597,13 @@ export function createMatrixConsultationService(input: Readonly<{
           if (latest !== undefined && now().getTime() - Date.parse(latest.confirmedAt) < progressMs) return;
           await notice("mx-wait-" + job.id + "-" + job.attempt + "-" + (++progressNumber),
             "Очікую завершення поточного запиту до обраного ШІ-провайдера. Нової підтвердженої репліки ще немає.", job.eventId);
-        })().catch(() => abort.abort()).finally(() => { progressBusy = false; });
+        })().catch(error => {
+          // This is an optional visibility notice, not an authority fence. Its
+          // transient delivery failure must not cancel the provider turn whose
+          // eventual messages remain protected by the durable registrar/outbox.
+          blocked = true;
+          lastFailure = classifyConsultationFailure("progress_notice", error);
+        }).finally(() => { progressBusy = false; });
       }, progressMs);
       if (job.resumeFinalization && job.documents.length === 0 && input.executor.resumeFinalization !== undefined) {
         const result = await input.executor.resumeFinalization({ sessionGeneration: job.generation!, task: job.task, signal: abort.signal });
@@ -749,7 +755,11 @@ export function createMatrixConsultationService(input: Readonly<{
       diagnosticStage = "media_maintenance";
       await input.media?.purgeExpired();
       diagnosticStage = "readiness";
-      input.assertReady();
+      // Matrix transport readiness gates NEW model work. Once a provider turn
+      // has begun, its confirmed messages are durable in MySQL and may safely
+      // wait in the outbox while Matrix reconnects. A transient send/reconcile
+      // state must not cancel paid work or force the owner to type Continue.
+      if (execution === undefined) input.assertReady();
       diagnosticStage = "leadership";
       if (!acquired) { acquired = await input.leadership.acquire(); if (!acquired) return; }
       if (!await input.leadership.check()) {
@@ -777,7 +787,9 @@ export function createMatrixConsultationService(input: Readonly<{
     } catch (error) {
       blocked = true;
       lastFailure = classifyConsultationFailure(diagnosticStage, error);
-      // No provider work may continue across lost room/DB readiness.
+      // Non-readiness failures here include leadership/DB/input faults and must
+      // still fence an active provider. Ordinary transport readiness is never
+      // checked in this loop while execution is active.
       controller?.abort();
       recovered = false;
     }
