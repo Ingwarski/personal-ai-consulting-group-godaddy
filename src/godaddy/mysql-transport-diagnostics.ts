@@ -134,16 +134,23 @@ export async function inspectMySqlTransport(
     const cipher = status.get("ssl_cipher");
     const tls = variables.get("have_ssl");
     const secure = variables.get("require_secure_transport");
+    const verifiedTlsConnection = configuration === undefined ? "not_checked"
+      : await probeVerifiedTls(configuration, dependencies.connectTls ?? defaultTlsConnector);
+    const identityProbe = configuration === undefined ? "not_checked"
+      : await probeVerifiedTls(configuration, dependencies.connectIdentityTls ?? defaultTlsIdentityConnector);
+    // mysql2 overwrites ERR_TLS_CERT_ALTNAME_INVALID with HANDSHAKE_SSL_ERROR.
+    // When the otherwise identical CA-only connection succeeds, the only
+    // additional failing check is the server-name identity check.
+    const verifiedTlsIdentityConnection = verifiedTlsConnection === "connected"
+      && identityProbe === "certificate_rejected" ? "server_identity_rejected" : identityProbe;
     return Object.freeze({
       nodeDatabaseReachable: true,
       nodeSessionEncrypted: cipher === undefined ? "unknown" : cipher.length > 0,
       ...trust,
       serverTlsSupport: tls === "YES" ? "available" : tls === "DISABLED" || tls === "NO" ? "disabled" : "unknown",
       secureTransportRequired: secure === "ON" ? true : secure === "OFF" ? false : "unknown",
-      verifiedTlsConnection: configuration === undefined ? "not_checked"
-        : await probeVerifiedTls(configuration, dependencies.connectTls ?? defaultTlsConnector),
-      verifiedTlsIdentityConnection: configuration === undefined ? "not_checked"
-        : await probeVerifiedTls(configuration, dependencies.connectIdentityTls ?? defaultTlsIdentityConnector)
+      verifiedTlsConnection,
+      verifiedTlsIdentityConnection
     });
   } catch {
     connection?.destroy?.();

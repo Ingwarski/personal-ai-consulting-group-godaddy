@@ -109,5 +109,64 @@ active bundled CA set, while native-tls delegates to `openssl-probe`, whose
 fixed Linux file/dir search is not a guarantee on the GoDaddy application host.
 The correction writes Node's active public CA roots to a private per-process
 bundle and supplies it to the static child through `SSL_CERT_FILE`. Hostname and
-certificate verification remain enabled; no owner secret or permissive TLS
-fallback is added.
+certificate verification remained enabled in that attempt; no owner secret or
+permissive TLS fallback was added. Published commit
+`f51d9fa4bf2a98c686382fb196be6dbe15e022f0` still returned
+`mysql_tls_failed`, so trust-root discovery alone was not the complete cause.
+
+## Certificate-identity isolation and compatibility repair
+
+Review of mysql2's actual TLS implementation found that `rejectUnauthorized`
+validates the CA chain, while hostname verification is a separate
+`verifyIdentity` option that mysql2 leaves disabled by default. The original
+Node diagnostic therefore overstated equivalence with SQLx `VerifyIdentity`.
+
+Published commit `ea0860d0b89832a3a603743b898face2035b52a1` added two
+otherwise identical probes. On the exact GoDaddy Published database it reports:
+
+- CA-chain verification: `connected`;
+- CA-chain plus server-name identity verification: `certificate_rejected`.
+
+Because only the identity check differs, these sequential probes isolate
+server-name verification as the failing check. The normalized result remains a
+diagnostic inference because mysql2 wraps pre-secure TLS errors.
+The Rust store now uses SQLx `VerifyCa`: encryption remains mandatory and the
+certificate chain must validate, but the provider-incompatible hostname check
+is omitted. There is no plaintext or accept-invalid-certificate fallback. The
+diagnostic normalizes mysql2's wrapped identity error on the next deployment so
+the owner page will report `server_identity_rejected` without exposing a host,
+certificate, account, schema or raw error.
+
+The immutable production release for this Rust change is GitHub run
+`34411975888`, attempt 1. Both jobs completed successfully for exact source
+`ea0860d0b89832a3a603743b898face2035b52a1`. The source-bound build passed its
+credential-free tests and produced two byte-identical static binaries. Artifact
+`10130411789` contains exactly ten files; its independently downloaded
+38,456,084-byte ZIP SHA-256 matches GitHub at
+`8b193d7d5145dd6566c8c6ddc7b2d82a7765bb25a0d2ebf8015820fa78f08638`.
+
+Independent promotion verification checked every artifact size/hash, checksum
+entry, all 47 declared source inputs against the exact commit, native tree,
+source/workflow/run binding, prepared image and Dockerfile identity, and both
+static stripped ELF binaries. Verified identities:
+
+- manifest: `7a9118119ac0e79b62256d794b0e9a7fb1e52d79dd09c41759f30c2f5a0f2de4`;
+- sidecar: `7ab03f29318bf789480af196bdb67f58c1dea04f824c7c768c044eb094d316c5`
+  (49,971,152 bytes);
+- setup: `4ebf7ef697d87f8b5f3989a5388d167729252f00a2678f49e270f18378b90454`
+  (44,773,232 bytes);
+- prepared builder image:
+  `sha256:d192369354a786a4e271992f59b5a54b8d2a10eab2173836ec64f9cb1a2d7bf3`;
+- native-TLS Dockerfile:
+  `3a05b3288f1abd892601288853fb90272bb9b4e02627fa04cf2a72a78b285fda`.
+
+The complete verified bundle and matching release pin are promoted together.
+The installer permits an atomic replacement only from the exact binaries
+currently deployed on GoDaddy; arbitrary or modified executables remain
+non-replaceable. Final Published deployment and Matrix provisioning are the
+remaining acceptance evidence.
+
+After promotion, the complete application gate passed with 944/944 tests plus
+build, typecheck and environment-policy validation; `git diff --check` also
+passed. These checks validate the committed candidate, not the remaining live
+Published setup.

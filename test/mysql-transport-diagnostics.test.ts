@@ -114,3 +114,15 @@ test("distinguishes CA validation from server-identity validation", async () => 
   assert.equal(result.verifiedTlsIdentityConnection, "server_identity_rejected");
   assert.equal(JSON.stringify(result).includes("private"), false);
 });
+
+test("normalizes mysql2's wrapped identity rejection only after the CA-only probe connects", async () => {
+  const fixture = pool({ cipher: "" });
+  const result = await inspectMySqlTransport(fixture.value, database, {
+    connectTls: async () => tlsConnection("TLS_AES_256_GCM_SHA384"),
+    connectIdentityTls: async () => {
+      throw Object.assign(new Error("private wrapped identity detail"), { code: "HANDSHAKE_SSL_ERROR" });
+    }
+  });
+  assert.equal(result.verifiedTlsConnection, "connected");
+  assert.equal(result.verifiedTlsIdentityConnection, "server_identity_rejected");
+});
