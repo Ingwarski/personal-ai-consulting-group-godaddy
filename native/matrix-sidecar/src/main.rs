@@ -58,10 +58,32 @@ impl ProtocolPhase {
 
 #[tokio::main]
 async fn main() {
+    if bind_lifetime_to_parent().is_err() {
+        telemetry::emit(telemetry::SafeEvent::ProtocolRejected);
+        std::process::exit(1);
+    }
     if run().await.is_err() {
         telemetry::emit(telemetry::SafeEvent::ProtocolRejected);
         std::process::exit(1);
     }
+}
+
+/// GoDaddy may terminate the Node supervisor without giving it a shutdown
+/// callback. On Linux, bind this stateful child to that exact parent so an old
+/// deployment cannot survive as an orphan and keep renewing the MySQL writer
+/// lease. Re-checking the parent closes the race in which it exits between the
+/// first lookup and installing the kernel notification.
+#[cfg(target_os = "linux")]
+fn bind_lifetime_to_parent() -> Result<(), ()> {
+    let parent = rustix::process::getppid().ok_or(())?;
+    rustix::process::set_parent_process_death_signal(Some(rustix::signal::Signal::Kill))
+        .map_err(|_| ())?;
+    (rustix::process::getppid() == Some(parent)).then_some(()).ok_or(())
+}
+
+#[cfg(not(target_os = "linux"))]
+fn bind_lifetime_to_parent() -> Result<(), ()> {
+    Ok(())
 }
 
 async fn run() -> Result<(), ()> {
