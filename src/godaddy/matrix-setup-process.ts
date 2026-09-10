@@ -103,6 +103,9 @@ export function spawnMatrixSetupProcess(input: Readonly<{
   // `exit` can precede delivery of already-flushed stdout. Wait for `close`
   // before rejecting; otherwise a successful final response can be discarded.
   child.on("close", fail);
+  // A setup helper may exit while an owner command is being written. EPIPE is
+  // a child failure, not a reason to crash the long-lived web application.
+  child.stdin.on("error", fail);
   // Drain without printing or storing SDK/HTTP error text.
   child.stderr.on("data", () => undefined);
   child.stdout.on("data", (part: Buffer) => {

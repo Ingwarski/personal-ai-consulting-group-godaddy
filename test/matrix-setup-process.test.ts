@@ -77,6 +77,14 @@ test("setup transport requires handshake, sends exact explicit commands, and doe
   await fixture.process.close();
 });
 
+test("setup helper stdin EPIPE becomes a closed setup request instead of an unhandled process error", async () => {
+  const fixture = childFixture();
+  fixture.frames({ version: 1, type: "setup_ready" });
+  fixture.child.stdin.emit("error", Object.assign(new Error("broken pipe"), { code: "EPIPE" }));
+  await assert.rejects(fixture.process.request({ type: "status" }), /matrix_setup/);
+  await fixture.process.close();
+});
+
 test("startup failure preserves only known safe native codes", async () => {
   for (const code of ["configuration_invalid", "store_locked", "store_or_device_quarantined", "transport_or_store_unavailable",
     "mysql_connection_timeout", "mysql_tls_failed", "mysql_login_or_database_failed", "mysql_connection_failed",

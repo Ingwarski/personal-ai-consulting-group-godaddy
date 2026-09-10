@@ -142,6 +142,7 @@ export type MatrixSidecarFileSystem = Readonly<{
 
 export type MatrixSidecarWritable = Readonly<{
   write: (value: string, encoding: "utf8") => boolean;
+  on: (event: "error", listener: (error: Error) => void) => unknown;
   once: (event: "drain", listener: () => void) => unknown;
   off?: (event: "drain", listener: () => void) => unknown;
 }>;
@@ -1244,6 +1245,14 @@ export class MatrixSidecarSupervisor {
     child.stderr.on("data", (chunk) => {
       const byteCount = typeof chunk === "string" ? Buffer.byteLength(chunk, "utf8") : chunk.byteLength;
       this.#diagnostic({ code: "stderr_redacted", byteCount });
+    });
+    // The native sidecar can close its read end between the writable check and
+    // stdin.write(). Node then emits EPIPE on this Socket as well as failing
+    // the write. Consume that stream event and recover through the supervisor
+    // instead of terminating the entire GoDaddy Node process.
+    child.stdin.on("error", () => {
+      if (generation !== this.#generation || this.#stopRequested) return;
+      this.#failGeneration("spawn_failed", "spawn_failed");
     });
     child.once("error", () => {
       this.#abortHandshake("spawn_failed");

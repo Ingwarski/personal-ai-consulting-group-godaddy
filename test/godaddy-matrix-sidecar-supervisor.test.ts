@@ -1077,6 +1077,21 @@ test("redacts stderr and automatically half-opens the crash circuit without rese
   assert.equal(children.length, 4);
 });
 
+test("a sidecar stdin EPIPE restarts the sidecar instead of crashing the Node process", async () => {
+  const clock = new ManualClock();
+  const { supervisor, children } = fixture({ clock, maxCrashes: 3 });
+  await supervisor.start();
+  const first = children[0]!;
+  first.stdin.emit("error", Object.assign(new Error("broken pipe"), { code: "EPIPE" }));
+  assert.deepEqual(first.kills, ["SIGTERM"]);
+  await turn();
+  clock.advance(1);
+  await turn();
+  assert.equal(children.length, 2);
+  assert.equal(supervisor.getStatus().matrixReadiness, "ready");
+  await supervisor.stop();
+});
+
 test("initial sync not_ready retries the same store and recovers without a Settings action", async () => {
   const clock = new ManualClock();
   const { supervisor, children, spawnCalls } = fixture({ clock, maxCrashes: 1,
