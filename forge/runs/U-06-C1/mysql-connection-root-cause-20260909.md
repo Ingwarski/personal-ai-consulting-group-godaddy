@@ -170,3 +170,45 @@ After promotion, the complete application gate passed with 944/944 tests plus
 build, typecheck and environment-policy validation; `git diff --check` also
 passed. These checks validate the committed candidate, not the remaining live
 Published setup.
+
+## In-process Matrix sync recovery release
+
+The live consultation test exposed short delivery bursts accompanied by
+`matrix_sidecar_not_ready` transitions. Source review found that any transient
+Matrix `/sync` failure emitted a fatal sidecar event and exited the only
+encrypted-store writer. The supervisor restart then introduced store-lock
+contention and delayed durable outbox delivery. Commit
+`f47a83201142177700aee7ebaf099d4df77b1480` keeps the exact process and store
+writer alive, reports blocked readiness, waits for the existing bounded retry
+delay and retries `/sync` in process. Explicit journal and startup integrity
+failures remain fatal.
+
+Authenticated GitHub run `34494531239`, attempt 1, completed successfully for
+that exact commit. Its source-bound job passed the complete Node gate and two
+independent network-disabled Rust release builds produced byte-identical static
+stripped binaries. Artifact `10163722561` contains exactly ten files; its
+38,455,583-byte ZIP SHA-256 matches GitHub at
+`93d360f8d38fffbbc4e4860ec95aebbed8e8efa7a59134e2cafe81b2f7260ede`.
+Independent promotion verification checked the run and repository identity,
+all 47 declared source inputs, every artifact size and hash, the manifest,
+checksums, builder projection, provenance and both ELF binaries. Verified
+release identities are:
+
+- manifest: `0d50f94b7717fb1aab50352a07076416cd57febddf8f16a677b3adea769a63dd`;
+- sidecar: `ce148392a57f4bd391437b8eedc963bf1fd0f252b4f599cdd6dd2e45369d6984`
+  (49,971,152 bytes);
+- setup: `59be65ea5668d365834be5174997c68e9bd14f35a1f6850b454be35ddb3e511f`
+  (44,773,232 bytes);
+- prepared builder image:
+  `sha256:7d0116fba48436b237b92fa1239e2ad960aa3f869bbfa1c99de288af60914cfb`.
+
+The atomic installer accepts replacement only from the exact currently
+deployed sidecar and setup hashes. Published deployment, a fresh consultation
+and post-test log inspection remain the real-host acceptance gates.
+
+After promotion, the complete application gate passed again with 963/963 tests,
+build, typecheck, environment-policy validation and `git diff --check`. A fresh
+canonical-root smoke test installed over the exact preceding pinned sidecar and
+setup executables, then the read-only inspector revalidated both new hashes.
+This proves the bounded atomic upgrade path locally; it does not replace the
+remaining Published acceptance test.
