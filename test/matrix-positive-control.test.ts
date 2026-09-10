@@ -38,6 +38,20 @@ test("actual HTTP server serves only the fresh harmless public control, not arbi
   assert.equal(await readFile(f.target, "utf8"), marker);
 });
 
+test("control freshness tolerates only the filesystem sub-millisecond precision difference", async t => {
+  const f = await fixture(t); await writeFile(f.target, marker, { mode: 0o644 });
+  const now = Date.now();
+  t.mock.method(Date, "now", () => now);
+  await utimes(f.target, now / 1_000, (now + 0.5) / 1_000);
+  const fresh = await matrixPositiveControlResponse(request(), f.root);
+  assert.equal(fresh?.status, 200);
+  assert.equal(fresh?.headers.get("x-matrix-control-result"), "ok");
+  await utimes(f.target, now / 1_000, (now + 2_000) / 1_000);
+  const future = await matrixPositiveControlResponse(request(), f.root);
+  assert.equal(future?.status, 404);
+  assert.equal(future?.headers.get("x-matrix-control-result"), "expired_file");
+});
+
 test("control reader rejects missing, stale, malformed, oversized, linked and unsafe files", async t => {
   for (const kind of ["missing", "stale", "body", "large", "symlink", "hardlink", "permissions"] as const) {
     const f = await fixture(t);

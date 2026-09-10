@@ -57,7 +57,12 @@ export async function matrixPositiveControlResponse(request: Request, root = app
     const before = await handle.stat();
     if (!before.isFile() || before.nlink !== 1 || before.uid !== uid || ![0o600, 0o644].includes(before.mode & 0o7777)
       || before.size < 1 || before.size > 128) return denied("unsafe_file");
-    if (before.mtimeMs > Date.now() || Date.now() - before.mtimeMs > 180_000) return denied("expired_file");
+    const now = Date.now();
+    // Filesystems retain sub-millisecond mtime precision while Date.now() is
+    // integer milliseconds. Permit only that rounding difference; otherwise a
+    // freshly-created control can be misclassified as future-dated on fast CI
+    // or production hosts.
+    if (before.mtimeMs > now + 1 || now - before.mtimeMs > 180_000) return denied("expired_file");
     const buffer = Buffer.alloc(128);
     const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
     const text = buffer.subarray(0, bytesRead).toString("utf8");

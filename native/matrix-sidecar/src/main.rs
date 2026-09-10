@@ -78,7 +78,9 @@ fn bind_lifetime_to_parent() -> Result<(), ()> {
     let parent = rustix::process::getppid().ok_or(())?;
     rustix::process::set_parent_process_death_signal(Some(rustix::signal::Signal::Kill))
         .map_err(|_| ())?;
-    (rustix::process::getppid() == Some(parent)).then_some(()).ok_or(())
+    (rustix::process::getppid() == Some(parent))
+        .then_some(())
+        .ok_or(())
 }
 
 #[cfg(not(target_os = "linux"))]
