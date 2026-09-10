@@ -154,7 +154,7 @@ test("shows every consultant and Critic under their exact registered role", () =
     });
     const known = resolveConsultantRole(role)!;
     assert.equal(delivery.body, `${known.emoji} ${known.role} · 18:10\n\nПовна підтверджена репліка.`);
-    assert.equal(delivery.formattedBody, `<strong>${known.emoji} ${known.role} · 18:10</strong><p>Повна підтверджена репліка.</p>`);
+    assert.equal(delivery.formattedBody, `<strong>${known.emoji} ${known.role} · 18:10</strong><br><p>Повна підтверджена репліка.</p>`);
     assert.doesNotMatch(delivery.body, /Система/u);
   }
 });
@@ -170,7 +170,7 @@ test("labels automatic notices as head coordination without changing stored iden
   const transactionId = matrixTransactionIdFor(message);
   const delivery = formatConfirmedMessageForMatrix(binding, message, "$original-owner-event");
   assert.equal(delivery.body, `🧭 Head Consultant · службове повідомлення · 18:11\n\n${input.body}`);
-  assert.match(delivery.formattedBody, /^<strong>🧭 Head Consultant · службове повідомлення · 18:11<\/strong>/u);
+  assert.match(delivery.formattedBody, /^<strong>🧭 Head Consultant · службове повідомлення · 18:11<\/strong><br><p>/u);
   assert.doesNotMatch(delivery.formattedBody, /Система/u);
   assert.equal(delivery.replyToEventId, "$original-owner-event");
   assert.equal(JSON.stringify(message), before);
@@ -225,7 +225,7 @@ test("candidate names its reviewers separately from the proposed owner answer wh
   assert.equal(candidate.body,
     "🧭 Head Consultant · Candidate for review · 12:34\nReviewers: Strategy Consultant; Operations Consultant; Critic\n\nProposed answer to the owner:\n\nExactly the same agreed recommendation.");
   assert.match(candidate.formattedBody,
-    /<strong>Reviewers:<\/strong> Strategy Consultant; Operations Consultant; Critic<\/p><p><em>Proposed answer to the owner:<\/em><\/p>/u);
+    /^<strong>🧭 Head Consultant · Candidate for review · 12:34<\/strong><br><p><strong>Reviewers:<\/strong> Strategy Consultant; Operations Consultant; Critic<\/p><p><em>Proposed answer to the owner:<\/em><\/p>/u);
   assert.doesNotMatch(candidate.body, /Candidate for review →/u);
 
   for (const [consensusKind, label] of [["final", "Approved"], ["unresolved", "Unresolved"], ["safety_handoff", "Safety handoff"]] as const) {
@@ -269,13 +269,13 @@ test("renders the closed Markdown subset and keeps injected HTML inert", () => {
   assert.doesNotMatch(delivery.formattedBody, /<img|<script>/);
 });
 
-test("keeps the legacy HTML output byte-identical when the body contains no Markdown", () => {
+test("starts a plain formatted message on the line after its header", () => {
   const delivery = formatConfirmedMessageForMatrix(binding, {
     generation: 1, sequence: 2, internalEventId: "internal-event-plain", role: "Роль", visibleTime: "16:20",
     body: "Перший рядок\nдругий.\n\nНовий абзац.", bodyFormat: "markdown", bodyHash: "e".repeat(64),
     confirmedAt: "2026-08-16T13:20:00.000Z"
   });
-  assert.equal(delivery.formattedBody, "<strong>Роль · 16:20</strong><p>Перший рядок<br>другий.</p><p>Новий абзац.</p>");
+  assert.equal(delivery.formattedBody, "<strong>Роль · 16:20</strong><br><p>Перший рядок<br>другий.</p><p>Новий абзац.</p>");
 });
 
 test("persists a durable work intent before ACK eligibility and never dispatches inline", async () => {

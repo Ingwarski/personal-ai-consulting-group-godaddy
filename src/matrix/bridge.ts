@@ -512,7 +512,7 @@ export function formatConfirmedMessageContentForMatrix(
     : "";
   return Object.freeze({
     body: `${header}${plainFrame}${message.body}`,
-    formattedBody: `<strong>${styledHeader}</strong>${formattedFrame}${renderMarkdownParagraphs(message.body)}`
+    formattedBody: `<strong>${styledHeader}</strong><br>${formattedFrame}${renderMarkdownParagraphs(message.body)}`
   });
 }
 
