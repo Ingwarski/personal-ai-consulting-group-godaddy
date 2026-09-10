@@ -649,9 +649,43 @@ impl Backend {
         key: &[u8; 32],
         lease_ms: u32,
     ) -> Result<Self, StoreError> {
+        Self::open_with_generation(pool, store, identity, key, lease_ms, None).await
+    }
+
+    /// A verified application deployment may atomically supersede a different
+    /// deployment generation. The fence prevents the predecessor from writing,
+    /// renewing, or releasing the successor. A concurrent process from the
+    /// same release remains blocked.
+    pub async fn open_for_deployment(
+        pool: MySqlPool,
+        store: [u8; 16],
+        identity: &[u8],
+        key: &[u8; 32],
+        lease_ms: u32,
+        deployment_generation: [u8; 16],
+    ) -> Result<Self, StoreError> {
+        Self::open_with_generation(
+            pool,
+            store,
+            identity,
+            key,
+            lease_ms,
+            Some(deployment_generation),
+        )
+        .await
+    }
+
+    async fn open_with_generation(
+        pool: MySqlPool,
+        store: [u8; 16],
+        identity: &[u8],
+        key: &[u8; 32],
+        lease_ms: u32,
+        deployment_generation: Option<[u8; 16]>,
+    ) -> Result<Self, StoreError> {
         tokio::time::timeout(
             OPERATION_TIMEOUT,
-            Self::open_inner(pool, store, identity, key, lease_ms),
+            Self::open_inner(pool, store, identity, key, lease_ms, deployment_generation),
         )
         .await
         .map_err(|_| StoreError::Unavailable)?
@@ -663,6 +697,7 @@ impl Backend {
         identity: &[u8],
         key: &[u8; 32],
         lease_ms: u32,
+        deployment_generation: Option<[u8; 16]>,
     ) -> Result<Self, StoreError> {
         if identity.is_empty() || !(100..=300_000).contains(&lease_ms) {
             return Err(StoreError::InvalidConfiguration);
@@ -672,7 +707,7 @@ impl Backend {
         let options = (*pool.connect_options()).clone();
         let pool = pool_options(2).connect_lazy_with(options.clone());
         let mut tx = pool.begin().await?;
-        let row = sqlx::query("SELECT schema_version,identity_fingerprint,cipher_export,binding,fence,lease_expires_ms FROM pc_matrix_stores WHERE store_id=? FOR UPDATE")
+        let row = sqlx::query("SELECT schema_version,identity_fingerprint,cipher_export,binding,fence,owner_nonce,lease_expires_ms FROM pc_matrix_stores WHERE store_id=? FOR UPDATE")
             .bind(store.as_slice()).fetch_optional(&mut *tx).await?.ok_or(StoreError::Schema)?;
         let fingerprint: [u8; 32] = Sha256::digest(identity).into();
         let version: u32 = row.try_get("schema_version")?;
@@ -692,14 +727,19 @@ impl Backend {
         }
         let now = db_now(&mut tx).await?;
         let expires: u64 = row.try_get("lease_expires_ms")?;
+        let previous_holder: Option<Vec<u8>> = row.try_get("owner_nonce")?;
         if expires > now {
-            return Err(StoreError::Conflict);
+            let generation = deployment_generation.as_ref().ok_or(StoreError::Conflict)?;
+            let holder = previous_holder.as_deref().ok_or(StoreError::Corrupt)?;
+            if holder.len() != generation.len() || holder == generation {
+                return Err(StoreError::Conflict);
+            }
         }
         let epoch = row
             .try_get::<u64, _>("fence")?
             .checked_add(1)
             .ok_or(StoreError::Corrupt)?;
-        let holder = *uuid::Uuid::new_v4().as_bytes();
+        let holder = deployment_generation.unwrap_or_else(|| *uuid::Uuid::new_v4().as_bytes());
         sqlx::query(
             "UPDATE pc_matrix_stores SET fence=?,owner_nonce=?,lease_expires_ms=? WHERE store_id=?",
         )

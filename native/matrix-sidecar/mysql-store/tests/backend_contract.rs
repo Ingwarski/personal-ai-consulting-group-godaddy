@@ -138,6 +138,32 @@ async fn second_owner_is_blocked_without_displacing_current_owner() {
 
 #[tokio::test]
 #[ignore = "requires isolated MySQL"]
+async fn verified_deployment_takeover_fences_predecessor_but_not_same_release_peer() {
+    let pool = pool().await;
+    let id = *uuid::Uuid::new_v4().as_bytes();
+    Backend::provision(&pool, id, IDENTITY, &KEY).await.unwrap();
+    let first = Backend::open_for_deployment(pool.clone(), id, IDENTITY, &KEY, 30_000, [1; 16])
+        .await
+        .unwrap();
+    assert!(matches!(
+        Backend::open_for_deployment(pool.clone(), id, IDENTITY, &KEY, 30_000, [1; 16]).await,
+        Err(StoreError::Conflict)
+    ));
+    let successor = Backend::open_for_deployment(pool.clone(), id, IDENTITY, &KEY, 30_000, [2; 16])
+        .await
+        .unwrap();
+    assert!(matches!(first.renew().await, Err(StoreError::Fenced)));
+    assert!(matches!(first.release().await, Err(StoreError::Fenced)));
+    successor
+        .write(vec![put("fixture", b"successor", b"owns-store")])
+        .await
+        .unwrap();
+    successor.release().await.unwrap();
+    pool.close().await;
+}
+
+#[tokio::test]
+#[ignore = "requires isolated MySQL"]
 async fn stale_owner_cannot_write_renew_or_release_successor() {
     let (pool, id, first) = fresh(100).await;
     tokio::time::sleep(Duration::from_millis(250)).await;

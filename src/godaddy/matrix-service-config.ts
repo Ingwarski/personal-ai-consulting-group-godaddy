@@ -200,7 +200,7 @@ export function parseGoDaddyMatrixConfiguration(
   }
   const spawnEnvironment = Object.freeze({
     ...databaseEnvironment,
-    ...(mysql ? { MATRIX_STORE_BACKEND: "mysql" } : {}),
+    ...(mysql ? { MATRIX_STORE_BACKEND: "mysql", MATRIX_DEPLOYMENT_GENERATION: expectedSha256 } : {}),
     PATH: pathValue,
     MATRIX_HOMESERVER_URL: GODADDY_MATRIX_HOMESERVER_ORIGIN,
     MATRIX_ALLOWED_HTTPS_ORIGINS: GODADDY_MATRIX_HOMESERVER_ORIGIN,

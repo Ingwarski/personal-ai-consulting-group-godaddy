@@ -36,6 +36,7 @@ pub enum ConfigError {
 
 pub struct Config {
     pub mysql: bool,
+    pub deployment_generation: Option<[u8; 16]>,
     pub homeserver: FixedHomeserver,
     pub store_root: PathBuf,
     pub spool_parent: PathBuf,
@@ -56,6 +57,21 @@ impl Config {
             Ok("mysql") => true,
             Ok("sqlite") | Err(_) => false,
             _ => return Err(ConfigError::Missing),
+        };
+        let deployment_generation = if mysql {
+            let encoded = required("MATRIX_DEPLOYMENT_GENERATION")?;
+            if !valid_secret_key(&encoded) {
+                return Err(ConfigError::Missing);
+            }
+            let mut generation = [0_u8; 16];
+            hex::decode_to_slice(&encoded[..32], &mut generation)
+                .map_err(|_| ConfigError::Missing)?;
+            Some(generation)
+        } else {
+            if env::var_os("MATRIX_DEPLOYMENT_GENERATION").is_some() {
+                return Err(ConfigError::Missing);
+            }
+            None
         };
         let (store_root, spool_parent) = if mysql {
             // Node creates this private per-boot directory and needs the same
@@ -101,6 +117,7 @@ impl Config {
             parse_allowed_origins(&required("MATRIX_ALLOWED_HTTPS_ORIGINS")?, &homeserver)?;
         Ok(Self {
             mysql,
+            deployment_generation,
             homeserver,
             store_root,
             spool_parent,

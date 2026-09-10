@@ -91,6 +91,7 @@ test("MySQL mode explicitly passes only selected DB credentials to its child and
     assert.equal(result.value.spawnEnvironment[field], mysqlConfiguration[field]);
   }
   assert.equal(result.value.spawnEnvironment.MATRIX_STORE_BACKEND, "mysql");
+  assert.equal(result.value.spawnEnvironment.MATRIX_DEPLOYMENT_GENERATION, MATRIX_RELEASE_SIDECAR_SHA256);
   for (const field of ["SETTINGS_OWNER_PASSWORD", "GOOGLE_CLIENT_SECRET", "DATABASE_URL", "DB_SSL_REJECT_UNAUTHORIZED"]) {
     assert.equal(Object.hasOwn(result.value.spawnEnvironment, field), false);
   }

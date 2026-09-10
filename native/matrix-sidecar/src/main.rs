@@ -524,17 +524,16 @@ async fn handle_request(
                             return;
                         }
                     };
-                    if let PendingJournal::MySql(backend) = &cleanup_journal {
-                        if personal_consultant_matrix_sidecar::durable_media::prune(
+                    if let PendingJournal::MySql(backend) = &cleanup_journal
+                        && personal_consultant_matrix_sidecar::durable_media::prune(
                             backend,
                             &active_handles,
                         )
                         .await
                         .is_err()
-                        {
-                            let _ = cleanup_output.send(MatrixOutput::Fatal).await;
-                            return;
-                        }
+                    {
+                        let _ = cleanup_output.send(MatrixOutput::Fatal).await;
+                        return;
                     }
                     if cleanup_spool
                         .cleanup_expired(

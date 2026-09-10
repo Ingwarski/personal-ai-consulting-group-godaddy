@@ -460,10 +460,10 @@ pub fn read_crypto_backup(
                 &sender,
             )?;
         }
-        if let Some(sender_type) = sql(row.get::<_, Option<u8>>(5))? {
-            if sender_type != session.sender_data_type() as u8 {
-                return Err(StoreError::Corrupt);
-            }
+        if let Some(sender_type) = sql(row.get::<_, Option<u8>>(5))?
+            && sender_type != session.sender_data_type() as u8
+        {
+            return Err(StoreError::Corrupt);
         }
         mutations.push(Mutation::Put {
             namespace: "crypto.inbound".to_owned(),

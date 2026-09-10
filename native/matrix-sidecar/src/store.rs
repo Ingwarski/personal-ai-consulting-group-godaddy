@@ -76,23 +76,21 @@ fn classify_mysql_error(error: &personal_consultant_matrix_mysql_store::StoreErr
 }
 
 fn crypto_error(error: matrix_sdk_base::crypto::store::CryptoStoreError) -> StoreError {
-    if let matrix_sdk_base::crypto::store::CryptoStoreError::Backend(error) = error {
-        if let Some(database) =
+    if let matrix_sdk_base::crypto::store::CryptoStoreError::Backend(error) = error
+        && let Some(database) =
             error.downcast_ref::<personal_consultant_matrix_mysql_store::StoreError>()
-        {
-            return classify_mysql_error(database);
-        }
+    {
+        return classify_mysql_error(database);
     }
     StoreError::Quarantined
 }
 
 fn state_error(error: matrix_sdk_base::store::StoreError) -> StoreError {
-    if let matrix_sdk_base::store::StoreError::Backend(error) = error {
-        if let Some(database) =
+    if let matrix_sdk_base::store::StoreError::Backend(error) = error
+        && let Some(database) =
             error.downcast_ref::<personal_consultant_matrix_mysql_store::StoreError>()
-        {
-            return classify_mysql_error(database);
-        }
+    {
+        return classify_mysql_error(database);
     }
     StoreError::Quarantined
 }
@@ -157,7 +155,9 @@ impl Drop for DatabaseLease {
 
 /// Stable namespace coordinates bind this application room and exact device.
 /// No additional owner secret or randomly regenerated environment ID is needed.
-pub fn mysql_coordinates(config: &Config) -> Result<([u8; 16], Vec<u8>, [u8; 32]), StoreError> {
+pub type MysqlCoordinates = ([u8; 16], Vec<u8>, [u8; 32]);
+
+pub fn mysql_coordinates(config: &Config) -> Result<MysqlCoordinates, StoreError> {
     let identity = serde_json::to_vec(&(
         "personal-consultant-matrix-v1",
         config.homeserver.origin(),
@@ -194,7 +194,21 @@ async fn open_mysql(config: &Config, setup_preflight: bool) -> Result<OpenStore,
             .await
             .map_err(mysql_error)?;
     }
-    let opened = Backend::open(pool.clone(), id, &identity, &key, 30_000).await;
+    let opened = if setup_preflight {
+        Backend::open(pool.clone(), id, &identity, &key, 30_000).await
+    } else {
+        Backend::open_for_deployment(
+            pool.clone(),
+            id,
+            &identity,
+            &key,
+            30_000,
+            config
+                .deployment_generation
+                .ok_or(StoreError::Quarantined)?,
+        )
+        .await
+    };
     pool.close().await;
     let backend = Arc::new(opened.map_err(mysql_error)?);
     let lease = DatabaseLease::start(backend.clone());
@@ -951,6 +965,7 @@ mod tests {
         }
         Config {
             mysql: false,
+            deployment_generation: None,
             homeserver: FixedHomeserver::parse("https://matrix.example").unwrap(),
             store_root: root.clone(),
             spool_parent: root.join("spool"),

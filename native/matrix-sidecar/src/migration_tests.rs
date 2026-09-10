@@ -254,6 +254,7 @@ async fn source_fixture() -> SourceFixture {
     assert!(!backup.path().join("matrix-sdk-crypto.sqlite3-wal").exists());
     let config = Config {
         mysql: true,
+        deployment_generation: Some([1; 16]),
         homeserver: FixedHomeserver::parse("https://matrix.org").unwrap(),
         store_root: backup.path().to_owned(),
         spool_parent: media.path().to_owned(),

@@ -574,6 +574,7 @@ const ALLOWED_SIDECAR_ENVIRONMENT = new Set([
   "PATH",
   "SSL_CERT_FILE",
   "MATRIX_STORE_BACKEND",
+  "MATRIX_DEPLOYMENT_GENERATION",
   "TMPDIR",
   "DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD", "DB_SSL_CA_FILE",
   "MATRIX_HOMESERVER_URL",
@@ -699,7 +700,8 @@ function validateExpectedIdentity(value: MatrixSidecarIdentityExpectation): Matr
 
 function validateSpawnIdentity(
   environment: Readonly<Record<string, string>>,
-  expected: MatrixSidecarIdentityExpectation
+  expected: MatrixSidecarIdentityExpectation,
+  expectedSha256: string
 ): void {
   const homeserver = environment.MATRIX_HOMESERVER_URL;
   const allowedOrigins = environment.MATRIX_ALLOWED_HTTPS_ORIGINS?.split(",").map((value) => value.trim());
@@ -723,6 +725,8 @@ function validateSpawnIdentity(
     || environment.MATRIX_ACCESS_TOKEN === undefined || environment.MATRIX_ACCESS_TOKEN.length === 0
     || environment.MATRIX_STORE_PASSPHRASE === undefined
     || !/^[a-f0-9]{64}$/u.test(environment.MATRIX_STORE_PASSPHRASE)
+    || (mysql && environment.MATRIX_DEPLOYMENT_GENERATION !== expectedSha256)
+    || (!mysql && environment.MATRIX_DEPLOYMENT_GENERATION !== undefined)
     || storeDirectory === undefined || !isAbsolute(storeDirectory) || resolve(storeDirectory) !== storeDirectory
     || spoolDirectory === undefined || !isAbsolute(spoolDirectory) || resolve(spoolDirectory) !== spoolDirectory
     || (mysql && caBundlePath !== join(spoolDirectory, "node-default-ca.pem"))
@@ -845,7 +849,7 @@ export class MatrixSidecarSupervisor {
     const expectedOwnerUid = options.expectedOwnerUid === undefined ? defaultOwnerUid() : options.expectedOwnerUid;
     const expectedIdentity = validateExpectedIdentity(options.expectedIdentity);
     const spawnEnvironment = safeEnvironment(options.spawnEnvironment);
-    validateSpawnIdentity(spawnEnvironment, expectedIdentity);
+    validateSpawnIdentity(spawnEnvironment, expectedIdentity, expectedSha256);
     if (
       !isAbsolute(options.binaryPath)
       || resolve(options.binaryPath) !== options.binaryPath

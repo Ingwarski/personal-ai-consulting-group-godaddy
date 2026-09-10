@@ -470,9 +470,16 @@ test("rejects ambient process injection and split-brain identity/path configurat
   }), (error: unknown) => error instanceof MatrixSidecarError && error.code === "invalid_configuration");
   assert.doesNotThrow(() => fixture({
     spawnEnvironment: { ...spawnEnvironment, MATRIX_STORE_BACKEND: "mysql",
+      MATRIX_DEPLOYMENT_GENERATION: checksum,
       DB_HOST: "db.example.test", DB_PORT: "3306", DB_NAME: "matrix", DB_USER: "matrix", DB_PASSWORD: "test-only",
       SSL_CERT_FILE: `${SPOOL_PARENT}/node-default-ca.pem` }
   }));
+  assert.throws(() => fixture({
+    spawnEnvironment: { ...spawnEnvironment, MATRIX_STORE_BACKEND: "mysql",
+      MATRIX_DEPLOYMENT_GENERATION: "f".repeat(64),
+      DB_HOST: "db.example.test", DB_PORT: "3306", DB_NAME: "matrix", DB_USER: "matrix", DB_PASSWORD: "test-only",
+      SSL_CERT_FILE: `${SPOOL_PARENT}/node-default-ca.pem` }
+  }), (error: unknown) => error instanceof MatrixSidecarError && error.code === "invalid_configuration");
   for (const argumentsList of [
     [],
     ["--caller-controlled"],

@@ -417,18 +417,18 @@ impl StateStore for MySqlStateStore {
                 for (s, v) in events {
                     let k = key(&[r.as_str(), &t.to_string(), s])?;
                     state_overlay.insert(k, v.clone());
-                    if *t == StateEventType::RoomMember {
-                        if let Ok(ev) = v.deserialize_as_unchecked::<SyncRoomMemberEvent>() {
-                            batch.push(put(
-                                MEMBERS,
-                                key(&[r.as_str(), ev.state_key().as_str()])?,
-                                &Member {
-                                    user: ev.state_key().to_owned(),
-                                    membership: ev.membership().clone(),
-                                    stripped: false,
-                                },
-                            )?);
-                        }
+                    if *t == StateEventType::RoomMember
+                        && let Ok(ev) = v.deserialize_as_unchecked::<SyncRoomMemberEvent>()
+                    {
+                        batch.push(put(
+                            MEMBERS,
+                            key(&[r.as_str(), ev.state_key().as_str()])?,
+                            &Member {
+                                user: ev.state_key().to_owned(),
+                                membership: ev.membership().clone(),
+                                stripped: false,
+                            },
+                        )?);
                     }
                 }
             }
@@ -437,18 +437,18 @@ impl StateStore for MySqlStateStore {
             for (t, events) in types {
                 for (s, v) in events {
                     batch.push(put(STRIPPED, key(&[r.as_str(), &t.to_string(), s])?, v)?);
-                    if *t == StateEventType::RoomMember {
-                        if let Ok(ev) = v.deserialize_as_unchecked::<StrippedRoomMemberEvent>() {
-                            batch.push(put(
-                                MEMBERS,
-                                key(&[r.as_str(), ev.state_key.as_str()])?,
-                                &Member {
-                                    user: ev.state_key.clone(),
-                                    membership: ev.content.membership,
-                                    stripped: true,
-                                },
-                            )?);
-                        }
+                    if *t == StateEventType::RoomMember
+                        && let Ok(ev) = v.deserialize_as_unchecked::<StrippedRoomMemberEvent>()
+                    {
+                        batch.push(put(
+                            MEMBERS,
+                            key(&[r.as_str(), ev.state_key.as_str()])?,
+                            &Member {
+                                user: ev.state_key.clone(),
+                                membership: ev.content.membership,
+                                stripped: true,
+                            },
+                        )?);
                     }
                 }
             }
@@ -512,20 +512,18 @@ impl StateStore for MySqlStateStore {
                 }
             }
             for (k, v) in events {
-                if let Ok(Some(id)) = v.get_field::<OwnedEventId>("event_id") {
-                    if let Some(redaction) = redactions.get(&id) {
-                        let object = redact(
-                            v.deserialize_as::<CanonicalJsonObject>()?,
-                            &rules,
-                            Some(RedactedBecause::from_raw_event(redaction)?),
-                        )
-                        .map_err(|_| {
-                            serde_json::Error::io(std::io::Error::other(
-                                "state event redaction failed",
-                            ))
-                        })?;
-                        state_overlay.insert(k, Raw::new(&object)?.cast_unchecked());
-                    }
+                if let Ok(Some(id)) = v.get_field::<OwnedEventId>("event_id")
+                    && let Some(redaction) = redactions.get(&id)
+                {
+                    let object = redact(
+                        v.deserialize_as::<CanonicalJsonObject>()?,
+                        &rules,
+                        Some(RedactedBecause::from_raw_event(redaction)?),
+                    )
+                    .map_err(|_| {
+                        serde_json::Error::io(std::io::Error::other("state event redaction failed"))
+                    })?;
+                    state_overlay.insert(k, Raw::new(&object)?.cast_unchecked());
                 }
             }
         }
@@ -981,10 +979,10 @@ impl StateStore for MySqlStateStore {
                     .map(TryInto::try_into)
                     .transpose()?,
             };
-            if let Some(old) = old {
-                if !compare_thread_subscription_bump_stamps(old.bump_stamp, &mut new.bump_stamp) {
-                    continue;
-                }
+            if let Some(old) = old
+                && !compare_thread_subscription_bump_stamps(old.bump_stamp, &mut new.bump_stamp)
+            {
+                continue;
             }
             overlay.insert(k, new);
         }
