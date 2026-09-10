@@ -763,11 +763,21 @@ export function createMatrixConsultationService(input: Readonly<{
       diagnosticStage = "leadership";
       if (!acquired) { acquired = await input.leadership.acquire(); if (!acquired) return; }
       if (!await input.leadership.check()) {
-        controller?.abort();
-        if (ownedGeneration !== undefined) await input.registrar.stopSession(ownedGeneration);
         await input.leadership.release();
-        acquired = false; recovered = false; blocked = true;
-        return;
+        acquired = false;
+        // A MySQL named lock disappears with its connection. GoDaddy may
+        // recycle that otherwise-idle connection while a provider call is in
+        // progress. Reacquire immediately before fencing paid work: success
+        // proves that no replacement worker owns the lock; contention still
+        // aborts the stale worker exactly as before.
+        acquired = await input.leadership.acquire();
+        if (!acquired) {
+          controller?.abort();
+          if (ownedGeneration !== undefined) await input.registrar.stopSession(ownedGeneration);
+          recovered = false; blocked = true;
+          lastFailure = { stage: "leadership", code: "matrix_lock_contended" };
+          return;
+        }
       }
       diagnosticStage = "recovery";
       if (!recovered && execution === undefined) await recover();
@@ -787,10 +797,13 @@ export function createMatrixConsultationService(input: Readonly<{
     } catch (error) {
       blocked = true;
       lastFailure = classifyConsultationFailure(diagnosticStage, error);
-      // Non-readiness failures here include leadership/DB/input faults and must
-      // still fence an active provider. Ordinary transport readiness is never
-      // checked in this loop while execution is active.
-      controller?.abort();
+      console.error(JSON.stringify({ event: "matrix.consultation.worker_failed", ...lastFailure,
+        activeProviderTurn: controller !== undefined }));
+      // Only an unresolved leadership failure may fence an active provider.
+      // Ingress, maintenance, and worker-state polling are independent of the
+      // durable provider turn; cancelling it for their transient failure wastes
+      // a subscription call and creates a needless manual Continue cycle.
+      if (diagnosticStage === "leadership") controller?.abort();
       recovered = false;
     }
   };

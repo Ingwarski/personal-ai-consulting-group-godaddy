@@ -66,8 +66,10 @@ async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort
   let ready = true;
   let currentNow = activeNow;
   let failNextAfterConfirmed = false;
+  let failNextIngressLease = false;
   let afterConfirmedFailures = 0;
   let leadership = true;
+  let failNextLeadershipCheck = false;
   let planCalls = 0;
   let snapshotCalls = 0;
   let eventNumber = 0;
@@ -87,7 +89,10 @@ async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort
     ...(media === undefined ? {} : { media }),
     resolveReplySession: async eventId => replySessions.get(eventId),
     ingress: {
-      async leaseNext() { return queue.shift(); },
+      async leaseNext() {
+        if (failNextIngressLease) { failNextIngressLease = false; throw new Error("Synthetic ingress read failure."); }
+        return queue.shift();
+      },
       async markProcessed() { return true; }
     },
     executor: {
@@ -102,7 +107,14 @@ async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort
       if (failNextAfterConfirmed) { failNextAfterConfirmed = false; afterConfirmedFailures++; throw new Error("Synthetic Matrix wake failure."); }
       if (noticeGate !== undefined) { noticeEntered.resolve(); await noticeGate; }
     },
-    leadership: { async acquire() { return leadership; }, async check() { return leadership; }, async release() {} },
+    leadership: {
+      async acquire() { return leadership; },
+      async check() {
+        if (failNextLeadershipCheck) { failNextLeadershipCheck = false; return false; }
+        return leadership;
+      },
+      async release() {}
+    },
     assertReady() { if (!ready) throw new Error("Room temporarily unavailable."); }
   });
   return {
@@ -134,6 +146,8 @@ async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort
     setReady(value: boolean) { ready = value; },
     advance(milliseconds: number) { currentNow = new Date(currentNow.getTime() + milliseconds); },
     failNextConfirmationWake() { failNextAfterConfirmed = true; },
+    failNextIngressLease() { failNextIngressLease = true; },
+    failNextLeadershipCheck() { failNextLeadershipCheck = true; },
     afterConfirmedFailures: () => afterConfirmedFailures,
     setLeadership(value: boolean) { leadership = value; },
     planCalls: () => planCalls,
@@ -378,6 +392,35 @@ test("a failed optional waiting notice does not cancel the provider turn", async
   await waitFor("the optional notice wake failure", async () => f.afterConfirmedFailures() === 1);
   assert.equal(f.planSignal()?.aborted, false);
   f.plan.resolve({ ok: true, kind: "direct", language: "uk", answer: "Рішення завершено попри збій службового повідомлення." });
+  await waitForJob(f, "completed");
+  assert.equal(f.planCalls(), 1);
+});
+
+test("a transient ingress polling failure does not cancel an active provider turn", async t => {
+  const f = await fixture();
+  t.after(async () => { f.plan.resolve({ ok: false, code: "runtime_unavailable" }); await f.service.stop(); });
+  f.enqueue("Допоможіть з багатокроковим рішенням.");
+  await f.service.tick();
+  await f.planEntered.promise;
+  f.failNextIngressLease();
+  await f.service.tick();
+  assert.equal(f.planSignal()?.aborted, false);
+  assert.deepEqual(f.service.status().lastFailure, { stage: "ingress_lease", code: "unknown" });
+  f.plan.resolve({ ok: true, kind: "direct", language: "uk", answer: "Роботу завершено після відновлення опитування." });
+  await waitForJob(f, "completed");
+  assert.equal(f.planCalls(), 1);
+});
+
+test("a recycled leadership connection is reacquired without cancelling active provider work", async t => {
+  const f = await fixture();
+  t.after(async () => { f.plan.resolve({ ok: false, code: "runtime_unavailable" }); await f.service.stop(); });
+  f.enqueue("Порівняйте стратегічні й фінансові компроміси.");
+  await f.service.tick();
+  await f.planEntered.promise;
+  f.failNextLeadershipCheck();
+  await f.service.tick();
+  assert.equal(f.planSignal()?.aborted, false);
+  f.plan.resolve({ ok: true, kind: "direct", language: "uk", answer: "Рішення завершено після відновлення лідерства." });
   await waitForJob(f, "completed");
   assert.equal(f.planCalls(), 1);
 });
