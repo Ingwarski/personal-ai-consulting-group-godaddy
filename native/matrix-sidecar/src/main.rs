@@ -31,6 +31,17 @@ struct Runtime {
     identity: ReadyIdentity,
 }
 
+struct RuntimeParts {
+    spool: PrivateSpool,
+    matrix: MatrixClient,
+    sync_task: tokio::task::JoinHandle<()>,
+    cleanup_task: tokio::task::JoinHandle<()>,
+    journal: PendingJournal,
+    output_rx: tokio::sync::mpsc::Receiver<MatrixOutput>,
+    readiness: Readiness,
+    identity: ReadyIdentity,
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum ProtocolPhase {
     AwaitingHello,
@@ -275,6 +286,9 @@ async fn run() -> Result<(), ()> {
                     error: None,
                 };
                 write_frame(&mut output, &response).await.map_err(|_| ())?;
+                if let Some(mut active) = runtime.take() {
+                    active.shutdown().await;
+                }
                 telemetry::emit(telemetry::SafeEvent::Shutdown);
                 break;
             }
@@ -316,7 +330,8 @@ async fn handle_request(
             }
             let config = Config::from_env(provision_fresh, application_root)
                 .map_err(|_| PublicError::StoreQuarantined)?;
-            let open_store = store::open(&config).await.map_err(public_store_error)?;
+            let mut open_store = store::open(&config).await.map_err(public_store_error)?;
+            let initialized = async {
             let spool =
                 PrivateSpool::create(&config.spool_parent).map_err(|_| PublicError::MediaDenied)?;
             let matrix = MatrixClient::new(
@@ -547,8 +562,7 @@ async fn handle_request(
                     }
                 }
             });
-            *runtime = Some(Runtime {
-                _store: open_store,
+            Ok::<_, PublicError>(RuntimeParts {
                 spool,
                 matrix,
                 sync_task,
@@ -561,6 +575,26 @@ async fn handle_request(
                     Readiness::Ready
                 },
                 identity,
+            })
+            }
+            .await;
+            let parts = match initialized {
+                Ok(parts) => parts,
+                Err(error) => {
+                    open_store.shutdown().await.map_err(public_store_error)?;
+                    return Err(error);
+                }
+            };
+            *runtime = Some(Runtime {
+                _store: open_store,
+                spool: parts.spool,
+                matrix: parts.matrix,
+                sync_task: parts.sync_task,
+                cleanup_task: parts.cleanup_task,
+                journal: parts.journal,
+                output_rx: parts.output_rx,
+                readiness: parts.readiness,
+                identity: parts.identity,
             });
             telemetry::emit(telemetry::SafeEvent::Ready);
             Ok(ResponseBody::Initialized)
@@ -686,6 +720,14 @@ impl Drop for Runtime {
     fn drop(&mut self) {
         self.sync_task.abort();
         self.cleanup_task.abort();
+    }
+}
+
+impl Runtime {
+    async fn shutdown(&mut self) {
+        self.sync_task.abort();
+        self.cleanup_task.abort();
+        let _ = self._store.shutdown().await;
     }
 }
 

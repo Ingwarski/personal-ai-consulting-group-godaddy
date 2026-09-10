@@ -123,7 +123,7 @@ pub struct OpenStore {
 }
 
 struct DatabaseLease {
-    task: tokio::task::JoinHandle<()>,
+    task: Option<tokio::task::JoinHandle<()>>,
     backend: Arc<Backend>,
 }
 impl DatabaseLease {
@@ -138,17 +138,42 @@ impl DatabaseLease {
                 }
             }
         });
-        Self { task, backend }
+        Self {
+            task: Some(task),
+            backend,
+        }
+    }
+
+    async fn shutdown(&mut self) -> Result<(), StoreError> {
+        if let Some(task) = self.task.take() {
+            task.abort();
+            let _ = task.await;
+        }
+        self.backend.close().await.map_err(mysql_error)
     }
 }
 impl Drop for DatabaseLease {
     fn drop(&mut self) {
-        self.task.abort();
-        let backend = self.backend.clone();
-        if let Ok(runtime) = tokio::runtime::Handle::try_current() {
-            runtime.spawn(async move {
-                let _ = backend.close().await;
-            });
+        if let Some(task) = self.task.take() {
+            task.abort();
+            let backend = self.backend.clone();
+            if let Ok(runtime) = tokio::runtime::Handle::try_current() {
+                runtime.spawn(async move {
+                    let _ = backend.close().await;
+                });
+            }
+        }
+    }
+}
+
+impl OpenStore {
+    /// Release the database writer lease before a failed initialization exits.
+    /// Drop remains a best-effort fallback for unexpected process teardown.
+    pub async fn shutdown(&mut self) -> Result<(), StoreError> {
+        if let Some(mut lease) = self._lease.take() {
+            lease.shutdown().await
+        } else {
+            Ok(())
         }
     }
 }
@@ -211,130 +236,146 @@ async fn open_mysql(config: &Config, setup_preflight: bool) -> Result<OpenStore,
     };
     pool.close().await;
     let backend = Arc::new(opened.map_err(mysql_error)?);
-    let lease = DatabaseLease::start(backend.clone());
-    // A partially imported namespace is never a runnable store.
-    if !config.provision_fresh
-        && backend
-            .get("app.meta", b"activation")
-            .await
-            .map_err(mysql_error)?
-            .as_deref()
-            != Some(b"ready")
-    {
-        return Err(StoreError::Quarantined);
-    }
-    let binding: Option<DeviceBinding> = if config.provision_fresh {
-        None
-    } else {
-        Some(
-            serde_json::from_slice(
-                &backend
-                    .get("app.meta", b"device-binding")
-                    .await
-                    .map_err(mysql_error)?
-                    .ok_or(StoreError::Quarantined)?,
+    let mut lease = DatabaseLease::start(backend.clone());
+    let initialized = async {
+        // A partially imported namespace is never a runnable store.
+        if !config.provision_fresh
+            && backend
+                .get("app.meta", b"activation")
+                .await
+                .map_err(mysql_error)?
+                .as_deref()
+                != Some(b"ready")
+        {
+            return Err(StoreError::Quarantined);
+        }
+        let binding: Option<DeviceBinding> = if config.provision_fresh {
+            None
+        } else {
+            Some(
+                serde_json::from_slice(
+                    &backend
+                        .get("app.meta", b"device-binding")
+                        .await
+                        .map_err(mysql_error)?
+                        .ok_or(StoreError::Quarantined)?,
+                )
+                .map_err(|_| StoreError::Quarantined)?,
             )
-            .map_err(|_| StoreError::Quarantined)?,
-        )
-    };
-    if binding
-        .as_ref()
-        .is_some_and(|b| b.device_id != config.bot_device_id)
-    {
-        return Err(StoreError::Quarantined);
-    }
-    let crypto = MySqlCryptoStore::new(backend.clone());
-    if let Some(binding) = &binding {
-        let account = crypto
-            .load_account()
-            .await
-            .map_err(mysql_error)?
-            .ok_or(StoreError::Quarantined)?;
-        if account.user_id().as_str() != config.bot_mxid
-            || account.device_id().as_str() != config.bot_device_id
-        {
-            return Err(StoreError::Quarantined);
-        }
-        let fingerprint = hex::encode(Sha256::digest(
-            account.identity_keys().ed25519.to_base64().as_bytes(),
-        ));
-        validate_bound_identity(binding, Some(&fingerprint))?;
-        if setup_preflight {
-            crate::setup::verify_session_binding_with_identity(config, Some(&fingerprint)).await?;
-        }
-    }
-    let checkpoint = if config.provision_fresh {
-        crate::durable_checkpoint::DurableCheckpoint::initialize_mysql(backend.clone(), None, None)
-            .await
-    } else {
-        crate::durable_checkpoint::DurableCheckpoint::open_mysql(backend.clone()).await
-    }
-    .map_err(checkpoint_error)?;
-    let http_client = reqwest::Client::builder()
-        .https_only(true)
-        .no_proxy()
-        .redirect(reqwest::redirect::Policy::none())
-        .build()
-        .map_err(|_| StoreError::Open)?;
-    let stores = matrix_sdk::config::StoreConfig::new(
-        matrix_sdk_common::cross_process_lock::CrossProcessLockConfig::SingleProcess,
-    )
-    .crypto_store(crypto)
-    .state_store(MySqlStateStore::new(backend.clone()));
-    // The backend fence governs the single writer; disposable SDK caches use
-    // StoreConfig's memory implementations, not another private SQLite file.
-    let client = private_client_builder()
-        .homeserver_url(config.homeserver.as_url().as_str())
-        .http_client(http_client.clone())
-        .respect_login_well_known(false)
-        .store_config(stores)
-        .build()
-        .await
-        .map_err(|_| StoreError::Open)?;
-    client
-        .restore_session(MatrixSession {
-            meta: SessionMeta {
-                user_id: config
-                    .bot_mxid
-                    .parse()
-                    .map_err(|_| StoreError::Quarantined)?,
-                device_id: config.bot_device_id.clone().into(),
-            },
-            tokens: SessionTokens {
-                access_token: config.access_token.to_string(),
-                refresh_token: None,
-            },
-        })
-        .await
-        .map_err(restore_mysql_session_error)?;
-    let binding = if config.provision_fresh {
-        let account = MySqlCryptoStore::new(backend.clone())
-            .load_account()
-            .await
-            .map_err(mysql_error)?
-            .ok_or(StoreError::Quarantined)?;
-        if account.user_id().as_str() != config.bot_mxid
-            || account.device_id().as_str() != config.bot_device_id
-        {
-            return Err(StoreError::Quarantined);
-        }
-        let fingerprint: [u8; 32] =
-            Sha256::digest(account.identity_keys().ed25519.to_base64().as_bytes()).into();
-        let binding = DeviceBinding {
-            device_id: config.bot_device_id.clone(),
-            store_fingerprint: hex::encode(fingerprint),
         };
-        backend
-            .activate_candidate(
-                &serde_json::to_vec(&binding).map_err(|_| StoreError::Quarantined)?,
-                fingerprint,
-                br#"{"version":1,"operation":"explicit-fresh-device"}"#,
+        if binding
+            .as_ref()
+            .is_some_and(|b| b.device_id != config.bot_device_id)
+        {
+            return Err(StoreError::Quarantined);
+        }
+        let crypto = MySqlCryptoStore::new(backend.clone());
+        if let Some(binding) = &binding {
+            let account = crypto
+                .load_account()
+                .await
+                .map_err(mysql_error)?
+                .ok_or(StoreError::Quarantined)?;
+            if account.user_id().as_str() != config.bot_mxid
+                || account.device_id().as_str() != config.bot_device_id
+            {
+                return Err(StoreError::Quarantined);
+            }
+            let fingerprint = hex::encode(Sha256::digest(
+                account.identity_keys().ed25519.to_base64().as_bytes(),
+            ));
+            validate_bound_identity(binding, Some(&fingerprint))?;
+            if setup_preflight {
+                crate::setup::verify_session_binding_with_identity(config, Some(&fingerprint))
+                    .await?;
+            }
+        }
+        let checkpoint = if config.provision_fresh {
+            crate::durable_checkpoint::DurableCheckpoint::initialize_mysql(
+                backend.clone(),
+                None,
+                None,
             )
             .await
-            .map_err(mysql_error)?;
-        Some(binding)
-    } else {
-        binding
+        } else {
+            crate::durable_checkpoint::DurableCheckpoint::open_mysql(backend.clone()).await
+        }
+        .map_err(checkpoint_error)?;
+        let http_client = reqwest::Client::builder()
+            .https_only(true)
+            .no_proxy()
+            .redirect(reqwest::redirect::Policy::none())
+            .build()
+            .map_err(|_| StoreError::Open)?;
+        let stores = matrix_sdk::config::StoreConfig::new(
+            matrix_sdk_common::cross_process_lock::CrossProcessLockConfig::SingleProcess,
+        )
+        .crypto_store(crypto)
+        .state_store(MySqlStateStore::new(backend.clone()));
+        // The backend fence governs the single writer; disposable SDK caches use
+        // StoreConfig's memory implementations, not another private SQLite file.
+        let client = private_client_builder()
+            .homeserver_url(config.homeserver.as_url().as_str())
+            .http_client(http_client.clone())
+            .respect_login_well_known(false)
+            .store_config(stores)
+            .build()
+            .await
+            .map_err(|_| StoreError::Open)?;
+        client
+            .restore_session(MatrixSession {
+                meta: SessionMeta {
+                    user_id: config
+                        .bot_mxid
+                        .parse()
+                        .map_err(|_| StoreError::Quarantined)?,
+                    device_id: config.bot_device_id.clone().into(),
+                },
+                tokens: SessionTokens {
+                    access_token: config.access_token.to_string(),
+                    refresh_token: None,
+                },
+            })
+            .await
+            .map_err(restore_mysql_session_error)?;
+        let binding = if config.provision_fresh {
+            let account = MySqlCryptoStore::new(backend.clone())
+                .load_account()
+                .await
+                .map_err(mysql_error)?
+                .ok_or(StoreError::Quarantined)?;
+            if account.user_id().as_str() != config.bot_mxid
+                || account.device_id().as_str() != config.bot_device_id
+            {
+                return Err(StoreError::Quarantined);
+            }
+            let fingerprint: [u8; 32] =
+                Sha256::digest(account.identity_keys().ed25519.to_base64().as_bytes()).into();
+            let binding = DeviceBinding {
+                device_id: config.bot_device_id.clone(),
+                store_fingerprint: hex::encode(fingerprint),
+            };
+            backend
+                .activate_candidate(
+                    &serde_json::to_vec(&binding).map_err(|_| StoreError::Quarantined)?,
+                    fingerprint,
+                    br#"{"version":1,"operation":"explicit-fresh-device"}"#,
+                )
+                .await
+                .map_err(mysql_error)?;
+            Some(binding)
+        } else {
+            binding
+        };
+        Ok::<_, StoreError>((client, http_client, binding, checkpoint))
+    }
+    .await;
+    let (client, http_client, binding, checkpoint) = match initialized {
+        Ok(initialized) => initialized,
+        Err(error) => {
+            lease.shutdown().await?;
+            return Err(error);
+        }
     };
     Ok(OpenStore {
         client,

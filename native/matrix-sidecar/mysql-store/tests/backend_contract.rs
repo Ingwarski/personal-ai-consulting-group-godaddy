@@ -164,6 +164,26 @@ async fn verified_deployment_takeover_fences_predecessor_but_not_same_release_pe
 
 #[tokio::test]
 #[ignore = "requires isolated MySQL"]
+async fn same_release_reopens_immediately_after_explicit_close() {
+    let pool = pool().await;
+    let id = *uuid::Uuid::new_v4().as_bytes();
+    Backend::provision(&pool, id, IDENTITY, &KEY).await.unwrap();
+    let generation = [3; 16];
+    let first = Backend::open_for_deployment(pool.clone(), id, IDENTITY, &KEY, 30_000, generation)
+        .await
+        .unwrap();
+
+    first.close().await.unwrap();
+
+    let retry = Backend::open_for_deployment(pool.clone(), id, IDENTITY, &KEY, 30_000, generation)
+        .await
+        .unwrap();
+    retry.release().await.unwrap();
+    pool.close().await;
+}
+
+#[tokio::test]
+#[ignore = "requires isolated MySQL"]
 async fn stale_owner_cannot_write_renew_or_release_successor() {
     let (pool, id, first) = fresh(100).await;
     tokio::time::sleep(Duration::from_millis(250)).await;
