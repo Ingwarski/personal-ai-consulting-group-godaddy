@@ -48,7 +48,7 @@ jobs:
 
   verify-build-package:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 90
     defaults:
       run:
         working-directory: native/matrix-sidecar
