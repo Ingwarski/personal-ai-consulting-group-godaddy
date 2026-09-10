@@ -378,9 +378,19 @@ export function createMatrixConsultationService(input: Readonly<{
         const confirmedReplySession = relation === undefined || isControl ? undefined : await input.resolveReplySession?.(relation);
         pending = planInput(prior, lease, confirmedReplySession);
         diagnosticStage = "input_resume_probe";
+        let resumableFinalization = false;
         if (parseConsultationControl(text) === "continue" && lease.workIntent.media.length === 0 && pending.revisionGeneration !== undefined
-          && pending.job !== null && pending.job.documents.length === 0 && input.executor.resumeFinalization !== undefined
-          && await input.executor.canResumeFinalization?.(pending.revisionGeneration)) {
+          && pending.job !== null && pending.job.documents.length === 0 && input.executor.resumeFinalization !== undefined) {
+          try {
+            resumableFinalization = await input.executor.canResumeFinalization?.(pending.revisionGeneration) === true;
+          } catch {
+            // This is only a reuse optimization. If its read cannot prove a
+            // complete final-only checkpoint, continue through the normal
+            // atomic revision path; that path retains every authority fence.
+            resumableFinalization = false;
+          }
+        }
+        if (resumableFinalization && pending.job !== null) {
           // Do not mint a new generation or substitute its Critic. Reuse only
           // the complete verified review in this exact still-active session.
           delete pending.revisionGeneration;

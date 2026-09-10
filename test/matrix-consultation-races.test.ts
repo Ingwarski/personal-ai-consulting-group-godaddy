@@ -73,6 +73,8 @@ async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort
   let translate: GoDaddyConsiliumRuntime["translateServiceMessages"] | undefined;
   let translationCalls = 0;
   let run: GoDaddyConsiliumRuntime["run"] = async () => { throw new Error("Unexpected consilium execution."); };
+  let canResumeFinalization: NonNullable<GoDaddyConsiliumRuntime["canResumeFinalization"]> = async () => false;
+  let resumeFinalization: NonNullable<GoDaddyConsiliumRuntime["resumeFinalization"]> = async () => { throw new Error("Unexpected final-only recovery."); };
   const replySessions = new Map<string, string>();
   let signal: AbortSignal | undefined;
   const service = createMatrixConsultationService({
@@ -87,7 +89,9 @@ async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort
     executor: {
       async plan(request) { planCalls += 1; requests.push(request); signal = request.signal; planEntered.resolve(); return runPlan(request); },
       async translateServiceMessages(request) { translationCalls++; return translate?.(request) ?? { ok: false, code: "translation_failed" as const }; },
-      async run(request) { return run(request); }
+      async run(request) { return run(request); },
+      async canResumeFinalization(generation) { return canResumeFinalization(generation); },
+      async resumeFinalization(request) { return resumeFinalization(request); }
     },
     async prepareSnapshot() { snapshotCalls += 1; prepareEntered.resolve(); await prepareGate; return snapshot.value; },
     async afterConfirmed() { if (noticeGate !== undefined) { noticeEntered.resolve(); await noticeGate; } },
@@ -113,6 +117,8 @@ async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort
     usePlan(handler: typeof runPlan) { runPlan = handler; },
     useTranslation(handler: NonNullable<typeof translate>) { translate = handler; },
     useRun(handler: typeof run) { run = handler; },
+    useFinalizationProbe(handler: typeof canResumeFinalization) { canResumeFinalization = handler; },
+    useFinalizationRecovery(handler: typeof resumeFinalization) { resumeFinalization = handler; },
     translationCalls: () => translationCalls,
     setReplySession(eventId: string, sessionId: string) { replySessions.set(eventId, sessionId); },
     holdPrepare(gate: Promise<void>) { prepareGate = gate; },
@@ -510,6 +516,23 @@ test("uncertain running checkpoint never auto-relaunches; explicit continuation 
   assert.equal(resumed.startedAt, original.startedAt);
   assert.deepEqual(resumed.settingsSnapshot, original.settingsSnapshot);
   assert.equal((await f.state())?.job?.status, "completed");
+});
+
+test("a failed final-only reuse probe falls back to the fenced full continuation instead of blocking ingress", async t => {
+  const f = await fixture();
+  t.after(() => f.service.stop());
+  const original = await seedUncertainRun(f);
+  f.useFinalizationProbe(async () => { throw new Error("simulated unreadable optional checkpoint"); });
+  f.usePlan(async () => ({ ok: true, kind: "direct", answer: "Recovered through the normal continuation path." }));
+  await f.service.tick();
+  f.enqueue("Продовжити");
+  await f.service.tick();
+  await waitForJob(f, "completed");
+  assert.equal(f.service.status().blocked, false);
+  assert.equal(f.planCalls(), 1);
+  const resumed = await f.registrar.getActiveSession();
+  assert.equal(resumed?.generation, original.generation + 1);
+  assert.equal(resumed?.previousGeneration, original.generation);
 });
 
 test("answering a head clarification keeps the logical session, original settings and full question context", async t => {
