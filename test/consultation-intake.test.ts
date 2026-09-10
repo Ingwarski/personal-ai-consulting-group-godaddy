@@ -4,7 +4,7 @@ import { parseConsultationIntake, consultationIntakeSchema } from "../src/runtim
 import { CONSULTANT_ROLES, CONSULTATION_SPECIALISTS, assignConsultantColourSlots, PERSONAL_SPECIALIST_SAFETY_PROMPT } from "../src/consilium/consultant-roles.ts";
 import { canonicalSessionLanguage, explicitSessionLanguage, initialLanguageHint, ownerLanguageSource, sessionLanguageInstruction } from "../src/consilium/language.ts";
 
-const direct = { kind: "direct", answer: "Валовий прибуток — виручка мінус собівартість продажів.", specialists: [], extractedEvidence: "", independentReviewRequested: false, language: "uk", safety: "ordinary", assignments: [] };
+const direct = { kind: "direct", answer: "Валовий прибуток — виручка мінус собівартість продажів.", recommendedAnswer: "", specialists: [], extractedEvidence: "", independentReviewRequested: false, language: "uk", safety: "ordinary", assignments: [] };
 const assignment = (agentId: string) => ({ agentId, question: agentId === "strategy" ? "Which market should we test first?" : "What financial downside can we afford?",
   expectedOutcome: agentId === "strategy" ? "A prioritised market test with success criteria." : "A cash runway scenario and spending ceiling.", facts: [], constraints: ["No external actions."], dependencies: [] as string[] });
 const consilium = { ...direct, kind: "consilium", answer: "", specialists: ["strategy", "finance"], assignments: [assignment("strategy"), assignment("finance")] };
@@ -42,13 +42,15 @@ test("image consilium requires factual extraction and text-only input cannot fab
 });
 
 test("clarification is a distinct bounded question outcome, never a completed direct answer", () => {
-  const question = { ...direct, kind: "clarification", answer: "Який бюджет доступний для цієї перевірки?" };
-  assert.deepEqual(parseConsultationIntake(JSON.stringify(question), 2), { ok: true, kind: "clarification", answer: question.answer, language: "uk" });
+  const question = { ...direct, kind: "clarification", answer: "Який бюджет доступний для цієї перевірки?", recommendedAnswer: "Використати суму, яку можна втратити без шкоди для поточних зобов’язань." };
+  assert.deepEqual(parseConsultationIntake(JSON.stringify(question), 2), { ok: true, kind: "clarification", answer: question.answer, recommendedAnswer: question.recommendedAnswer, language: "uk" });
   assert.deepEqual(parseConsultationIntake(JSON.stringify({ ...question, answer: "ї".repeat(501) }), 2), { ok: false, code: "intake_output_invalid" });
   assert.deepEqual(parseConsultationIntake(JSON.stringify({ ...question, specialists: ["finance"] }), 2), { ok: false, code: "intake_output_invalid" });
   assert.deepEqual(parseConsultationIntake(JSON.stringify({ ...question, answer: "" }), 2), { ok: false, code: "intake_output_invalid" });
   assert.deepEqual(parseConsultationIntake(JSON.stringify({ ...question, answer: "This is not a question." }), 2), { ok: false, code: "intake_output_invalid" });
   assert.deepEqual(parseConsultationIntake(JSON.stringify({ ...question, answer: "Бюджет? Строк?" }), 2), { ok: false, code: "intake_output_invalid" });
+  assert.deepEqual(parseConsultationIntake(JSON.stringify({ ...question, recommendedAnswer: "" }), 2), { ok: false, code: "intake_output_invalid" });
+  assert.deepEqual(parseConsultationIntake(JSON.stringify({ ...question, recommendedAnswer: "Може, 1000?" }), 2), { ok: false, code: "intake_output_invalid" });
 });
 
 test("an explicit independent review cannot be downgraded to a direct final answer", () => {
@@ -60,9 +62,9 @@ test("an explicit independent review cannot be downgraded to a direct final answ
   assert.deepEqual(parseConsultationIntake(JSON.stringify(legacy), 2), { ok: false, code: "intake_output_invalid" });
   const result = parseConsultationIntake(JSON.stringify({ ...consilium, independentReviewRequested: true }), 2);
   assert.equal(result.ok && result.kind === "consilium" && result.critic.agentId === "critic", true);
-  const clarification = { ...direct, kind: "clarification", answer: "Який строк для незалежної перевірки?", independentReviewRequested: true };
+  const clarification = { ...direct, kind: "clarification", answer: "Який строк для незалежної перевірки?", recommendedAnswer: "До кінця цього тижня.", independentReviewRequested: true };
   assert.deepEqual(parseConsultationIntake(JSON.stringify(clarification), 2),
-    { ok: true, kind: "clarification", answer: clarification.answer, language: "uk" });
+    { ok: true, kind: "clarification", answer: clarification.answer, recommendedAnswer: clarification.recommendedAnswer, language: "uk" });
   const schema = consultationIntakeSchema(2) as { required: string[]; properties: Record<string, { type: string }> };
   assert.equal(schema.required.includes("independentReviewRequested"), true);
   assert.equal(schema.properties.independentReviewRequested?.type, "boolean");
@@ -111,10 +113,23 @@ test("language is explicit metadata, ambiguous input clarifies, and retained lan
     assert.deepEqual(parseConsultationIntake(JSON.stringify({ ...direct, language }), 2), { ok: false, code: "intake_output_invalid" });
   }
   assert.deepEqual(parseConsultationIntake(JSON.stringify({ ...direct, kind: "clarification", language: "", answer: "Which language would you like?" }), 2),
-    { ok: true, kind: "clarification", language: null, answer: "Which language would you like?" });
+    { ok: true, kind: "clarification", language: null, answer: "Which language would you like?", recommendedAnswer: "" });
   assert.deepEqual(parseConsultationIntake(JSON.stringify({ ...direct, language: "uk" }), 2, false, "es"), { ok: false, code: "intake_output_invalid" });
   assert.equal(canonicalSessionLanguage("pt-br"), "pt-BR");
   assert.equal(canonicalSessionLanguage("system_override"), undefined);
+});
+
+test("brief intake requires one recommended question when requested, then enforces the five-question cap", () => {
+  const question = { ...direct, kind: "clarification", answer: "Який результат буде достатнім?", recommendedAnswer: "Один перевірений наступний крок протягом 72 годин." };
+  const requested = { requested: true, questionsAsked: 0, skipRemaining: false };
+  assert.equal(parseConsultationIntake(JSON.stringify(question), 2, false, "uk", requested).ok, true);
+  assert.deepEqual(parseConsultationIntake(JSON.stringify(direct), 2, false, "uk", requested), { ok: false, code: "intake_output_invalid" });
+  assert.deepEqual(parseConsultationIntake(JSON.stringify(consilium), 2, false, "uk", requested), { ok: false, code: "intake_output_invalid" });
+  for (const policy of [{ requested: true, questionsAsked: 5, skipRemaining: false }, { requested: true, questionsAsked: 2, skipRemaining: true }]) {
+    assert.deepEqual(parseConsultationIntake(JSON.stringify(question), 2, false, "uk", policy), { ok: false, code: "intake_output_invalid" });
+    const schema = consultationIntakeSchema(2, policy) as { properties: { kind: { enum: string[] } } };
+    assert.equal(schema.properties.kind.enum.includes("clarification"), false);
+  }
 });
 
 test("explicit language detection ignores quotes, code and ordinary mentions, not the current task language", () => {

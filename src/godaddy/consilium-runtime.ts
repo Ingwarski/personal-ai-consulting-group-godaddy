@@ -12,6 +12,7 @@ import { canonicalSessionLanguage } from "../consilium/language.ts";
 import { isSessionId } from "../identity/ids.ts";
 import { translateServiceMessages } from "../runtime/service-message-translator.ts";
 import { extractContinuationImageEvidence } from "../runtime/consultation-image-evidence.ts";
+import type { BriefIntakePolicy } from "../consilium/brief-intake.ts";
 
 export type GoDaddyConsiliumRequest = Readonly<{
   sessionGeneration: number;
@@ -30,7 +31,10 @@ export type GoDaddyConsiliumResult = PreparedConsiliumExecutionResult | Readonly
   code: "runtime_unavailable" | "session_unavailable" | "session_busy" | "invalid_task" | "catalog_unavailable" | "prepare_failed" | "speed_policy_unresolved";
   detail?: string;
 }>;
-export type GoDaddyConsultationPlanRequest = Pick<GoDaddyConsiliumRequest, "sessionGeneration" | "task" | "signal" | "language" | "taskId"> & Readonly<{ images?: readonly CodexTurnImage[] }>;
+export type GoDaddyConsultationPlanRequest = Pick<GoDaddyConsiliumRequest, "sessionGeneration" | "task" | "signal" | "language" | "taskId"> & Readonly<{
+  images?: readonly CodexTurnImage[];
+  briefIntake?: BriefIntakePolicy;
+}>;
 export type GoDaddyConsultationPlanResult = ConsultationIntakeResult | Exclude<GoDaddyConsiliumResult, { ok: true }>;
 type ServiceTranslationResult = Awaited<ReturnType<typeof translateServiceMessages>>;
 type RuntimeOperationResult = GoDaddyConsiliumResult | GoDaddyConsultationPlanResult | ServiceTranslationResult;
@@ -132,6 +136,7 @@ export function createGoDaddyConsiliumRuntime(input: Readonly<{
     return planConsultation({ task: request.task, snapshot, capabilityReceipt: receipt, codex,
       ...(request.language === undefined ? {} : { language: request.language }),
       ...(request.images === undefined ? {} : { images: request.images }),
+      ...(request.briefIntake === undefined ? {} : { briefIntake: request.briefIntake }),
       environment: input.environment, now: input.now(), maximumSpecialists: 2 + policy.maxOptionalSpecialists.value, signal });
   };
 

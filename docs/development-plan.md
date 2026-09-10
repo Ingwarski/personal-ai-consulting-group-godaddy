@@ -1,5 +1,9 @@
 # План розробки
 
+## PI-BRIEF-INTAKE-20260910 — U-05/U-08 correction
+
+Implement `FR-053.a–c` without a new unit: U-05 persists the bounded intake record through clarification revisions; U-08 owns explicit/automatic one-question planning, recommendation schema, five-question/skip gates and the pre-digest candidate style validator; U-06 only renders the confirmed multiline question/recommendation and already-validated candidate; U-09 verifies restart and real Matrix behavior. Completion evidence: parser/schema negatives at 0/5/skip, durable default acceptance and preserved logical session, one format-only retry with only the replacement emitted, full regression suite, then Published `Grill me:` and ordinary-task checks. Do not claim ChatGPT Chat as a server runtime: the Head remains the configured Codex subscription runtime unless a separately supported provider integration is designed and authorized.
+
 ## U-06-C1 — Durable Matrix storage and unattended operation
 
 **Source and scope:** PI-MATRIX-MYSQL-20260908, architecture AD-26, corresponding DoD/QA corrections; `JOB-001`, `JOB-003`, `JOB-004`; `UC-001`, `UC-002`, `UC-003`, `UC-005`; `FR-052.a`, `FR-052.b`, `FR-052.c`, `FR-052.d`; `NFR-005`, `NFR-006`, `NFR-007`, `NFR-008`, `NFR-009`, `NFR-010`, `NFR-012`, `NFR-019`. This is one integration correction unit with internal milestones, before advancing beyond unresolved Matrix continuity. U-06's SQLite-only/OS-lock-only/no-Rust-MySQL work items are superseded for the new backend by AD-26; nonconflicting transport, protocol, policy, build and delivery work remains. No Product V1 or prior unit completion is inferred.

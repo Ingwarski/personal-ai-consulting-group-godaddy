@@ -13,10 +13,11 @@ const review: ConsiliumRuntimeInput = {
   consensus: { dispatchId: "review-0001", affectedSpecialistIds: ["finance"], proposalDigest: digest }
 };
 
-function codexStub(body: string) {
+function codexStub(body: string | readonly string[]) {
   const calls: Parameters<CodexAppServerThreadClient["runTextTurn"]>[0][] = [];
   const client = { runTextTurn: async (input: Parameters<CodexAppServerThreadClient["runTextTurn"]>[0]) => {
-    calls.push(input); return { ok: true, body, turnId: "provider-turn-0001" };
+    calls.push(input); const current = Array.isArray(body) ? body[Math.min(calls.length - 1, body.length - 1)]! : body;
+    return { ok: true, body: current, turnId: `provider-turn-${String(calls.length).padStart(4, "0")}` };
   } } as unknown as CodexAppServerThreadClient;
   return { client, calls };
 }
@@ -53,6 +54,20 @@ test("Head creates the candidate as a separately completed body, not an assumed 
   assert.equal(emitted[0]!.body, "Propuesta pendiente de revisión.");
   assert.equal(emitted[0]!.decision, undefined);
   assert.equal(emitted[0]!.proposalDigest, undefined);
+});
+
+test("Head replaces a second-person action-label draft once before any review sees it", async () => {
+  const rejected = JSON.stringify({ body: "Decision.\n\n- You — next 3 minutes: compare the options.\n- You — afterward: start the better one.", safety: "ordinary" });
+  const accepted = JSON.stringify({ body: "Decision.\n\n- Next 3 minutes: compare the options.\n- Immediately afterward: start the better one.", safety: "ordinary" });
+  const f = codexStub([rejected, accepted]);
+  const runtime = new CodexHeadThreadRuntime({ registration: { agentId: "head", role: "Head Consultant", provider: "codex", runtimeSessionRef: "head-thread" },
+    lease: { threadId: "head-thread", modelId: "head-model" }, threadClient: f.client, reasoningEffort: "high" });
+  const emitted: RuntimeEmission[] = [];
+  await runtime.run({ ...review, phase: "proposal", consensus: { dispatchId: "proposal-repair", affectedSpecialistIds: ["finance"] } }, async message => { emitted.push(message); });
+  assert.equal(f.calls.length, 2);
+  assert.match(f.calls[1]!.body, /failed the owner-facing action-label format/u);
+  assert.equal(emitted.length, 1);
+  assert.equal(emitted[0]!.body, JSON.parse(accepted).body);
 });
 
 test("a stale or unstructured Codex vote emits no message and cannot become consensus", async () => {

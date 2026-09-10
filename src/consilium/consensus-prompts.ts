@@ -36,13 +36,17 @@ export function consensusPrompt(role: string, input: ConsiliumRuntimeInput): str
       input.phase === "critique" ? "Act as a constructive Critic for the specified specialist. Help refine useful advice. Do not invent objections just to argue; agree promptly when the recommendation is sound. Critique directed to Head Consultant still counts against affected specialists. Do not silently broaden this review to additional specialists." :
         "Give your own explicit judgment of the complete proposal. Do not merely acknowledge receipt. If revising, explain the concrete change without assuming that any other participant agreed."
     ].join("\n") : input.phase === "proposal" ?
-      "Return JSON containing body and safety: a complete candidate recommendation written only as the proposed answer to the owner, in the session language. Synthesize current positions and all unresolved review issues. Include one practical decision, up to three actions with owner/time/evidence, key risk or assumption and a review condition. Do not address the specialist reviewers inside body: the Matrix presentation separately names them. Avoid ambiguous numbered phrases such as `You, first...`; make action labels and timing self-explanatory. Do not call it consensus yet. This exact candidate will be reviewed and, only if everyone explicitly agrees, published without a final rewrite." :
+      "Return JSON containing body and safety: a complete candidate recommendation written only as the proposed answer to the owner, in the session language. Synthesize current positions and all unresolved review issues. Include one practical decision, up to three actions with owner/time/evidence, key risk or assumption and a review condition. Do not address the specialist reviewers inside body: the Matrix presentation separately names them. The owner is implicit: every action item must begin with a timing or action phrase and must not begin with a second-person pronoun such as You, Ти, Ви, Ты, Вы, Tú, Usted, Tu, Vous, Du, Sie, Ty or Wy. Do not repeat an owner label on every action. Do not call it consensus yet. This exact candidate will be reviewed and, only if everyone explicitly agrees, published without a final rewrite." :
       "Return JSON containing body and safety: your full specialist position. For a revision, address the specific critique by improving your advice or explaining a reasoned disagreement; never pretend the issue is resolved. Do not include raw protocol fields or technical IDs."
   ].join("\n\n");
 }
 
 /** Strict protocol parsing: words such as 'agree' in prose are never a vote. */
-export function parseConsensusOutput(body: string, input: ConsiliumRuntimeInput): Pick<RuntimeEmission, "body" | "decision" | "proposalDigest" | "safetyHandoff"> | undefined {
+export function hasSecondPersonActionLabel(body: string): boolean {
+  return /^\s*(?:(?:[-*+•]|\d{1,2}[.)])\s+)?(?:\*{1,2}|_{1,2})?(?:you|ти|ви|ты|вы|tú|usted(?:es)?|tu|vous|du|sie|ty|wy|pan|pani)(?:\*{1,2}|_{1,2})?\s*(?:—|–|-|:|,)/imu.test(body);
+}
+
+export function parseConsensusOutput(body: string, input: ConsiliumRuntimeInput, options?: Readonly<{ allowSecondPersonActionLabels?: boolean }>): Pick<RuntimeEmission, "body" | "decision" | "proposalDigest" | "safetyHandoff"> | undefined {
   let value: unknown;
   try { value = JSON.parse(body); } catch { return undefined; }
   if (typeof value !== "object" || value === null || Array.isArray(value)) return undefined;
@@ -52,6 +56,7 @@ export function parseConsensusOutput(body: string, input: ConsiliumRuntimeInput)
   const keys = review ? ["body", "decision", "proposalDigest", "safety"] : ["body", "safety"];
   if (Object.keys(data).length !== keys.length || Object.keys(data).some(key => !keys.includes(key))) return undefined;
   if (data.safety !== "ordinary" && data.safety !== "crisis_handoff") return undefined;
+  if (input.phase === "proposal" && data.safety === "ordinary" && !options?.allowSecondPersonActionLabels && hasSecondPersonActionLabel(data.body)) return undefined;
   const safety = data.safety === "crisis_handoff" ? { safetyHandoff: true as const } : {};
   if (!review) return { body: data.body, ...safety };
   if (!["agree", "revise", "unresolved"].includes(String(data.decision)) ||

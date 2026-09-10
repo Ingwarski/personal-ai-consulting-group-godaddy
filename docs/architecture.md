@@ -1,5 +1,11 @@
 # Архітектура Personal Consultant
 
+## AD-27 — Durable bounded Head intake and owner-facing candidate style
+
+Current implementation correction for `PI-BRIEF-INTAKE-20260910` / `FR-053`. The existing Matrix worker job owns a bounded `briefIntake` record: explicit-request flag, skip flag and at most five `{question, recommendedAnswer, answer, usedRecommendation}` rounds. The confirmed Registrar transcript remains the visible record; the job record supplies deterministic count/recovery. An exact control may substitute the stored recommended answer, never model-authored authority. Each owner answer creates the existing fresh generation while preserving logical session, snapshot, language and prior transcript. Planning receives only request/count/skip policy plus the already bounded task/history. The structured-output schema removes `clarification` after five questions or skip; an explicit first grill restricts ordinary output to one clarification. Crisis handoff remains the only direct bypass.
+
+Specialists and Critic remain unavailable until intake returns direct/consilium. Head proposals pass a deterministic action-label validator before a proposal digest exists. It rejects Markdown/plain action lines beginning with supported-language second-person pronouns. The same Head thread gets one format-only rewrite; only a valid replacement is emitted, digested and reviewed. No string post-processing changes reviewed content.
+
 ## AD-26 — Transactional MySQL Matrix store (PI-MATRIX-MYSQL-20260908)
 
 Current correction target, not implemented/deployed fact. This explicitly supersedes only the SQLite-only, OS-lock-only and “Rust must not access MySQL” statements in §§2–5, 10–12 and AD-16 below; previous paragraphs remain design history. Sources: current product idea/PRD correction, guardrails and existing FR-052 no-Settings journey. Existing visual baseline/frozen bytes and Matrix recovery states are retained; no new dashboard or visual redesign.

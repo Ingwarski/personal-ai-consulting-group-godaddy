@@ -39,7 +39,7 @@ const productionEnvironment = {
   DB_PORT: "3306", DB_NAME: "test_only", DB_USER: "test_only", DB_PASSWORD: "fixture-only"
 };
 const intakeJSON = (value: Record<string, unknown>) => JSON.stringify({
-  language: "uk", safety: "ordinary", assignments: ((value.specialists ?? []) as string[]).map(agentId => ({
+  language: "uk", safety: "ordinary", recommendedAnswer: "", assignments: ((value.specialists ?? []) as string[]).map(agentId => ({
     agentId, question: `Оцініть напрям ${agentId}.`, expectedOutcome: `Конкретний висновок щодо ${agentId}.`, facts: [], constraints: [], dependencies: []
   })), ...value
 });
@@ -415,9 +415,9 @@ test("head intake chooses the bounded specialist catalog via structured model de
 });
 
 test("critical missing information returns clarification without closing or altering the immutable active snapshot", async () => {
-  const h = await fixture({ intakeBody: intakeJSON({ kind: "clarification", answer: "Який строк для цього рішення?", specialists: [], extractedEvidence: "", independentReviewRequested: false }) });
+  const h = await fixture({ intakeBody: intakeJSON({ kind: "clarification", answer: "Який строк для цього рішення?", recommendedAnswer: "До кінця цього тижня.", specialists: [], extractedEvidence: "", independentReviewRequested: false }) });
   const result = await h.runtime.plan(request);
-  assert.deepEqual(result, { ok: true, kind: "clarification", language: "uk", answer: "Який строк для цього рішення?" });
+  assert.deepEqual(result, { ok: true, kind: "clarification", language: "uk", answer: "Який строк для цього рішення?", recommendedAnswer: "До кінця цього тижня." });
   assert.equal((await h.registrar.getActiveSession())?.phase, "active");
   assert.deepEqual((await h.registrar.getActiveSession())?.settingsSnapshot, h.snapshot);
   assert.equal(h.sent.filter(message => message.method === "turn/start").length, 1);

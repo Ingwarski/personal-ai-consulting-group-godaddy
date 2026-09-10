@@ -1,5 +1,5 @@
 import type { ConsiliumAgentRuntime, ConsiliumEvidence, ConsiliumPhase, ConsiliumRuntimeInput, RuntimeEmission } from "../consilium/router.ts";
-import { consensusPrompt, consensusOutputSchema, parseConsensusOutput } from "../consilium/consensus-prompts.ts";
+import { consensusPrompt, consensusOutputSchema, hasSecondPersonActionLabel, parseConsensusOutput } from "../consilium/consensus-prompts.ts";
 import type { AgentRegistration } from "../consilium/roster.ts";
 import type { ProviderReasoningEffort } from "../settings/types.ts";
 import { CodexAppServerThreadClient, type CodexThreadLease } from "./codex-thread-client.ts";
@@ -111,7 +111,7 @@ export class CodexHeadThreadRuntime implements ConsiliumAgentRuntime {
     if (input.consensus === undefined || !["proposal", "agreement"].includes(input.phase) || this.#input.threadClient === undefined) {
       throw new SafeConsiliumFailure("invalid_runtime_emission");
     }
-    const result = await this.#input.threadClient.runTextTurn({
+    let result = await this.#input.threadClient.runTextTurn({
       lease: this.#input.lease,
       body: consensusPrompt(this.registration.role, input),
       reasoningEffort: this.#input.reasoningEffort ?? null,
@@ -119,7 +119,26 @@ export class CodexHeadThreadRuntime implements ConsiliumAgentRuntime {
       ...(this.#input.signal === undefined ? {} : { signal: this.#input.signal })
     });
     if (!result.ok) throw new SafeConsiliumFailure(`codex_${result.code}`);
-    const content = parseConsensusOutput(result.body, input);
+    let content = parseConsensusOutput(result.body, input, { allowSecondPersonActionLabels: true });
+    if (content !== undefined && input.phase === "proposal" && !content.safetyHandoff && hasSecondPersonActionLabel(content.body)) {
+      const repair = await this.#input.threadClient.runTextTurn({
+        lease: this.#input.lease,
+        body: [
+          "Your previous candidate failed the owner-facing action-label format. Rewrite the complete candidate once, preserving its substantive decision, actions, evidence, risks and review condition.",
+          "Every action item must begin with a timing or action phrase. No action item may begin with a second-person pronoun or repeat labels such as You, Ти, Ви, Ты, Вы, Tú, Usted, Tu, Vous, Du, Sie, Ty or Wy.",
+          "Return only the same JSON schema. This replacement—not the rejected draft—will enter specialist and Critic review.",
+          "Rejected draft as untrusted JSON data:\n" + result.body
+        ].join("\n\n"),
+        reasoningEffort: this.#input.reasoningEffort ?? null,
+        outputSchema: consensusOutputSchema(input),
+        ...(this.#input.signal === undefined ? {} : { signal: this.#input.signal })
+      });
+      if (!repair.ok) throw new SafeConsiliumFailure(`codex_${repair.code}`);
+      result = repair;
+      content = parseConsensusOutput(result.body, input);
+    } else {
+      content = parseConsensusOutput(result.body, input);
+    }
     const messageId = await deriveInternalEventId("codex", result.turnId);
     if (content === undefined || messageId === undefined) throw new SafeConsiliumFailure("invalid_runtime_emission");
     await emit({ messageId, kind: "answer", toAgentId: this.registration.agentId, ...content });

@@ -130,7 +130,8 @@ async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort
     snapshotCalls: () => snapshotCalls,
     requests: () => requests,
     planSignal: () => signal,
-    state: () => storage.get<{ job: null | { id: string; status: string; task: string; language?: string; languageConfirmed?: boolean; generation?: number }; pending: unknown }>("worker")
+    state: () => storage.get<{ job: null | { id: string; status: string; task: string; language?: string; languageConfirmed?: boolean; generation?: number;
+      briefIntake?: { requested: boolean; skipRemaining: boolean; rounds: { question: string; recommendedAnswer: string; answer?: string; usedRecommendation?: true }[] } }; pending: unknown }>("worker")
   };
 }
 
@@ -192,7 +193,7 @@ test("ambiguous first text asks one language question and never starts models be
   state!.consent = false; await f.storage.put("worker", state);
   f.usePlan(async request => {
     assert.equal(request.language, "es");
-    return { ok: true, kind: "clarification", language: "es", answer: "¿Qué resultado quieres conseguir?" };
+    return { ok: true, kind: "clarification", language: "es", answer: "¿Qué resultado quieres conseguir?", recommendedAnswer: "Un siguiente paso comprobable esta semana." };
   });
   const event = f.enqueue("🚀");
   await f.service.tick();
@@ -227,7 +228,7 @@ test("an additional locale is not forced to English: consent precedes content-fr
   let turns = 0;
   f.usePlan(async request => {
     assert.equal(request.language, "ja"); turns++;
-    return turns === 1 ? { ok: true, kind: "clarification", language: "ja", answer: "予算はいくらですか?" }
+    return turns === 1 ? { ok: true, kind: "clarification", language: "ja", answer: "予算はいくらですか?", recommendedAnswer: "現在の義務を損なわずに失える金額。" }
       : { ok: true, kind: "direct", language: "ja", answer: "小さな実験から始めましょう。" };
   });
   f.enqueue("Please reply in Japanese. Compare my two business options.");
@@ -296,10 +297,10 @@ test("quotes cannot switch confirmed language; explicit owner choice changes fut
   let calls = 0;
   f.usePlan(async request => {
     calls++;
-    if (calls === 1) return { ok: true, kind: "clarification", language: "en", answer: "What budget is available?" };
+    if (calls === 1) return { ok: true, kind: "clarification", language: "en", answer: "What budget is available?", recommendedAnswer: "Use the amount that can be lost without affecting current commitments." };
     if (calls === 2) {
       assert.equal(request.language, "en");
-      return { ok: true, kind: "clarification", language: "en", answer: "What is your deadline?" };
+      return { ok: true, kind: "clarification", language: "en", answer: "What is your deadline?", recommendedAnswer: "Use the end of next week." };
     }
     assert.equal(request.language, "es");
     return { ok: true, kind: "direct", language: "es", answer: "Primero prueba una opción dentro del presupuesto." };
@@ -539,7 +540,7 @@ test("answering a head clarification keeps the logical session, original setting
   const f = await fixture();
   t.after(() => f.service.stop());
   f.usePlan(async () => f.planCalls() === 1
-    ? { ok: true, kind: "clarification", answer: "Який бюджет цього рішення?" }
+    ? { ok: true, kind: "clarification", answer: "Який бюджет цього рішення?", recommendedAnswer: "Сума, яку можна втратити без шкоди для поточних зобов’язань." }
     : { ok: true, kind: "direct", answer: "Тепер можна порівняти варіанти в межах зазначеного бюджету." });
   const initial = f.enqueue("Порівняйте два варіанти розвитку бізнесу.");
   await f.service.tick(); await waitForJob(f, "awaiting_clarification");
@@ -560,6 +561,65 @@ test("answering a head clarification keeps the logical session, original setting
   assert.match(f.requests()[1]!.task, /Який бюджет цього рішення/u);
   assert.match(f.requests()[1]!.task, /сто тисяч гривень/u);
   assert.equal((await f.state())?.job?.status, "completed");
+});
+
+test("explicit brief intake persists the question and recommendation, accepts the default and can skip remaining questions", async t => {
+  const f = await fixture(undefined, undefined, false);
+  t.after(() => f.service.stop());
+  f.usePlan(async request => {
+    if (f.planCalls() === 1) {
+      assert.deepEqual(request.briefIntake, { requested: true, questionsAsked: 0, skipRemaining: false });
+      return { ok: true, kind: "clarification", language: "en", answer: "What result would make this useful?", recommendedAnswer: "A decision and one verified action for this week." };
+    }
+    assert.deepEqual(request.briefIntake, { requested: true, questionsAsked: 1, skipRemaining: true });
+    assert.match(request.task, /Head Consultant clarification:\nWhat result would make this useful\?/u);
+    assert.match(request.task, /Owner answer:\nA decision and one verified action for this week\./u);
+    assert.match(request.task, /A decision and one verified action for this week\./u);
+    return { ok: true, kind: "direct", language: "en", answer: "Use the selected action this week." };
+  });
+  f.enqueue("Grill me: help me choose what to do next.");
+  await f.service.tick(); await waitForJob(f, "awaiting_clarification");
+  const state = await f.state();
+  assert.equal(state?.job?.briefIntake?.requested, true);
+  assert.equal(state?.job?.briefIntake?.rounds.length, 1);
+  const session = await f.registrar.getActiveSession();
+  const question = (await f.registrar.getConfirmedMessages(session!.generation)).at(-1)!;
+  assert.match(question.body, /Recommended answer: A decision and one verified action/u);
+  assert.match(question.body, /Skip questions/u);
+  f.enqueue("Skip questions — use your recommendations");
+  await f.service.tick(); await waitForJob(f, "completed");
+  const completed = await f.state();
+  assert.equal(completed?.job?.briefIntake?.skipRemaining, true);
+  assert.equal(completed?.job?.briefIntake?.rounds[0]?.answer, "A decision and one verified action for this week.");
+  assert.equal(completed?.job?.briefIntake?.rounds[0]?.usedRecommendation, true);
+});
+
+test("worker refuses a sixth brief-intake question even if an executor violates its schema contract", async t => {
+  const f = await fixture(undefined, undefined, false);
+  t.after(() => f.service.stop());
+  f.usePlan(async () => ({ ok: true, kind: "clarification", language: "en",
+    answer: `Question ${f.planCalls()}: what material fact is still missing?`, recommendedAnswer: `Recommended assumption ${f.planCalls()}.` }));
+  f.enqueue("Please reply in English. Grill me: help me decide.");
+  await f.service.tick(); await waitForJob(f, "awaiting_clarification");
+  for (let round = 1; round < 5; round++) {
+    f.enqueue(`Answer ${round}.`);
+    await f.service.tick(); await waitForJob(f, "awaiting_clarification");
+  }
+  assert.equal((await f.state())?.job?.briefIntake?.rounds.length, 5);
+  f.enqueue("Answer 5.");
+  await f.service.tick(); await waitForJob(f, "failed");
+  assert.equal(f.planCalls(), 6);
+  assert.equal((await f.state())?.job?.briefIntake?.rounds.length, 5);
+  const session = await f.registrar.getActiveSession();
+  const questions = (await f.registrar.getConfirmedMessages(session!.generation)).filter(message => /^Question \d/u.test(message.body));
+  assert.equal(questions.length, 0, "questions from prior generations are not duplicated into the current generation");
+  let totalQuestions = 0;
+  let generation: number | undefined = session!.generation;
+  while (generation !== undefined) {
+    totalQuestions += (await f.registrar.getConfirmedMessages(generation)).filter(message => /^Question \d/u.test(message.body)).length;
+    generation = (await f.registrar.getSession(generation))?.previousGeneration;
+  }
+  assert.equal(totalQuestions, 5);
 });
 
 test("Stop prevents a late provider final even when the provider resolves successfully after cancellation", async t => {
@@ -607,7 +667,7 @@ test("confirmed attachments remain available through clarification and are erase
   });
   t.after(() => f.service.stop());
   f.usePlan(async () => f.planCalls() === 1
-    ? { ok: true, kind: "clarification", answer: "З яким попереднім періодом порівняти документ?" }
+    ? { ok: true, kind: "clarification", answer: "З яким попереднім періодом порівняти документ?", recommendedAnswer: "З аналогічним періодом попереднього року." }
     : { ok: true, kind: "direct", answer: "Документ порівняно з указаним періодом." });
   const document = f.enqueue("Проаналізуйте цей звіт.", undefined, [
     { declaredMime: "application/pdf", length: 128, sha256: "a".repeat(64) }
@@ -632,7 +692,7 @@ test("a native reply to the bot clarification joins only its confirmed logical s
   const f = await fixture();
   t.after(() => f.service.stop());
   f.usePlan(async () => f.planCalls() === 1
-    ? { ok: true, kind: "clarification", answer: "Якого результату потрібно досягти?" }
+    ? { ok: true, kind: "clarification", answer: "Якого результату потрібно досягти?", recommendedAnswer: "Скоротити час виконання замовлень без падіння якості." }
     : { ok: true, kind: "direct", answer: "Відповідь у контексті підтвердженої сесії." });
   f.enqueue("Потрібна порада щодо операційного процесу.");
   await f.service.tick(); await waitForJob(f, "awaiting_clarification");

@@ -11,6 +11,8 @@ import type { EffectiveSessionSnapshot } from "../settings/types.ts";
 import type { GoDaddyConsiliumRuntime } from "./consilium-runtime.ts";
 import type { ConsultationLeadership } from "./consultation-leadership.ts";
 import type { LeasedMatrixIngressIntent, MatrixIngressIntent, MySqlMatrixIngressReceipts } from "./mysql-matrix-outbox.ts";
+import { formatBriefIntakeQuestion, MAX_BRIEF_INTAKE_QUESTIONS, parseBriefIntakeControl, requestsBriefIntake, validBriefIntakeState,
+  type BriefIntakeState } from "../consilium/brief-intake.ts";
 
 const KEY = "worker";
 const MAX_TASK_BYTES = 24_000;
@@ -50,6 +52,7 @@ type Job = {
   generation?: number;
   sessionId?: string;
   resumeFinalization?: true;
+  briefIntake?: BriefIntakeState;
 };
 type Handled = { hash: string; sessionId: string; generation: number };
 type PendingInput = {
@@ -141,6 +144,7 @@ export function createMatrixConsultationService(input: Readonly<{
       && (job.language === undefined || canonicalSessionLanguage(job.language) === job.language)
       && (job.languageConfirmed === undefined || typeof job.languageConfirmed === "boolean")
       && (job.resumeFinalization === undefined || job.resumeFinalization === true)
+      && (job.briefIntake === undefined || validBriefIntakeState(job.briefIntake))
       && ["awaiting_language", "awaiting_consent", "awaiting_document", "awaiting_clarification", "queued", "planning", "running",
         "awaiting_continuation", "interrupted", "completed", "stopped", "failed"].includes(job.status)
       && (job.generation === undefined || (Number.isSafeInteger(job.generation) && job.generation > 0
@@ -219,7 +223,7 @@ export function createMatrixConsultationService(input: Readonly<{
     const language = explicitLanguage ?? initialLanguageHint(e.body ?? "");
     const job: Job = { id: lease.eventHash, eventId: e.eventId, task: e.body ?? "",
       documents: e.media.length === 0 ? [] : [{ eventHash: lease.eventHash, eventId: e.eventId, manifest: e.media, confirmed: false }],
-      status: "queued", attempt: 0,
+      status: "queued", attempt: 0, briefIntake: { requested: requestsBriefIntake(e.body ?? ""), skipRemaining: false, rounds: [] },
       ...(language === null ? {} : { language, languageConfirmed: explicitLanguage !== undefined }) };
     job.status = readyStatus(job, consent);
     return job;
@@ -325,7 +329,24 @@ export function createMatrixConsultationService(input: Readonly<{
       }
       const explicitLanguage = explicitSessionLanguage(body);
       if (explicitLanguage !== undefined) { job.language = explicitLanguage; job.languageConfirmed = true; }
-      const amended = job.task + (body.trim() ? "\n\nOwner clarification:\n" + body : "");
+      let clarification = body;
+      let clarificationQuestion: string | undefined;
+      if (job.status === "awaiting_clarification") {
+        const state = job.briefIntake ?? { requested: false, skipRemaining: false, rounds: [] };
+        const rounds = state.rounds.map(round => ({ ...round }));
+        const current = rounds.at(-1);
+        const intakeControl = e.media.length === 0 ? parseBriefIntakeControl(body) : undefined;
+        if (current !== undefined && current.answer === undefined) {
+          clarificationQuestion = current.question;
+          const usesRecommendation = intakeControl === "use_recommendation" || intakeControl === "skip_questions";
+          clarification = usesRecommendation ? current.recommendedAnswer : body;
+          rounds[rounds.length - 1] = { ...current, answer: clarification, ...(usesRecommendation ? { usedRecommendation: true as const } : {}) };
+        }
+        job.briefIntake = { ...state, skipRemaining: state.skipRemaining || intakeControl === "skip_questions", rounds };
+      }
+      const amended = job.task + (clarification.trim() ? clarificationQuestion === undefined
+        ? "\n\nOwner clarification:\n" + clarification
+        : "\n\nHead Consultant clarification:\n" + clarificationQuestion + "\n\nOwner answer:\n" + clarification : "");
       // Changed owner input requires a fresh reviewed generation.
       delete job.resumeFinalization;
       const mediaBytes = job.documents.reduce((n, d) => n + d.manifest.reduce((size, m) => size + m.length, 0), 0)
@@ -620,6 +641,8 @@ export function createMatrixConsultationService(input: Readonly<{
       }
       const planned = await input.executor.plan({ sessionGeneration: job.generation!, task, signal: abort.signal,
         taskId: job.id, ...(job.language === undefined || job.languageConfirmed === false ? {} : { language: job.language }),
+        briefIntake: { requested: job.briefIntake?.requested ?? false, questionsAsked: job.briefIntake?.rounds.length ?? 0,
+          skipRemaining: job.briefIntake?.skipRemaining ?? false },
         ...(media?.images.length ? { images: media.images } : {}) });
       if (abort.signal.aborted) {
         if (expired) await fail(NOTICE_CONTINUE, "awaiting_continuation");
@@ -636,11 +659,19 @@ export function createMatrixConsultationService(input: Readonly<{
       await ensureNoticeTranslation();
       if (abort.signal.aborted) return;
       if (planned.kind === "direct" || planned.kind === "clarification") {
-        if (isSecretLikeMatrixContent(planned.answer)) { await fail("Відповідь заблоковано перевіркою конфіденційності.", "failed"); return; }
+        if (planned.kind === "clarification" && planned.language !== null &&
+          ((job.briefIntake?.rounds.length ?? 0) >= MAX_BRIEF_INTAKE_QUESTIONS || job.briefIntake?.skipRemaining)) {
+          await fail("Консультацію не завершено: обраний ШІ-провайдер або його відповідь зараз недоступні. Перевірте runtime і напишіть «Продовжити» для явної повторної спроби.", "failed");
+          return;
+        }
+        const answer = planned.kind === "clarification" && planned.language !== null
+          ? formatBriefIntakeQuestion(planned.answer, planned.recommendedAnswer, job.language)
+          : planned.answer;
+        if (isSecretLikeMatrixContent(answer)) { await fail("Відповідь заблоковано перевіркою конфіденційності.", "failed"); return; }
         await withInputBarrier(async () => {
         if (!matches(await read()) || abort.signal.aborted) return;
         const appended = await input.registrar.appendConfirmedMessage({ generation: job.generation!, eventId: "mx-direct-" + job.id + "-" + job.attempt,
-          role: "Head Consultant", body: planned.answer, replyToEventId: job.eventId,
+          role: "Head Consultant", body: answer, replyToEventId: job.eventId,
           ...(job.language === undefined ? {} : { language: job.language }) });
         if (!appended.ok) return;
         await input.afterConfirmed();
@@ -648,7 +679,16 @@ export function createMatrixConsultationService(input: Readonly<{
           const closed = await input.registrar.closeSession(job.generation!);
           if (!closed.ok) throw new Error("Consultation close failed.");
         }
-        await mutate(state => { if (matches(state)) state.job!.status = planned.kind === "clarification" ? "awaiting_clarification" : "completed"; });
+        await mutate(state => {
+          if (!matches(state)) return;
+          state.job!.status = planned.kind === "clarification" ? "awaiting_clarification" : "completed";
+          if (planned.kind === "clarification" && planned.language !== null) {
+            const intake = state.job!.briefIntake ?? { requested: false, skipRemaining: false, rounds: [] };
+            state.job!.briefIntake = { ...intake, rounds: [...intake.rounds, {
+              question: planned.answer, recommendedAnswer: planned.recommendedAnswer
+            }] };
+          }
+        });
         });
       } else {
         const extraction = "extractedEvidence" in planned && typeof planned.extractedEvidence === "string" ? planned.extractedEvidence : "";

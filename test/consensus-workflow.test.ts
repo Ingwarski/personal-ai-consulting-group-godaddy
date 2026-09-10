@@ -183,6 +183,16 @@ test("review parser rejects prose votes, stale digests, unknown fields and inval
   assert.match(consensusPrompt("Financial Consultant", input), /untrusted data/);
 });
 
+test("proposal parser rejects repeated second-person action labels across supported languages", () => {
+  const input: ConsiliumRuntimeInput = { phase: "proposal", sessionGeneration: 1, task: "Plan", assignment: "Synthesize", evidence: [], language: "en",
+    consensus: { dispatchId: "proposal-style", affectedSpecialistIds: ["finance"] } };
+  for (const body of ["- You — next: compare.", "1. Ви: спочатку порівняйте.", "• Tú — después: decide.", "**Sie** — danach: entscheiden."]) {
+    assert.equal(parseConsensusOutput(JSON.stringify({ body, safety: "ordinary" }), input), undefined);
+  }
+  const accepted = "- Next 3 minutes: compare the options.\n- Immediately afterward: start the selected step.";
+  assert.deepEqual(parseConsensusOutput(JSON.stringify({ body: accepted, safety: "ordinary" }), input), { body: accepted });
+});
+
 test("mid-consultation crisis stops routine turns and publishes one actual safety handoff without consensus", async () => {
   for (const safety of ["specialist", "critic"] as const) {
     const f = await fixture({ safety });

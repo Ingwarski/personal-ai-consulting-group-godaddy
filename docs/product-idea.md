@@ -1,5 +1,13 @@
 # Product Idea: Personal Consultant
 
+## PI-BRIEF-INTAKE-20260910 — Коротке інтерв’ю й читабельні дії
+
+Джерело — пряме доручення Власника від 10.09.2026 виправити повтори `You — ...`, з’ясувати можливість короткого `grill-me` від Head Consultant і наступне явне `yes, implement it`. Це вузьке уточнення JOB-001/002: провайдери, підписки, склад консиліуму й межі безпеки не змінюються.
+
+Перед прямою відповіддю або запуском спеціалістів Head Consultant може поставити одне найважливіше запитання, якщо відповідь матеріально змінить пораду. Явне `Grill me:` гарантує перше запитання; далі Head зупиняється, щойно даних досить, зазвичай після 1–3 запитань і ніколи пізніше п’ятого. Питання ставляться по одному й кожне містить конкретну рекомендовану відповідь. Власник може відповісти сам, прийняти рекомендацію або пропустити решту питань; `Стоп` і `Нова задача` лишаються чинними. Питання, рекомендації, відповіді/прийняті припущення, мова і лічильник зберігаються в поточній задачі та переживають restart/Continue без повтору вже відомого. До завершення цього intake спеціалісти й Critic не запускаються.
+
+Фінальна пропозиція Head Consultant має залишатися прямою й читабельною: owner у списку дій не повторюється як `You/Ви/...`; кожна дія починається з часу або самої дії. Порушення відхиляється до формування proposal digest; дозволена одна format-only перегенерація зі збереженням змісту, після якої саме новий текст проходить повний review. Старі повідомлення не переписуються.
+
 ## PI-MATRIX-MYSQL-20260908 — Durable Matrix without another host
 
 Source: the Owner repeated the one-GoDaddy/MySQL recommendation, requested the correction-unit plan, then explicitly instructed “implement it, plz” in the current conversation. The exact platform message ID and receipt time are unavailable; no historical timestamp or implementation-gate receipt is inferred. The following adopted scope refines JOB-001, JOB-003 and JOB-004; unchanged product decisions and design materials remain authoritative.
