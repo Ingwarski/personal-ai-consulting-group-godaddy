@@ -212,3 +212,64 @@ canonical-root smoke test installed over the exact preceding pinned sidecar and
 setup executables, then the read-only inspector revalidated both new hashes.
 This proves the bounded atomic upgrade path locally; it does not replace the
 remaining Published acceptance test.
+
+## Deployment-writer orphan safety release
+
+GoDaddy restarts can replace the Node parent without reliably terminating an
+older native child immediately. The resulting old sidecar continued renewing
+the single-writer MySQL lease, so the new deployment reported
+`matrix_lock_contended` and could not become ready. Source commit
+`9d362d0c990893ce0ef7f84b468bc73d150bba6d` adds two complementary controls:
+
+- on Linux, the sidecar arms a parent-death signal and rechecks its parent so a
+  child cannot survive the loss of the Node process that created it;
+- the verified sidecar binary hash becomes a deployment generation. A different
+  verified release may atomically advance the MySQL fence and supersede an old
+  live writer, while a concurrent process from the same release remains blocked.
+  Every lease renewal, write and release is conditioned on the active fence, so
+  the superseded process cannot resume writing.
+
+The complete Node gate passed with 964/964 tests. The Rust workspace passed
+formatting, Clippy with warnings denied and 117 executable tests; 29 tests that
+require an isolated MySQL service remained explicitly ignored in the
+credential-free job. Repaired non-deployable verification run `34527021179`
+then completed the host and static-musl checks successfully. Its first attempt
+had reached and passed the static-musl tests but hit the former 45-minute job
+limit while installing SBOM tools; commit
+`c8b1ccca3f5c504f0851d8692484ee38d21c9de9` raised only that job timeout to 90
+minutes, without weakening a check.
+
+Authenticated immutable production run `34521582640`, attempt 1, completed
+successfully for the exact source/workflow commit. Two independent
+network-disabled builds produced byte-identical static stripped binaries and
+the credential-free musl tests passed. Artifact `10173795555` contains exactly
+ten files; its independently downloaded 38,457,987-byte ZIP SHA-256 matches
+GitHub at
+`251cee197a83817b478a991d57e3f6424cc95c0634d1787b02d905bbecec7501`.
+
+The independent verifier in
+`forge/runs/U-06-C1/verify-orphan-safety-release-20260910.mjs` checked the exact
+repository, workflow, commit, run attempt and artifact identity; every archive
+entry, manifest entry and checksum; all 47 declared source inputs against both
+the exact Git commit and current checkout; full builder/provenance projection;
+and both static stripped ELF binaries. Verified release identities are:
+
+- manifest: `b8dc030b2b3dee702ed29c4d965ce62cd72b8e80fe2d018d30d20e2c8259426e`;
+- sidecar: `2ca6f0a34f57401169b2433f1b442c7e31a83ab9a0350f61e9157453734a7c97`
+  (49,975,248 bytes);
+- setup: `a6eb8d38b9f9b8ff9c63bea60369e012bc4b7bf3b99d65187c11ce721e26e354`
+  (44,777,328 bytes);
+- prepared builder image:
+  `sha256:0eafb505192b70ac30678b732441844b4fa62eca7e56dfd5271c5f636f33b3d3`.
+
+The atomic installer accepts replacement only from the exact sidecar and setup
+hashes currently deployed on GoDaddy; arbitrary or modified executables remain
+non-replaceable. Published deployment, takeover of the existing orphan and a
+fresh end-to-end Matrix consultation remain the real-host acceptance gates.
+
+After promotion, the complete application gate passed again with 964/964 tests,
+build, typecheck, environment-policy validation and `git diff --check`. A fresh
+canonical-root smoke test installed the promoted release over the exact prior
+sidecar and setup binaries, and the independent read-only inspection then
+revalidated both installed hashes. This proves the bounded local upgrade path;
+it does not replace the remaining Published acceptance test.

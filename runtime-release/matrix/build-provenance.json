@@ -3,13 +3,13 @@
   "kind": "matrix-production-build-provenance",
   "source": {
     "repository": "Ingwarski/personal-ai-consulting-group-godaddy",
-    "commit": "f47a83201142177700aee7ebaf099d4df77b1480",
-    "workflowCommit": "f47a83201142177700aee7ebaf099d4df77b1480",
+    "commit": "9d362d0c990893ce0ef7f84b468bc73d150bba6d",
+    "workflowCommit": "9d362d0c990893ce0ef7f84b468bc73d150bba6d",
     "workflowRef": "Ingwarski/personal-ai-consulting-group-godaddy/.github/workflows/matrix-sidecar-release.yml@refs/heads/main",
-    "runId": "34494531239",
+    "runId": "34521582640",
     "runAttempt": "1",
-    "runUrl": "https://github.com/Ingwarski/personal-ai-consulting-group-godaddy/actions/runs/34494531239/attempts/1",
-    "nativeTree": "755ee5a8d144b552c2f46aa0832a49882629aa55",
+    "runUrl": "https://github.com/Ingwarski/personal-ai-consulting-group-godaddy/actions/runs/34521582640/attempts/1",
+    "nativeTree": "b9ac26df47248b1db83cb42edbb8feebe49efaad",
     "inputs": [
       {
         "path": ".github/workflows/matrix-sidecar-release.yml",
@@ -41,7 +41,7 @@
       },
       {
         "path": "native/matrix-sidecar/mysql-store/src/backend.rs",
-        "sha256": "0db9ba24adaaf4b63e2b28ec56c8ab0e5110da44a703460aca174d899c81317c"
+        "sha256": "658d4e5c6a56ca593aaef42ed96b719c1e04e7bb29f2335ec72d349016d563cf"
       },
       {
         "path": "native/matrix-sidecar/mysql-store/src/crypto.rs",
@@ -53,7 +53,7 @@
       },
       {
         "path": "native/matrix-sidecar/mysql-store/src/legacy_crypto.rs",
-        "sha256": "84cae4cbaa082a6535fb5a1806e6925bdceef986787cf02527e3e17ebf350ee7"
+        "sha256": "23684b0cdba05144b90a521ed5ff8e82d76cf255e27ccfe1cd937113c7c6acce"
       },
       {
         "path": "native/matrix-sidecar/mysql-store/src/legacy_state.rs",
@@ -65,11 +65,11 @@
       },
       {
         "path": "native/matrix-sidecar/mysql-store/src/state.rs",
-        "sha256": "c31375a5a2e8a89b340f9e17f3fd7695a5ea0d27c786167e13d37ae2ee41ac9a"
+        "sha256": "87f942d5d23f9aab309b11c4564d82ee1e4aa69c631a30eb6e3f443d86e1c518"
       },
       {
         "path": "native/matrix-sidecar/mysql-store/tests/backend_contract.rs",
-        "sha256": "845660601b046496a063f185ce227538be635c30c59d26c2abe984367bf7aaf0"
+        "sha256": "0e206cde02614968b1b74c87f1fa9840675c727591798602640e5ec6d0a4891b"
       },
       {
         "path": "native/matrix-sidecar/mysql-store/tests/backend_faults.rs",
@@ -93,7 +93,7 @@
       },
       {
         "path": "native/matrix-sidecar/src/config.rs",
-        "sha256": "35997152e300c6dfa6abb2fd2faf700eda9109019c4dd945bf868f19c55a6e4e"
+        "sha256": "0a9190a6ea3caed80f5bea783fcea4f25b602ee2792f99af8c5e84938ace2aee"
       },
       {
         "path": "native/matrix-sidecar/src/durable_checkpoint.rs",
@@ -129,7 +129,7 @@
       },
       {
         "path": "native/matrix-sidecar/src/main.rs",
-        "sha256": "48d816da688d5fa05901c60b6f26937764b681987744db68a60d0e1e2b8acaf1"
+        "sha256": "d29040bb5da29c98bde1351da2c940c5d11d8b0ae3404baa17df7023735960ba"
       },
       {
         "path": "native/matrix-sidecar/src/media_spool.rs",
@@ -141,7 +141,7 @@
       },
       {
         "path": "native/matrix-sidecar/src/migration_tests.rs",
-        "sha256": "1fbb6147496277062223810a60ee955f9d676732d43a37ab03c48b6cf6dd05b7"
+        "sha256": "4894c081859829dd95bd614301d9182f06b3234282d64ab525b00a793c2c27a4"
       },
       {
         "path": "native/matrix-sidecar/src/protocol.rs",
@@ -161,7 +161,7 @@
       },
       {
         "path": "native/matrix-sidecar/src/store.rs",
-        "sha256": "e08f8d3dc4caec691352945c499b58bd3a639671eca559d5d4ebebe919d43744"
+        "sha256": "e3a3a1c5d38d12a4c704d1568547039480c3f29063eaf93ee5aaa8447cd835da"
       },
       {
         "path": "native/matrix-sidecar/src/sync_checkpoint.rs",
@@ -237,13 +237,13 @@
     "registryVerifiedOn": "2026-09-06",
     "registryVerification": "The amd64 manifest bytes were SHA-256 checked against the digest; its config pins Rust 1.93.0, gcc and musl-dev. A run-local derived image may add only the exact nativeTlsBuildPackages declared above; its image ID and Dockerfile hash are recorded. Compilation runs offline in that same prepared image. The separately hash-pinned UAPI header input is acquired before compilation and mounted read-only.",
     "observedImageConfigDigest": "sha256:6336bf7b311135c893a4a930b0920892b5e596ccdc374777290fa91bb59ae818",
-    "preparedImageConfigDigest": "sha256:7d0116fba48436b237b92fa1239e2ad960aa3f869bbfa1c99de288af60914cfb",
+    "preparedImageConfigDigest": "sha256:0eafb505192b70ac30678b732441844b4fa62eca7e56dfd5271c5f636f33b3d3",
     "nativeTlsDockerfileSha256": "3a05b3288f1abd892601288853fb90272bb9b4e02627fa04cf2a72a78b285fda"
   },
   "build": {
-    "startedAt": "2026-09-10T15:17:42.107Z",
-    "completedAt": "2026-09-10T17:02:25.173Z",
-    "sourceDateEpoch": "1789053370",
+    "startedAt": "2026-09-10T19:39:39.200Z",
+    "completedAt": "2026-09-10T21:22:40.999Z",
+    "sourceDateEpoch": "1789069053",
     "command": "cargo build --release --locked --frozen --target x86_64-unknown-linux-musl",
     "networkDuringCompilation": "none",
     "cleanBuildCount": 2,
@@ -258,14 +258,14 @@
     {
       "path": "personal-consultant-matrix-sidecar",
       "role": "sidecar",
-      "sha256": "ce148392a57f4bd391437b8eedc963bf1fd0f252b4f599cdd6dd2e45369d6984",
-      "sizeBytes": 49971152
+      "sha256": "2ca6f0a34f57401169b2433f1b442c7e31a83ab9a0350f61e9157453734a7c97",
+      "sizeBytes": 49975248
     },
     {
       "path": "personal-consultant-matrix-setup",
       "role": "setup",
-      "sha256": "59be65ea5668d365834be5174997c68e9bd14f35a1f6850b454be35ddb3e511f",
-      "sizeBytes": 44773232
+      "sha256": "a6eb8d38b9f9b8ff9c63bea60369e012bc4b7bf3b99d65187c11ce721e26e354",
+      "sizeBytes": 44777328
     }
   ],
   "trust": {
