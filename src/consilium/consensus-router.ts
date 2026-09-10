@@ -190,13 +190,18 @@ export class ConsensusRouter {
               evidence, [head.agentId, critic.agentId], proposal.positionsDigest);
           });
           state = await read();
-          for (const specialist of specialists) {
-            if (currentReview(state, critic.agentId, specialist.agentId) !== undefined) continue;
-            if (state.critiqueCounts[specialist.agentId]! >= 7) break;
-            await run(dispatch("critic_review", critic, `${state.proposalVersion}-${specialist.agentId}`, [specialist.agentId], proposal.digest),
-              "critique", `Constructively review ${specialist.role}'s current position and its treatment in the complete candidate. Help resolve material issues; agree when sound. This message affects only ${specialist.role}.`,
+          const criticTargets = specialists.filter(specialist =>
+            currentReview(state, critic.agentId, specialist.agentId) === undefined && state.critiqueCounts[specialist.agentId]! < 7);
+          if (criticTargets.length > 0) {
+            const targetRoles = criticTargets.map(specialist => specialist.role);
+            // One complete Critic review can address several specialists. The
+            // durable ledger still increments and enforces the seven-message
+            // cap independently for every affected specialist. This removes
+            // unnecessary sequential model turns without weakening consensus.
+            await run(dispatch("critic_review", critic, String(state.proposalVersion), criticTargets.map(s => s.agentId), proposal.digest),
+              "critique", `Constructively review the current positions of ${targetRoles.join("; ")} and their treatment in the complete candidate. Help resolve material issues; agree when the complete candidate is sound. If any material correction is needed, identify every affected role precisely. This joint decision applies to all listed roles.`,
               [...positionsEvidence(state), { fromRole: head.role, body: proposal.body }, ...reviewEvidence(state)],
-              [specialist.agentId, head.agentId], proposal.positionsDigest);
+              [...criticTargets.map(s => s.agentId), head.agentId], proposal.positionsDigest);
             state = await read();
           }
           if (specialists.every(s => currentReview(state, s.agentId)?.decision === "agree" && currentReview(state, critic.agentId, s.agentId)?.decision === "agree") &&

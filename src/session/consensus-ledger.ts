@@ -95,8 +95,10 @@ export async function initializeConsensusState(storage: RegistrarStorage, input:
       positions: taskChanged ? {} : existing.positions,
       ...(!taskChanged && existing.language === input.language && priorProposal !== undefined ? { proposal: priorProposal } : {}),
       head: input.head, specialists: input.specialists, critic: input.critic, status: "working",
-      // New runtime contexts must expressly review the proposal again; old counts survive.
-      reviews: [] };
+      // Continue fences unconfirmed output by generation, but confirmed reviews
+      // remain valid for the same immutable task and exact proposal digest.
+      // Repeating them wastes provider turns and can make recovery time out.
+      reviews: taskChanged || existing.language !== input.language ? [] : existing.reviews };
     await writeState(storage, updated);
     return success(updated);
   }

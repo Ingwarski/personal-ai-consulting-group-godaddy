@@ -349,7 +349,7 @@ test("actual application intake reaches planner, separate specialists, Astra cri
     assert.equal(new Set(h.sent.filter(m => m.method === "thread/start").map(m => (m.params as { cwd: string }).cwd)).size, 5);
     assert.equal(h.calls().claudeCalls, 0);
     const calls = h.sent.filter(m => m.method === "turn/start").length;
-    assert.equal(calls, 9, "planner + two positions + candidate + two specialist agreements + two Critic agreements + Head agreement");
+    assert.equal(calls, 8, "planner + two positions + candidate + two specialist agreements + one joint Critic agreement + Head agreement");
     assert.equal((await h.registrar.getConsensus(eventHash))?.status, "published");
     queue.push(event);
     await application.consultationService.tick();

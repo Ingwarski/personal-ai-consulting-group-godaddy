@@ -123,7 +123,10 @@ test("restart and explicit Continue preserve task counts, reject a new task ID o
   assert.ok((await restarted.designateCritic({ generation: 2, critic })).ok);
   assert.equal((await restarted.initializeConsensus({ ...f.initialization, generation: 2, critic, taskId: "fake-reset-task" })).ok, false);
   assert.ok((await restarted.initializeConsensus({ ...f.initialization, generation: 2, critic })).ok);
-  assert.equal((await restarted.getConsensus(f.initialization.taskId))?.critiqueCounts.strategy, 1);
+  const continued = await restarted.getConsensus(f.initialization.taskId);
+  assert.equal(continued?.critiqueCounts.strategy, 1);
+  assert.equal(continued?.reviews.length, 1, "confirmed review survives an unchanged explicit Continue");
+  assert.equal(continued?.reviews[0]?.decision, "revise");
   assert.equal((await restarted.reserveConsensusDispatch(f.dispatch("position", "strategy"))).ok, false);
 });
 

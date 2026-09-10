@@ -723,6 +723,8 @@ export function createMatrixConsultationService(input: Readonly<{
         if (abort.signal.aborted) { if (expired) await fail(NOTICE_CONTINUE, "awaiting_continuation"); return; }
         if (!result.ok) {
           lastFailure = classifyConsultationResult("execution", result);
+          console.error(JSON.stringify({ event: "matrix.consultation.execution_failed", ...lastFailure,
+            generation: job.generation, attempt: job.attempt }));
           await fail("Консультацію не завершено. Критичний або фінальний етап не підтверджено; готову рекомендацію не оголошено. Напишіть «Продовжити» для явної повторної спроби або «Стоп».", "failed");
           return;
         }
@@ -791,7 +793,12 @@ export function createMatrixConsultationService(input: Readonly<{
       diagnosticStage = "worker_state";
       const state = await read();
       if (recovered && execution === undefined && state.pending === null && state.job?.status === "queued") {
-        execution = execute(state.job).catch(error => { blocked = true; lastFailure = classifyConsultationFailure("execution", error); }).finally(() => { execution = undefined; });
+        execution = execute(state.job).catch(error => {
+          blocked = true;
+          lastFailure = classifyConsultationFailure("execution", error);
+          console.error(JSON.stringify({ event: "matrix.consultation.execution_failed", ...lastFailure,
+            generation: state.job?.generation, attempt: state.job?.attempt }));
+        }).finally(() => { execution = undefined; });
       }
       blocked = false;
     } catch (error) {

@@ -90,6 +90,7 @@ test("explicit complete agreement stops after one Critic message per target and 
   assert.equal(state.finalBody, state.proposal!.body);
   assert.equal(f.calls.filter(c => c.agent === "head" && c.input.phase === "agreement").length, 1);
   assert.equal(f.calls.filter(c => c.input.phase === "revision").length, 0);
+  assert.equal(f.calls.filter(call => call.agent === "critic").length, 1);
   assert.equal((await f.registrar.getActiveSession())!.phase, "closed");
   const messages = await f.registrar.getConfirmedMessages(1);
   assert.equal(messages.filter(message => message.authority?.kind === "assignment").length, 2);
@@ -97,16 +98,16 @@ test("explicit complete agreement stops after one Critic message per target and 
   assert.equal(messages.every(message => message.language === "en"), true);
 });
 
-test("constructive correction revises only affected specialist then obtains fresh agreement from everyone", async () => {
+test("joint constructive correction revises affected positions then obtains fresh agreement from everyone", async () => {
   const f = await fixture({ revise: "once" });
   const result = await f.make().run(task);
   assert.equal(result.ok, true, JSON.stringify(result));
   const state = (await f.registrar.getConsensus(task.taskId))!;
   assert.equal(state.proposalVersion, 2);
   assert.deepEqual(state.critiqueCounts, { finance: 2, strategy: 2 });
-  assert.deepEqual(f.calls.filter(c => c.input.phase === "revision").map(c => c.agent), ["finance"]);
+  assert.deepEqual(f.calls.filter(c => c.input.phase === "revision").map(c => c.agent), ["finance", "strategy"]);
   assert.equal(state.positions.finance!.revision, 2);
-  assert.equal(state.positions.strategy!.revision, 1);
+  assert.equal(state.positions.strategy!.revision, 2);
   assert.equal(state.proposal!.positionsDigest, await consensusPositionsDigest(state.positions));
   assert.equal(state.reviews.every(review => review.proposalDigest === state.proposal!.digest), true);
 });
@@ -130,11 +131,11 @@ test("no eighth Critic call: seven non-consensus exchanges per target produce an
   assert.equal(state.status, "unresolved");
   assert.equal(hasConsensus(state), false);
   assert.match(state.finalBody!, /Consensus was not reached/);
-  assert.equal(f.calls.filter(call => call.agent === "critic").length, 14);
+  assert.equal(f.calls.filter(call => call.agent === "critic").length, 7);
   assert.equal(f.calls.filter(call => call.agent === "head" && call.input.phase === "agreement").length, 0);
 });
 
-test("restart after confirmed Critic message reuses durable work and does not count or call it twice", async () => {
+test("restart after confirmed joint Critic message reuses durable work and does not count or call it twice", async () => {
   const controller = new AbortController();
   let paused = false;
   const f = await fixture({ observer: async message => {
@@ -142,12 +143,12 @@ test("restart after confirmed Critic message reuses durable work and does not co
   } });
   const first = await f.make().run({ ...task, signal: controller.signal });
   assert.equal(first.ok, false);
-  assert.deepEqual((await f.registrar.getConsensus(task.taskId))!.critiqueCounts, { finance: 1, strategy: 0 });
+  assert.deepEqual((await f.registrar.getConsensus(task.taskId))!.critiqueCounts, { finance: 1, strategy: 1 });
   const result = await f.make().run(task);
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.deepEqual((await f.registrar.getConsensus(task.taskId))!.critiqueCounts, { finance: 1, strategy: 1 });
   assert.equal(f.calls.filter(call => call.input.phase === "initial_position").length, 2);
-  assert.equal(f.calls.filter(call => call.agent === "critic").length, 2);
+  assert.equal(f.calls.filter(call => call.agent === "critic").length, 1);
 });
 
 test("failed provider is not an approval or counted message and pending dispatch cannot duplicate a model call", async () => {
@@ -204,7 +205,7 @@ test("mid-consultation crisis stops routine turns and publishes one actual safet
     const state = (await f.registrar.getConsensus(task.taskId))!;
     assert.equal(state.status, "unresolved");
     assert.equal(hasConsensus(state), false);
-    assert.deepEqual(state.critiqueCounts, { finance: safety === "critic" ? 1 : 0, strategy: 0 });
+    assert.deepEqual(state.critiqueCounts, safety === "critic" ? { finance: 1, strategy: 1 } : { finance: 0, strategy: 0 });
     assert.equal((await f.registrar.getActiveSession())!.phase, "closed");
     const messages = await f.registrar.getConfirmedMessages(1);
     assert.equal(messages.filter(message => message.body.includes("immediate human support")).length, 1);
