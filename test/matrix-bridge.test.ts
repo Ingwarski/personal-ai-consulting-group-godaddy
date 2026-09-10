@@ -216,13 +216,23 @@ test("role colours are opt-in, accessible seven-slot headers with mandatory emoj
   }
 });
 
-test("candidate and exact approved final remain visible but have distinct localized stage headers", () => {
+test("candidate names its reviewers separately from the proposed owner answer while the approved final stays clean", () => {
   const base = { generation: 1, sequence: 1, internalEventId: "stage-event", visibleTime: "12:34", body: "Exactly the same agreed recommendation.",
     bodyFormat: "markdown" as const, bodyHash: "a".repeat(64), confirmedAt: "2026-09-08T09:34:00.000Z", language: "en", role: "Head Consultant" };
-  for (const [consensusKind, label] of [["proposal", "Candidate"], ["final", "Approved"], ["unresolved", "Unresolved"], ["safety_handoff", "Safety handoff"]] as const) {
+  const candidate = formatConfirmedMessageForMatrix(binding, {
+    ...base, consensusKind: "proposal", addressedTo: "Strategy Consultant; Operations Consultant; Critic"
+  });
+  assert.equal(candidate.body,
+    "🧭 Head Consultant · Candidate for review · 12:34\nReviewers: Strategy Consultant; Operations Consultant; Critic\n\nProposed answer to the owner:\n\nExactly the same agreed recommendation.");
+  assert.match(candidate.formattedBody,
+    /<strong>Reviewers:<\/strong> Strategy Consultant; Operations Consultant; Critic<\/p><p><em>Proposed answer to the owner:<\/em><\/p>/u);
+  assert.doesNotMatch(candidate.body, /Candidate for review →/u);
+
+  for (const [consensusKind, label] of [["final", "Approved"], ["unresolved", "Unresolved"], ["safety_handoff", "Safety handoff"]] as const) {
     const result = formatConfirmedMessageForMatrix(binding, { ...base, consensusKind });
     assert.ok(result.body.startsWith(`🧭 Head Consultant · ${label} · 12:34`));
     assert.ok(result.body.endsWith(base.body));
+    assert.doesNotMatch(result.body, /Reviewers|Proposed answer/u);
   }
 });
 

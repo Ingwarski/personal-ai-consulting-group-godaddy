@@ -483,11 +483,13 @@ export function formatConfirmedMessageContentForMatrix(
   const observationLabel = ({ uk: "спостереження із зображення", en: "image observation", ru: "наблюдение по изображению", es: "observación de imagen",
     fr: "observation d’image", de: "Bildbeobachtung", pl: "obserwacja obrazu" } as Record<string, string>)[language!] ?? "image observation";
   const visibleRole = known === undefined ? message.role : `${known.emoji} ${known.role}`;
-  const addressee = message.addressedTo === undefined ? "" : ` → ${message.addressedTo.split("; ").map(role => resolveConsultantRole(role)?.role ?? role).join("; ")}`;
-  const stageLabels: Readonly<Record<string, readonly string[]>> = { en: ["Candidate", "Approved", "Unresolved", "Safety handoff"], uk: ["Пропозиція", "Погоджено", "Без консенсусу", "Допомога людини для безпеки"],
+  const addressedRoles = message.addressedTo?.split("; ").map(role => resolveConsultantRole(role)?.role ?? role).join("; ");
+  const stageKind = String(message.consensusKind);
+  const proposalForReview = stageKind === "proposal" && addressedRoles !== undefined;
+  const addressee = addressedRoles === undefined || proposalForReview ? "" : ` → ${addressedRoles}`;
+  const stageLabels: Readonly<Record<string, readonly string[]>> = { en: ["Candidate for review", "Approved", "Unresolved", "Safety handoff"], uk: ["Пропозиція для перевірки", "Погоджено", "Без консенсусу", "Допомога людини для безпеки"],
     es: ["Propuesta", "Aprobado", "Sin consenso", "Ayuda humana para la seguridad"], fr: ["Proposition", "Approuvé", "Sans consensus", "Aide humaine pour la sécurité"], de: ["Vorschlag", "Bestätigt", "Kein Konsens", "Menschliche Sicherheitshilfe"],
     pl: ["Propozycja", "Zatwierdzono", "Brak konsensusu", "Pomoc człowieka dla bezpieczeństwa"], ru: ["Предложение", "Согласовано", "Без консенсуса", "Помощь человека для безопасности"] };
-  const stageKind = String(message.consensusKind);
   const stageIndex = stageKind === "proposal" ? 0 : stageKind === "final" ? 1 : stageKind === "unresolved" ? 2 : stageKind === "safety_handoff" ? 3 : undefined;
   const stage = stageIndex === undefined ? "" : ` · ${(stageLabels[language!] ?? stageLabels.en)![stageIndex]}`;
   const header = `${visibleRole}${service ? ` · ${message.internalEventId.startsWith("mx-image-") ? observationLabel : serviceLabel}` : ""}${stage}${addressee} · ${message.visibleTime}`;
@@ -496,9 +498,21 @@ export function formatConfirmedMessageContentForMatrix(
     ? CONSULTANT_COLOUR_SLOTS[slot!] : undefined;
   const styledHeader = colour === undefined ? escapeHtml(header)
     : `<span data-mx-color="${colour}" data-mx-bg-color="#ffffff">${escapeHtml(header)}</span>`;
+  const proposalLabels = ({
+    uk: ["Рецензенти", "Запропонована відповідь власнику"], en: ["Reviewers", "Proposed answer to the owner"],
+    ru: ["Рецензенты", "Предлагаемый ответ владельцу"], es: ["Revisores", "Respuesta propuesta al propietario"],
+    fr: ["Relecteurs", "Réponse proposée au propriétaire"], de: ["Prüfende", "Vorgeschlagene Antwort an den Eigentümer"],
+    pl: ["Recenzenci", "Proponowana odpowiedź dla właściciela"]
+  } as Readonly<Record<string, readonly [string, string]>>)[language!] ?? ["Reviewers", "Proposed answer to the owner"];
+  const plainFrame = proposalForReview
+    ? `\n${proposalLabels[0]}: ${addressedRoles}\n\n${proposalLabels[1]}:\n\n`
+    : "\n\n";
+  const formattedFrame = proposalForReview
+    ? `<p><strong>${escapeHtml(proposalLabels[0])}:</strong> ${escapeHtml(addressedRoles!)}</p><p><em>${escapeHtml(proposalLabels[1])}:</em></p>`
+    : "";
   return Object.freeze({
-    body: `${header}\n\n${message.body}`,
-    formattedBody: `<strong>${styledHeader}</strong>${renderMarkdownParagraphs(message.body)}`
+    body: `${header}${plainFrame}${message.body}`,
+    formattedBody: `<strong>${styledHeader}</strong>${formattedFrame}${renderMarkdownParagraphs(message.body)}`
   });
 }
 
