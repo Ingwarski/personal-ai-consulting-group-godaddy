@@ -17,7 +17,8 @@ const CODES = new Set([
   "runtime_unavailable", "session_unavailable", "session_busy", "invalid_task", "catalog_unavailable", "prepare_failed",
   "speed_policy_unresolved", "consilium_route_failed", "head_synthesis_failed", "finalization_failed",
   "publication_lock_unavailable", "publication_lock_release_failed", "publication_state_invalid", "publication_unresolved",
-  "input_order_changed", "session_cancellation_failed", "registrar_revision_missing", "registrar_consensus_missing"
+  "input_order_changed", "session_cancellation_failed", "registrar_revision_missing", "registrar_consensus_missing",
+  "registrar_revision_fence_failed", "registrar_revision_state_failed", "registrar_revision_transaction_failed"
 ]);
 const DETAILS = new Set([
   "invalid_roles", "preflight_failed", "codex_thread_start_failed", "cancelled",

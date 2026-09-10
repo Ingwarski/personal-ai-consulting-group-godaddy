@@ -271,7 +271,10 @@ test("revision rejects missing, stale and invalid requests and rolls back a fail
   const before = new Map(pool.values);
   pool.failFence = true;
   const input = { generation: 1, revisionId: "revision-rollback" };
-  await assert.rejects(registrar.reviseSession(input), /fence unavailable/);
+  await assert.rejects(registrar.reviseSession(input), (error: unknown) => {
+    assert.equal((error as { code?: unknown }).code, "registrar_revision_fence_failed");
+    return true;
+  });
   assert.deepEqual(pool.values, before);
   assert.equal(pool.rollbacks, 1);
   pool.failFence = false;

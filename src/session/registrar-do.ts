@@ -469,7 +469,8 @@ export class RegistrarDO {
     if (!Number.isSafeInteger(input.generation) || input.generation < 1 || !isInternalEventId(input.revisionId)) {
       return { ok: false, code: "invalid_event" };
     }
-    return this.#storage.transaction(async (storage) => {
+    try {
+      return await this.#storage.transaction(async (storage) => {
       const recorded = await storage.get<SessionRevision>(revisionKey(input.revisionId));
       if (recorded !== undefined) {
         if (recorded.sourceGeneration !== input.generation) return { ok: false, code: "idempotency_conflict" };
@@ -492,7 +493,11 @@ export class RegistrarDO {
       }
 
       const now = this.#now().toISOString();
-      await this.#fenceGeneration(storage, { generation: active.generation, reason: "revision", fencedAt: now });
+      try {
+        await this.#fenceGeneration(storage, { generation: active.generation, reason: "revision", fencedAt: now });
+      } catch (cause) {
+        throw Object.assign(new Error("Registrar revision fence failed.", { cause }), { code: "registrar_revision_fence_failed" as const });
+      }
       const priorGeneration = (await storage.get<number>(GENERATION_KEY)) ?? active.generation;
       const replacement: SessionGeneration = deepFreeze({
         sessionId: active.sessionId,
@@ -504,14 +509,24 @@ export class RegistrarDO {
         nextSequence: 1
       });
       const closed = Object.freeze({ ...active, phase: "closed" as const, closedAt: active.closedAt ?? now });
-      await storage.put(sessionKey(active.generation), closed);
-      await storage.put(GENERATION_KEY, replacement.generation);
-      await storage.put(sessionKey(replacement.generation), replacement);
-      await storage.put(ACTIVE_SESSION_KEY, replacement);
-      if (consensusTask !== undefined) await storage.put(consensusTaskKey(replacement.generation), consensusTask);
-      await storage.put(revisionKey(input.revisionId), { sourceGeneration: active.generation, targetGeneration: replacement.generation });
+      try {
+        await storage.put(sessionKey(active.generation), closed);
+        await storage.put(GENERATION_KEY, replacement.generation);
+        await storage.put(sessionKey(replacement.generation), replacement);
+        await storage.put(ACTIVE_SESSION_KEY, replacement);
+        if (consensusTask !== undefined) await storage.put(consensusTaskKey(replacement.generation), consensusTask);
+        await storage.put(revisionKey(input.revisionId), { sourceGeneration: active.generation, targetGeneration: replacement.generation });
+      } catch (cause) {
+        throw Object.assign(new Error("Registrar revision state write failed.", { cause }), { code: "registrar_revision_state_failed" as const });
+      }
       return { ok: true, value: replacement, replayed: false };
-    });
+      });
+    } catch (error) {
+      if (typeof error === "object" && error !== null && "code" in error &&
+        ["registrar_revision_fence_failed", "registrar_revision_state_failed"].includes(String(error.code))) throw error;
+      if (error instanceof Error && ["Registrar revision session is missing.", "Registrar consensus task is missing."].includes(error.message)) throw error;
+      throw Object.assign(new Error("Registrar revision transaction failed.", { cause: error }), { code: "registrar_revision_transaction_failed" as const });
+    }
   }
 
   async stopSession(

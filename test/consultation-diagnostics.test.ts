@@ -45,4 +45,7 @@ test("registrar revision diagnostics are specific and contain no raw error text"
   assert.deepEqual(classifyConsultationFailure("input_revision", new Error("Registrar consensus task is missing.")), {
     stage: "input_revision", code: "registrar_consensus_missing"
   });
+  assert.deepEqual(classifyConsultationFailure("input_revision", { code: "registrar_revision_fence_failed", message: "private" }), {
+    stage: "input_revision", code: "registrar_revision_fence_failed"
+  });
 });
