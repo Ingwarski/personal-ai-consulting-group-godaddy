@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { isAbsolute, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { MATRIX_RELEASE_SIDECAR_SHA256 } from "./matrix-release-pin.ts";
@@ -48,6 +48,28 @@ const DEFAULT_MYSQL_EXECUTABLE_BINDING: GoDaddyMatrixExecutableBinding = Object.
   binaryPath: MATRIX_MYSQL_SIDECAR_PATH,
   expectedSha256: MATRIX_RELEASE_SIDECAR_SHA256
 });
+
+const MATRIX_DEPLOYMENT_GENERATION_PREFIX = "50434731"; // ASCII "PCG1".
+
+/**
+ * Identifies one Node application lifetime, not one release binary. GoDaddy can
+ * leave the previous native child alive while replacing its Node parent. A
+ * release checksum is identical across such restarts and therefore cannot
+ * distinguish the replacement writer from the orphan it must fence.
+ */
+export function createMatrixDeploymentGeneration(
+  nowMilliseconds: number = Date.now(),
+  entropy: Uint8Array = randomBytes(20)
+): string {
+  if (!Number.isSafeInteger(nowMilliseconds) || nowMilliseconds < 0 || entropy.byteLength !== 20) {
+    throw new Error("Invalid Matrix deployment generation input.");
+  }
+  const bytes = Buffer.alloc(32);
+  bytes.write(MATRIX_DEPLOYMENT_GENERATION_PREFIX, 0, "hex");
+  bytes.writeBigUInt64BE(BigInt(nowMilliseconds), 4);
+  Buffer.from(entropy).copy(bytes, 12);
+  return bytes.toString("hex");
+}
 
 type MatrixEnvironmentName = typeof MATRIX_ENVIRONMENT_NAMES[number];
 
@@ -167,6 +189,7 @@ export function parseGoDaddyMatrixConfiguration(
   const botDeviceId = values.MATRIX_BOT_DEVICE_ID as string;
   const storePassphrase = values.MATRIX_STORE_PASSPHRASE as string;
   const accessToken = values.MATRIX_ACCESS_TOKEN as string;
+  const deploymentGeneration = mysql ? createMatrixDeploymentGeneration() : undefined;
   if (
     binaryPath === undefined || storeDir === undefined || mediaSpoolDir === undefined ||
     overlaps(storeDir, mediaSpoolDir) || overlaps(binaryPath, storeDir) || overlaps(binaryPath, mediaSpoolDir) ||
@@ -200,7 +223,10 @@ export function parseGoDaddyMatrixConfiguration(
   }
   const spawnEnvironment = Object.freeze({
     ...databaseEnvironment,
-    ...(mysql ? { MATRIX_STORE_BACKEND: "mysql", MATRIX_DEPLOYMENT_GENERATION: expectedSha256 } : {}),
+    ...(mysql ? {
+      MATRIX_STORE_BACKEND: "mysql",
+      MATRIX_DEPLOYMENT_GENERATION: deploymentGeneration as string
+    } : {}),
     PATH: pathValue,
     MATRIX_HOMESERVER_URL: GODADDY_MATRIX_HOMESERVER_ORIGIN,
     MATRIX_ALLOWED_HTTPS_ORIGINS: GODADDY_MATRIX_HOMESERVER_ORIGIN,

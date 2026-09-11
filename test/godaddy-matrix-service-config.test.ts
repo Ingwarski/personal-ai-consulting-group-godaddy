@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  createMatrixDeploymentGeneration,
   godaddyMatrixEnvironmentNames,
   parseGoDaddyMatrixConfiguration
 } from "../src/godaddy/matrix-service-config.ts";
@@ -91,10 +92,28 @@ test("MySQL mode explicitly passes only selected DB credentials to its child and
     assert.equal(result.value.spawnEnvironment[field], mysqlConfiguration[field]);
   }
   assert.equal(result.value.spawnEnvironment.MATRIX_STORE_BACKEND, "mysql");
-  assert.equal(result.value.spawnEnvironment.MATRIX_DEPLOYMENT_GENERATION, MATRIX_RELEASE_SIDECAR_SHA256);
+  assert.match(result.value.spawnEnvironment.MATRIX_DEPLOYMENT_GENERATION ?? "", /^50434731[a-f0-9]{56}$/u);
+  assert.notEqual(result.value.spawnEnvironment.MATRIX_DEPLOYMENT_GENERATION, MATRIX_RELEASE_SIDECAR_SHA256);
   for (const field of ["SETTINGS_OWNER_PASSWORD", "GOOGLE_CLIENT_SECRET", "DATABASE_URL", "DB_SSL_REJECT_UNAUTHORIZED"]) {
     assert.equal(Object.hasOwn(result.value.spawnEnvironment, field), false);
   }
+});
+
+test("MySQL deployment generations are process-lifetime identities rather than release checksums", () => {
+  const first = createMatrixDeploymentGeneration(1_789_000_000_000, new Uint8Array(20).fill(1));
+  const second = createMatrixDeploymentGeneration(1_789_000_000_001, new Uint8Array(20).fill(1));
+  assert.equal(first, "50434731000001a088b5a200" + "01".repeat(20));
+  assert.notEqual(second, first);
+  assert.throws(() => createMatrixDeploymentGeneration(-1, new Uint8Array(20)));
+  assert.throws(() => createMatrixDeploymentGeneration(1, new Uint8Array(19)));
+
+  const firstConfiguration = parseGoDaddyMatrixConfiguration(mysqlConfiguration);
+  const secondConfiguration = parseGoDaddyMatrixConfiguration(mysqlConfiguration);
+  assert.ok(firstConfiguration.ok && secondConfiguration.ok);
+  assert.notEqual(
+    firstConfiguration.value.spawnEnvironment.MATRIX_DEPLOYMENT_GENERATION,
+    secondConfiguration.value.spawnEnvironment.MATRIX_DEPLOYMENT_GENERATION
+  );
 });
 
 test("MySQL executable identity comes from the verified release, not stale deployment values", () => {

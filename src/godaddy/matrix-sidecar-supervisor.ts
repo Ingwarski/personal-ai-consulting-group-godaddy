@@ -700,8 +700,7 @@ function validateExpectedIdentity(value: MatrixSidecarIdentityExpectation): Matr
 
 function validateSpawnIdentity(
   environment: Readonly<Record<string, string>>,
-  expected: MatrixSidecarIdentityExpectation,
-  expectedSha256: string
+  expected: MatrixSidecarIdentityExpectation
 ): void {
   const homeserver = environment.MATRIX_HOMESERVER_URL;
   const allowedOrigins = environment.MATRIX_ALLOWED_HTTPS_ORIGINS?.split(",").map((value) => value.trim());
@@ -725,7 +724,7 @@ function validateSpawnIdentity(
     || environment.MATRIX_ACCESS_TOKEN === undefined || environment.MATRIX_ACCESS_TOKEN.length === 0
     || environment.MATRIX_STORE_PASSPHRASE === undefined
     || !/^[a-f0-9]{64}$/u.test(environment.MATRIX_STORE_PASSPHRASE)
-    || (mysql && environment.MATRIX_DEPLOYMENT_GENERATION !== expectedSha256)
+    || (mysql && !/^50434731[a-f0-9]{56}$/u.test(environment.MATRIX_DEPLOYMENT_GENERATION ?? ""))
     || (!mysql && environment.MATRIX_DEPLOYMENT_GENERATION !== undefined)
     || storeDirectory === undefined || !isAbsolute(storeDirectory) || resolve(storeDirectory) !== storeDirectory
     || spoolDirectory === undefined || !isAbsolute(spoolDirectory) || resolve(spoolDirectory) !== spoolDirectory
@@ -849,7 +848,7 @@ export class MatrixSidecarSupervisor {
     const expectedOwnerUid = options.expectedOwnerUid === undefined ? defaultOwnerUid() : options.expectedOwnerUid;
     const expectedIdentity = validateExpectedIdentity(options.expectedIdentity);
     const spawnEnvironment = safeEnvironment(options.spawnEnvironment);
-    validateSpawnIdentity(spawnEnvironment, expectedIdentity, expectedSha256);
+    validateSpawnIdentity(spawnEnvironment, expectedIdentity);
     if (
       !isAbsolute(options.binaryPath)
       || resolve(options.binaryPath) !== options.binaryPath
