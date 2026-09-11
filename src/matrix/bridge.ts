@@ -487,11 +487,20 @@ export function formatConfirmedMessageContentForMatrix(
   const stageKind = String(message.consensusKind);
   const proposalForReview = stageKind === "proposal" && addressedRoles !== undefined;
   const addressee = addressedRoles === undefined || proposalForReview ? "" : ` → ${addressedRoles}`;
-  const stageLabels: Readonly<Record<string, readonly string[]>> = { en: ["Candidate for review", "Approved", "Unresolved", "Safety handoff"], uk: ["Пропозиція для перевірки", "Погоджено", "Без консенсусу", "Допомога людини для безпеки"],
-    es: ["Propuesta", "Aprobado", "Sin consenso", "Ayuda humana para la seguridad"], fr: ["Proposition", "Approuvé", "Sans consensus", "Aide humaine pour la sécurité"], de: ["Vorschlag", "Bestätigt", "Kein Konsens", "Menschliche Sicherheitshilfe"],
-    pl: ["Propozycja", "Zatwierdzono", "Brak konsensusu", "Pomoc człowieka dla bezpieczeństwa"], ru: ["Предложение", "Согласовано", "Без консенсуса", "Помощь человека для безопасности"] };
-  const stageIndex = stageKind === "proposal" ? 0 : stageKind === "final" ? 1 : stageKind === "unresolved" ? 2 : stageKind === "safety_handoff" ? 3 : undefined;
-  const stage = stageIndex === undefined ? "" : ` · ${(stageLabels[language!] ?? stageLabels.en)![stageIndex]}`;
+  // A Critic message must be visually unmistakable in a long consultation.
+  // The final is possible only after that review has been durably recorded, so
+  // its header states that fact without altering the exact agreed answer body.
+  const stageLabels: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+    en: { proposal: "Candidate for review", final: "Approved after Critic review", unresolved: "Unresolved", safety_handoff: "Safety handoff", critic_review: "Critic review", specialist_review: "Specialist review", head_review: "Head review" },
+    uk: { proposal: "Пропозиція для перевірки", final: "Погоджено після перевірки Критика", unresolved: "Без консенсусу", safety_handoff: "Допомога людини для безпеки", critic_review: "Перевірка Критика", specialist_review: "Перевірка спеціаліста", head_review: "Перевірка Головного консультанта" },
+    es: { proposal: "Propuesta", final: "Aprobado tras la revisión del crítico", unresolved: "Sin consenso", safety_handoff: "Ayuda humana para la seguridad", critic_review: "Revisión del crítico", specialist_review: "Revisión del especialista", head_review: "Revisión del responsable" },
+    fr: { proposal: "Proposition", final: "Approuvé après l’examen du critique", unresolved: "Sans consensus", safety_handoff: "Aide humaine pour la sécurité", critic_review: "Examen du critique", specialist_review: "Examen du spécialiste", head_review: "Examen du responsable" },
+    de: { proposal: "Vorschlag", final: "Nach Kritikprüfung bestätigt", unresolved: "Kein Konsens", safety_handoff: "Menschliche Sicherheitshilfe", critic_review: "Kritikprüfung", specialist_review: "Fachprüfung", head_review: "Prüfung durch die Leitung" },
+    pl: { proposal: "Propozycja", final: "Zatwierdzono po ocenie krytyka", unresolved: "Brak konsensusu", safety_handoff: "Pomoc człowieka dla bezpieczeństwa", critic_review: "Ocena krytyka", specialist_review: "Ocena specjalisty", head_review: "Ocena głównego konsultanta" },
+    ru: { proposal: "Предложение", final: "Согласовано после проверки Критика", unresolved: "Без консенсуса", safety_handoff: "Помощь человека для безопасности", critic_review: "Проверка Критика", specialist_review: "Проверка специалиста", head_review: "Проверка главного консультанта" }
+  };
+  const stageLabel = (stageLabels[language!] ?? stageLabels.en)![stageKind];
+  const stage = stageLabel === undefined ? "" : ` · ${stageLabel}`;
   const header = `${visibleRole}${service ? ` · ${message.internalEventId.startsWith("mx-image-") ? observationLabel : serviceLabel}` : ""}${stage}${addressee} · ${message.visibleTime}`;
   const slot = presentation?.roleColorSlot;
   const colour = known !== undefined && presentation?.supportsRoleColours === true && Number.isSafeInteger(slot) && slot! >= 0 && slot! < CONSULTANT_COLOUR_SLOTS.length

@@ -216,7 +216,7 @@ test("role colours are opt-in, accessible seven-slot headers with mandatory emoj
   }
 });
 
-test("candidate names its reviewers separately from the proposed owner answer while the approved final stays clean", () => {
+test("candidate and each review stage make Critic participation visible while the approved body stays clean", () => {
   const base = { generation: 1, sequence: 1, internalEventId: "stage-event", visibleTime: "12:34", body: "Exactly the same agreed recommendation.",
     bodyFormat: "markdown" as const, bodyHash: "a".repeat(64), confirmedAt: "2026-09-08T09:34:00.000Z", language: "en", role: "Head Consultant" };
   const candidate = formatConfirmedMessageForMatrix(binding, {
@@ -228,7 +228,12 @@ test("candidate names its reviewers separately from the proposed owner answer wh
     /^<strong>🧭 Head Consultant · Candidate for review · 12:34<\/strong><br><p><strong>Reviewers:<\/strong> Strategy Consultant; Operations Consultant; Critic<\/p><p><em>Proposed answer to the owner:<\/em><\/p>/u);
   assert.doesNotMatch(candidate.body, /Candidate for review →/u);
 
-  for (const [consensusKind, label] of [["final", "Approved"], ["unresolved", "Unresolved"], ["safety_handoff", "Safety handoff"]] as const) {
+  const criticReview = formatConfirmedMessageForMatrix(binding, {
+    ...base, consensusKind: "critic_review", role: "Critic", addressedTo: "Strategy Consultant; Head Consultant"
+  });
+  assert.ok(criticReview.body.startsWith("🔎 Critic · Critic review → Strategy Consultant; Head Consultant · 12:34"));
+
+  for (const [consensusKind, label] of [["final", "Approved after Critic review"], ["unresolved", "Unresolved"], ["safety_handoff", "Safety handoff"]] as const) {
     const result = formatConfirmedMessageForMatrix(binding, { ...base, consensusKind });
     assert.ok(result.body.startsWith(`🧭 Head Consultant · ${label} · 12:34`));
     assert.ok(result.body.endsWith(base.body));
