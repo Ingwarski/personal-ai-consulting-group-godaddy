@@ -68,6 +68,7 @@ async function fixture(input: { approved?: boolean; missingSession?: boolean; mi
   const confirmed: ConfirmedAgentMessage[] = [];
   const lifecycle: string[] = [];
   let loadCalls = 0;
+  const expectedCatalogVersions: Array<string | undefined> = [];
   let clientCalls = 0;
   let claudeCalls = 0;
   let firstTurn = () => {};
@@ -134,7 +135,10 @@ async function fixture(input: { approved?: boolean; missingSession?: boolean; mi
   const bootstrap: RuntimeBootstrap = {
     loadCatalog: async () => { loadCalls++; return input.missingCatalog || input.renewCatalog ? undefined : { ...receipt,
       ...(input.staleCatalog ? { expiresAt: activeNow.toISOString() } : {}), ...(input.untrustedCatalog ? { trusted: false } : {}) }; },
-    ...(input.renewCatalog ? { ensureCatalogForSettings: async () => receipt } : {}),
+    ...(input.renewCatalog ? { ensureCatalogForSettings: async (_settings, expectedCatalogVersion) => {
+      expectedCatalogVersions.push(expectedCatalogVersion);
+      return expectedCatalogVersion === receipt.catalogVersion ? receipt : undefined;
+    } } : {}),
     getCodexThreadClient: async () => { clientCalls++; return client; },
     getClaudeProcess: () => { claudeCalls++; throw new Error("Inactive Claude must never be acquired"); },
     status: async () => { throw new Error("Runner uses selected preflight instead"); },
@@ -145,7 +149,7 @@ async function fixture(input: { approved?: boolean; missingSession?: boolean; mi
   const runtime = createGoDaddyConsiliumRuntime({ bootstrap, registrarRuntime, environment: { ...productionEnvironment,
     ...(input.forbiddenEnvironment ? { OPENAI_API_KEY: "never-used-fixture" } : {}) }, now: () => activeNow });
   return { runtime, registrarRuntime, registrar, registrarStorage, sent, confirmed, turnStarted, pool, lifecycle,
-    calls: () => ({ loadCalls, clientCalls, claudeCalls }), snapshot: snapshot.value };
+    calls: () => ({ loadCalls, clientCalls, claudeCalls }), expectedCatalogVersions, snapshot: snapshot.value };
 }
 
 test("final-only recovery reuses the same designated review, creates one head context, and closes the same generation", async () => {
@@ -487,6 +491,7 @@ test("unattended Matrix planning and execution renew the saved provider catalog 
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.equal((await h.registrar.getConsensus("matrix-renewal-task"))?.status, "published");
   assert.equal(h.calls().loadCalls, 0, "the execution path must use unattended exact-selection renewal, not a stale catalog read");
+  assert.deepEqual(h.expectedCatalogVersions, [h.snapshot.catalogVersion, h.snapshot.catalogVersion]);
   await h.runtime.close();
 });
 

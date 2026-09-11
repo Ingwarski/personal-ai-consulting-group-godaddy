@@ -133,6 +133,7 @@ test("unattended expired Codex catalog revalidates once for concurrent consultat
   release();
   const result = await one;
   assert.ok(result);
+  assert.equal(result.catalogVersion, h.source.catalogVersion, "route renewal must preserve the immutable catalog identity");
   assert.equal(result.issuedAt, activeNow.toISOString());
   assert.deepEqual(result.defaults, h.source.defaults);
   assert.equal(result.providerReceipts?.claude_code.expiresAt, h.source.expiresAt);
@@ -140,6 +141,23 @@ test("unattended expired Codex catalog revalidates once for concurrent consultat
   assert.equal(h.calls.writes.length, 1); assert.equal(JSON.stringify(settings), before);
   assert.deepEqual(await h.runtime.ensureCatalogForSettings!(settings), result);
   assert.equal(h.calls.codex, 1);
+});
+
+test("independent GoDaddy processes renew one immutable session route with the same catalog version", async () => {
+  const source = expiredReceipt();
+  const settings = codexOnlySettings();
+  const first = routerFixture({ initialCatalog: source, now: () => activeNow });
+  const second = routerFixture({ initialCatalog: source, now: () => new Date(activeNow.getTime() + 1_000) });
+
+  const [one, two] = await Promise.all([
+    first.runtime.ensureCatalogForSettings!(settings, source.catalogVersion),
+    second.runtime.ensureCatalogForSettings!(settings, source.catalogVersion)
+  ]);
+
+  assert.ok(one); assert.ok(two);
+  assert.equal(one.catalogVersion, source.catalogVersion);
+  assert.equal(two.catalogVersion, source.catalogVersion);
+  assert.notEqual(one.issuedAt, two.issuedAt, "the proof envelopes may be renewed independently");
 });
 
 test("unattended revalidation never revives ended subscriptions and bounds repeated failure probes", async () => {

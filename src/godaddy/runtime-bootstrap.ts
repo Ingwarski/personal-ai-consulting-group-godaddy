@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { createRuntimeCapabilityCatalog, type RuntimeCapabilityCatalogResult } from "../runtime/capability-catalog.ts";
 import { ClaudeDiscoveryFailure, createGoDaddyClaudeCodeProcess, type GoDaddyClaudeCodeProcess } from "./claude-code-process.ts";
 import { createGoDaddyCodexAppServer, type CodexDeviceAuthorization, type GoDaddyCodexAppServer } from "./codex-app-server-process.ts";
@@ -13,6 +14,7 @@ import type { CapabilityReceipt, CriticProvider, OwnerSettings, ProviderModelCap
 
 const CATALOG_STORAGE_KEY = "current";
 const CATALOG_NAMESPACE = "runtime-capability-v1";
+const SELECTION_LEASE_NAMESPACE = "runtime-selection-capability-v1";
 const PREFERRED_CLAUDE_DEFAULT_MODEL_IDS = Object.freeze([
   "claude-sonnet-5",
   "claude-sonnet-4-6",
@@ -32,7 +34,7 @@ export type RuntimeBootstrap = Readonly<{
   startCodexDeviceAuthorization: () => Promise<CodexDeviceAuthorization | undefined>;
   resetCodexAuthorization: () => Promise<boolean>;
   refreshCatalog: (provider?: CriticProvider) => Promise<RuntimeCapabilityCatalogResult>;
-  ensureCatalogForSettings?: (settings: OwnerSettings) => Promise<CapabilityReceipt | undefined>;
+  ensureCatalogForSettings?: (settings: OwnerSettings, expectedCatalogVersion?: string) => Promise<CapabilityReceipt | undefined>;
   getCodexThreadClient?: () => Promise<CodexAppServerThreadClient | undefined>;
   getClaudeProcess?: () => ClaudeCodeSubscriptionProcess | undefined;
   close: () => Promise<void>;
@@ -70,6 +72,7 @@ function chooseDefaults(codexModels: readonly ProviderModelCapability[], claudeM
 export function createRuntimeBootstrap(options: RuntimeBootstrapOptions): RuntimeBootstrap {
   const now = options.now ?? (() => new Date());
   const runtimeStorage = new MySqlKeyValueStorage({ executor: options.pool, namespace: CATALOG_NAMESPACE });
+  const selectionLeaseStorage = new MySqlKeyValueStorage({ executor: options.pool, namespace: SELECTION_LEASE_NAMESPACE });
   const credentialStorage = new MySqlKeyValueStorage({ executor: options.pool, namespace: "runtime-credentials-v1" });
   const vault = createRuntimeCredentialVault({ storage: credentialStorage, rootSecret: options.environment.SETTINGS_CSRF_HMAC_KEY });
   let catalog = options.initialCatalog;
@@ -109,6 +112,7 @@ export function createRuntimeBootstrap(options: RuntimeBootstrapOptions): Runtim
 
   const revalidations = new Map<string, Promise<CapabilityReceipt | undefined>>();
   const failedRevalidations = new Map<string, number>();
+  const selectionLeases = new Map<string, CapabilityReceipt>();
   const freshForSelection = (receipt: CapabilityReceipt, settings: OwnerSettings): boolean =>
     validateCatalogTiming(receipt, now()) === null &&
     (settings.critic.provider === "codex" ? ["codex"] as const : ["codex", "claude_code"] as const).every(provider => {
@@ -120,14 +124,63 @@ export function createRuntimeBootstrap(options: RuntimeBootstrapOptions): Runtim
       && (selection.reasoningEffort === null || (model.supportedReasoningEfforts.includes(selection.reasoningEffort)
         && model.reasoningMappings[selection.reasoningEffort] === selection.reasoningEffort)));
 
+  const selectionLeaseKey = (settings: OwnerSettings, catalogVersion: string): string =>
+    `selection-${createHash("sha256").update(JSON.stringify({ catalogVersion, settings })).digest("hex")}`;
+
+  const loadSelectionLease = async (settings: OwnerSettings, catalogVersion: string): Promise<Readonly<{
+    fresh?: CapabilityReceipt;
+    historical?: CapabilityReceipt;
+  }>> => {
+    const key = selectionLeaseKey(settings, catalogVersion);
+    const cached = selectionLeases.get(key);
+    if (cached !== undefined) {
+      const fresh = parseCapabilityReceipt(cached, now());
+      if (fresh !== undefined && freshForSelection(fresh, settings) && validateOwnerSettings(settings, fresh, now()).ok) {
+        return { fresh, historical: fresh };
+      }
+    }
+    try {
+      const stored = await selectionLeaseStorage.get<unknown>(key);
+      const historical = historicalReceipt(stored);
+      if (historical?.catalogVersion !== catalogVersion) return {};
+      const fresh = parseCapabilityReceipt(stored, now());
+      if (fresh === undefined || !freshForSelection(fresh, settings) || !validateOwnerSettings(settings, fresh, now()).ok) {
+        return { historical };
+      }
+      selectionLeases.set(key, fresh);
+      return { fresh, historical };
+    } catch {
+      return {};
+    }
+  };
+
+  const persistSelectionLease = async (settings: OwnerSettings, receipt: CapabilityReceipt): Promise<boolean> => {
+    const key = selectionLeaseKey(settings, receipt.catalogVersion);
+    try {
+      await selectionLeaseStorage.put(key, receipt);
+      selectionLeases.set(key, receipt);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   // Unattended Matrix reception includes content-free capability revalidation,
   // not authentication, a new provider, default selection or a catalog sweep.
   // Only the already-saved models/efforts may receive a harmless probe.
-  const revalidateSelection = async (settings: OwnerSettings): Promise<CapabilityReceipt | undefined> => {
+  const revalidateSelection = async (settings: OwnerSettings, expectedCatalogVersion?: string): Promise<CapabilityReceipt | undefined> => {
     if (closing) return undefined;
     const current = await loadCatalog();
-    if (current !== undefined && freshForSelection(current, settings)) return current;
-    const previous = historicalReceipt(catalog);
+    if (current !== undefined && (expectedCatalogVersion === undefined || current.catalogVersion === expectedCatalogVersion)
+      && freshForSelection(current, settings) && validateOwnerSettings(settings, current, now()).ok) {
+      return await persistSelectionLease(settings, current) ? current : undefined;
+    }
+    const requestedVersion = expectedCatalogVersion ?? historicalReceipt(catalog)?.catalogVersion;
+    if (requestedVersion === undefined) return undefined;
+    const savedLease = await loadSelectionLease(settings, requestedVersion);
+    if (savedLease.fresh !== undefined) return savedLease.fresh;
+    const globalHistory = historicalReceipt(catalog);
+    const previous = savedLease.historical ?? (globalHistory?.catalogVersion === requestedVersion ? globalHistory : undefined);
     if (previous === undefined || codex === undefined
       || FORBIDDEN_RUNTIME_ENVIRONMENT_NAMES.some(name => Object.hasOwn(options.environment, name))) return undefined;
     const selections = settings.critic.provider === "codex" && settings.critic.codex !== null
@@ -168,25 +221,25 @@ export function createRuntimeBootstrap(options: RuntimeBootstrapOptions): Runtim
     const issuedAt = now();
     const result = createRuntimeCapabilityCatalog({ codex: codexProbe,
       ...(claudeProbe === undefined ? {} : { claude: claudeProbe }), previous, verifiedCodexModelIds,
-      defaults: previous.defaults, catalogVersion: `runtime-${issuedAt.getTime()}`,
+      defaults: previous.defaults, catalogVersion: requestedVersion,
       issuedAt, expiresAt: new Date(issuedAt.getTime() + 24 * 60 * 60_000) });
     if (closing || !result.ok || !validateOwnerSettings(settings, result.receipt, now()).ok) return undefined;
-    await runtimeStorage.put(CATALOG_STORAGE_KEY, result.receipt);
-    catalog = result.receipt;
-    return result.receipt;
+    return await persistSelectionLease(settings, result.receipt) ? result.receipt : undefined;
   };
 
   return Object.freeze({
     loadCatalog,
-    ensureCatalogForSettings(settings: OwnerSettings): Promise<CapabilityReceipt | undefined> {
+    ensureCatalogForSettings(settings: OwnerSettings, expectedCatalogVersion?: string): Promise<CapabilityReceipt | undefined> {
       if (closing) return Promise.resolve(undefined);
       const parsed = parseHistoricalOwnerSettings(settings);
-      if (!parsed.ok) return Promise.resolve(undefined);
-      const key = JSON.stringify(parsed.value);
+      if (!parsed.ok || (expectedCatalogVersion !== undefined && (expectedCatalogVersion.trim().length === 0 || expectedCatalogVersion.length > 512))) {
+        return Promise.resolve(undefined);
+      }
+      const key = JSON.stringify({ settings: parsed.value, expectedCatalogVersion });
       const pending = revalidations.get(key);
       if (pending !== undefined) return pending;
       if ((failedRevalidations.get(key) ?? 0) > now().getTime()) return Promise.resolve(undefined);
-      const operation = serializeMutation(() => revalidateSelection(parsed.value)).catch(() => undefined).then(result => {
+      const operation = serializeMutation(() => revalidateSelection(parsed.value, expectedCatalogVersion)).catch(() => undefined).then(result => {
         if (result === undefined) {
           // Bound repeated failed probes without acknowledging stale evidence.
           if (failedRevalidations.size >= 16) failedRevalidations.delete(failedRevalidations.keys().next().value!);
