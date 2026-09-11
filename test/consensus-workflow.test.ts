@@ -151,6 +151,28 @@ test("restart after confirmed joint Critic message reuses durable work and does 
   assert.equal(f.calls.filter(call => call.agent === "critic").length, 1);
 });
 
+test("explicit Continue into a revised generation resumes adaptive consensus without repeating confirmed turns", async () => {
+  const controller = new AbortController();
+  let paused = false;
+  const f = await fixture({ observer: async message => {
+    if (!paused && message.role === "Critic") { paused = true; controller.abort(); }
+  } });
+  const first = await f.make().run({ ...task, signal: controller.signal });
+  assert.equal(first.ok, false);
+  assert.deepEqual((await f.registrar.getConsensus(task.taskId))!.critiqueCounts, { finance: 1, strategy: 1 });
+
+  const revised = await f.registrar.reviseSession({ generation: 1, revisionId: "owner-explicit-continue" });
+  assert.ok(revised.ok);
+  if (!revised.ok) return;
+  const result = await f.make().run({ ...task, sessionGeneration: revised.value.generation });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.deepEqual((await f.registrar.getConsensus(task.taskId))!.critiqueCounts, { finance: 1, strategy: 1 });
+  assert.equal(f.calls.filter(call => call.input.phase === "initial_position").length, 2);
+  assert.equal(f.calls.filter(call => call.agent === "critic").length, 1);
+  assert.equal((await f.registrar.getConsensus(task.taskId))!.status, "published");
+  assert.equal((await f.registrar.getActiveSession())!.phase, "closed");
+});
+
 test("failed provider is not an approval or counted message and pending dispatch cannot duplicate a model call", async () => {
   const f = await fixture({ failCritic: true });
   assert.equal((await f.make().run(task)).ok, false);

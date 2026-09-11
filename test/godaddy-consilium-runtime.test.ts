@@ -45,7 +45,8 @@ const intakeJSON = (value: Record<string, unknown>) => JSON.stringify({
 });
 
 async function fixture(input: { approved?: boolean; missingSession?: boolean; missingCatalog?: boolean; holdTurns?: boolean; intakeBody?: string; selectedClaude?: boolean; matrixIntake?: boolean; failFirstFinal?: boolean;
-  forbiddenEnvironment?: boolean; staleCatalog?: boolean; untrustedCatalog?: boolean; auth?: "apikey"; quotaBlocked?: boolean; changedModel?: boolean; removedEffort?: boolean } = {}) {
+  forbiddenEnvironment?: boolean; staleCatalog?: boolean; untrustedCatalog?: boolean; auth?: "apikey"; quotaBlocked?: boolean; changedModel?: boolean; removedEffort?: boolean;
+  renewCatalog?: boolean } = {}) {
   const base = createCapabilityReceipt();
   const receipt = createCapabilityReceipt({ codexModels: [...base.codexModels, {
     productId: "gpt-6-astra", runtimeModelId: "gpt-6-astra", displayName: "GPT-6 Astra", availability: "available",
@@ -131,8 +132,9 @@ async function fixture(input: { approved?: boolean; missingSession?: boolean; mi
     afterConfirmed: async message => { confirmed.push(message); }, getActiveSessionSummary: async () => null
   };
   const bootstrap: RuntimeBootstrap = {
-    loadCatalog: async () => { loadCalls++; return input.missingCatalog ? undefined : { ...receipt,
+    loadCatalog: async () => { loadCalls++; return input.missingCatalog || input.renewCatalog ? undefined : { ...receipt,
       ...(input.staleCatalog ? { expiresAt: activeNow.toISOString() } : {}), ...(input.untrustedCatalog ? { trusted: false } : {}) }; },
+    ...(input.renewCatalog ? { ensureCatalogForSettings: async () => receipt } : {}),
     getCodexThreadClient: async () => { clientCalls++; return client; },
     getClaudeProcess: () => { claudeCalls++; throw new Error("Inactive Claude must never be acquired"); },
     status: async () => { throw new Error("Runner uses selected preflight instead"); },
@@ -471,6 +473,20 @@ test("Continue interprets newly authorized images while retaining the durable te
   await assert.rejects(access(turn.input[1]!.path!));
   assert.deepEqual((await h.registrar.getConsensus("continued-images"))?.critiqueCounts, { finance: 0, strategy: 0 });
   assert.equal(h.calls().claudeCalls, 0);
+  await h.runtime.close();
+});
+
+test("unattended Matrix planning and execution renew the saved provider catalog without opening Settings", async () => {
+  const h = await fixture({ matrixIntake: true, renewCatalog: true });
+  const planned = await h.runtime.plan({ sessionGeneration: 1, task: request.task, taskId: "matrix-renewal-task", language: "uk" });
+  assert.ok(planned.ok && planned.kind === "consilium");
+  if (!planned.ok || planned.kind !== "consilium") return;
+  const result = await h.runtime.run({ sessionGeneration: 1, taskId: "matrix-renewal-task", taskDigest: await consensusDigest(request.task),
+    task: request.task, language: planned.language, assignments: planned.assignments,
+    head: planned.head, specialists: planned.specialists, critic: planned.critic });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal((await h.registrar.getConsensus("matrix-renewal-task"))?.status, "published");
+  assert.equal(h.calls().loadCalls, 0, "the execution path must use unattended exact-selection renewal, not a stale catalog read");
   await h.runtime.close();
 });
 

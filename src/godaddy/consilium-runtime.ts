@@ -53,6 +53,11 @@ export function createGoDaddyConsiliumRuntime(input: Readonly<{
   const running = new Map<number, Readonly<{ abort: AbortController; completion: Promise<RuntimeOperationResult> }>>();
   let closing = false;
 
+  const catalogFor = (settings: Parameters<NonNullable<RuntimeBootstrap["ensureCatalogForSettings"]>>[0]) =>
+    input.bootstrap.ensureCatalogForSettings === undefined
+      ? input.bootstrap.loadCatalog()
+      : input.bootstrap.ensureCatalogForSettings(settings);
+
   const execute = async (request: GoDaddyConsiliumRequest, signal: AbortSignal): Promise<GoDaddyConsiliumResult> => {
     if (signal.aborted) return { ok: false, code: "runtime_unavailable" };
     const adaptive = request.taskId !== undefined || request.taskDigest !== undefined || request.language !== undefined || request.assignments !== undefined;
@@ -75,7 +80,10 @@ export function createGoDaddyConsiliumRuntime(input: Readonly<{
       Object.values(policy.invariants).some(value => value !== true) ||
       request.specialists.length < 2 || request.specialists.length > 2 + policy.maxOptionalSpecialists.value) return { ok: false, code: "speed_policy_unresolved" };
     signal = AbortSignal.any([signal, AbortSignal.timeout(budget)]);
-    const receipt = await input.bootstrap.loadCatalog();
+    // Matrix is an unattended entry point. A valid historical selection may
+    // expire while the owner is away, so revalidate that exact saved route
+    // here instead of making the Settings page a hidden runtime dependency.
+    const receipt = await catalogFor(snapshot.settings);
     if (receipt === undefined) return { ok: false, code: "catalog_unavailable" };
     const codex = await input.bootstrap.getCodexThreadClient?.();
     if (codex === undefined) return { ok: false, code: "runtime_unavailable" };
@@ -123,7 +131,7 @@ export function createGoDaddyConsiliumRuntime(input: Readonly<{
       policy.critiqueRevisionCycles.value !== 1 || policy.paidAcceleration !== "forbidden" ||
       Object.values(policy.invariants).some(value => value !== true)) return { ok: false, code: "speed_policy_unresolved" };
     signal = AbortSignal.any([signal, AbortSignal.timeout(policy.internalBudgetMilliseconds.value)]);
-    const receipt = await input.bootstrap.loadCatalog();
+    const receipt = await catalogFor(snapshot.settings);
     if (receipt === undefined) return { ok: false, code: "catalog_unavailable" };
     const codex = await input.bootstrap.getCodexThreadClient?.();
     if (codex === undefined) return { ok: false, code: "runtime_unavailable" };
@@ -166,9 +174,10 @@ export function createGoDaddyConsiliumRuntime(input: Readonly<{
         const session = await input.registrarRuntime.registrar.getActiveSession();
         if (session?.generation !== request.sessionGeneration || session.phase !== "active") return { ok: false as const, code: "session_unavailable" as const };
         const settings = parseHistoricalOwnerSettings(session.settingsSnapshot.settings);
-        const receipt = await input.bootstrap.loadCatalog();
+        if (!settings.ok) return { ok: false as const, code: "runtime_unavailable" as const };
+        const receipt = await catalogFor(settings.value);
         const codex = await input.bootstrap.getCodexThreadClient?.();
-        if (!settings.ok || receipt === undefined || codex === undefined) return { ok: false as const, code: "runtime_unavailable" as const };
+        if (receipt === undefined || codex === undefined) return { ok: false as const, code: "runtime_unavailable" as const };
         return translateServiceMessages({ language: request.language, snapshot: { ...session.settingsSnapshot, settings: settings.value },
           capabilityReceipt: receipt, codex, environment: input.environment, now: input.now(), signal });
       });
@@ -191,7 +200,7 @@ export function createGoDaddyConsiliumRuntime(input: Readonly<{
           policy.internalBudgetMilliseconds.value < 1 || policy.internalBudgetMilliseconds.value > 540_000 ||
           policy.paidAcceleration !== "forbidden" || Object.values(policy.invariants).some(value => value !== true)) return { ok: false, code: "speed_policy_unresolved" };
         signal = AbortSignal.any([signal, AbortSignal.timeout(policy.internalBudgetMilliseconds.value)]);
-        const receipt = await input.bootstrap.loadCatalog();
+        const receipt = await catalogFor(snapshot.settings);
         const codex = await input.bootstrap.getCodexThreadClient?.();
         if (receipt === undefined || codex === undefined) return { ok: false, code: "runtime_unavailable" };
         const modelId = await preflightCodexForSnapshot({ snapshot, capabilityReceipt: receipt, codex,
