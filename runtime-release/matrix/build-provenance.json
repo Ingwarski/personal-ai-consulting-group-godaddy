@@ -3,17 +3,17 @@
   "kind": "matrix-production-build-provenance",
   "source": {
     "repository": "Ingwarski/personal-ai-consulting-group-godaddy",
-    "commit": "9d362d0c990893ce0ef7f84b468bc73d150bba6d",
-    "workflowCommit": "9d362d0c990893ce0ef7f84b468bc73d150bba6d",
-    "workflowRef": "Ingwarski/personal-ai-consulting-group-godaddy/.github/workflows/matrix-sidecar-release.yml@refs/heads/main",
-    "runId": "34521582640",
+    "commit": "ff8a4a5f142a005d38fe2f1a0361b65aaa06d60b",
+    "workflowCommit": "ff8a4a5f142a005d38fe2f1a0361b65aaa06d60b",
+    "workflowRef": "Ingwarski/personal-ai-consulting-group-godaddy/.github/workflows/matrix-sidecar-release.yml@refs/heads/codex/matrix-connection-20260906",
+    "runId": "34538409177",
     "runAttempt": "1",
-    "runUrl": "https://github.com/Ingwarski/personal-ai-consulting-group-godaddy/actions/runs/34521582640/attempts/1",
-    "nativeTree": "b9ac26df47248b1db83cb42edbb8feebe49efaad",
+    "runUrl": "https://github.com/Ingwarski/personal-ai-consulting-group-godaddy/actions/runs/34538409177/attempts/1",
+    "nativeTree": "a855c9bd803a0a74fa304323a47ac780b15aef62",
     "inputs": [
       {
         "path": ".github/workflows/matrix-sidecar-release.yml",
-        "sha256": "07cea909829a428120ccdbeb5fc9d4fa4d6ea8b241cb54f02f1b8a0e8aed8765"
+        "sha256": "b5f778f22a59676bbf95e980b75ba50cdd8eb8f7a922988a7c51c8e266e18b32"
       },
       {
         "path": "native/matrix-sidecar/.gitignore",
@@ -69,7 +69,7 @@
       },
       {
         "path": "native/matrix-sidecar/mysql-store/tests/backend_contract.rs",
-        "sha256": "0e206cde02614968b1b74c87f1fa9840675c727591798602640e5ec6d0a4891b"
+        "sha256": "f374319816c54342d80036acf5e8513d036a9f8713f20989a2245aad2d591394"
       },
       {
         "path": "native/matrix-sidecar/mysql-store/tests/backend_faults.rs",
@@ -129,7 +129,7 @@
       },
       {
         "path": "native/matrix-sidecar/src/main.rs",
-        "sha256": "d29040bb5da29c98bde1351da2c940c5d11d8b0ae3404baa17df7023735960ba"
+        "sha256": "a12c068ef52960ef47e4f2085b219f78ff6cc3ed049053e3730c82b26ff11bbc"
       },
       {
         "path": "native/matrix-sidecar/src/media_spool.rs",
@@ -161,7 +161,7 @@
       },
       {
         "path": "native/matrix-sidecar/src/store.rs",
-        "sha256": "e3a3a1c5d38d12a4c704d1568547039480c3f29063eaf93ee5aaa8447cd835da"
+        "sha256": "85503e266105f556da73f4dbde366a4543d6691d069995d9104c0dae09a0dea0"
       },
       {
         "path": "native/matrix-sidecar/src/sync_checkpoint.rs",
@@ -237,13 +237,13 @@
     "registryVerifiedOn": "2026-09-06",
     "registryVerification": "The amd64 manifest bytes were SHA-256 checked against the digest; its config pins Rust 1.93.0, gcc and musl-dev. A run-local derived image may add only the exact nativeTlsBuildPackages declared above; its image ID and Dockerfile hash are recorded. Compilation runs offline in that same prepared image. The separately hash-pinned UAPI header input is acquired before compilation and mounted read-only.",
     "observedImageConfigDigest": "sha256:6336bf7b311135c893a4a930b0920892b5e596ccdc374777290fa91bb59ae818",
-    "preparedImageConfigDigest": "sha256:0eafb505192b70ac30678b732441844b4fa62eca7e56dfd5271c5f636f33b3d3",
+    "preparedImageConfigDigest": "sha256:597cda95d8bb329895cee03467c7e2500a332e71c7c3af48d5c21d580573eb7d",
     "nativeTlsDockerfileSha256": "3a05b3288f1abd892601288853fb90272bb9b4e02627fa04cf2a72a78b285fda"
   },
   "build": {
-    "startedAt": "2026-09-10T19:39:39.200Z",
-    "completedAt": "2026-09-10T21:22:40.999Z",
-    "sourceDateEpoch": "1789069053",
+    "startedAt": "2026-09-10T22:39:40.073Z",
+    "completedAt": "2026-09-11T00:13:35.454Z",
+    "sourceDateEpoch": "1789079882",
     "command": "cargo build --release --locked --frozen --target x86_64-unknown-linux-musl",
     "networkDuringCompilation": "none",
     "cleanBuildCount": 2,
@@ -258,13 +258,13 @@
     {
       "path": "personal-consultant-matrix-sidecar",
       "role": "sidecar",
-      "sha256": "2ca6f0a34f57401169b2433f1b442c7e31a83ab9a0350f61e9157453734a7c97",
-      "sizeBytes": 49975248
+      "sha256": "1344e3ee2dfffc2ac1f3b6b3705dc2d8d234f54254d83a45ff2c9ed27031f547",
+      "sizeBytes": 49987536
     },
     {
       "path": "personal-consultant-matrix-setup",
       "role": "setup",
-      "sha256": "a6eb8d38b9f9b8ff9c63bea60369e012bc4b7bf3b99d65187c11ce721e26e354",
+      "sha256": "1c973ae7eb11c68f8618dc72b139e9e00abeb6f8f3fb36cf246cebd826dece04",
       "sizeBytes": 44777328
     }
   ],

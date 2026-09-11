@@ -7,10 +7,10 @@ import { join } from "node:path";
 import { assertStaticStrippedElf, matrixReleaseSourceMounts, sha256 } from "../../../scripts/matrix-release-package.mjs";
 
 const repository = "Ingwarski/personal-ai-consulting-group-godaddy";
-const commit = "9d362d0c990893ce0ef7f84b468bc73d150bba6d";
-const runId = 34521582640;
-const artifactId = 10173795555;
-const archiveDigest = "251cee197a83817b478a991d57e3f6424cc95c0634d1787b02d905bbecec7501";
+const commit = "ff8a4a5f142a005d38fe2f1a0361b65aaa06d60b";
+const runId = 34538409177;
+const artifactId = 10178869289;
+const archiveDigest = "13daa2d17f7855de87f4f2e957e28cf79106268b8cb27bfd425290eafcbf62b6";
 const root = process.cwd();
 const execute = (command, args, limit = 64 * 1024 * 1024) => {
   const result = spawnSync(command, args, { cwd: root, maxBuffer: limit, timeout: 120_000 });

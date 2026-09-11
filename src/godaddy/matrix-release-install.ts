@@ -417,10 +417,12 @@ async function runMySqlRelease(applicationRoot: string, expected: MatrixReleaseE
     const sidecarPath = join(paths.runtimeDir, SIDECAR);
     const setupPath = join(paths.runtimeDir, SETUP);
     if (prepare && sourceSidecar !== undefined && sourceSetup !== undefined) {
+      // Permit one atomic upgrade only from the exact release currently deployed
+      // from authenticated run 34521582640; arbitrary installed bytes still fail closed.
       await installBinary(sidecarPath, sourceSidecar, metadata.sidecar, uid,
-        "ce148392a57f4bd391437b8eedc963bf1fd0f252b4f599cdd6dd2e45369d6984");
+        "2ca6f0a34f57401169b2433f1b442c7e31a83ab9a0350f61e9157453734a7c97");
       await installBinary(setupPath, sourceSetup, metadata.setup, uid,
-        "59be65ea5668d365834be5174997c68e9bd14f35a1f6850b454be35ddb3e511f");
+        "a6eb8d38b9f9b8ff9c63bea60369e012bc4b7bf3b99d65187c11ce721e26e354");
     } else {
       await verifiedBinary(sidecarPath, metadata.sidecar, uid, true);
       await verifiedBinary(setupPath, metadata.setup, uid, true);
