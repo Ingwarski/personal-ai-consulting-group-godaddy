@@ -51,7 +51,7 @@ export function initialLanguageHint(message: string): string | null {
   if (cyrillicWords.length >= 2 && /[ыэъё]/u.test(text) && !/[іїєґ]/u.test(text)) return "ru";
   if (words.length < 3) return null;
   const clues: Readonly<Record<string, readonly string[]>> = {
-    en: ["the", "and", "with", "what", "how", "should", "would", "could", "please", "my", "your", "help", "need", "want", "this", "for", "is", "to"],
+    en: ["the", "and", "with", "what", "which", "how", "i", "we", "you", "do", "does", "did", "are", "have", "has", "will", "should", "would", "could", "please", "my", "your", "help", "need", "want", "this", "for", "is", "to", "task", "first", "today", "accept", "business", "give"],
     uk: ["мені", "мене", "мій", "моя", "що", "як", "щоб", "потрібно", "допоможи", "будь", "ласка", "хочу", "для", "це", "та", "зробити"],
     ru: ["мне", "меня", "мой", "моя", "что", "как", "чтобы", "нужно", "помоги", "пожалуйста", "хочу", "для", "это", "сделать"],
     es: ["qué", "cómo", "quiero", "necesito", "ayuda", "puedo", "para", "por", "favor", "una", "con", "que", "mi"],

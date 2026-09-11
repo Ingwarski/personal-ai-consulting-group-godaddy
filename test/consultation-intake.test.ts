@@ -157,6 +157,8 @@ test("explicit language detection ignores quotes, code and ordinary mentions, no
     assert.equal(explicitSessionLanguage(text), undefined);
   }
   assert.equal(initialLanguageHint("How should I improve my business?"), "en");
+  assert.equal(initialLanguageHint("Which task should I do first today?"), "en");
+  assert.equal(initialLanguageHint("Should I accept this business partnership? Give me a counteroffer."), "en");
   assert.equal(initialLanguageHint("Як мені зробити це краще для мого бізнесу?"), "uk");
   assert.equal(initialLanguageHint("ok"), null);
   assert.equal(initialLanguageHint("> How should I improve my business?\n🚀"), null);
