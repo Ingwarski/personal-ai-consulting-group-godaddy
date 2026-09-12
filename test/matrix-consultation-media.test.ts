@@ -46,9 +46,10 @@ class MemoryPool implements MySqlPool {
 const hash = (value: string | Uint8Array): string => createHash("sha256").update(value).digest("hex");
 const key = Buffer.alloc(32, 0x63);
 const jpeg = (body = "ordinary business image"): Buffer => Buffer.concat([Buffer.from([0xff, 0xd8, 0xff]), Buffer.from(body)]);
+const ogg = (body = "voice note"): Buffer => Buffer.concat([Buffer.from([0x4f, 0x67, 0x67, 0x53]), Buffer.from(body)]);
 
-function fixture(bytes = jpeg(), id = "$event-media", mime: "image/jpeg" | "image/png" | "application/pdf" = "image/jpeg") {
-  const media = { handle: `${"a".repeat(32)}-${"b".repeat(24)}.${mime === "image/jpeg" ? "jpg" : mime === "image/png" ? "png" : "pdf"}`, declaredMime: mime, length: bytes.length, sha256: hash(bytes) };
+function fixture(bytes = jpeg(), id = "$event-media", mime: "image/jpeg" | "image/png" | "application/pdf" | "audio/ogg" = "image/jpeg") {
+  const media = { handle: `${"a".repeat(32)}-${"b".repeat(24)}.${mime === "image/jpeg" ? "jpg" : mime === "image/png" ? "png" : mime === "application/pdf" ? "pdf" : "ogg"}`, declaredMime: mime, length: bytes.length, sha256: hash(bytes) };
   const event: ValidatedMatrixIngress = { receiptId: "receipt", eventId: id, roomId: "!room:matrix.org", senderMxid: "@owner:matrix.org", senderDeviceId: "VERIFIED", body: "Review the attachment", media: [media] };
   const manifest = [{ declaredMime: media.declaredMime, length: media.length, sha256: media.sha256 }];
   const eventHash = hash(JSON.stringify({ eventId: event.eventId, roomId: event.roomId, senderMxid: event.senderMxid, senderDeviceId: event.senderDeviceId, encrypted: true, bodyHash: hash(JSON.stringify(event.body)), relationEventId: null, mediaManifestHash: hash(JSON.stringify(manifest)) }));
@@ -80,6 +81,16 @@ test("encrypted media is durable before ACK, restart/replay stable, and caller r
   loaded.release();
   assert.ok(loaded.objects[0]!.bytes.every((byte) => byte === 0));
   assert.ok(input.objects[0]!.bytes.some((byte) => byte !== 0), "does not erase caller-owned sidecar bytes");
+});
+
+test("verified Ogg audio is staged encrypted without text-secret scanning", async () => {
+  const pool = new MemoryPool();
+  const input = fixture(ogg("password=spoken-only-characters"), "$voice-note", "audio/ogg");
+  const store = createMySqlMatrixConsultationMediaStore({ pool, encryptionKey: key, now: () => 1_000 });
+  await store.consume(input);
+  const loaded = await store.load(input.eventHash, input.manifest);
+  assert.equal(loaded.ok, true);
+  if (loaded.ok) { assert.deepEqual(loaded.objects[0]!.bytes, input.objects[0]!.bytes); loaded.release(); }
 });
 
 test("failed transaction yields no ACK receipt or partial encrypted staging", async () => {

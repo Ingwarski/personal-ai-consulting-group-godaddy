@@ -78,6 +78,7 @@ async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort
   let translate: GoDaddyConsiliumRuntime["translateServiceMessages"] | undefined;
   let translationCalls = 0;
   let run: GoDaddyConsiliumRuntime["run"] = async () => { throw new Error("Unexpected consilium execution."); };
+  let transcribeVoice: NonNullable<GoDaddyConsiliumRuntime["transcribeVoice"]> = async () => ({ ok: false, code: "transcription_failed" });
   let canResumeFinalization: NonNullable<GoDaddyConsiliumRuntime["canResumeFinalization"]> = async () => false;
   let resumeFinalization: NonNullable<GoDaddyConsiliumRuntime["resumeFinalization"]> = async () => { throw new Error("Unexpected final-only recovery."); };
   const replySessions = new Map<string, string>();
@@ -99,6 +100,7 @@ async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort
       async plan(request) { planCalls += 1; requests.push(request); signal = request.signal; planEntered.resolve(); return runPlan(request); },
       async translateServiceMessages(request) { translationCalls++; return translate?.(request) ?? { ok: false, code: "translation_failed" as const }; },
       async run(request) { return run(request); },
+      async transcribeVoice(request) { return transcribeVoice(request); },
       async canResumeFinalization(generation) { return canResumeFinalization(generation); },
       async resumeFinalization(request) { return resumeFinalization(request); }
     },
@@ -136,6 +138,7 @@ async function fixture(executionBudgetMs?: number, media?: ConsultationMediaPort
     usePlan(handler: typeof runPlan) { runPlan = handler; },
     useTranslation(handler: NonNullable<typeof translate>) { translate = handler; },
     useRun(handler: typeof run) { run = handler; },
+    useTranscribeVoice(handler: typeof transcribeVoice) { transcribeVoice = handler; },
     useFinalizationProbe(handler: typeof canResumeFinalization) { canResumeFinalization = handler; },
     useFinalizationRecovery(handler: typeof resumeFinalization) { resumeFinalization = handler; },
     translationCalls: () => translationCalls,
@@ -313,6 +316,26 @@ test("bound-consensus image observation is recorded verbatim without fake prior 
   assert.equal(message.role, "Service"); assert.equal(message.authority, undefined);
   assert.match(formatConfirmedMessageContentForMatrix(message).body, /^🧭 Head Consultant · image observation/u);
   assert.ok(formatConfirmedMessageContentForMatrix(message).body.endsWith(observation));
+});
+
+test("a verified Matrix voice note is transcribed before planning and enters the normal consultation task", async t => {
+  const voice = Uint8Array.from([0x4f, 0x67, 0x67, 0x53, 0x00, 0x02, 0x00, 0x00]);
+  const f = await fixture(undefined, {
+    async prepare() { return { images: [], audio: [{ mime: "audio/ogg", bytes: voice }], text: "", release() {} }; },
+    async erase() {}, async purgeExpired() {}
+  }, false);
+  t.after(() => f.service.stop());
+  f.useTranscribeVoice(async request => {
+    assert.deepEqual(request.audio, { mime: "audio/ogg", bytes: voice });
+    return { ok: true, transcript: "Please give one concise business priority." };
+  });
+  f.usePlan(async request => {
+    assert.equal(request.task, "Please give one concise business priority.");
+    return { ok: true, kind: "direct", language: "en", answer: "Choose the highest-impact task." };
+  });
+  f.enqueue("", undefined, [{ declaredMime: "audio/ogg", length: voice.length, sha256: "a".repeat(64) }]);
+  await f.service.tick(); await waitForJob(f, "completed");
+  assert.equal(f.planCalls(), 1);
 });
 
 test("quotes cannot switch confirmed language; explicit owner choice changes future messages without rewriting history", async t => {
@@ -629,6 +652,21 @@ test("answering a head clarification keeps the logical session, original setting
   assert.match(f.requests()[1]!.task, /Порівняйте два варіанти/u);
   assert.match(f.requests()[1]!.task, /Який бюджет цього рішення/u);
   assert.match(f.requests()[1]!.task, /сто тисяч гривень/u);
+  assert.equal((await f.state())?.job?.status, "completed");
+});
+
+test("a valid long owner task reaches the provider instead of failing at the former 32 KB local guard", async t => {
+  const f = await fixture(undefined, undefined, false);
+  t.after(() => f.service.stop());
+  const longTask = "Please reply in English. " + "evidence ".repeat(5_000);
+  assert.ok(Buffer.byteLength(longTask, "utf8") > 32_000 && Buffer.byteLength(longTask, "utf8") < 64 * 1024);
+  f.usePlan(async request => {
+    assert.ok(Buffer.byteLength(request.task, "utf8") > 32_000);
+    return { ok: true, kind: "direct", language: "en", answer: "The complete long task reached the consultation planner." };
+  });
+  f.enqueue(longTask);
+  await f.service.tick(); await waitForJob(f, "completed");
+  assert.equal(f.planCalls(), 1);
   assert.equal((await f.state())?.job?.status, "completed");
 });
 

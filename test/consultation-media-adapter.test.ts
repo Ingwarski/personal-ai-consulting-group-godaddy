@@ -9,7 +9,7 @@ import type { ConsultationDocument } from "../src/godaddy/matrix-consultation-se
 
 const hash = (value: Uint8Array | string): string => createHash("sha256").update(value).digest("hex");
 const image = Buffer.from([0xff, 0xd8, 0xff, 0x41, 0x42, 0x43]);
-function document(bytes: Buffer, mime: "image/jpeg" | "application/pdf", confirmed = true): ConsultationDocument {
+function document(bytes: Buffer, mime: "image/jpeg" | "application/pdf" | "audio/ogg", confirmed = true): ConsultationDocument {
   return { eventHash: hash(bytes), eventId: "$" + hash(bytes), confirmed, manifest: [{ declaredMime: mime, length: bytes.length, sha256: hash(bytes) }] };
 }
 
@@ -94,6 +94,19 @@ test("confirmed documents become actual PDF text and native image bytes with exp
   assert.deepEqual(state.releases, [1, 1]);
   assert.ok(state.buffers.every(bytes => bytes.every(byte => byte === 0)));
   assert.ok(image.some(byte => byte !== 0));
+});
+
+test("a verified Matrix Ogg voice note remains native audio for the separate transcription turn", async () => {
+  const voice = Buffer.from([0x4f, 0x67, 0x67, 0x53, 0x00, 0x02, 0x00, 0x00]);
+  const item = document(voice, "audio/ogg");
+  const state = harness([{ document: item, bytes: voice }]);
+  const prepared = await state.adapter.prepare([item]);
+  assert.ok(prepared);
+  assert.deepEqual(prepared.images, []);
+  assert.deepEqual(prepared.audio, [{ mime: "audio/ogg", bytes: voice }]);
+  assert.equal(prepared.text, "");
+  prepared.release();
+  assert.ok(state.buffers[0]!.every(byte => byte === 0));
 });
 
 test("unavailable later document releases already-loaded bytes and forwards no partial payload", async () => {

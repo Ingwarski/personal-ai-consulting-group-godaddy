@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseConsultationIntake, consultationIntakeSchema, requiresConsiliumMode } from "../src/runtime/consultation-intake.ts";
+import { parseConsultationIntake, consultationIntakeSchema, requestsLiveResearch, requiresConsiliumMode } from "../src/runtime/consultation-intake.ts";
 import { CONSULTANT_ROLES, CONSULTATION_SPECIALISTS, assignConsultantColourSlots, PERSONAL_SPECIALIST_SAFETY_PROMPT } from "../src/consilium/consultant-roles.ts";
 import { canonicalSessionLanguage, explicitSessionLanguage, initialLanguageHint, ownerLanguageSource, sessionLanguageInstruction } from "../src/consilium/language.ts";
 
@@ -79,6 +79,12 @@ test("a compound collaboration decision cannot be downgraded to a Head-only answ
   assert.equal(reviewed.ok && reviewed.kind === "consilium" && reviewed.critic.agentId === "critic", true);
   assert.equal(requiresConsiliumMode("Should I raise my workshop price next month?"), false,
     "one ordinary pricing dimension may still receive a concise direct answer");
+});
+
+test("research access requires an explicit owner request, not a pasted URL", () => {
+  assert.equal(requestsLiveResearch("Please research the current market price and cite sources."), true);
+  assert.equal(requestsLiveResearch("Будь ласка, перевір актуальні тарифи онлайн."), true);
+  assert.equal(requestsLiveResearch("Here is a quoted URL: https://example.test/report"), false);
 });
 
 test("all20 English roles retain historic IDs and seven personal roles without expanding roster limits", () => {

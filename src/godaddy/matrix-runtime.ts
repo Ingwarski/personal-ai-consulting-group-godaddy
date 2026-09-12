@@ -15,7 +15,7 @@ const MAX_PLAINTEXT_BYTES = 64 * 1024;
 const MAX_FORMATTED_BYTES = 128 * 1024;
 const SAFE_PROTOCOL_ID = /^[A-Za-z0-9._:-]{1,64}$/u;
 const SHA256 = /^[a-f0-9]{64}$/u;
-const MEDIA_HANDLE = /^([a-f0-9]{32})-[a-f0-9]{24}\.(jpg|png|pdf)$/u;
+const MEDIA_HANDLE = /^([a-f0-9]{32})-[a-f0-9]{24}\.(jpg|png|pdf|ogg)$/u;
 const MAX_MEDIA_OBJECTS = 4;
 const MAX_MEDIA_OBJECT_BYTES = 20 * 1024 * 1024;
 const MAX_MEDIA_AGGREGATE_BYTES = 64 * 1024 * 1024;
@@ -47,7 +47,7 @@ export type MatrixRuntimeDependencyReadiness = Readonly<{
 
 export type MatrixIngressMedia = Readonly<{
   handle: string;
-  declaredMime: "image/jpeg" | "image/png" | "application/pdf";
+  declaredMime: "image/jpeg" | "image/png" | "application/pdf" | "audio/ogg";
   length: number;
   sha256: string;
 }>;
@@ -282,7 +282,7 @@ function parseMedia(value: unknown): MatrixIngressMedia | undefined {
   if (
     typeof value.handle !== "string"
     || !MEDIA_HANDLE.test(value.handle)
-    || !["image/jpeg", "image/png", "application/pdf"].includes(value.declared_mime as string)
+    || !["image/jpeg", "image/png", "application/pdf", "audio/ogg"].includes(value.declared_mime as string)
     || !Number.isSafeInteger(value.length)
     || (value.length as number) <= 0
     || (value.length as number) > 20 * 1024 * 1024
@@ -515,7 +515,7 @@ function validatedMediaBatch(value: unknown): readonly MatrixIngressMedia[] | un
     if (
       typeof item.handle !== "string"
       || !MEDIA_HANDLE.test(item.handle)
-      || !["image/jpeg", "image/png", "application/pdf"].includes(item.declaredMime as string)
+      || !["image/jpeg", "image/png", "application/pdf", "audio/ogg"].includes(item.declaredMime as string)
       || !Number.isSafeInteger(item.length)
       || (item.length as number) <= 0
       || (item.length as number) > MAX_MEDIA_OBJECT_BYTES
@@ -568,7 +568,7 @@ function inspectedMediaMatches(value: unknown, media: readonly MatrixIngressMedi
       ? "jpeg"
       : expected.declaredMime === "image/png"
         ? "png"
-        : "pdf";
+        : expected.declaredMime === "application/pdf" ? "pdf" : "ogg";
     return object.handle === expected.handle
       && object.kind === kind
       && object.length === expected.length
@@ -608,6 +608,7 @@ function detectedMime(bytes: Buffer): MatrixIngressMedia["declaredMime"] | undef
     bytes.length >= 5
     && bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46 && bytes[4] === 0x2d
   ) return "application/pdf";
+  if (bytes.length >= 4 && bytes[0] === 0x4f && bytes[1] === 0x67 && bytes[2] === 0x67 && bytes[3] === 0x53) return "audio/ogg";
   return undefined;
 }
 
@@ -689,7 +690,7 @@ async function readVerifiedMediaObject(input: Readonly<{
     ) throw new MatrixSidecarError("protocol_error");
 
     const mime = detectedMime(ownedBytes);
-    const expectedExtension = mime === "image/jpeg" ? "jpg" : mime === "image/png" ? "png" : mime === "application/pdf" ? "pdf" : undefined;
+    const expectedExtension = mime === "image/jpeg" ? "jpg" : mime === "image/png" ? "png" : mime === "application/pdf" ? "pdf" : mime === "audio/ogg" ? "ogg" : undefined;
     const digest = createHash("sha256").update(ownedBytes).digest("hex");
     if (
       mime !== input.media.declaredMime

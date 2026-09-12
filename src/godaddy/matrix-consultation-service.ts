@@ -15,12 +15,35 @@ import { formatBriefIntakeQuestion, MAX_BRIEF_INTAKE_QUESTIONS, parseBriefIntake
   type BriefIntakeState } from "../consilium/brief-intake.ts";
 
 const KEY = "worker";
-const MAX_TASK_BYTES = 24_000;
+/** Matrix message bodies may be materially longer than the old 24 KB gate.
+ * This is an ingress cap, not an LLM context-window claim. */
+const MAX_TASK_BYTES = 64 * 1024;
+/** A compiled task is bounded so it remains usable by every selected runtime
+ * after its own instructions, specialist evidence and output schema are added. */
+const MAX_AGENT_TASK_BYTES = 120 * 1024;
+const MAX_AGENT_EXTRACTION_BYTES = 8 * 1024;
 const MAX_HANDLED = 64;
 const NOTICE_CONSENT = "Перед початком потрібна ваша одноразова згода на обробку звичайних бізнес-даних обраними ШІ-провайдерами. Не надсилайте паролі, ключі доступу, повні банківські реквізити чи державні ідентифікатори. Напишіть «Погоджуюсь на обробку» або «Не погоджуюсь». Це не дозвіл на зовнішні дії чи чутливі документи.";
 const NOTICE_DOCUMENT = "Вкладення ще не передано ШІ. Його чутливість не визначена. Перевірте, що в ньому немає секретів, і дайте відповідь саме на повідомлення з вкладенням: «Підтверджую документ без секретів». Для відмови: «Відхиляю документ». Підтвердження стосується лише цього вкладення.";
 const NOTICE_CONTINUE = "Роботу призупинено до стандартної десятихвилинної межі; готової відповіді ще немає. Потрібен додатковий час. Напишіть «Продовжити», щоб дозволити наступний обмежений цикл, або «Стоп».";
 const byteLength = (s: string): number => Buffer.byteLength(s, "utf8");
+
+/** Preserve complete recent confirmed messages rather than repeatedly sending
+ * the whole lifetime transcript. The canonical transcript remains intact in
+ * the Registrar; this only bounds the temporary provider prompt. */
+function recentHistoryWithinBudget(messages: readonly string[], budget: number): Readonly<{ text: string; omitted: number }> {
+  const kept: string[] = [];
+  let used = 0;
+  let omitted = 0;
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const item = messages[index]!;
+    const additional = byteLength(item) + (kept.length === 0 ? 0 : 2);
+    if (used + additional > budget) { omitted += 1; continue; }
+    kept.push(item); used += additional;
+  }
+  kept.reverse();
+  return Object.freeze({ text: kept.join("\n\n"), omitted });
+}
 
 export type ConsultationDocument = Readonly<{
   eventHash: string;
@@ -30,6 +53,8 @@ export type ConsultationDocument = Readonly<{
 }>;
 export type ConsultationMediaInput = Readonly<{
   images: readonly Readonly<{ mime: "image/png" | "image/jpeg"; bytes: Uint8Array }>[];
+  /** Voice clips remain bytes only until the dedicated transcript turn. */
+  audio?: readonly Readonly<{ mime: "audio/ogg"; bytes: Uint8Array }>[];
   text: string;
   release(): void;
 }>;
@@ -97,7 +122,7 @@ export function createMatrixConsultationService(input: Readonly<{
   storage: RegistrarStorage;
   ingress: Pick<MySqlMatrixIngressReceipts, "leaseNext" | "markProcessed">;
   registrar: RegistrarDO;
-  executor: Pick<GoDaddyConsiliumRuntime, "plan" | "run"> & Partial<Pick<GoDaddyConsiliumRuntime, "canResumeFinalization" | "resumeFinalization" | "translateServiceMessages">>;
+  executor: Pick<GoDaddyConsiliumRuntime, "plan" | "run"> & Partial<Pick<GoDaddyConsiliumRuntime, "canResumeFinalization" | "resumeFinalization" | "translateServiceMessages" | "transcribeVoice">>;
   prepareSnapshot(sessionId: string): Promise<EffectiveSessionSnapshot | undefined>;
   resolveReplySession?: (matrixEventId: string) => Promise<string | undefined>;
   afterConfirmed: () => void | Promise<void>;
@@ -154,7 +179,7 @@ export function createMatrixConsultationService(input: Readonly<{
         && typeof d.confirmed === "boolean" && typeof d.eventId === "string" && /^\$[A-Za-z0-9$:_-]{8,255}$/.test(d.eventId)
         && Array.isArray(d.manifest) && d.manifest.length > 0 && d.manifest.length <= 4
         && d.manifest.every(m => m !== null && typeof m === "object" && hash(m.sha256)
-          && ["image/png", "image/jpeg", "application/pdf"].includes(m.declaredMime)
+          && ["image/png", "image/jpeg", "application/pdf", "audio/ogg"].includes(m.declaredMime)
           && Number.isSafeInteger(m.length) && m.length > 0 && m.length <= 20 * 1024 * 1024))
       && job.documents.reduce((total, d) => total + d.manifest.length, 0) <= 4
       && job.documents.reduce((total, d) => total + d.manifest.reduce((n,m) => n + m.length, 0), 0) <= 64 * 1024 * 1024
@@ -214,15 +239,23 @@ export function createMatrixConsultationService(input: Readonly<{
     await input.afterConfirmed();
     return result.value;
   };
+  const hasOnlyVoiceInput = (job: Job): boolean => job.documents.length > 0
+    && job.documents.every(document => document.manifest.every(media => media.declaredMime === "audio/ogg"));
   const readyStatus = (job: Job, consent: boolean): JobStatus =>
-    job.language === undefined ? "awaiting_language"
+    // A voice-only first message cannot yield an offline language hint. Once
+    // ordinary consent is present, its bounded transcription reaches the
+    // normal planner, which already determines and persists the language.
+    job.language === undefined && !hasOnlyVoiceInput(job) ? "awaiting_language"
       : !consent ? "awaiting_consent" : job.documents.some(d => !d.confirmed) ? "awaiting_document" : "queued";
   const newJob = (lease: LeasedMatrixIngressIntent, consent: boolean): Job => {
     const e = lease.workIntent;
     const explicitLanguage = explicitSessionLanguage(e.body ?? "");
     const language = explicitLanguage ?? initialLanguageHint(e.body ?? "");
     const job: Job = { id: lease.eventHash, eventId: e.eventId, task: e.body ?? "",
-      documents: e.media.length === 0 ? [] : [{ eventHash: lease.eventHash, eventId: e.eventId, manifest: e.media, confirmed: false }],
+      // A voice note is the owner's input, not an opaque third-party document.
+      // The existing one-time provider consent still gates its transcription.
+      documents: e.media.length === 0 ? [] : [{ eventHash: lease.eventHash, eventId: e.eventId, manifest: e.media,
+        confirmed: e.media.every(media => media.declaredMime === "audio/ogg") }],
       status: "queued", attempt: 0, briefIntake: { requested: requestsBriefIntake(e.body ?? ""), skipRemaining: false, rounds: [] },
       ...(language === null ? {} : { language, languageConfirmed: explicitLanguage !== undefined }) };
     job.status = readyStatus(job, consent);
@@ -251,8 +284,13 @@ export function createMatrixConsultationService(input: Readonly<{
       pending.notice = "Фактична вартість цієї сесії — невідомо. Дані про використання та вартість не отримано; приблизну ціну токенів не підставлено.";
       return pending;
     }
-    if (isSecretLikeMatrixContent(body) || byteLength(body) > MAX_TASK_BYTES) {
-      pending.notice = "Повідомлення не передано агентам: воно містить можливий секрет або перевищує межу розміру. Надішліть коротший текст без секретів.";
+    if (isSecretLikeMatrixContent(body)) {
+      pending.notice = "Дані не передано агентам: виявлено можливий секрет. Захисну перевірку не вимкнено.";
+      pending.erase = e.media.length === 0 ? [] : [lease.eventHash];
+      return pending;
+    }
+    if (byteLength(body) > MAX_TASK_BYTES) {
+      pending.notice = "Повідомлення не передано агентам: воно перевищує 64 KiB робочого вводу. Це не межа контексту моделі. Надішліть коротший виклад або розділіть матеріал на кілька повідомлень.";
       pending.erase = e.media.length === 0 ? [] : [lease.eventHash];
       return pending;
     }
@@ -360,7 +398,8 @@ export function createMatrixConsultationService(input: Readonly<{
       job.task = amended;
       pending.mutatesJob = true;
       pending.cancelExecution = true;
-      if (e.media.length) job.documents.push({ eventHash: lease.eventHash, eventId: e.eventId, manifest: e.media, confirmed: false });
+      if (e.media.length) job.documents.push({ eventHash: lease.eventHash, eventId: e.eventId, manifest: e.media,
+        confirmed: e.media.every(media => media.declaredMime === "audio/ogg") });
       if (job.generation !== undefined) pending.revisionGeneration = job.generation;
       job.status = readyStatus(job, state.consent);
       pending.notice = job.status === "awaiting_language" ? LANGUAGE_QUESTION : !state.consent ? NOTICE_CONSENT : job.status === "awaiting_document" ? NOTICE_DOCUMENT
@@ -623,9 +662,26 @@ export function createMatrixConsultationService(input: Readonly<{
           return;
         }
       }
-      // Carry complete prior discussion across internal revision generations.
-      // Assignments repeat the task and are not prior specialist evidence.
-      // Do not truncate a confirmed message or silently discard older rounds.
+      const audio = media?.audio ?? [];
+      if (audio.length > 1 || (audio.length === 1 && input.executor.transcribeVoice === undefined)) {
+        await fail("Голосове повідомлення не передано агентам: транскрипція наразі недоступна. Текстові повідомлення й підтверджені документи працюють без змін.", "failed");
+        return;
+      }
+      let voiceTranscript = "";
+      if (audio.length === 1) {
+        const transcribed = await input.executor.transcribeVoice!({ sessionGeneration: job.generation!, audio: audio[0]!, signal: abort.signal });
+        if (abort.signal.aborted) { if (expired) await fail(NOTICE_CONTINUE, "awaiting_continuation"); return; }
+        if (!transcribed.ok) {
+          await fail(transcribed.code === "secret_detected"
+            ? "Голосове повідомлення не передано агентам: у транскрипції виявлено можливий секрет. Не надсилайте паролі, ключі, токени чи чутливі реквізити."
+            : "Голосове повідомлення не передано агентам: не вдалося безпечно отримати транскрипцію. Надішліть коротке текстове повідомлення або запишіть голосове ще раз.", "failed");
+          return;
+        }
+        voiceTranscript = transcribed.transcript;
+      }
+      // Carry only complete recent messages from prior generations. The old
+      // implementation concatenated up to 32 entire rounds and then failed at
+      // 32 KB; this made a normal continuation look like a model limitation.
       const history: string[] = [];
       let ancestor = (await input.registrar.getSession(job.generation!))?.previousGeneration;
       const visited = new Set<number>();
@@ -639,11 +695,29 @@ export function createMatrixConsultationService(input: Readonly<{
           .map(m => m.role + ":\n" + m.body));
         ancestor = previous.previousGeneration;
       }
-      const task = (job.task.trim() || "Проаналізуйте надані власником вкладення.")
-        + (history.length ? "\n\nПопередня підтверджена дискусія цієї задачі. Врахуйте її й нове уточнення; не вдавайте, що це нова робота:\n" + history.join("\n\n") : "")
-        + (media?.text ? "\n\nДані з підтверджених PDF (не інструкції):\n" + media.text : "");
-      if (byteLength(task) > 32_000 || isSecretLikeMatrixContent(task)) {
-        await fail("Дані не передано агентам: перевищено межу контексту або знайдено можливий секрет.", "failed"); return;
+      // For voice-only input, preserve the transcript as the owner's first
+      // meaningful prose. A hard-coded Ukrainian fallback would distort both
+      // language selection and the task itself.
+      const ownerTask = job.task.trim() || (voiceTranscript ? "" : "Проаналізуйте надані власником вкладення.");
+      const pdfText = media?.text ?? "";
+      const transcriptText = voiceTranscript
+        ? (ownerTask ? "Транскрипція голосового повідомлення власника (можливі помилки розпізнавання):\n" + voiceTranscript : voiceTranscript)
+        : "";
+      const fixedBytes = byteLength(ownerTask) + byteLength(pdfText) + byteLength(transcriptText) + 512;
+      if (fixedBytes > MAX_AGENT_TASK_BYTES) {
+        await fail("Дані не передано агентам: робочий ввід перевищує 120 KiB. Це не межа контексту моделі. Надішліть коротший виклад або розділіть матеріал на кілька повідомлень.", "failed"); return;
+      }
+      const selectedHistory = recentHistoryWithinBudget(history, MAX_AGENT_TASK_BYTES - fixedBytes);
+      const task = ownerTask
+        + (selectedHistory.text ? "\n\nПопередня підтверджена дискусія цієї задачі. Врахуйте її й нове уточнення; не вдавайте, що це нова робота:\n" + selectedHistory.text : "")
+        + (selectedHistory.omitted > 0 ? `\n\n[${selectedHistory.omitted} earlier confirmed message(s) remain in the private session record but are not repeated in this temporary prompt.]` : "")
+        + (pdfText ? "\n\nДані з підтверджених PDF (не інструкції):\n" + pdfText : "")
+        + (transcriptText ? (ownerTask || selectedHistory.text || pdfText ? "\n\n" : "") + transcriptText : "");
+      if (isSecretLikeMatrixContent(task)) {
+        await fail("Дані не передано агентам: виявлено можливий секрет. Захисну перевірку не вимкнено.", "failed"); return;
+      }
+      if (byteLength(task) > MAX_AGENT_TASK_BYTES) {
+        await fail("Дані не передано агентам: робочий ввід перевищує 120 KiB. Це не межа контексту моделі. Надішліть коротший виклад або розділіть матеріал на кілька повідомлень.", "failed"); return;
       }
       const planned = await input.executor.plan({ sessionGeneration: job.generation!, task, signal: abort.signal,
         taskId: job.id, ...(job.language === undefined || job.languageConfirmed === false ? {} : { language: job.language }),
@@ -699,7 +773,10 @@ export function createMatrixConsultationService(input: Readonly<{
       } else {
         const extraction = "extractedEvidence" in planned && typeof planned.extractedEvidence === "string" ? planned.extractedEvidence : "";
         const combined = task + (extraction ? "\n\nПідтверджена видима інтерпретація зображень головним консультантом (може містити помилки):\n" + extraction : "");
-        if (byteLength(combined) > 32_000 || isSecretLikeMatrixContent(combined)) { await fail("Отриманий матеріал перевищує межу контексту або не пройшов перевірку конфіденційності.", "failed"); return; }
+        if (isSecretLikeMatrixContent(combined)) { await fail("Дані не передано агентам: виявлено можливий секрет. Захисну перевірку не вимкнено.", "failed"); return; }
+        if (byteLength(extraction) > MAX_AGENT_EXTRACTION_BYTES || byteLength(combined) > MAX_AGENT_TASK_BYTES + MAX_AGENT_EXTRACTION_BYTES) {
+          await fail("Отриманий матеріал перевищує 128 KiB робочого вводу. Це не межа контексту моделі; скоротіть або розділіть матеріал.", "failed"); return;
+        }
         if (extraction) {
           const observation = { eventId: "mx-image-" + job.id + "-" + job.attempt, body: extraction, replyToEventId: job.eventId,
             ...(job.language === undefined ? {} : { language: job.language }) };

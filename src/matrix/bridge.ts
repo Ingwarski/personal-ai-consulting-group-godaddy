@@ -19,7 +19,7 @@ export type RawMatrixIngress = Readonly<{
   relationEventId?: string;
   media?: readonly Readonly<{
     handle: string;
-    declaredMime: "image/jpeg" | "image/png" | "application/pdf";
+    declaredMime: "image/jpeg" | "image/png" | "application/pdf" | "audio/ogg";
     length: number;
     sha256: string;
   }>[];
@@ -27,7 +27,7 @@ export type RawMatrixIngress = Readonly<{
 }>;
 
 export type MatrixIngressMediaMetadata = Readonly<{
-  declaredMime: "image/jpeg" | "image/png" | "application/pdf";
+  declaredMime: "image/jpeg" | "image/png" | "application/pdf" | "audio/ogg";
   length: number;
   sha256: string;
 }>;
@@ -388,7 +388,7 @@ function validateSidecarEnvelope(binding: RoomBinding, raw: RawMatrixIngress): M
   const media = raw.media ?? [];
   const validMedia = media.length <= 4 && media.every((item) =>
     /^[A-Za-z0-9._:-]{1,64}$/.test(item.handle) &&
-    ["image/jpeg", "image/png", "application/pdf"].includes(item.declaredMime) &&
+    ["image/jpeg", "image/png", "application/pdf", "audio/ogg"].includes(item.declaredMime) &&
     Number.isSafeInteger(item.length) && item.length > 0 && item.length <= 20 * 1024 * 1024 &&
     /^[a-f0-9]{64}$/.test(item.sha256)
   ) && media.reduce((sum, item) => sum + item.length, 0) <= 64 * 1024 * 1024;

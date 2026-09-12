@@ -42,8 +42,8 @@ test("pinned native CLI accepts analysis-only empty environments and its generat
       onLine: (listener) => { lines.on("line", listener); return () => { lines.off("line", listener); lines.close(); }; }
     } });
     client = new CodexAppServerThreadClient({ rpc, clientInfo: { name: "critic-protocol-test", title: "Protocol test", version: "1" } });
-    lease = await client.startIsolatedThread({ modelId: "gpt-6-astra" });
-    assert.equal(lease.ok, true, "Exact native thread/start must accept the enforced policy, not a mock.");
+    lease = await client.startIsolatedThread({ modelId: "gpt-6-astra", webSearch: true });
+    assert.equal(lease.ok, true, "Exact native thread/start must accept the isolated research policy, not a mock.");
     assert.equal(methods.includes("turn/start"), false, "This check must not invoke a model.");
     await assert.rejects(readFile(join(authHome, "auth.json")), { code: "ENOENT" });
   } finally {

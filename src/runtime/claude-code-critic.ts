@@ -43,7 +43,9 @@ export type ClaudeCodeCriticRuntimeInput = Readonly<{
   signal?: AbortSignal;
 }>;
 
-const nonEmpty = (value: unknown, maximum = 32_000): value is string =>
+const nonEmptyPrompt = (value: unknown, maximum = 128 * 1024): value is string =>
+  typeof value === "string" && value.trim().length > 0 && value.length <= maximum;
+const nonEmptyCompletion = (value: unknown, maximum = 32 * 1024): value is string =>
   typeof value === "string" && value.trim().length > 0 && value.length <= maximum;
 
 function supportsSelectedEffort(model: ProviderModelCapability, reasoningEffort: ProviderReasoningEffort | null): boolean {
@@ -90,7 +92,7 @@ export class ClaudeCodeCriticRuntime implements ConsiliumAgentRuntime {
   }
 
   async run(input: ConsiliumRuntimeInput, emit: (message: RuntimeEmission) => Promise<void>): Promise<void> {
-    if (this.#signal?.aborted || input.phase !== "critique" || !nonEmpty(input.task) || !nonEmpty(input.assignment) || input.evidence.length < 2) {
+    if (this.#signal?.aborted || input.phase !== "critique" || !nonEmptyPrompt(input.task) || !nonEmptyPrompt(input.assignment) || input.evidence.length < 2) {
       throw new SafeConsiliumFailure("invalid_runtime_emission");
     }
     let status: ClaudeCodeSubscriptionStatus;
@@ -113,7 +115,7 @@ export class ClaudeCodeCriticRuntime implements ConsiliumAgentRuntime {
       ...(this.#signal === undefined ? {} : { signal: this.#signal })
     });
     const messageId = await deriveInternalEventId("claude", completed.turnRef);
-    if (this.#signal?.aborted || messageId === undefined || !nonEmpty(completed.body)) {
+    if (this.#signal?.aborted || messageId === undefined || !nonEmptyCompletion(completed.body)) {
       throw new SafeConsiliumFailure("claude_invalid_completion");
     }
     const content = input.consensus === undefined ? { body: completed.body } : parseConsensusOutput(completed.body, input);

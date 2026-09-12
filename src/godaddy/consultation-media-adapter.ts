@@ -10,6 +10,7 @@ export function createConsultationMediaAdapter(store: MatrixConsultationMediaSto
       if (documents.some(d => d.confirmed !== true) || signal?.aborted) return undefined;
       const releases: (() => void)[] = [];
       const images: { mime: "image/png" | "image/jpeg"; bytes: Uint8Array }[] = [];
+      const audio: { mime: "audio/ogg"; bytes: Uint8Array }[] = [];
       const texts: string[] = [];
       let transferred = false;
       try {
@@ -24,12 +25,16 @@ export function createConsultationMediaAdapter(store: MatrixConsultationMediaSto
               const extracted = await extractPdfForConsultation(object.bytes, signal === undefined ? {} : { signal });
               if (!extracted.ok) { await store.erase(document.eventHash, "rejected"); return undefined; }
               texts.push("Текстовий шар PDF; графічні елементи не аналізувалися:\n" + extracted.text);
+            } else if (object.declaredMime === "audio/ogg") {
+              // Matrix voice notes are handled by the dedicated, audio-only
+              // transcription turn; never reinterpret arbitrary bytes as text.
+              audio.push({ mime: object.declaredMime, bytes: object.bytes });
             } else images.push({ mime: object.declaredMime, bytes: object.bytes });
           }
         }
-        if (signal?.aborted) return undefined;
+        if (signal?.aborted || audio.length > 1) return undefined;
         transferred = true;
-        return { images, text: texts.join("\n\n"), release: () => releases.forEach(release => release()) };
+        return { images, audio, text: texts.join("\n\n"), release: () => releases.forEach(release => release()) };
       } finally {
         if (!transferred) releases.forEach(release => release());
       }

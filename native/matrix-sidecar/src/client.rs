@@ -638,6 +638,39 @@ impl MatrixClient {
                 };
                 ingress.media.push(reference);
             }
+            MessageType::Audio(audio) => {
+                let Some(kind) = audio
+                    .info
+                    .as_ref()
+                    .and_then(|info| info.mimetype.as_deref())
+                    .and_then(audio_media_kind)
+                else {
+                    return Ok(());
+                };
+                let size = audio
+                    .info
+                    .as_ref()
+                    .and_then(|info| info.size)
+                    .map(u64::from)
+                    .unwrap_or(0);
+                ingress.body = audio.caption().and_then(nonempty_caption);
+                let descriptor = serde_json::to_value(&event.content.msgtype)
+                    .map_err(|_| TransportError::TransportFailed)?;
+                let outcome = download_media(
+                    self,
+                    &pipeline.spool,
+                    kind,
+                    size,
+                    audio.source.clone(),
+                )
+                .await;
+                let Some(reference) =
+                    record_media_outcome(&pipeline, &ingress, &descriptor, outcome).await?
+                else {
+                    return Ok(());
+                };
+                ingress.media.push(reference);
+            }
             _ => return Ok(()),
         }
         let cleanup_media = ingress.media.clone();
@@ -1369,6 +1402,16 @@ fn media_kind(mime: &str) -> Option<MediaKind> {
     match mime {
         "image/jpeg" => Some(MediaKind::Jpeg),
         "image/png" => Some(MediaKind::Png),
+        _ => None,
+    }
+}
+
+/// Matrix clients normally send voice notes as Ogg/Opus. Accept the stable
+/// Ogg container aliases only; the spool verifies its OggS signature before
+/// it ever reaches Node or a provider.
+fn audio_media_kind(mime: &str) -> Option<MediaKind> {
+    match mime.to_ascii_lowercase().as_str() {
+        "audio/ogg" | "audio/opus" | "audio/ogg; codecs=opus" => Some(MediaKind::Ogg),
         _ => None,
     }
 }

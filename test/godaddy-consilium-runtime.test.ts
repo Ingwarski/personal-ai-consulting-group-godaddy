@@ -525,7 +525,7 @@ test("intake and execution share the generation mutex; stop interrupts and relea
 test("missing catalog and invalid task fail without provider turns", async () => {
   const h = await fixture({ missingCatalog: true });
   assert.deepEqual(await h.runtime.run({ ...request, task: " " }), { ok: false, code: "invalid_task" });
-  assert.deepEqual(await h.runtime.run({ ...request, task: "x".repeat(32_001) }), { ok: false, code: "invalid_task" });
+  assert.deepEqual(await h.runtime.run({ ...request, task: "x".repeat(160 * 1024 + 1) }), { ok: false, code: "invalid_task" });
   assert.deepEqual(await h.runtime.run(request), { ok: false, code: "catalog_unavailable" });
   assert.deepEqual(h.calls(), { loadCalls: 1, clientCalls: 0, claudeCalls: 0 });
   await h.runtime.close();

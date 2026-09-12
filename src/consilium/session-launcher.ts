@@ -95,6 +95,7 @@ export class ConsiliumSessionLauncher {
     head: ConsiliumRole;
     specialists: readonly ConsiliumRole[];
     critic: ConsiliumRole;
+    researchRequested?: boolean;
     signal?: AbortSignal;
   }>): Promise<SessionLaunchResult> {
     const compatible = parseHistoricalOwnerSettings(input.snapshot.settings);
@@ -131,13 +132,13 @@ export class ConsiliumSessionLauncher {
     let preparedSuccessfully = false;
     try {
       if (input.signal?.aborted) return { ok: false, code: "cancelled" };
-      const headLease = await this.#codex.startIsolatedThread({ modelId: selectedCodex.runtimeModelId });
+      const headLease = await this.#codex.startIsolatedThread({ modelId: selectedCodex.runtimeModelId, webSearch: input.researchRequested === true });
       if (!headLease.ok) return { ok: false, code: "codex_thread_start_failed", threadStartCode: `head_${headLease.code}` };
       leases.push(headLease.value);
       const specialistLeases: CodexThreadLease[] = [];
       for (const specialist of input.specialists) {
         if (controller.signal.aborted) return { ok: false, code: "cancelled" };
-        const lease = await this.#codex.startIsolatedThread({ modelId: selectedCodex.runtimeModelId });
+        const lease = await this.#codex.startIsolatedThread({ modelId: selectedCodex.runtimeModelId, webSearch: input.researchRequested === true });
         if (!lease.ok) return { ok: false, code: "codex_thread_start_failed", threadStartCode: `specialist_${lease.code}` };
         specialistLeases.push(lease.value);
         leases.push(lease.value);
@@ -145,7 +146,7 @@ export class ConsiliumSessionLauncher {
       if (controller.signal.aborted) return { ok: false, code: "cancelled" };
       let criticLease: CodexThreadLease | undefined;
       if (selectedCritic.provider === "codex") {
-        const lease = await this.#codex.startIsolatedThread({ modelId: criticCodex!.runtimeModelId });
+        const lease = await this.#codex.startIsolatedThread({ modelId: criticCodex!.runtimeModelId, webSearch: input.researchRequested === true });
         if (!lease.ok) return { ok: false, code: "codex_thread_start_failed", threadStartCode: `critic_${lease.code}` };
         criticLease = lease.value;
         leases.push(lease.value);

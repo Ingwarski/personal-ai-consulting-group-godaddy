@@ -4,7 +4,7 @@ import { access, readFile, stat } from "node:fs/promises";
 import { dirname } from "node:path";
 
 import { CodexConsiliumAgentRuntime } from "../src/runtime/codex-consilium-agent.ts";
-import { CODEX_ANALYSIS_CONFIG, CodexAppServerThreadClient } from "../src/runtime/codex-thread-client.ts";
+import { CODEX_ANALYSIS_CONFIG, CODEX_RESEARCH_CONFIG, CodexAppServerThreadClient } from "../src/runtime/codex-thread-client.ts";
 import { JsonRpcClient } from "../src/runtime/json-rpc-client.ts";
 
 function appServerHarness(options: {
@@ -88,6 +88,25 @@ test("starts one real Codex thread and preserves only the completed agent messag
   harness.rpc.close();
 });
 
+test("explicit research enables only web search on its isolated thread", async () => {
+  const harness = appServerHarness();
+  const client = new CodexAppServerThreadClient({
+    rpc: harness.rpc,
+    clientInfo: { name: "personal-consultant", title: "Personal Consultant", version: "0.1.0" }
+  });
+  const thread = await client.startIsolatedThread({ modelId: "catalog-only-model", webSearch: true });
+  if (!thread.ok) throw new Error("Expected research thread.");
+  assert.equal(thread.value.webSearch, true);
+  assert.deepEqual((harness.messages.find(message => message.method === "thread/start")?.params as { config: unknown }).config, CODEX_RESEARCH_CONFIG);
+  const turn = await client.runTextTurn({ lease: thread.value, body: "Research the current rate.", reasoningEffort: "high" });
+  assert.equal(turn.ok, true);
+  assert.deepEqual((harness.messages.find(message => message.method === "turn/start")?.params as { sandboxPolicy: unknown }).sandboxPolicy,
+    { type: "readOnly", networkAccess: true });
+  assert.deepEqual(CODEX_RESEARCH_CONFIG.features, CODEX_ANALYSIS_CONFIG.features, "research may not unlock any other tool channel");
+  await client.releaseThread(thread.value);
+  harness.rpc.close();
+});
+
 test("approved images use only private owned localImage paths and are erased when the turn ends", async () => {
   const png = Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10, 1, 2, 3]);
   let imagePath = "";
@@ -111,6 +130,28 @@ test("approved images use only private owned localImage paths and are erased whe
   assert.equal(dirname(imagePath), thread.value.cwd);
   await assert.rejects(access(imagePath));
   assert.equal(png[0], 137); // The caller owns its input; only internal copies are zeroed.
+  await client.releaseThread(thread.value);
+  harness.rpc.close();
+});
+
+test("verified voice input uses a private localAudio path and is erased after its turn", async () => {
+  const ogg = Uint8Array.from([0x4f, 0x67, 0x67, 0x53, 0x00, 0x02, 0x00, 0x00]);
+  let audioPath = "";
+  const harness = appServerHarness({ onTurnStart: async (respond, message) => {
+    const input = (message.params as { input: { type: string; path?: string }[] }).input;
+    assert.equal(input[1]?.type, "localAudio");
+    audioPath = input[1]!.path!;
+    assert.match(audioPath, /input-audio-[a-f0-9-]+\.ogg$/u);
+    assert.deepEqual([...await readFile(audioPath)], [...ogg]);
+    assert.equal((await stat(audioPath)).mode & 0o777, 0o600);
+    respond({ id: message.id, result: { turn: { id: "turn-audio-1", status: "completed", items: [{ type: "agentMessage", text: '{"transcript":"hello"}' }] } } });
+  } });
+  const client = new CodexAppServerThreadClient({ rpc: harness.rpc, clientInfo: { name: "test", title: "Test", version: "1" } });
+  const thread = await client.startIsolatedThread({ modelId: "gpt-6-astra" });
+  if (!thread.ok) throw new Error("Expected thread");
+  const result = await client.runTextTurn({ lease: thread.value, body: "Transcribe only.", reasoningEffort: "high", audios: [{ mime: "audio/ogg", bytes: ogg }] });
+  assert.equal(result.ok, true);
+  await assert.rejects(access(audioPath));
   await client.releaseThread(thread.value);
   harness.rpc.close();
 });

@@ -50,7 +50,7 @@ function manifestValue(value: unknown): MatrixConsultationMediaManifest | undefi
   if (!Array.isArray(value) || value.length < 1 || value.length > 4) return undefined;
   const result: MatrixConsultationMediaManifest[number][] = [];
   for (const item of value) {
-    if (!isRecord(item) || !["image/png", "image/jpeg", "application/pdf"].includes(item.declaredMime as string)
+    if (!isRecord(item) || !["image/png", "image/jpeg", "application/pdf", "audio/ogg"].includes(item.declaredMime as string)
       || !Number.isSafeInteger(item.length) || (item.length as number) < 1 || (item.length as number) > MAX_OBJECT_BYTES
       || typeof item.sha256 !== "string" || !SHA256.test(item.sha256)) return undefined;
     result.push(Object.freeze({ declaredMime: item.declaredMime as MatrixIngressMedia["declaredMime"], length: item.length as number, sha256: item.sha256 }));
@@ -63,6 +63,7 @@ function detectedMime(bytes: Buffer): MatrixIngressMedia["declaredMime"] | undef
   if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
   if (bytes.length >= 8 && [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every((value, index) => bytes[index] === value)) return "image/png";
   if (bytes.length >= 5 && [0x25, 0x50, 0x44, 0x46, 0x2d].every((value, index) => bytes[index] === value)) return "application/pdf";
+  if (bytes.length >= 4 && [0x4f, 0x67, 0x67, 0x53].every((value, index) => bytes[index] === value)) return "audio/ogg";
   return undefined;
 }
 
@@ -185,10 +186,10 @@ export function createMySqlMatrixConsultationMediaStore(input: Readonly<{
     try {
       for (const [index, expected] of manifest.entries()) {
         const object: MatrixIngressMediaObject | undefined = value.objects[index];
-        const extension = expected.declaredMime === "image/jpeg" ? "jpg" : expected.declaredMime === "image/png" ? "png" : "pdf";
+        const extension = expected.declaredMime === "image/jpeg" ? "jpg" : expected.declaredMime === "image/png" ? "png" : expected.declaredMime === "application/pdf" ? "pdf" : "ogg";
         if (object === undefined || !Buffer.isBuffer(object.bytes) || object.bytes.length !== expected.length
           || object.handle !== value.event.media[index]?.handle || object.declaredMime !== expected.declaredMime
-          || !/^[a-f0-9]{32}-[a-f0-9]{24}\.(?:jpg|png|pdf)$/u.test(object.handle) || !object.handle.endsWith(`.${extension}`)
+          || !/^[a-f0-9]{32}-[a-f0-9]{24}\.(?:jpg|png|pdf|ogg)$/u.test(object.handle) || !object.handle.endsWith(`.${extension}`)
           || object.sha256 !== expected.sha256 || object.length !== expected.length) throw invalid();
         const bytes = Buffer.from(object.bytes);
         owned.push(bytes);
@@ -197,7 +198,9 @@ export function createMySqlMatrixConsultationMediaStore(input: Readonly<{
         // not a transient consumer failure. Persist metadata without bytes and
         // return its receipt so ACK can release the sidecar queue for Stop/new
         // inputs. Only invalid transport integrity above throws for retry.
-        rejected ||= containsAccessibleSecret(bytes);
+        // Binary audio cannot be inspected as text. The ordinary body and the
+        // later transcript still pass the same secret gate before any advice.
+        rejected ||= expected.declaredMime === "audio/ogg" ? false : containsAccessibleSecret(bytes);
       }
       const manifestHash = digest(JSON.stringify(manifest));
       const record: RecordValue = {
@@ -275,7 +278,8 @@ export function createMySqlMatrixConsultationMediaStore(input: Readonly<{
               bytes.set(plain, offset);
             } finally { plain?.fill(0); }
           }
-          if (digest(bytes) !== metadata.sha256 || detectedMime(bytes) !== metadata.declaredMime || containsAccessibleSecret(bytes)) throw invalid();
+          if (digest(bytes) !== metadata.sha256 || detectedMime(bytes) !== metadata.declaredMime
+            || (metadata.declaredMime !== "audio/ogg" && containsAccessibleSecret(bytes))) throw invalid();
           objects.push(Object.freeze({ ...metadata, bytes }));
         }
         if (currentTime() >= record.expiresAtMs) throw invalid();

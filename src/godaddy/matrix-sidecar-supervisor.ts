@@ -27,7 +27,7 @@ const SAFE_ID = /^[A-Za-z0-9._:-]{1,64}$/u;
 const SAFE_TOKEN = /^[A-Za-z0-9._:-]{1,128}$/u;
 const SHA256_HEX = /^[a-f0-9]{64}$/u;
 const BOOT_ID = /^[a-f0-9]{32}$/u;
-const MEDIA_HANDLE = /^[a-f0-9]{32}-[a-f0-9]{24}\.(?:jpg|png|pdf)$/u;
+const MEDIA_HANDLE = /^[a-f0-9]{32}-[a-f0-9]{24}\.(?:jpg|png|pdf|ogg)$/u;
 const MAX_PLAINTEXT_BYTES = 64 * 1024;
 const MAX_MEDIA_OBJECTS = 4;
 const MAX_MEDIA_OBJECT_BYTES = 20 * 1024 * 1024;
@@ -425,7 +425,7 @@ function validProtocolMedia(value: unknown): boolean {
     && hasOnlyKeys(value, ["handle", "declared_mime", "length", "sha256"])
     && typeof value.handle === "string"
     && MEDIA_HANDLE.test(value.handle)
-    && ["image/jpeg", "image/png", "application/pdf"].includes(value.declared_mime as string)
+    && ["image/jpeg", "image/png", "application/pdf", "audio/ogg"].includes(value.declared_mime as string)
     && Number.isSafeInteger(value.length)
     && (value.length as number) > 0
     && (value.length as number) <= MAX_MEDIA_OBJECT_BYTES

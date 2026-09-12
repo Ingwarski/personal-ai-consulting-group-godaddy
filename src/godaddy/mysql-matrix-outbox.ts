@@ -719,7 +719,7 @@ export type MatrixIngressIntent = Readonly<{
   body: string | null;
   relationEventId?: string;
   media: readonly Readonly<{
-    declaredMime: "image/jpeg" | "image/png" | "application/pdf";
+    declaredMime: "image/jpeg" | "image/png" | "application/pdf" | "audio/ogg";
     length: number;
     sha256: string;
   }>[];
@@ -802,7 +802,7 @@ async function validateIngressIntent(
   for (const item of media) {
     if (!isRecord(item) || !hasOnlyKeys(item, allowedIngressMediaKeys)) return undefined;
     if (
-      !["image/jpeg", "image/png", "application/pdf"].includes(String(item.declaredMime)) ||
+      !["image/jpeg", "image/png", "application/pdf", "audio/ogg"].includes(String(item.declaredMime)) ||
       !Number.isSafeInteger(item.length) || Number(item.length) <= 0 || Number(item.length) > 20 * 1024 * 1024 ||
       typeof item.sha256 !== "string" || !/^[a-f0-9]{64}$/.test(item.sha256)
     ) return undefined;

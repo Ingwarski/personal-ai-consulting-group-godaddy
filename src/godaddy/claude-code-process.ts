@@ -9,7 +9,7 @@ import type { ProviderModelCapability, ProviderReasoningEffort } from "../settin
 import type { ClaudeCodeSubscriptionProcess, ClaudeCodeSubscriptionStatus } from "../runtime/claude-code-critic.ts";
 
 const MAX_OUTPUT_BYTES = 96 * 1024;
-const MAX_PROMPT_BYTES = 32_000;
+const MAX_PROMPT_BYTES = 256 * 1024;
 const DEFAULT_TIMEOUT_MILLISECONDS = 9 * 60_000;
 const DEFAULT_CLAUDE_CODE_MODEL_CANDIDATES = Object.freeze([
   "claude-fable-5",

@@ -11,8 +11,14 @@ export type CodexThreadLease = Readonly<{
   threadId: string;
   modelId: string;
   cwd?: string;
+  /** Web search is a per-thread capability, never a turn-controlled escape hatch. */
+  webSearch?: boolean;
 }>;
 export type CodexTurnImage = Readonly<{ mime: "image/png" | "image/jpeg"; bytes: Uint8Array }>;
+/** A Matrix voice note is accepted only after the encrypted ingress pipeline
+ * has verified its Ogg container. It is staged in the lease-only workspace
+ * and sent as a native app-server audio input, never as a public URL. */
+export type CodexTurnAudio = Readonly<{ mime: "audio/ogg"; bytes: Uint8Array }>;
 
 function validImages(images: readonly CodexTurnImage[]): boolean {
   if (!Array.isArray(images) || images.length > 4) return false;
@@ -26,6 +32,14 @@ function validImages(images: readonly CodexTurnImage[]): boolean {
       ? [137, 80, 78, 71, 13, 10, 26, 10].every((byte, index) => bytes[index] === byte)
       : image.mime === "image/jpeg" && bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255);
   });
+}
+
+function validAudios(audios: readonly CodexTurnAudio[]): boolean {
+  if (!Array.isArray(audios) || audios.length > 1) return false;
+  return audios.every(audio => audio !== null && typeof audio === "object"
+    && audio.mime === "audio/ogg" && audio.bytes instanceof Uint8Array
+    && audio.bytes.byteLength >= 4 && audio.bytes.byteLength <= 20 * 1024 * 1024
+    && [0x4f, 0x67, 0x67, 0x53].every((byte, index) => audio.bytes[index] === byte));
 }
 
 export type CodexThreadResult =
@@ -44,6 +58,8 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const nonEmpty = (value: unknown, max = 32_000): value is string =>
   typeof value === "string" && value.trim().length > 0 && value.length <= max;
+const nonEmptyPrompt = (value: unknown): value is string =>
+  typeof value === "string" && value.trim().length > 0 && Buffer.byteLength(value, "utf8") <= 256 * 1024;
 
 // Pinned 0.153.1 feature keys plus its experimental empty-environments
 // contract. ReadOnly alone does NOT restrict reads of credential files; no
@@ -59,6 +75,13 @@ export const CODEX_ANALYSIS_CONFIG = Object.freeze({
     code_mode: false, code_mode_host: false, multi_agent: false, multi_agent_v2: false,
     skill_search: false, tool_suggest: false, request_permissions_tool: false
   })
+});
+
+/** Research changes exactly one capability. The analysis tool fence remains
+ * otherwise identical: no shell, browser control, local files or computer use. */
+export const CODEX_RESEARCH_CONFIG = Object.freeze({
+  ...CODEX_ANALYSIS_CONFIG,
+  web_search: "live"
 });
 
 function parseThreadStart(value: unknown, modelId: string): CodexThreadLease | undefined {
@@ -127,7 +150,7 @@ export class CodexAppServerThreadClient {
     });
   }
 
-  async startIsolatedThread(input: Readonly<{ modelId: string; cwd?: string }>): Promise<CodexThreadResult> {
+  async startIsolatedThread(input: Readonly<{ modelId: string; cwd?: string; webSearch?: boolean }>): Promise<CodexThreadResult> {
     if (!nonEmpty(input.modelId, 512)) return { ok: false, code: "invalid_thread_response" };
     let ownedWorkspace: string | undefined;
     try {
@@ -141,7 +164,7 @@ export class CodexAppServerThreadClient {
         sandbox: "read-only",
         approvalPolicy: "never",
         environments: [],
-        config: CODEX_ANALYSIS_CONFIG
+        config: input.webSearch === true ? CODEX_RESEARCH_CONFIG : CODEX_ANALYSIS_CONFIG
       });
       const thread = parseThreadStart(result, input.modelId);
       if (thread === undefined) {
@@ -152,7 +175,7 @@ export class CodexAppServerThreadClient {
         return { ok: false, code: "invalid_thread_response" };
       }
       if (ownedWorkspace !== undefined) this.#workspaces.set(thread.threadId, ownedWorkspace);
-      return { ok: true, value: Object.freeze({ ...thread, cwd }) };
+      return { ok: true, value: Object.freeze({ ...thread, cwd, webSearch: input.webSearch === true }) };
     } catch {
       await this.#onUnresponsive?.().catch(() => undefined);
       if (ownedWorkspace !== undefined) await rm(ownedWorkspace, { recursive: true, force: true });
@@ -184,14 +207,17 @@ export class CodexAppServerThreadClient {
     reasoningEffort: ProviderReasoningEffort | null;
     outputSchema?: unknown;
     images?: readonly CodexTurnImage[];
+    audios?: readonly CodexTurnAudio[];
     timeoutMilliseconds?: number;
     signal?: AbortSignal;
   }>): Promise<CodexTurnResult> {
     const threadId = input.lease.threadId;
-    if (!nonEmpty(input.body) || this.#released.has(threadId) || this.#busyThreads.has(threadId)) return { ok: false, code: "invalid_turn_response" };
+    if (!nonEmptyPrompt(input.body) || this.#released.has(threadId) || this.#busyThreads.has(threadId)) return { ok: false, code: "invalid_turn_response" };
     const images = input.images ?? [];
+    const audios = input.audios ?? [];
     const ownedWorkspace = this.#workspaces.get(threadId);
-    if (!validImages(images) || (images.length > 0 && (ownedWorkspace === undefined || ownedWorkspace !== input.lease.cwd))) return { ok: false, code: "invalid_turn_response" };
+    if (!validImages(images) || !validAudios(audios)
+      || ((images.length > 0 || audios.length > 0) && (ownedWorkspace === undefined || ownedWorkspace !== input.lease.cwd))) return { ok: false, code: "invalid_turn_response" };
     if (input.signal?.aborted) return { ok: false, code: "turn_cancelled" };
     this.#busyThreads.add(threadId);
     const timeoutMilliseconds = input.timeoutMilliseconds ?? 10 * 60_000;
@@ -201,7 +227,7 @@ export class CodexAppServerThreadClient {
     let turnId: string | undefined;
     let interruptRequest: Promise<void> | undefined;
     let settlePending: ((result: CodexTurnResult) => void) | undefined;
-    const stagedImages: string[] = [];
+    const stagedInputs: string[] = [];
     const interrupt = async (code: "turn_cancelled" | "turn_timeout"): Promise<void> => {
       cancellation ??= code;
       if (turnId === undefined) return;
@@ -226,7 +252,18 @@ export class CodexAppServerThreadClient {
         try {
           if (!validImages([{ mime: image.mime, bytes }])) return { ok: false, code: "invalid_turn_response" };
           const file = await open(path, "wx", 0o600);
-          stagedImages.push(path);
+          stagedInputs.push(path);
+          try { await file.writeFile(bytes); } finally { await file.close(); }
+        } finally { bytes.fill(0); }
+        if (input.signal?.aborted || this.#released.has(threadId)) return { ok: false, code: "turn_cancelled" };
+      }
+      for (const audio of audios) {
+        const path = join(ownedWorkspace!, `input-audio-${randomUUID()}.ogg`);
+        const bytes = Buffer.from(audio.bytes);
+        try {
+          if (!validAudios([{ mime: audio.mime, bytes }])) return { ok: false, code: "invalid_turn_response" };
+          const file = await open(path, "wx", 0o600);
+          stagedInputs.push(path);
           try { await file.writeFile(bytes); } finally { await file.close(); }
         } finally { bytes.fill(0); }
         if (input.signal?.aborted || this.#released.has(threadId)) return { ok: false, code: "turn_cancelled" };
@@ -254,10 +291,14 @@ export class CodexAppServerThreadClient {
       });
       const response = await this.#rpc.request("turn/start", {
         threadId,
-        input: [{ type: "text", text: input.body, text_elements: [] }, ...stagedImages.map(path => ({ type: "localImage", path }))],
+        input: [
+          { type: "text", text: input.body, text_elements: [] },
+          ...stagedInputs.filter(path => path.endsWith(".jpg") || path.endsWith(".png")).map(path => ({ type: "localImage", path })),
+          ...stagedInputs.filter(path => path.endsWith(".ogg")).map(path => ({ type: "localAudio", path }))
+        ],
         model: input.lease.modelId,
         approvalPolicy: "never",
-        sandboxPolicy: { type: "readOnly", networkAccess: false },
+        sandboxPolicy: { type: "readOnly", networkAccess: input.lease.webSearch === true },
         environments: [],
         ...(input.reasoningEffort === null ? {} : { effort: input.reasoningEffort }),
         ...(input.outputSchema === undefined ? {} : { outputSchema: input.outputSchema })
@@ -320,7 +361,7 @@ export class CodexAppServerThreadClient {
       await interruptRequest;
       this.#activeTurns.delete(threadId);
       this.#busyThreads.delete(threadId);
-      await Promise.all(stagedImages.map(path => rm(path, { force: true })));
+      await Promise.all(stagedInputs.map(path => rm(path, { force: true })));
     }
   }
 }

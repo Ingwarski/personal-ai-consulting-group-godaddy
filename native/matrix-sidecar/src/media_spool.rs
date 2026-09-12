@@ -36,6 +36,7 @@ pub enum MediaKind {
     Jpeg,
     Png,
     Pdf,
+    Ogg,
 }
 
 impl MediaKind {
@@ -44,6 +45,7 @@ impl MediaKind {
             Self::Jpeg => "image/jpeg",
             Self::Png => "image/png",
             Self::Pdf => "application/pdf",
+            Self::Ogg => "audio/ogg",
         }
     }
 
@@ -52,6 +54,7 @@ impl MediaKind {
             Self::Jpeg => "jpg",
             Self::Png => "png",
             Self::Pdf => "pdf",
+            Self::Ogg => "ogg",
         }
     }
 }
@@ -487,7 +490,7 @@ fn parse_handle(value: &str) -> Option<(&str, &str)> {
     (valid_instance(instance)
         && token.len() == 24
         && token.bytes().all(is_lower_hex)
-        && matches!(extension, "jpg" | "png" | "pdf"))
+        && matches!(extension, "jpg" | "png" | "pdf" | "ogg"))
     .then_some((instance, extension))
 }
 
@@ -506,6 +509,8 @@ fn detect_kind(bytes: &[u8]) -> Option<MediaKind> {
         Some(MediaKind::Png)
     } else if bytes.starts_with(b"%PDF-") {
         Some(MediaKind::Pdf)
+    } else if bytes.starts_with(b"OggS") {
+        Some(MediaKind::Ogg)
     } else {
         None
     }
@@ -534,6 +539,16 @@ mod tests {
             Err(MediaWriteError::Unavailable)
         ));
         assert_eq!(fs::read_dir(spool.root()).unwrap().count(), 0);
+    }
+
+    #[test]
+    fn verified_ogg_voice_note_keeps_its_opaque_private_handle() {
+        let temp = tempfile::tempdir().unwrap();
+        let spool = create_spool(&temp);
+        let reference = spool.write(MediaKind::Ogg, b"OggS\0\x02voice").unwrap();
+        assert!(reference.handle.ends_with(".ogg"));
+        assert_eq!(reference.declared_mime, "audio/ogg");
+        assert_eq!(spool.inspect(&reference).unwrap().kind, MediaKind::Ogg);
     }
 
     fn create_spool(temp: &tempfile::TempDir) -> PrivateSpool {
