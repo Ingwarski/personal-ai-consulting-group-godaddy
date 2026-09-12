@@ -3,13 +3,13 @@
   "kind": "matrix-production-build-provenance",
   "source": {
     "repository": "Ingwarski/personal-ai-consulting-group-godaddy",
-    "commit": "ff8a4a5f142a005d38fe2f1a0361b65aaa06d60b",
-    "workflowCommit": "ff8a4a5f142a005d38fe2f1a0361b65aaa06d60b",
-    "workflowRef": "Ingwarski/personal-ai-consulting-group-godaddy/.github/workflows/matrix-sidecar-release.yml@refs/heads/codex/matrix-connection-20260906",
-    "runId": "34538409177",
+    "commit": "36a2d10134862f61ada51b0387de1aa3acf24531",
+    "workflowCommit": "36a2d10134862f61ada51b0387de1aa3acf24531",
+    "workflowRef": "Ingwarski/personal-ai-consulting-group-godaddy/.github/workflows/matrix-sidecar-release.yml@refs/heads/main",
+    "runId": "34699403518",
     "runAttempt": "1",
-    "runUrl": "https://github.com/Ingwarski/personal-ai-consulting-group-godaddy/actions/runs/34538409177/attempts/1",
-    "nativeTree": "a855c9bd803a0a74fa304323a47ac780b15aef62",
+    "runUrl": "https://github.com/Ingwarski/personal-ai-consulting-group-godaddy/actions/runs/34699403518/attempts/1",
+    "nativeTree": "adc244d4cd56c31d61b6eca072a1f8d3cdb5bf7b",
     "inputs": [
       {
         "path": ".github/workflows/matrix-sidecar-release.yml",
@@ -85,7 +85,7 @@
       },
       {
         "path": "native/matrix-sidecar/src/client.rs",
-        "sha256": "23caa1505119b829d11406ad600ba1afdb9b171a1093d22ccc70d7ecfafb1120"
+        "sha256": "977d4a8537fdb4b2307170e339eaa1088b55c3490bb1a137729bedb64fd51fce"
       },
       {
         "path": "native/matrix-sidecar/src/client_sdk_tests.rs",
@@ -133,7 +133,7 @@
       },
       {
         "path": "native/matrix-sidecar/src/media_spool.rs",
-        "sha256": "1f40ed5347e4caf844bfe056b9efc9dc73a53d969f2791e8047563d7acdf495f"
+        "sha256": "dd2e1001a07ecff0fe604bb62629f609c8e98dd884c5c1ea42e230ae6607c285"
       },
       {
         "path": "native/matrix-sidecar/src/migration.rs",
@@ -237,13 +237,13 @@
     "registryVerifiedOn": "2026-09-06",
     "registryVerification": "The amd64 manifest bytes were SHA-256 checked against the digest; its config pins Rust 1.93.0, gcc and musl-dev. A run-local derived image may add only the exact nativeTlsBuildPackages declared above; its image ID and Dockerfile hash are recorded. Compilation runs offline in that same prepared image. The separately hash-pinned UAPI header input is acquired before compilation and mounted read-only.",
     "observedImageConfigDigest": "sha256:6336bf7b311135c893a4a930b0920892b5e596ccdc374777290fa91bb59ae818",
-    "preparedImageConfigDigest": "sha256:597cda95d8bb329895cee03467c7e2500a332e71c7c3af48d5c21d580573eb7d",
+    "preparedImageConfigDigest": "sha256:19dc99d874db4346a227bac7cd3c580695a7e4d8c1df438585a750649f03809c",
     "nativeTlsDockerfileSha256": "3a05b3288f1abd892601288853fb90272bb9b4e02627fa04cf2a72a78b285fda"
   },
   "build": {
-    "startedAt": "2026-09-10T22:39:40.073Z",
-    "completedAt": "2026-09-11T00:13:35.454Z",
-    "sourceDateEpoch": "1789079882",
+    "startedAt": "2026-09-12T14:29:46.457Z",
+    "completedAt": "2026-09-12T15:35:24.696Z",
+    "sourceDateEpoch": "1789223326",
     "command": "cargo build --release --locked --frozen --target x86_64-unknown-linux-musl",
     "networkDuringCompilation": "none",
     "cleanBuildCount": 2,
@@ -258,13 +258,13 @@
     {
       "path": "personal-consultant-matrix-sidecar",
       "role": "sidecar",
-      "sha256": "1344e3ee2dfffc2ac1f3b6b3705dc2d8d234f54254d83a45ff2c9ed27031f547",
-      "sizeBytes": 49987536
+      "sha256": "74da7ea448778a480551bade74a4e42836d45416a3f56d0e8b48ddf1a5ad1f91",
+      "sizeBytes": 49995728
     },
     {
       "path": "personal-consultant-matrix-setup",
       "role": "setup",
-      "sha256": "1c973ae7eb11c68f8618dc72b139e9e00abeb6f8f3fb36cf246cebd826dece04",
+      "sha256": "98d3f3f5154aa9c6d1c7ff59d2cf1dac6f00a4ca0ae8e2be696fb8ff819a8b35",
       "sizeBytes": 44777328
     }
   ],

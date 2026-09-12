@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "kind": "matrix-production-release",
-  "sourceCommit": "ff8a4a5f142a005d38fe2f1a0361b65aaa06d60b",
+  "sourceCommit": "36a2d10134862f61ada51b0387de1aa3acf24531",
   "sidecarVersion": "0.1.0",
   "protocolVersion": 1,
   "builder": {
@@ -30,15 +30,15 @@
         "licenseExpression": "Artistic-1.0-Perl OR GPL-1.0-or-later"
       }
     ],
-    "preparedImageConfigDigest": "sha256:597cda95d8bb329895cee03467c7e2500a332e71c7c3af48d5c21d580573eb7d",
+    "preparedImageConfigDigest": "sha256:19dc99d874db4346a227bac7cd3c580695a7e4d8c1df438585a750649f03809c",
     "nativeTlsDockerfileSha256": "3a05b3288f1abd892601288853fb90272bb9b4e02627fa04cf2a72a78b285fda"
   },
   "artifacts": [
     {
       "path": "build-provenance.json",
       "role": "evidence",
-      "sha256": "a9a89a3077bb5cf055eefd11afafc4f7769ba15a65640745e4a166ebd7721fd0",
-      "sizeBytes": 12266
+      "sha256": "4d1a8024727d741faa6100dd511c4e7576d4ca7f8da018061ef9df9e02cdae52",
+      "sizeBytes": 12238
     },
     {
       "path": "cc.txt",
@@ -55,14 +55,14 @@
     {
       "path": "personal-consultant-matrix-setup",
       "role": "setup",
-      "sha256": "1c973ae7eb11c68f8618dc72b139e9e00abeb6f8f3fb36cf246cebd826dece04",
+      "sha256": "98d3f3f5154aa9c6d1c7ff59d2cf1dac6f00a4ca0ae8e2be696fb8ff819a8b35",
       "sizeBytes": 44777328
     },
     {
       "path": "personal-consultant-matrix-sidecar",
       "role": "sidecar",
-      "sha256": "1344e3ee2dfffc2ac1f3b6b3705dc2d8d234f54254d83a45ff2c9ed27031f547",
-      "sizeBytes": 49987536
+      "sha256": "74da7ea448778a480551bade74a4e42836d45416a3f56d0e8b48ddf1a5ad1f91",
+      "sizeBytes": 49995728
     },
     {
       "path": "personal-consultant-matrix-sidecar.cdx.json",
