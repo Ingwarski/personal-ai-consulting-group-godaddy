@@ -656,14 +656,8 @@ impl MatrixClient {
                 ingress.body = audio.caption().and_then(nonempty_caption);
                 let descriptor = serde_json::to_value(&event.content.msgtype)
                     .map_err(|_| TransportError::TransportFailed)?;
-                let outcome = download_media(
-                    self,
-                    &pipeline.spool,
-                    kind,
-                    size,
-                    audio.source.clone(),
-                )
-                .await;
+                let outcome =
+                    download_media(self, &pipeline.spool, kind, size, audio.source.clone()).await;
                 let Some(reference) =
                     record_media_outcome(&pipeline, &ingress, &descriptor, outcome).await?
                 else {
