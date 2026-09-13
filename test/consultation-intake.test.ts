@@ -81,6 +81,12 @@ test("a compound collaboration decision cannot be downgraded to a Head-only answ
     "one ordinary pricing dimension may still receive a concise direct answer");
 });
 
+test("a live-research financial action cannot bypass the specialists and Critic", () => {
+  assert.equal(requiresConsiliumMode("There are $100 and 0.0013 BTC. Research today's USD/BTC exchange rate, cite two sources, and give one action: buy, sell, or hold."), true);
+  assert.equal(requiresConsiliumMode("Research today's USD/BTC exchange rate and cite two sources."), false,
+    "a factual lookup without a financial recommendation may still be concise");
+});
+
 test("research access requires an explicit owner request, not a pasted URL", () => {
   assert.equal(requestsLiveResearch("Please research the current market price and cite sources."), true);
   assert.equal(requestsLiveResearch("Будь ласка, перевір актуальні тарифи онлайн."), true);

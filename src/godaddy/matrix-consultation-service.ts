@@ -728,7 +728,12 @@ export function createMatrixConsultationService(input: Readonly<{
         if (expired) await fail(NOTICE_CONTINUE, "awaiting_continuation");
         return;
       }
-      if (!planned.ok) { await fail("Консультацію не завершено: обраний ШІ-провайдер або його відповідь зараз недоступні. Перевірте runtime і напишіть «Продовжити» для явної повторної спроби.", "failed"); return; }
+      if (!planned.ok) {
+        lastFailure = classifyConsultationResult("planning", planned);
+        console.error(JSON.stringify({ event: "matrix.consultation.planning_failed", ...lastFailure,
+          generation: job.generation, attempt: job.attempt }));
+        await fail("Консультацію не завершено: обраний ШІ-провайдер або його відповідь зараз недоступні. Перевірте runtime і напишіть «Продовжити» для явної повторної спроби.", "failed"); return;
+      }
       await ticking;
       if (!matches(await read()) || abort.signal.aborted) return;
       if (planned.language !== null && canonicalSessionLanguage(planned.language) !== undefined) {

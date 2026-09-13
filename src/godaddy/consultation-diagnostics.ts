@@ -2,7 +2,7 @@ const STAGES = new Set([
   "media_maintenance", "readiness", "leadership", "recovery", "ingress_lease",
   "input_state", "input_resume_probe", "input_pending_store", "input_cancel",
   "input_revision", "input_media", "input_notice", "input_commit", "input_ack",
-  "worker_state", "execution"
+  "worker_state", "planning", "execution"
 ]);
 const READINESS_CODES: Readonly<Record<string, string>> = Object.freeze({
   database_unavailable: "matrix_database_unavailable", schema_unavailable: "matrix_schema_unavailable",
@@ -15,6 +15,7 @@ const CODES = new Set([
   "mysql_datetime_rejected", "mysql_lock_timeout", "mysql_deadlock", "mysql_data_too_long", "mysql_schema_error", "mysql_duplicate",
   "invalid_worker_state", "notice_rejected", "unknown", ...Object.values(READINESS_CODES),
   "runtime_unavailable", "session_unavailable", "session_busy", "invalid_task", "catalog_unavailable", "prepare_failed",
+  "intake_preflight_failed", "intake_failed", "intake_output_invalid",
   "speed_policy_unresolved", "consilium_route_failed", "head_synthesis_failed", "finalization_failed",
   "publication_lock_unavailable", "publication_lock_release_failed", "publication_state_invalid", "publication_unresolved",
   "input_order_changed", "session_cancellation_failed", "registrar_revision_missing", "registrar_consensus_missing",

@@ -420,6 +420,27 @@ test("head intake chooses the bounded specialist catalog via structured model de
   await h.runtime.close();
 });
 
+test("a research-backed financial action plans offline and reserves live search for the reviewed consilium", async () => {
+  const h = await fixture({ matrixIntake: true });
+  const task = "There are $100 and 0.0013 BTC. Research today's USD/BTC exchange rate, cite two sources, and give one action: buy, sell, or hold.";
+  const planned = await h.runtime.plan({ ...request, task, taskId: "research-financial-action" });
+  assert.equal(planned.ok && planned.kind, "consilium");
+  const planningThread = h.sent.find(message => message.method === "thread/start")!.params as { config: { web_search: string } };
+  assert.equal(planningThread.config.web_search, "disabled");
+  const planningTurn = h.sent.find(message => message.method === "turn/start")!.params as { input: unknown };
+  assert.match(JSON.stringify(planningTurn.input), /не виконуй веб-пошук тут/u);
+  if (!planned.ok || planned.kind !== "consilium") return;
+  const beforeRun = h.sent.length;
+  const result = await h.runtime.run({ sessionGeneration: 1, taskId: "research-financial-action", taskDigest: await consensusDigest(task),
+    task, language: planned.language, assignments: planned.assignments, head: planned.head,
+    specialists: planned.specialists, critic: planned.critic });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  const workerThreads = h.sent.slice(beforeRun).filter(message => message.method === "thread/start");
+  assert.ok(workerThreads.length >= 4, "head, two specialists and Critic each receive an isolated worker thread");
+  for (const workerThread of workerThreads) assert.equal((workerThread.params as { config: { web_search: string } }).config.web_search, "live");
+  await h.runtime.close();
+});
+
 test("critical missing information returns clarification without closing or altering the immutable active snapshot", async () => {
   const h = await fixture({ intakeBody: intakeJSON({ kind: "clarification", answer: "Який строк для цього рішення?", recommendedAnswer: "До кінця цього тижня.", specialists: [], extractedEvidence: "", independentReviewRequested: false }) });
   const result = await h.runtime.plan(request);

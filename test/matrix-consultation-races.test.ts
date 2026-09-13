@@ -434,6 +434,15 @@ test("a transient ingress polling failure does not cancel an active provider tur
   assert.equal(f.planCalls(), 1);
 });
 
+test("a failed planner records its closed diagnostic without exposing provider text", async t => {
+  const f = await fixture();
+  t.after(() => f.service.stop());
+  f.usePlan(async () => ({ ok: false, code: "intake_failed" }));
+  f.enqueue("Please research today's USD/BTC exchange rate and recommend buy, sell, or hold.");
+  await f.service.tick(); await waitForJob(f, "failed");
+  assert.deepEqual(f.service.status().lastFailure, { stage: "planning", code: "intake_failed" });
+});
+
 test("a recycled leadership connection is reacquired without cancelling active provider work", async t => {
   const f = await fixture();
   t.after(async () => { f.plan.resolve({ ok: false, code: "runtime_unavailable" }); await f.service.stop(); });
