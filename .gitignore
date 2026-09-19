@@ -1,0 +1,10 @@
+.playwright-cli/
+.DS_Store
+output/playwright/
+node_modules/
+.dev.vars
+.dev.vars.local
+coverage/
+dist/
+/runtime/
+/.runtime/

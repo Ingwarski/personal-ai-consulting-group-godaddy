@@ -1,0 +1,24 @@
+# Copy to an untracked local environment file. Keep all real values out of Git.
+RUNTIME_MODE=production
+PORT=3000
+GODADDY_STATE_DATABASE_ROLE=published
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_NAME=personal_consultant
+DB_USER=application
+DB_PASSWORD=
+DB_POOL_LIMIT=8
+
+SETTINGS_OWNER_ENABLED=true
+SETTINGS_PUBLIC_ORIGIN=https://app.example.com
+SETTINGS_OWNER_GOOGLE_EMAIL=owner@gmail.com
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+SETTINGS_SESSION_HMAC_KEY=
+SETTINGS_CSRF_HMAC_KEY=
+SETTINGS_OAUTH_TRANSACTION_KEY=
+
+# Three distinct random 256-bit values encoded as 64 hex characters or base64url.
+ARCHIVE_ENCRYPTION_KEY=
+RUNTIME_INSTRUCTION_ENCRYPTION_KEY=
+RUNTIME_CREDENTIAL_ENCRYPTION_KEY=

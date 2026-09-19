@@ -1,0 +1,31 @@
+{
+  "name": "personal-ai-consulting-group",
+  "version": "0.1.0",
+  "main": "src/godaddy/server.mjs",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0 <23.0.0"
+  },
+  "scripts": {
+    "build:settings-assets": "node scripts/build-settings-assets.mjs",
+    "build": "npm run build:settings-assets",
+    "start": "npm run build && node --experimental-strip-types src/godaddy/server.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test test/*.test.ts test/*.test.mjs",
+    "test:mysql": "MYSQL_INTEGRATION=1 node --experimental-strip-types --test test/godaddy-mysql-integration.test.ts",
+    "check:environment": "node --experimental-strip-types scripts/check-forbidden-runtime-env.mjs",
+    "check": "npm run build && npm run typecheck && npm run test && npm run check:environment"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-code": "2.1.258",
+    "@openai/codex": "0.153.1",
+    "google-auth-library": "11.0.2",
+    "mysql2": "^3.24.2",
+    "unpdf": "1.8.1"
+  }
+}

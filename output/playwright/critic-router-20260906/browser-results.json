@@ -1,0 +1,60 @@
+{
+  "date": "2026-09-06",
+  "status": "passed-bounded-fixture-checks",
+  "scope": "Real headless Chromium on a loopback fixture using shipped settings template/client/CSS and in-memory OwnerSettingsDO. Not production auth, database, provider execution, deployment, representative-user validation, or the full UI gate.",
+  "checks": {
+    "provider_focus_retained": true,
+    "inactive_codex_low_restored": true,
+    "claude_draft_medium_retained": true,
+    "codex_draft_xhigh_retained": true,
+    "head_high_unchanged": true,
+    "no_autosave": true,
+    "extra_high_label": true,
+    "exactly_three_groups": true,
+    "one_explicit_save": true,
+    "both_preferences_persisted": true,
+    "save_reload_restores_codex": true,
+    "reflow_1440": true,
+    "reflow_1280": true,
+    "reflow_768": true,
+    "reflow_430": true,
+    "reflow_390": true,
+    "reflow_320": true,
+    "missing_claude_keeps_codex_valid": true,
+    "invalid_default_reset_disabled": true,
+    "missing_claude_selector_enabled_focused": true,
+    "missing_claude_saved_value_retained": true,
+    "missing_claude_blocks_save": true,
+    "missing_claude_recovery_visible": true,
+    "codex_recovers_without_claude": true,
+    "expired_catalog_blocks_save": true,
+    "expired_catalog_recovery_visible": true,
+    "fixture_external_provider_calls_zero": true
+  },
+  "viewports": [
+    { "width": 1440, "scrollWidth": 1440, "groups": 3, "screenshot": "settings-1440.png" },
+    { "width": 1280, "scrollWidth": 1280, "groups": 3, "screenshot": "settings-1280.png" },
+    { "width": 768, "scrollWidth": 768, "groups": 3, "screenshot": "settings-768.png" },
+    { "width": 430, "scrollWidth": 430, "groups": 3, "screenshot": "settings-430.png" },
+    { "width": 390, "scrollWidth": 390, "groups": 3, "screenshot": "settings-390.png" },
+    { "width": 320, "scrollWidth": 320, "groups": 3, "screenshot": "settings-320.png" }
+  ],
+  "unavailableScreenshot": "missing-claude-390.png",
+  "visualInspection": "Desktop, mobile, narrow reflow, and unavailable-state screenshots inspected. Existing palette, three-group hierarchy, field labels, and error/recovery state retained; no visible overlap or horizontal clipping in inspected captures.",
+  "savedFixtureSettings": {
+    "codex": { "modelId": "codex-current-primary", "reasoningEffort": "high" },
+    "critic": {
+      "provider": "codex",
+      "claude": { "modelId": "claude-current-critic", "reasoningEffort": "medium" },
+      "codex": { "modelId": "codex-current-primary", "reasoningEffort": "xhigh" }
+    },
+    "speedPreset": "збалансовано"
+  },
+  "notes": [
+    "Model capabilities and owner grant are simulated fixture values, not live entitlements or authentication evidence.",
+    "Initial harness attempts had CLI function-format/global-URL errors; an overlapping run was discarded. The reported checks came from a clean browser/server restart.",
+    "The fixture returned favicon.ico 404; no application JavaScript error was observed in the successful isolated run.",
+    "Full-page captures were recentered to scrollY zero to avoid a screenshot artifact from offscreen fixed skip-link placement. No UI code change was needed for it.",
+    "This is partial implementation/UI evidence. No claim of screen-reader audit, real-browser 200-percent zoom, representative-user usability, live Google authentication, or live provider calls."
+  ]
+}
